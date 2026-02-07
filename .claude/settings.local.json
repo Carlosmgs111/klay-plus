@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(dir /s \"D:\\\\Documentos\\\\Desktop\\\\klay+\")"
+      "Bash(dir /s \"D:\\\\Documentos\\\\Desktop\\\\klay+\")",
+      "Bash(node:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run test:source-ingestion:*)"
     ]
   }
 }

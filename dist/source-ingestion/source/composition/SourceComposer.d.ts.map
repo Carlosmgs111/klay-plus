@@ -1,0 +1,1 @@
+{"version":3,"file":"SourceComposer.d.ts","sourceRoot":"","sources":["../../../../src/source-ingestion/source/composition/SourceComposer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,0BAA0B,EAC1B,mBAAmB,EACpB,MAAM,qBAAqB,CAAC;AAE7B,qBAAa,cAAc;WACZ,OAAO,CAClB,MAAM,EAAE,0BAA0B,GACjC,OAAO,CAAC,mBAAmB,CAAC;CA4ChC"}

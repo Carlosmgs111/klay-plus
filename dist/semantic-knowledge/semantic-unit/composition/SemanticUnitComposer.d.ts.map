@@ -1,0 +1,1 @@
+{"version":3,"file":"SemanticUnitComposer.d.ts","sourceRoot":"","sources":["../../../../src/semantic-knowledge/semantic-unit/composition/SemanticUnitComposer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,gCAAgC,EAChC,yBAAyB,EAC1B,MAAM,qBAAqB,CAAC;AAE7B,qBAAa,oBAAoB;WAClB,OAAO,CAClB,MAAM,EAAE,gCAAgC,GACvC,OAAO,CAAC,yBAAyB,CAAC;CA4CtC"}

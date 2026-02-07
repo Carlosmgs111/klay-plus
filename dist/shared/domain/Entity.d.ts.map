@@ -1,0 +1,1 @@
+{"version":3,"file":"Entity.d.ts","sourceRoot":"","sources":["../../../src/shared/domain/Entity.ts"],"names":[],"mappings":"AAAA,8BAAsB,MAAM,CAAC,EAAE;IACjB,SAAS,CAAC,QAAQ,CAAC,GAAG,EAAE,EAAE;gBAAP,GAAG,EAAE,EAAE;IAEtC,IAAI,EAAE,IAAI,EAAE,CAEX;IAED,MAAM,CAAC,KAAK,EAAE,MAAM,CAAC,EAAE,CAAC,GAAG,OAAO;CAKnC"}

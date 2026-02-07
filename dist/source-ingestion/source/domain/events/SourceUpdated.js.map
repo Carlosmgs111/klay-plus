@@ -1,0 +1,1 @@
+{"version":3,"file":"SourceUpdated.js","sourceRoot":"","sources":["../../../../../src/source-ingestion/source/domain/events/SourceUpdated.ts"],"names":[],"mappings":"AAEA,MAAM,OAAO,aAAa;IACxB,MAAM,CAAU,UAAU,GAAG,iCAAiC,CAAC;IAE/D,MAAM,CAAC,EAAE,CAAC,KAAkB;QAC1B,OAAO,KAAK,CAAC,SAAS,KAAK,aAAa,CAAC,UAAU,CAAC;IACtD,CAAC"}

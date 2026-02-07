@@ -1,0 +1,1 @@
+{"version":3,"file":"ExtractionJobId.d.ts","sourceRoot":"","sources":["../../../../src/source-ingestion/extraction/domain/ExtractionJobId.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,iCAAiC,CAAC;AAE3D,qBAAa,eAAgB,SAAQ,QAAQ;WAC3B,MAAM,CAAC,KAAK,EAAE,MAAM,GAAG,eAAe;CAMvD"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"ProjectionFailed.d.ts","sourceRoot":"","sources":["../../../../../src/semantic-processing/projection/domain/events/ProjectionFailed.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,oCAAoC,CAAC;AAEtE,qBAAa,gBAAgB;IAC3B,MAAM,CAAC,QAAQ,CAAC,UAAU,2CAA2C;IAErE,MAAM,CAAC,EAAE,CAAC,KAAK,EAAE,WAAW,GAAG,OAAO;CAGvC"}
