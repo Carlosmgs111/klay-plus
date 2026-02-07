@@ -13,20 +13,16 @@ export {
   SourceComposer,
   RegisterSource,
   UpdateSource,
-  TextSourceExtractor,
-  PdfBrowserExtractor,
-  PdfServerExtractor,
   sourceFactory,
 } from "./source/index.js";
 
 export type {
   SourceRepository,
-  SourceExtractor,
-  ExtractionResult,
   SourceInfrastructurePolicy,
   ResolvedSourceInfra,
   RegisterSourceCommand,
   UpdateSourceCommand,
+  SourceFactoryResult,
 } from "./source/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -42,13 +38,20 @@ export {
   ExtractionComposer,
   ExecuteExtraction,
   extractionFactory,
+  // Content Extractors
+  TextContentExtractor,
+  PdfContentExtractor,
+  CompositeContentExtractor,
 } from "./extraction/index.js";
 
 export type {
   ExtractionJobRepository,
+  ContentExtractor,
+  ExtractionResult,
   ExtractionInfrastructurePolicy,
   ResolvedExtractionInfra,
   ExecuteExtractionCommand,
+  ExecuteExtractionResult,
 } from "./extraction/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════

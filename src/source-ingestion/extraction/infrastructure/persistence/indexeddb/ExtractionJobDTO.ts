@@ -10,6 +10,9 @@ export interface ExtractionJobDTO {
   startedAt: string | null;
   completedAt: string | null;
   error: string | null;
+  extractedText: string | null;
+  contentHash: string | null;
+  metadata: Record<string, unknown> | null;
 }
 
 export function toDTO(job: ExtractionJob): ExtractionJobDTO {
@@ -21,6 +24,9 @@ export function toDTO(job: ExtractionJob): ExtractionJobDTO {
     startedAt: job.startedAt?.toISOString() ?? null,
     completedAt: job.completedAt?.toISOString() ?? null,
     error: job.error,
+    extractedText: job.extractedText,
+    contentHash: job.contentHash,
+    metadata: job.metadata,
   };
 }
 
@@ -33,5 +39,8 @@ export function fromDTO(dto: ExtractionJobDTO): ExtractionJob {
     dto.startedAt ? new Date(dto.startedAt) : null,
     dto.completedAt ? new Date(dto.completedAt) : null,
     dto.error,
+    dto.extractedText,
+    dto.contentHash,
+    dto.metadata,
   );
 }

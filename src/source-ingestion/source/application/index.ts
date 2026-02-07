@@ -1,5 +1,4 @@
 import type { SourceRepository } from "../domain/SourceRepository.js";
-import type { SourceExtractor } from "../domain/SourceExtractor.js";
 import type { EventPublisher } from "../../../shared/domain/EventPublisher.js";
 
 // ─── Use Cases ─────────────────────────────────────────────────────
@@ -19,10 +18,9 @@ export class SourceUseCases {
 
   constructor(
     repository: SourceRepository,
-    extractor: SourceExtractor,
     eventPublisher: EventPublisher,
   ) {
-    this.registerSource = new RegisterSource(repository, extractor, eventPublisher);
-    this.updateSource = new UpdateSource(repository, extractor, eventPublisher);
+    this.registerSource = new RegisterSource(repository, eventPublisher);
+    this.updateSource = new UpdateSource(repository, eventPublisher);
   }
 }

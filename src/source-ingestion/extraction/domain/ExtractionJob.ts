@@ -11,6 +11,9 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
   private _completedAt: Date | null;
   private _error: string | null;
   private _createdAt: Date;
+  private _extractedText: string | null;
+  private _contentHash: string | null;
+  private _metadata: Record<string, unknown> | null;
 
   private constructor(
     id: ExtractionJobId,
@@ -20,6 +23,9 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
     startedAt: Date | null,
     completedAt: Date | null,
     error: string | null,
+    extractedText: string | null,
+    contentHash: string | null,
+    metadata: Record<string, unknown> | null,
   ) {
     super(id);
     this._sourceId = sourceId;
@@ -28,6 +34,9 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
     this._startedAt = startedAt;
     this._completedAt = completedAt;
     this._error = error;
+    this._extractedText = extractedText;
+    this._contentHash = contentHash;
+    this._metadata = metadata;
   }
 
   get sourceId(): string {
@@ -54,6 +63,18 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
     return this._createdAt;
   }
 
+  get extractedText(): string | null {
+    return this._extractedText;
+  }
+
+  get contentHash(): string | null {
+    return this._contentHash;
+  }
+
+  get metadata(): Record<string, unknown> | null {
+    return this._metadata;
+  }
+
   static create(id: ExtractionJobId, sourceId: string): ExtractionJob {
     if (!sourceId) throw new Error("ExtractionJob sourceId is required");
     return new ExtractionJob(
@@ -61,6 +82,9 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
       sourceId,
       ExtractionStatus.Pending,
       new Date(),
+      null,
+      null,
+      null,
       null,
       null,
       null,
@@ -75,8 +99,22 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
     startedAt: Date | null,
     completedAt: Date | null,
     error: string | null,
+    extractedText: string | null,
+    contentHash: string | null,
+    metadata: Record<string, unknown> | null,
   ): ExtractionJob {
-    return new ExtractionJob(id, sourceId, status, createdAt, startedAt, completedAt, error);
+    return new ExtractionJob(
+      id,
+      sourceId,
+      status,
+      createdAt,
+      startedAt,
+      completedAt,
+      error,
+      extractedText,
+      contentHash,
+      metadata,
+    );
   }
 
   start(): void {
@@ -87,12 +125,19 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
     this._startedAt = new Date();
   }
 
-  complete(): void {
+  complete(result: {
+    text: string;
+    contentHash: string;
+    metadata: Record<string, unknown>;
+  }): void {
     if (this._status !== ExtractionStatus.Running) {
       throw new Error(`Cannot complete extraction job in status ${this._status}`);
     }
     this._status = ExtractionStatus.Completed;
     this._completedAt = new Date();
+    this._extractedText = result.text;
+    this._contentHash = result.contentHash;
+    this._metadata = result.metadata;
 
     this.record({
       eventId: crypto.randomUUID(),
@@ -101,6 +146,7 @@ export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
       aggregateId: this.id.value,
       payload: {
         sourceId: this._sourceId,
+        contentHash: result.contentHash,
       },
     });
   }

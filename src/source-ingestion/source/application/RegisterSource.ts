@@ -3,7 +3,6 @@ import { Source } from "../domain/Source.js";
 import { SourceId } from "../domain/SourceId.js";
 import type { SourceType } from "../domain/SourceType.js";
 import type { SourceRepository } from "../domain/SourceRepository.js";
-import type { SourceExtractor } from "../domain/SourceExtractor.js";
 
 export interface RegisterSourceCommand {
   id: string;
@@ -12,10 +11,13 @@ export interface RegisterSourceCommand {
   uri: string;
 }
 
+/**
+ * Registers a new source reference.
+ * Does NOT extract content - that's done by the extraction module.
+ */
 export class RegisterSource {
   constructor(
     private readonly repository: SourceRepository,
-    private readonly extractor: SourceExtractor,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
@@ -27,15 +29,11 @@ export class RegisterSource {
       throw new Error(`Source ${command.id} already exists`);
     }
 
-    const extraction = await this.extractor.extract(command.uri, command.type);
-
     const source = Source.register(
       sourceId,
       command.name,
       command.type,
       command.uri,
-      extraction.rawContent,
-      extraction.contentHash,
     );
 
     await this.repository.save(source);

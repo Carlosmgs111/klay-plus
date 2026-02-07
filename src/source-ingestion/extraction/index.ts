@@ -7,11 +7,22 @@ export {
   ExtractionFailed,
 } from "./domain/index.js";
 
-export type { ExtractionJobRepository } from "./domain/index.js";
+export type {
+  ExtractionJobRepository,
+  ContentExtractor,
+  ExtractionResult,
+} from "./domain/index.js";
 
 // ─── Application ───────────────────────────────────────────────────
 export { ExecuteExtraction, ExtractionUseCases } from "./application/index.js";
-export type { ExecuteExtractionCommand } from "./application/index.js";
+export type { ExecuteExtractionCommand, ExecuteExtractionResult } from "./application/index.js";
+
+// ─── Infrastructure Adapters ───────────────────────────────────────
+export {
+  TextContentExtractor,
+  PdfContentExtractor,
+  CompositeContentExtractor,
+} from "./infrastructure/adapters/index.js";
 
 // ─── Composition ───────────────────────────────────────────────────
 export { ExtractionComposer } from "./composition/ExtractionComposer.js";
@@ -32,8 +43,7 @@ export async function extractionFactory(
   const infra = await ExtractionComposer.resolve(policy);
   return new ExtractionUseCases(
     infra.repository,
-    infra.sourceRepository,
-    infra.sourceExtractor,
+    infra.extractor,
     infra.eventPublisher,
   );
 }

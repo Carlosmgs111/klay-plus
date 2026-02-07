@@ -1,11 +1,10 @@
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { SourceRepository } from "../../source/domain/SourceRepository.js";
-import type { SourceExtractor } from "../../source/domain/SourceExtractor.js";
+import type { ContentExtractor } from "../domain/ContentExtractor.js";
 import type { EventPublisher } from "../../../shared/domain/EventPublisher.js";
 
 // ─── Use Cases ─────────────────────────────────────────────────────
 export { ExecuteExtraction } from "./ExecuteExtraction.js";
-export type { ExecuteExtractionCommand } from "./ExecuteExtraction.js";
+export type { ExecuteExtractionCommand, ExecuteExtractionResult } from "./ExecuteExtraction.js";
 
 // ─── Use Cases Facade ──────────────────────────────────────────────
 import { ExecuteExtraction } from "./ExecuteExtraction.js";
@@ -15,14 +14,12 @@ export class ExtractionUseCases {
 
   constructor(
     repository: ExtractionJobRepository,
-    sourceRepository: SourceRepository,
-    sourceExtractor: SourceExtractor,
+    extractor: ContentExtractor,
     eventPublisher: EventPublisher,
   ) {
     this.executeExtraction = new ExecuteExtraction(
       repository,
-      sourceRepository,
-      sourceExtractor,
+      extractor,
       eventPublisher,
     );
   }

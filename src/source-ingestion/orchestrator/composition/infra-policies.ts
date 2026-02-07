@@ -2,6 +2,7 @@ import type { SourceInfrastructurePolicy } from "../../source/composition/infra-
 import type { ExtractionInfrastructurePolicy } from "../../extraction/composition/infra-policies.js";
 import type { SourceUseCases } from "../../source/application/index.js";
 import type { ExtractionUseCases } from "../../extraction/application/index.js";
+import type { SourceRepository } from "../../source/domain/SourceRepository.js";
 
 // ─── Orchestrator Policy ──────────────────────────────────────────────────────
 
@@ -34,4 +35,6 @@ export interface SourceIngestionOrchestratorPolicy {
 export interface ResolvedSourceIngestionModules {
   source: SourceUseCases;
   extraction: ExtractionUseCases;
+  /** Repository exposed for orchestrator coordination */
+  sourceRepository: SourceRepository;
 }

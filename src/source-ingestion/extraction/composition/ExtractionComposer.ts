@@ -4,6 +4,22 @@ import type {
 } from "./infra-policies.js";
 
 export class ExtractionComposer {
+  private static async createDefaultExtractor() {
+    const { CompositeContentExtractor } = await import(
+      "../infrastructure/adapters/CompositeContentExtractor.js"
+    );
+    const { TextContentExtractor } = await import(
+      "../infrastructure/adapters/TextContentExtractor.js"
+    );
+    const { PdfContentExtractor } = await import(
+      "../infrastructure/adapters/PdfContentExtractor.js"
+    );
+
+    return new CompositeContentExtractor()
+      .register(new TextContentExtractor())
+      .register(new PdfContentExtractor());
+  }
+
   static async resolve(
     policy: ExtractionInfrastructurePolicy,
   ): Promise<ResolvedExtractionInfra> {
@@ -11,11 +27,7 @@ export class ExtractionComposer {
       "../../../shared/infrastructure/InMemoryEventPublisher.js"
     );
 
-    if (!policy.sourceRepository || !policy.sourceExtractor) {
-      throw new Error(
-        "ExtractionComposer requires 'sourceRepository' and 'sourceExtractor' in policy",
-      );
-    }
+    const extractor = policy.contentExtractor ?? await this.createDefaultExtractor();
 
     switch (policy.type) {
       case "in-memory": {
@@ -24,8 +36,7 @@ export class ExtractionComposer {
         );
         return {
           repository: new InMemoryExtractionJobRepository(),
-          sourceRepository: policy.sourceRepository,
-          sourceExtractor: policy.sourceExtractor,
+          extractor,
           eventPublisher: new InMemoryEventPublisher(),
         };
       }
@@ -37,8 +48,7 @@ export class ExtractionComposer {
         const dbName = policy.dbName ?? "knowledge-platform";
         return {
           repository: new IndexedDBExtractionJobRepository(dbName),
-          sourceRepository: policy.sourceRepository,
-          sourceExtractor: policy.sourceExtractor,
+          extractor,
           eventPublisher: new InMemoryEventPublisher(),
         };
       }
@@ -52,8 +62,7 @@ export class ExtractionComposer {
           : undefined;
         return {
           repository: new NeDBExtractionJobRepository(filename),
-          sourceRepository: policy.sourceRepository,
-          sourceExtractor: policy.sourceExtractor,
+          extractor,
           eventPublisher: new InMemoryEventPublisher(),
         };
       }

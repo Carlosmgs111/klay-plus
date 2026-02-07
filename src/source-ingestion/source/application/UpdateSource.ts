@@ -1,16 +1,19 @@
 import type { EventPublisher } from "../../../shared/domain/index.js";
 import { SourceId } from "../domain/SourceId.js";
 import type { SourceRepository } from "../domain/SourceRepository.js";
-import type { SourceExtractor } from "../domain/SourceExtractor.js";
 
 export interface UpdateSourceCommand {
   sourceId: string;
+  contentHash: string;
 }
 
+/**
+ * Records that content was extracted for a source.
+ * Called by the orchestrator after extraction completes.
+ */
 export class UpdateSource {
   constructor(
     private readonly repository: SourceRepository,
-    private readonly extractor: SourceExtractor,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
@@ -22,8 +25,7 @@ export class UpdateSource {
       throw new Error(`Source ${command.sourceId} not found`);
     }
 
-    const extraction = await this.extractor.extract(source.uri, source.type);
-    const changed = source.updateContent(extraction.rawContent, extraction.contentHash);
+    const changed = source.recordExtraction(command.contentHash);
 
     if (changed) {
       await this.repository.save(source);

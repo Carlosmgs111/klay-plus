@@ -27,7 +27,7 @@ export class SourceIngestionOrchestratorComposer {
     };
 
     // Resolve modules in parallel
-    const [sourceModule, extractionModule] = await Promise.all([
+    const [sourceResult, extractionUseCases] = await Promise.all([
       import("../../source/index.js").then((m) =>
         m.sourceFactory(sourcePolicy),
       ),
@@ -37,8 +37,9 @@ export class SourceIngestionOrchestratorComposer {
     ]);
 
     return {
-      source: sourceModule,
-      extraction: extractionModule,
+      source: sourceResult.useCases,
+      extraction: extractionUseCases,
+      sourceRepository: sourceResult.infra.repository,
     };
   }
 }
