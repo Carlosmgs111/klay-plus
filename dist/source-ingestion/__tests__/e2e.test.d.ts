@@ -2,7 +2,7 @@
  * End-to-End Test for Source Ingestion Context
  *
  * Tests the complete flow:
- * 1. Create orchestrator with in-memory infrastructure
+ * 1. Create facade with in-memory infrastructure
  * 2. Register a source
  * 3. Execute extraction
  * 4. Verify the results

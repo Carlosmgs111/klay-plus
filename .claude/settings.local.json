@@ -6,7 +6,8 @@
       "Bash(dir /s \"D:\\\\Documentos\\\\Desktop\\\\klay+\")",
       "Bash(node:*)",
       "Bash(npm run test:*)",
-      "Bash(npm run test:source-ingestion:*)"
+      "Bash(npm run test:source-ingestion:*)",
+      "Bash(npm run rebuild:*)"
     ]
   }
 }

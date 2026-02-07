@@ -6,7 +6,7 @@ export interface UpdateSourceCommand {
 }
 /**
  * Records that content was extracted for a source.
- * Called by the orchestrator after extraction completes.
+ * Called by the facade after extraction completes.
  */
 export declare class UpdateSource {
     private readonly repository;

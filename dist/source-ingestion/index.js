@@ -9,7 +9,7 @@ export { ExtractionJob, ExtractionJobId, ExtractionStatus, ExtractionCompleted, 
 // Content Extractors
 TextContentExtractor, PdfContentExtractor, CompositeContentExtractor, } from "./extraction/index.js";
 // ═══════════════════════════════════════════════════════════════════════════
-// Orchestrator Module
+// Context Facade (Application Layer Entry Point)
 // ═══════════════════════════════════════════════════════════════════════════
-export { SourceIngestionOrchestrator, SourceIngestionOrchestratorComposer, sourceIngestionOrchestratorFactory, } from "./orchestrator/index.js";
+export { SourceIngestionFacade, SourceIngestionFacadeComposer, createSourceIngestionFacade, } from "./application/facade/index.js";
 //# sourceMappingURL=index.js.map

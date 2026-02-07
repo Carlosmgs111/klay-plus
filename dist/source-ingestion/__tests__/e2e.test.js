@@ -2,7 +2,7 @@
  * End-to-End Test for Source Ingestion Context
  *
  * Tests the complete flow:
- * 1. Create orchestrator with in-memory infrastructure
+ * 1. Create facade with in-memory infrastructure
  * 2. Register a source
  * 3. Execute extraction
  * 4. Verify the results
@@ -10,7 +10,7 @@
  *
  * Run with: npm run test:source-ingestion [optional-pdf-path]
  */
-import { sourceIngestionOrchestratorFactory } from "../orchestrator/index.js";
+import { createSourceIngestionFacade } from "../application/facade/index.js";
 import { SourceType } from "../source/domain/SourceType.js";
 import * as path from "path";
 import * as fs from "fs";
@@ -23,18 +23,19 @@ const PROJECT_ROOT = path.resolve(__dirname, "../../..");
 async function runE2ETest() {
     console.log("🧪 Starting End-to-End Test for Source Ingestion Context\n");
     try {
-        // ─── Step 1: Create Orchestrator ───────────────────────────────────────
-        console.log("📦 Step 1: Creating orchestrator with in-memory infrastructure...");
-        const orchestrator = await sourceIngestionOrchestratorFactory({
-            type: "in-memory",
+        // ─── Step 1: Create Facade ─────────────────────────────────────────────
+        console.log("📦 Step 1: Creating facade with in-memory infrastructure...");
+        const facade = await createSourceIngestionFacade({
+            type: "server",
+            dbPath: "./data",
         });
-        console.log("   ✅ Orchestrator created successfully\n");
+        console.log("   ✅ Facade created successfully\n");
         // ─── Step 2: Register a Source ─────────────────────────────────────────
         console.log("📝 Step 2: Registering a plain text source...");
         const sourceId = crypto.randomUUID();
         const sourceName = "Test Document";
         const sourceUri = "Hello World! This is a test document for the knowledge platform.";
-        const registerResult = await orchestrator.registerSource({
+        const registerResult = await facade.registerSource({
             id: sourceId,
             name: sourceName,
             uri: sourceUri,
@@ -44,7 +45,7 @@ async function runE2ETest() {
         // ─── Step 3: Execute Extraction ────────────────────────────────────────
         console.log("🔍 Step 3: Executing extraction...");
         const extractionJobId = crypto.randomUUID();
-        const extractionResult = await orchestrator.extractSource({
+        const extractionResult = await facade.extractSource({
             jobId: extractionJobId,
             sourceId: sourceId,
         });
@@ -59,7 +60,7 @@ async function runE2ETest() {
             data: [1, 2, 3],
             nested: { key: "value" },
         });
-        const fullFlowResult = await orchestrator.ingestAndExtract({
+        const fullFlowResult = await facade.ingestAndExtract({
             sourceId: crypto.randomUUID(),
             sourceName: "JSON Test Document",
             uri: jsonContent,
@@ -72,7 +73,7 @@ async function runE2ETest() {
         console.log(`      Content Hash: ${fullFlowResult.contentHash}\n`);
         // ─── Step 5: Re-extract (should detect no change) ──────────────────────
         console.log("🔄 Step 5: Re-extracting same source (should detect no change)...");
-        const reExtractResult = await orchestrator.extractSource({
+        const reExtractResult = await facade.extractSource({
             jobId: crypto.randomUUID(),
             sourceId: sourceId,
         });
@@ -85,7 +86,7 @@ async function runE2ETest() {
             { id: crypto.randomUUID(), name: "Doc 2", uri: "Content 2", type: SourceType.Markdown },
             { id: crypto.randomUUID(), name: "Doc 3", uri: "a,b,c\n1,2,3", type: SourceType.Csv },
         ];
-        const batchResult = await orchestrator.batchRegister(batchSources);
+        const batchResult = await facade.batchRegister(batchSources);
         const successCount = batchResult.filter((r) => r.success).length;
         console.log(`   ✅ Batch registration completed: ${successCount}/${batchSources.length} successful\n`);
         // ─── Step 7: Batch Ingest and Extract ──────────────────────────────────
@@ -106,7 +107,7 @@ async function runE2ETest() {
                 extractionJobId: crypto.randomUUID(),
             },
         ];
-        const batchIngestResult = await orchestrator.batchIngestAndExtract(batchIngestSources);
+        const batchIngestResult = await facade.batchIngestAndExtract(batchIngestSources);
         const batchSuccessCount = batchIngestResult.filter((r) => r.success).length;
         console.log(`   ✅ Batch ingest completed: ${batchSuccessCount}/${batchIngestSources.length} successful`);
         for (const result of batchIngestResult) {
@@ -125,7 +126,7 @@ async function runE2ETest() {
         }
         else {
             console.log(`   📁 Loading PDF from: ${pdfPath}`);
-            const pdfResult = await orchestrator.ingestAndExtract({
+            const pdfResult = await facade.ingestAndExtract({
                 sourceId: crypto.randomUUID(),
                 sourceName: "Real PDF Document",
                 uri: pdfPath,
@@ -137,7 +138,7 @@ async function runE2ETest() {
             console.log(`      Job ID: ${pdfResult.jobId}`);
             console.log(`      Content Hash: ${pdfResult.contentHash}`);
             // Get the extraction job to see the extracted text
-            const extractionJob = await orchestrator.extraction.executeExtraction.execute({
+            const extractionJob = await facade.extraction.executeExtraction.execute({
                 jobId: crypto.randomUUID(),
                 sourceId: pdfResult.sourceId,
                 uri: pdfPath,
@@ -156,7 +157,7 @@ async function runE2ETest() {
                 console.log(`   ❌ Custom PDF file not found: ${customPdfPath}\n`);
             }
             else {
-                const customPdfResult = await orchestrator.ingestAndExtract({
+                const customPdfResult = await facade.ingestAndExtract({
                     sourceId: crypto.randomUUID(),
                     sourceName: path.basename(customPdfPath),
                     uri: path.resolve(customPdfPath),
@@ -167,7 +168,7 @@ async function runE2ETest() {
                 console.log(`      Source ID: ${customPdfResult.sourceId}`);
                 console.log(`      Content Hash: ${customPdfResult.contentHash}`);
                 // Execute extraction to get text content
-                const customExtractionJob = await orchestrator.extraction.executeExtraction.execute({
+                const customExtractionJob = await facade.extraction.executeExtraction.execute({
                     jobId: crypto.randomUUID(),
                     sourceId: customPdfResult.sourceId,
                     uri: path.resolve(customPdfPath),
@@ -186,7 +187,7 @@ async function runE2ETest() {
         console.log("✅ ALL TESTS PASSED!");
         console.log("═══════════════════════════════════════════════════════════════");
         console.log("\nSummary:");
-        console.log("  • Orchestrator creation: ✅");
+        console.log("  • Facade creation: ✅");
         console.log("  • Source registration: ✅");
         console.log("  • Content extraction: ✅");
         console.log("  • Full ingest flow: ✅");

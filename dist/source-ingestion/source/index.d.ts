@@ -14,7 +14,7 @@ export interface SourceFactoryResult {
 /**
  * Creates the source module with resolved infrastructure.
  * Returns both the use cases and the resolved infra (repository is exposed
- * for orchestrator coordination).
+ * for facade coordination).
  */
 export declare function sourceFactory(policy: SourceInfrastructurePolicy): Promise<SourceFactoryResult>;
 //# sourceMappingURL=index.d.ts.map

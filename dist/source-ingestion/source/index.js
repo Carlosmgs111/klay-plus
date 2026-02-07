@@ -7,7 +7,7 @@ export { SourceComposer } from "./composition/SourceComposer.js";
 /**
  * Creates the source module with resolved infrastructure.
  * Returns both the use cases and the resolved infra (repository is exposed
- * for orchestrator coordination).
+ * for facade coordination).
  */
 export async function sourceFactory(policy) {
     const { SourceComposer } = await import("./composition/SourceComposer.js");

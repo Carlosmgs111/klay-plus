@@ -55,16 +55,16 @@ export type {
 } from "./extraction/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Orchestrator Module
+// Context Facade (Application Layer Entry Point)
 // ═══════════════════════════════════════════════════════════════════════════
 export {
-  SourceIngestionOrchestrator,
-  SourceIngestionOrchestratorComposer,
-  sourceIngestionOrchestratorFactory,
-} from "./orchestrator/index.js";
+  SourceIngestionFacade,
+  SourceIngestionFacadeComposer,
+  createSourceIngestionFacade,
+} from "./application/facade/index.js";
 
 export type {
-  SourceIngestionOrchestratorPolicy,
+  SourceIngestionFacadePolicy,
   SourceIngestionInfraPolicy,
   ResolvedSourceIngestionModules,
-} from "./orchestrator/index.js";
+} from "./application/facade/index.js";

@@ -24,7 +24,7 @@ export interface ExecuteExtractionResult {
  *
  * This use case is pure: it receives the URI and mimeType directly,
  * performs extraction, and stores the result in an ExtractionJob.
- * It does NOT interact with Source - that coordination is done by the orchestrator.
+ * It does NOT interact with Source - that coordination is done by the facade.
  */
 export class ExecuteExtraction {
   constructor(

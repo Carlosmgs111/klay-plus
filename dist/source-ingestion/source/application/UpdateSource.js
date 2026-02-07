@@ -1,7 +1,7 @@
 import { SourceId } from "../domain/SourceId.js";
 /**
  * Records that content was extracted for a source.
- * Called by the orchestrator after extraction completes.
+ * Called by the facade after extraction completes.
  */
 export class UpdateSource {
     repository;
