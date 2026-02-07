@@ -10,7 +10,7 @@ export type {
 } from "./domain/index.js";
 
 // ─── Application ───────────────────────────────────────────────────
-export { ExecuteSemanticQuery } from "./application/index.js";
+export { ExecuteSemanticQuery, SemanticQueryUseCases } from "./application/index.js";
 export type { ExecuteSemanticQueryCommand } from "./application/index.js";
 
 // ─── Infrastructure ────────────────────────────────────────────────
@@ -23,7 +23,6 @@ export {
 } from "./infrastructure/adapters/index.js";
 
 // ─── Composition ───────────────────────────────────────────────────
-export { SemanticQueryUseCases } from "./SemanticQueryUseCases.js";
 export { SemanticQueryComposer } from "./composition/SemanticQueryComposer.js";
 export type {
   SemanticQueryInfrastructurePolicy,
@@ -32,13 +31,13 @@ export type {
 
 // ─── Module Factory ────────────────────────────────────────────────
 import type { SemanticQueryInfrastructurePolicy } from "./composition/infra-policies.js";
-import type { SemanticQueryUseCases as _UseCases } from "./SemanticQueryUseCases.js";
+import type { SemanticQueryUseCases as _UseCases } from "./application/index.js";
 
 export async function semanticQueryFactory(
   policy: SemanticQueryInfrastructurePolicy,
 ): Promise<_UseCases> {
   const { SemanticQueryComposer } = await import("./composition/SemanticQueryComposer.js");
-  const { SemanticQueryUseCases } = await import("./SemanticQueryUseCases.js");
+  const { SemanticQueryUseCases } = await import("./application/index.js");
   const infra = await SemanticQueryComposer.resolve(policy);
   return new SemanticQueryUseCases(
     infra.queryEmbedder,

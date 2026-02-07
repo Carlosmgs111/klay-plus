@@ -53,3 +53,18 @@ export type {
   ResolvedLineageInfra,
   RegisterTransformationCommand,
 } from "./lineage/index.js";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Orchestrator Module
+// ═══════════════════════════════════════════════════════════════════════════
+export {
+  SemanticKnowledgeOrchestrator,
+  SemanticKnowledgeOrchestratorComposer,
+  semanticKnowledgeOrchestratorFactory,
+} from "./orchestrator/index.js";
+
+export type {
+  SemanticKnowledgeOrchestratorPolicy,
+  SemanticKnowledgeInfraPolicy,
+  ResolvedSemanticKnowledgeModules,
+} from "./orchestrator/index.js";

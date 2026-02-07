@@ -21,7 +21,7 @@ export type {
 } from "./domain/index.js";
 
 // ─── Application ───────────────────────────────────────────────────
-export { GenerateProjection } from "./application/index.js";
+export { GenerateProjection, ProjectionUseCases } from "./application/index.js";
 export type { GenerateProjectionCommand } from "./application/index.js";
 
 // ─── Infrastructure (strategies & adapters) ────────────────────────
@@ -39,7 +39,6 @@ export {
 export { InMemoryVectorStore } from "./infrastructure/adapters/InMemoryVectorStore.js";
 
 // ─── Composition ───────────────────────────────────────────────────
-export { ProjectionUseCases } from "./ProjectionUseCases.js";
 export { ProjectionComposer } from "./composition/ProjectionComposer.js";
 export type {
   ProjectionInfrastructurePolicy,
@@ -48,13 +47,13 @@ export type {
 
 // ─── Module Factory ────────────────────────────────────────────────
 import type { ProjectionInfrastructurePolicy } from "./composition/infra-policies.js";
-import type { ProjectionUseCases as _UseCases } from "./ProjectionUseCases.js";
+import type { ProjectionUseCases as _UseCases } from "./application/index.js";
 
 export async function projectionFactory(
   policy: ProjectionInfrastructurePolicy,
 ): Promise<_UseCases> {
   const { ProjectionComposer } = await import("./composition/ProjectionComposer.js");
-  const { ProjectionUseCases } = await import("./ProjectionUseCases.js");
+  const { ProjectionUseCases } = await import("./application/index.js");
   const infra = await ProjectionComposer.resolve(policy);
   return new ProjectionUseCases(
     infra.repository,

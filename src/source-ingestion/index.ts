@@ -50,3 +50,18 @@ export type {
   ResolvedExtractionInfra,
   ExecuteExtractionCommand,
 } from "./extraction/index.js";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Orchestrator Module
+// ═══════════════════════════════════════════════════════════════════════════
+export {
+  SourceIngestionOrchestrator,
+  SourceIngestionOrchestratorComposer,
+  sourceIngestionOrchestratorFactory,
+} from "./orchestrator/index.js";
+
+export type {
+  SourceIngestionOrchestratorPolicy,
+  SourceIngestionInfraPolicy,
+  ResolvedSourceIngestionModules,
+} from "./orchestrator/index.js";

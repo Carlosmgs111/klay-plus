@@ -27,3 +27,18 @@ export type {
   SemanticQueryInfrastructurePolicy,
   ResolvedSemanticQueryInfra,
 } from "./semantic-query/index.js";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Orchestrator Module
+// ═══════════════════════════════════════════════════════════════════════════
+export {
+  KnowledgeRetrievalOrchestrator,
+  KnowledgeRetrievalOrchestratorComposer,
+  knowledgeRetrievalOrchestratorFactory,
+} from "./orchestrator/index.js";
+
+export type {
+  KnowledgeRetrievalOrchestratorPolicy,
+  KnowledgeRetrievalInfraPolicy,
+  ResolvedKnowledgeRetrievalModules,
+} from "./orchestrator/index.js";

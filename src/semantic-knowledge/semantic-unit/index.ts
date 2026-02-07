@@ -21,6 +21,7 @@ export {
   VersionSemanticUnit,
   DeprecateSemanticUnit,
   ReprocessSemanticUnit,
+  SemanticUnitUseCases,
 } from "./application/index.js";
 
 export type {
@@ -31,7 +32,6 @@ export type {
 } from "./application/index.js";
 
 // ─── Composition ───────────────────────────────────────────────────
-export { SemanticUnitUseCases } from "./SemanticUnitUseCases.js";
 export { SemanticUnitComposer } from "./composition/SemanticUnitComposer.js";
 export type {
   SemanticUnitInfrastructurePolicy,
@@ -40,13 +40,13 @@ export type {
 
 // ─── Module Factory ────────────────────────────────────────────────
 import type { SemanticUnitInfrastructurePolicy } from "./composition/infra-policies.js";
-import type { SemanticUnitUseCases as _UseCases } from "./SemanticUnitUseCases.js";
+import type { SemanticUnitUseCases as _UseCases } from "./application/index.js";
 
 export async function semanticUnitFactory(
   policy: SemanticUnitInfrastructurePolicy,
 ): Promise<_UseCases> {
   const { SemanticUnitComposer } = await import("./composition/SemanticUnitComposer.js");
-  const { SemanticUnitUseCases } = await import("./SemanticUnitUseCases.js");
+  const { SemanticUnitUseCases } = await import("./application/index.js");
   const infra = await SemanticUnitComposer.resolve(policy);
   return new SemanticUnitUseCases(infra.repository, infra.eventPublisher);
 }

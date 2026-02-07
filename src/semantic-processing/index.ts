@@ -57,3 +57,18 @@ export type {
   ResolvedStrategyRegistryInfra,
   RegisterStrategyCommand,
 } from "./strategy-registry/index.js";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Orchestrator Module
+// ═══════════════════════════════════════════════════════════════════════════
+export {
+  SemanticProcessingOrchestrator,
+  SemanticProcessingOrchestratorComposer,
+  semanticProcessingOrchestratorFactory,
+} from "./orchestrator/index.js";
+
+export type {
+  SemanticProcessingOrchestratorPolicy,
+  SemanticProcessingInfraPolicy,
+  ResolvedSemanticProcessingModules,
+} from "./orchestrator/index.js";

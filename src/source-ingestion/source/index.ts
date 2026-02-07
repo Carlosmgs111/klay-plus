@@ -16,7 +16,7 @@ export type {
 } from "./domain/index.js";
 
 // ─── Application ───────────────────────────────────────────────────
-export { RegisterSource, UpdateSource } from "./application/index.js";
+export { RegisterSource, UpdateSource, SourceUseCases } from "./application/index.js";
 export type {
   RegisterSourceCommand,
   UpdateSourceCommand,
@@ -28,7 +28,6 @@ export { PdfBrowserExtractor } from "./infrastructure/adapters/PdfBrowserExtract
 export { PdfServerExtractor } from "./infrastructure/adapters/PdfServerExtractor.js";
 
 // ─── Composition ───────────────────────────────────────────────────
-export { SourceUseCases } from "./SourceUseCases.js";
 export { SourceComposer } from "./composition/SourceComposer.js";
 export type {
   SourceInfrastructurePolicy,
@@ -37,13 +36,13 @@ export type {
 
 // ─── Module Factory ────────────────────────────────────────────────
 import type { SourceInfrastructurePolicy } from "./composition/infra-policies.js";
-import type { SourceUseCases as _UseCases } from "./SourceUseCases.js";
+import type { SourceUseCases as _UseCases } from "./application/index.js";
 
 export async function sourceFactory(
   policy: SourceInfrastructurePolicy,
 ): Promise<_UseCases> {
   const { SourceComposer } = await import("./composition/SourceComposer.js");
-  const { SourceUseCases } = await import("./SourceUseCases.js");
+  const { SourceUseCases } = await import("./application/index.js");
   const infra = await SourceComposer.resolve(policy);
   return new SourceUseCases(infra.repository, infra.extractor, infra.eventPublisher);
 }

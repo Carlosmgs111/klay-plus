@@ -10,11 +10,10 @@ export {
 export type { KnowledgeLineageRepository } from "./domain/index.js";
 
 // ─── Application ───────────────────────────────────────────────────
-export { RegisterTransformation } from "./application/index.js";
+export { RegisterTransformation, LineageUseCases } from "./application/index.js";
 export type { RegisterTransformationCommand } from "./application/index.js";
 
 // ─── Composition ───────────────────────────────────────────────────
-export { LineageUseCases } from "./LineageUseCases.js";
 export { LineageComposer } from "./composition/LineageComposer.js";
 export type {
   LineageInfrastructurePolicy,
@@ -23,13 +22,13 @@ export type {
 
 // ─── Module Factory ────────────────────────────────────────────────
 import type { LineageInfrastructurePolicy } from "./composition/infra-policies.js";
-import type { LineageUseCases as _UseCases } from "./LineageUseCases.js";
+import type { LineageUseCases as _UseCases } from "./application/index.js";
 
 export async function lineageFactory(
   policy: LineageInfrastructurePolicy,
 ): Promise<_UseCases> {
   const { LineageComposer } = await import("./composition/LineageComposer.js");
-  const { LineageUseCases } = await import("./LineageUseCases.js");
+  const { LineageUseCases } = await import("./application/index.js");
   const infra = await LineageComposer.resolve(policy);
   return new LineageUseCases(infra.repository, infra.eventPublisher);
 }
