@@ -2,12 +2,21 @@ import type {
   SourceIngestionFacadePolicy,
   ResolvedSourceIngestionModules,
 } from "./infra-policies.js";
-import type { SourceInfrastructurePolicy } from "../../../source/composition/infra-policies.js";
-import type { ExtractionInfrastructurePolicy } from "../../../extraction/composition/infra-policies.js";
+import type { SourceInfrastructurePolicy } from "../../../source/composition/index.js";
+import type { ExtractionInfrastructurePolicy } from "../../../extraction/composition/index.js";
 
 /**
  * Composer for the Source Ingestion Facade.
- * Resolves all module dependencies based on infrastructure policy.
+ *
+ * This is a COMPOSITION component - it only:
+ * - Selects infrastructure implementations based on policy
+ * - Instantiates modules via their factories
+ * - Wires dependencies for the facade
+ *
+ * It does NOT contain:
+ * - Business logic
+ * - Domain rules
+ * - Application flows
  */
 export class SourceIngestionFacadeComposer {
   /**
@@ -30,19 +39,19 @@ export class SourceIngestionFacadeComposer {
       dbName: policy.overrides?.extraction?.dbName ?? policy.dbName,
     };
 
-    // Resolve modules in parallel
-    const [sourceResult, extractionUseCases] = await Promise.all([
-      import("../../../source/index.js").then((m) =>
+    // Resolve modules in parallel using their factories (from composition/)
+    const [sourceResult, extractionResult] = await Promise.all([
+      import("../../../source/composition/source.factory.js").then((m) =>
         m.sourceFactory(sourcePolicy),
       ),
-      import("../../../extraction/index.js").then((m) =>
+      import("../../../extraction/composition/extraction.factory.js").then((m) =>
         m.extractionFactory(extractionPolicy),
       ),
     ]);
 
     return {
       source: sourceResult.useCases,
-      extraction: extractionUseCases,
+      extraction: extractionResult.useCases,
       sourceRepository: sourceResult.infra.repository,
     };
   }

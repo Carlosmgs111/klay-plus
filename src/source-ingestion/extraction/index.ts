@@ -1,4 +1,10 @@
-// ─── Domain ────────────────────────────────────────────────────────
+/**
+ * Extraction Module - Public API
+ *
+ * This module handles content extraction from sources (PDF, text, etc.).
+ */
+
+// ─── Domain ─────────────────────────────────────────────────────────────────
 export {
   ExtractionJob,
   ExtractionJobId,
@@ -13,37 +19,25 @@ export type {
   ExtractionResult,
 } from "./domain/index.js";
 
-// ─── Application ───────────────────────────────────────────────────
+// ─── Application ────────────────────────────────────────────────────────────
 export { ExecuteExtraction, ExtractionUseCases } from "./application/index.js";
-export type { ExecuteExtractionCommand, ExecuteExtractionResult } from "./application/index.js";
+export type {
+  ExecuteExtractionCommand,
+  ExecuteExtractionResult,
+} from "./application/index.js";
 
-// ─── Infrastructure Adapters ───────────────────────────────────────
+// ─── Infrastructure Adapters (for custom composition) ──────────────────────
 export {
   TextContentExtractor,
   PdfContentExtractor,
   CompositeContentExtractor,
 } from "./infrastructure/adapters/index.js";
 
-// ─── Composition ───────────────────────────────────────────────────
-export { ExtractionComposer } from "./composition/ExtractionComposer.js";
+// ─── Composition & Factory ──────────────────────────────────────────────────
+export { ExtractionComposer, extractionFactory } from "./composition/index.js";
 export type {
+  ExtractionInfraPolicy,
   ExtractionInfrastructurePolicy,
   ResolvedExtractionInfra,
-} from "./composition/infra-policies.js";
-
-// ─── Module Factory ────────────────────────────────────────────────
-import type { ExtractionInfrastructurePolicy } from "./composition/infra-policies.js";
-import type { ExtractionUseCases as _UseCases } from "./application/index.js";
-
-export async function extractionFactory(
-  policy: ExtractionInfrastructurePolicy,
-): Promise<_UseCases> {
-  const { ExtractionComposer } = await import("./composition/ExtractionComposer.js");
-  const { ExtractionUseCases } = await import("./application/index.js");
-  const infra = await ExtractionComposer.resolve(policy);
-  return new ExtractionUseCases(
-    infra.repository,
-    infra.extractor,
-    infra.eventPublisher,
-  );
-}
+  ExtractionFactoryResult,
+} from "./composition/index.js";

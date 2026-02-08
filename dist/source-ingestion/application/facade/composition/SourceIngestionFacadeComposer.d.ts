@@ -1,7 +1,16 @@
 import type { SourceIngestionFacadePolicy, ResolvedSourceIngestionModules } from "./infra-policies.js";
 /**
  * Composer for the Source Ingestion Facade.
- * Resolves all module dependencies based on infrastructure policy.
+ *
+ * This is a COMPOSITION component - it only:
+ * - Selects infrastructure implementations based on policy
+ * - Instantiates modules via their factories
+ * - Wires dependencies for the facade
+ *
+ * It does NOT contain:
+ * - Business logic
+ * - Domain rules
+ * - Application flows
  */
 export declare class SourceIngestionFacadeComposer {
     /**

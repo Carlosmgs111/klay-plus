@@ -18,6 +18,7 @@ export {
 
 export type {
   SourceRepository,
+  SourceInfraPolicy,
   SourceInfrastructurePolicy,
   ResolvedSourceInfra,
   RegisterSourceCommand,
@@ -48,10 +49,12 @@ export type {
   ExtractionJobRepository,
   ContentExtractor,
   ExtractionResult,
+  ExtractionInfraPolicy,
   ExtractionInfrastructurePolicy,
   ResolvedExtractionInfra,
   ExecuteExtractionCommand,
   ExecuteExtractionResult,
+  ExtractionFactoryResult,
 } from "./extraction/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════

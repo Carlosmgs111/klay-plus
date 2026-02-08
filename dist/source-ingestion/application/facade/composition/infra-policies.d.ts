@@ -1,5 +1,5 @@
-import type { SourceInfrastructurePolicy } from "../../../source/composition/infra-policies.js";
-import type { ExtractionInfrastructurePolicy } from "../../../extraction/composition/infra-policies.js";
+import type { SourceInfrastructurePolicy } from "../../../source/composition/index.js";
+import type { ExtractionInfrastructurePolicy } from "../../../extraction/composition/index.js";
 import type { SourceUseCases } from "../../../source/application/index.js";
 import type { ExtractionUseCases } from "../../../extraction/application/index.js";
 import type { SourceRepository } from "../../../source/domain/SourceRepository.js";

@@ -1,21 +1,13 @@
-// ─── Domain ────────────────────────────────────────────────────────
-export { Source, SourceId, SourceType, SourceVersion, SourceRegistered, SourceUpdated, SourceExtracted, } from "./domain/index.js";
-// ─── Application ───────────────────────────────────────────────────
-export { RegisterSource, UpdateSource, SourceUseCases } from "./application/index.js";
-// ─── Composition ───────────────────────────────────────────────────
-export { SourceComposer } from "./composition/SourceComposer.js";
 /**
- * Creates the source module with resolved infrastructure.
- * Returns both the use cases and the resolved infra (repository is exposed
- * for facade coordination).
+ * Source Module - Public API
+ *
+ * This module manages source references (URIs, metadata, version tracking).
+ * It does NOT store content - that's handled by the extraction module.
  */
-export async function sourceFactory(policy) {
-    const { SourceComposer } = await import("./composition/SourceComposer.js");
-    const { SourceUseCases } = await import("./application/index.js");
-    const infra = await SourceComposer.resolve(policy);
-    return {
-        useCases: new SourceUseCases(infra.repository, infra.eventPublisher),
-        infra,
-    };
-}
+// ─── Domain ──────────────────────────────────────────────────────────────────
+export { Source, SourceId, SourceType, SourceVersion, SourceRegistered, SourceUpdated, SourceExtracted, } from "./domain/index.js";
+// ─── Application ─────────────────────────────────────────────────────────────
+export { RegisterSource, UpdateSource, SourceUseCases } from "./application/index.js";
+// ─── Composition & Factory ───────────────────────────────────────────────────
+export { SourceComposer, sourceFactory } from "./composition/index.js";
 //# sourceMappingURL=index.js.map
