@@ -34,7 +34,8 @@ async function runE2ETest() {
       type: "server",
       dbPath: "./data",
     });
-    console.log("   ✅ Facade created successfully\n");
+    console.log("   ✅ Facade created successfully");
+    console.log(`   📋 Supported MIME types: ${facade.extraction.getSupportedMimeTypes().join(", ")}\n`);
 
     // ─── Step 2: Register a Source ─────────────────────────────────────────
     console.log("📝 Step 2: Registering a plain text source...");

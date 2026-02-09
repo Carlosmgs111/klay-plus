@@ -3,7 +3,7 @@
  *
  * This module is ONLY responsible for:
  * - Selecting infrastructure implementations based on policy
- * - Instantiating repositories, extractors, and adapters
+ * - Instantiating repositories and extractors
  * - Wiring dependencies
  * - Factory construction of UseCases
  *

@@ -4,6 +4,11 @@ import { ExtractionJobId } from "../domain/ExtractionJobId.js";
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
 import type { ContentExtractor } from "../domain/ContentExtractor.js";
 
+/**
+ * Map of MIME types to their corresponding content extractors.
+ */
+export type ExtractorMap = Map<string, ContentExtractor>;
+
 export interface ExecuteExtractionCommand {
   jobId: string;
   sourceId: string;
@@ -20,27 +25,62 @@ export interface ExecuteExtractionResult {
 }
 
 /**
+ * Error thrown when no extractor is available for a given MIME type.
+ */
+export class UnsupportedMimeTypeError extends Error {
+  constructor(
+    public readonly mimeType: string,
+    public readonly supportedTypes: string[],
+  ) {
+    super(
+      `No extractor available for MIME type: ${mimeType}. ` +
+        `Supported types: ${supportedTypes.join(", ")}`,
+    );
+    this.name = "UnsupportedMimeTypeError";
+  }
+}
+
+/**
  * Use case for executing content extraction.
  *
  * This use case is pure: it receives the URI and mimeType directly,
- * performs extraction, and stores the result in an ExtractionJob.
+ * selects the appropriate extractor, performs extraction, and stores
+ * the result in an ExtractionJob.
+ *
  * It does NOT interact with Source - that coordination is done by the facade.
  */
 export class ExecuteExtraction {
   constructor(
     private readonly jobRepository: ExtractionJobRepository,
-    private readonly extractor: ContentExtractor,
+    private readonly extractors: ExtractorMap,
     private readonly eventPublisher: EventPublisher,
   ) {}
+
+  /**
+   * Returns the list of supported MIME types.
+   */
+  getSupportedMimeTypes(): string[] {
+    return Array.from(this.extractors.keys());
+  }
 
   async execute(command: ExecuteExtractionCommand): Promise<ExecuteExtractionResult> {
     const jobId = ExtractionJobId.create(command.jobId);
     const job = ExtractionJob.create(jobId, command.sourceId);
 
+    // Select extractor based on mimeType
+    const extractor = this.extractors.get(command.mimeType);
+
+    if (!extractor) {
+      throw new UnsupportedMimeTypeError(
+        command.mimeType,
+        this.getSupportedMimeTypes(),
+      );
+    }
+
     job.start();
 
     try {
-      const result = await this.extractor.extract({
+      const result = await extractor.extract({
         uri: command.uri,
         content: command.content,
         mimeType: command.mimeType,

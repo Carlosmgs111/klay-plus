@@ -39,10 +39,11 @@ export {
   ExtractionComposer,
   ExecuteExtraction,
   extractionFactory,
+  UnsupportedMimeTypeError,
   // Content Extractors
   TextContentExtractor,
-  PdfContentExtractor,
-  CompositeContentExtractor,
+  BrowserPdfContentExtractor,
+  ServerPdfContentExtractor,
 } from "./extraction/index.js";
 
 export type {
@@ -55,6 +56,7 @@ export type {
   ExecuteExtractionCommand,
   ExecuteExtractionResult,
   ExtractionFactoryResult,
+  ExtractorMap,
 } from "./extraction/index.js";
 
 // ═══════════════════════════════════════════════════════════════════════════

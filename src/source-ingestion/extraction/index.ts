@@ -20,17 +20,22 @@ export type {
 } from "./domain/index.js";
 
 // ─── Application ────────────────────────────────────────────────────────────
-export { ExecuteExtraction, ExtractionUseCases } from "./application/index.js";
+export {
+  ExecuteExtraction,
+  ExtractionUseCases,
+  UnsupportedMimeTypeError,
+} from "./application/index.js";
 export type {
   ExecuteExtractionCommand,
   ExecuteExtractionResult,
+  ExtractorMap,
 } from "./application/index.js";
 
 // ─── Infrastructure Adapters (for custom composition) ──────────────────────
 export {
   TextContentExtractor,
-  PdfContentExtractor,
-  CompositeContentExtractor,
+  BrowserPdfContentExtractor,
+  ServerPdfContentExtractor,
 } from "./infrastructure/adapters/index.js";
 
 // ─── Composition & Factory ──────────────────────────────────────────────────

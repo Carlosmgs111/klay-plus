@@ -40,7 +40,7 @@ export async function extractionFactory(
   const { ExtractionUseCases } = await import("../application/index.js");
   const useCases = new ExtractionUseCases(
     infra.repository,
-    infra.extractor,
+    infra.extractors,
     infra.eventPublisher,
   );
 

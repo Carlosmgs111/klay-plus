@@ -17,7 +17,7 @@ export async function extractionFactory(policy) {
     const infra = await ExtractionComposer.resolve(policy);
     // 2. Construct use cases with resolved dependencies
     const { ExtractionUseCases } = await import("../application/index.js");
-    const useCases = new ExtractionUseCases(infra.repository, infra.extractor, infra.eventPublisher);
+    const useCases = new ExtractionUseCases(infra.repository, infra.extractors, infra.eventPublisher);
     return { useCases, infra };
 }
 //# sourceMappingURL=extraction.factory.js.map

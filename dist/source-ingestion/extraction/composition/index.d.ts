@@ -3,7 +3,7 @@
  *
  * This module is ONLY responsible for:
  * - Selecting infrastructure implementations based on policy
- * - Instantiating repositories, extractors, and adapters
+ * - Instantiating repositories and extractors
  * - Wiring dependencies
  * - Factory construction of UseCases
  *
@@ -13,7 +13,7 @@
  * - Application flows
  */
 export { ExtractionComposer } from "./ExtractionComposer.js";
-export type { ExtractionInfraPolicy, ExtractionInfrastructurePolicy, ResolvedExtractionInfra, } from "./infra-policies.js";
+export type { ExtractionInfraPolicy, ExtractionInfrastructurePolicy, ResolvedExtractionInfra, ExtractorMap, } from "./infra-policies.js";
 export { extractionFactory } from "./extraction.factory.js";
 export type { ExtractionFactoryResult } from "./extraction.factory.js";
 //# sourceMappingURL=index.d.ts.map

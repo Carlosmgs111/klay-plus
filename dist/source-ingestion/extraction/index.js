@@ -6,9 +6,9 @@
 // ─── Domain ─────────────────────────────────────────────────────────────────
 export { ExtractionJob, ExtractionJobId, ExtractionStatus, ExtractionCompleted, ExtractionFailed, } from "./domain/index.js";
 // ─── Application ────────────────────────────────────────────────────────────
-export { ExecuteExtraction, ExtractionUseCases } from "./application/index.js";
+export { ExecuteExtraction, ExtractionUseCases, UnsupportedMimeTypeError, } from "./application/index.js";
 // ─── Infrastructure Adapters (for custom composition) ──────────────────────
-export { TextContentExtractor, PdfContentExtractor, CompositeContentExtractor, } from "./infrastructure/adapters/index.js";
+export { TextContentExtractor, BrowserPdfContentExtractor, ServerPdfContentExtractor, } from "./infrastructure/adapters/index.js";
 // ─── Composition & Factory ──────────────────────────────────────────────────
 export { ExtractionComposer, extractionFactory } from "./composition/index.js";
 //# sourceMappingURL=index.js.map

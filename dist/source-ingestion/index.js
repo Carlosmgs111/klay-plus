@@ -5,9 +5,9 @@ export { Source, SourceId, SourceType, SourceVersion, SourceRegistered, SourceUp
 // ═══════════════════════════════════════════════════════════════════════════
 // Extraction Module
 // ═══════════════════════════════════════════════════════════════════════════
-export { ExtractionJob, ExtractionJobId, ExtractionStatus, ExtractionCompleted, ExtractionFailed, ExtractionUseCases, ExtractionComposer, ExecuteExtraction, extractionFactory, 
+export { ExtractionJob, ExtractionJobId, ExtractionStatus, ExtractionCompleted, ExtractionFailed, ExtractionUseCases, ExtractionComposer, ExecuteExtraction, extractionFactory, UnsupportedMimeTypeError, 
 // Content Extractors
-TextContentExtractor, PdfContentExtractor, CompositeContentExtractor, } from "./extraction/index.js";
+TextContentExtractor, BrowserPdfContentExtractor, ServerPdfContentExtractor, } from "./extraction/index.js";
 // ═══════════════════════════════════════════════════════════════════════════
 // Context Facade (Application Layer Entry Point)
 // ═══════════════════════════════════════════════════════════════════════════
