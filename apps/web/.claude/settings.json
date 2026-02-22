@@ -1,0 +1,61 @@
+{
+  "skills": {
+    "astro-react-patterns": {
+      "path": "./skills/astro-react-patterns.md",
+      "description": "Patrones Astro 5 + React 19 para klay+ web: estructura del proyecto, dual runtime (server/browser), service layer, hooks, component organization y convenciones.",
+      "triggers": [
+        "astro page",
+        "react component",
+        "nueva feature",
+        "nueva pagina",
+        "API route",
+        "pipeline service",
+        "runtime mode",
+        "server mode",
+        "browser mode",
+        "dual runtime",
+        "usePipelineAction",
+        "DashboardShell",
+        "lazy loading",
+        "service layer"
+      ]
+    },
+    "tailwind-design-system": {
+      "path": "./skills/tailwind-design-system.md",
+      "description": "Design system de klay+ web: tokens Tailwind (colores, tipografia, spacing), component classes en global.css, patrones de estilo y convenciones para componentes shared.",
+      "triggers": [
+        "tailwind",
+        "estilos",
+        "design system",
+        "colores",
+        "tokens",
+        "component class",
+        "global css",
+        "button style",
+        "card style",
+        "badge",
+        "nuevo componente shared",
+        "tema",
+        "theme"
+      ]
+    },
+    "frontend-architecture": {
+      "path": "./skills/frontend-architecture.md",
+      "description": "Arquitectura general del frontend: layers, dependencias, feature-based organization, state management, error handling, code splitting y la relacion Astro-React-Core.",
+      "triggers": [
+        "arquitectura frontend",
+        "frontend architecture",
+        "state management",
+        "error handling",
+        "code splitting",
+        "feature organization",
+        "nueva feature completa",
+        "diagrama arquitectura",
+        "layers frontend",
+        "context API",
+        "nuevo hook",
+        "nuevo contexto"
+      ]
+    }
+  }
+}
