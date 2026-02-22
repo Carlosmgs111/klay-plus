@@ -1,6 +1,6 @@
-import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
 import type { CatalogDocumentInput, CatalogDocumentSuccess } from "../../contracts/dtos.js";
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import { KnowledgePipelineError } from "../../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../../domain/PipelineStep.js";
 

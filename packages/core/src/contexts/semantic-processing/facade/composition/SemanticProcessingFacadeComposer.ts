@@ -5,7 +5,7 @@ import type {
 } from "./infra-policies.js";
 import type { ProjectionInfrastructurePolicy } from "../../projection/composition/index.js";
 import type { ProcessingProfileInfrastructurePolicy } from "../../processing-profile/composition/index.js";
-import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider";
+import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider.js";
 
 /**
  * Composer for the Semantic Processing Facade.

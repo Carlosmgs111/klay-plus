@@ -2,7 +2,7 @@ import type { ContentManifestEntry } from "../domain/ContentManifest.js";
 import type { ManifestRepository } from "../contracts/ManifestRepository.js";
 
 export class NeDBManifestRepository implements ManifestRepository {
-  private store: import("../../../platform/persistence/nedb/NeDBStore").NeDBStore<ContentManifestEntry> | null = null;
+  private store: import("../../../platform/persistence/nedb/NeDBStore.js").NeDBStore<ContentManifestEntry> | null = null;
   private readonly filename?: string;
 
   constructor(filename?: string) {
@@ -12,7 +12,7 @@ export class NeDBManifestRepository implements ManifestRepository {
   private async getStore() {
     if (!this.store) {
       const { NeDBStore } = await import(
-        "../../../platform/persistence/nedb/NeDBStore"
+        "../../../platform/persistence/nedb/NeDBStore.js"
       );
       this.store = new NeDBStore<ContentManifestEntry>(this.filename);
     }

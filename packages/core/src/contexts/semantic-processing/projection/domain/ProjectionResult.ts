@@ -1,4 +1,4 @@
-import { ValueObject } from "../../../../shared/domain/index";
+import { ValueObject } from "../../../../shared/domain/index.js";
 import type { ProjectionType } from "./ProjectionType.js";
 
 interface ProjectionResultProps {

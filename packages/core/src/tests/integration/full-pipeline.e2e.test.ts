@@ -34,21 +34,21 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 
 // ─── Context Facades ─────────────────────────────────────────────────────────
-import { createSourceIngestionFacade } from "../../contexts/source-ingestion/facade/index";
-import { createSemanticProcessingFacade } from "../../contexts/semantic-processing/facade/index";
-import { createSemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/index";
-import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/index";
+import { createSourceIngestionFacade } from "../../contexts/source-ingestion/facade/index.js";
+import { createSemanticProcessingFacade } from "../../contexts/semantic-processing/facade/index.js";
+import { createSemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/index.js";
+import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/index.js";
 
 // ─── Domain Types ────────────────────────────────────────────────────────────
-import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";
-import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType";
-import { TransformationType } from "../../contexts/semantic-knowledge/lineage/domain/Transformation";
+import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType.js";
+import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType.js";
+import { TransformationType } from "../../contexts/semantic-knowledge/lineage/domain/Transformation.js";
 
 // ─── Facade Types ────────────────────────────────────────────────────────────
-import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
-import type { KnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
+import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
+import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
+import type { SemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
+import type { KnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade.js";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DIMENSIONS = 128;

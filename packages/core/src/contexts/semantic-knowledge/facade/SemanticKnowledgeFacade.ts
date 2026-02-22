@@ -5,8 +5,8 @@ import type { KnowledgeLineageRepository } from "../lineage/domain/KnowledgeLine
 import type { ResolvedSemanticKnowledgeModules } from "./composition/infra-policies.js";
 import { SemanticUnitId } from "../semantic-unit/domain/SemanticUnitId.js";
 import { TransformationType } from "../lineage/domain/Transformation.js";
-import { Result, tryCatchAsync } from "../../../shared/domain/Result";
-import { DomainError, NotFoundError, OperationError } from "../../../shared/domain/errors/DomainError";
+import { Result, tryCatchAsync } from "../../../shared/domain/Result.js";
+import { DomainError, NotFoundError, OperationError } from "../../../shared/domain/errors/DomainError.js";
 
 // ─── Facade Errors ────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import {
   NotFoundError,
   AlreadyExistsError,
   ValidationError,
-} from "../../../../../shared/domain/errors";
+} from "../../../../../shared/domain/errors/index.js";
 
 // ─── Not Found Errors ────────────────────────────────────────────────────────
 

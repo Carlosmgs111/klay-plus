@@ -2,7 +2,7 @@ import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepos
 import type { ExtractionJob } from "../../../domain/ExtractionJob.js";
 import type { ExtractionJobId } from "../../../domain/ExtractionJobId.js";
 import type { ExtractionStatus } from "../../../domain/ExtractionStatus.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore";
+import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
 import { toDTO, fromDTO, type ExtractionJobDTO } from "./ExtractionJobDTO.js";
 
 export class IndexedDBExtractionJobRepository implements ExtractionJobRepository {

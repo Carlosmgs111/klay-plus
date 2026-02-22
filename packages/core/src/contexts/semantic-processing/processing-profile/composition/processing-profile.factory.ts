@@ -31,7 +31,7 @@ export async function processingProfileFactory(
   policy: ProcessingProfileInfrastructurePolicy,
 ): Promise<ProcessingProfileFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────
@@ -77,7 +77,7 @@ export async function processingProfileFactory(
 
   const { ProcessingProfileUseCases } = await import("../application/index.js");
   const { InMemoryEventPublisher } = await import(
-    "../../../../platform/eventing/InMemoryEventPublisher"
+    "../../../../platform/eventing/InMemoryEventPublisher.js"
   );
 
   const eventPublisher = new InMemoryEventPublisher();

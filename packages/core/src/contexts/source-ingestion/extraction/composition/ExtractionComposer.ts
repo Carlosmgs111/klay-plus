@@ -4,8 +4,8 @@ import type {
   ExtractorMap,
 } from "./infra-policies.js";
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
-import type { ProviderRegistry } from "../../../../shared/domain/ProviderRegistry";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
+import type { ProviderRegistry } from "../../../../shared/domain/ProviderRegistry.js";
 
 /**
  * Supported MIME types for text-based extraction.

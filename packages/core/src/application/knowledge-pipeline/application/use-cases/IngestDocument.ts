@@ -1,7 +1,7 @@
-import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType";
+import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
+import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType.js";
 import type { IngestDocumentInput, IngestDocumentSuccess } from "../../contracts/dtos.js";
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import { KnowledgePipelineError } from "../../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../../domain/PipelineStep.js";
 

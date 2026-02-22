@@ -1,5 +1,5 @@
-import type { EventPublisher } from "../../../../shared/domain/index";
-import { Result } from "../../../../shared/domain/Result";
+import type { EventPublisher } from "../../../../shared/domain/index.js";
+import { Result } from "../../../../shared/domain/Result.js";
 import { ProcessingProfile } from "../domain/ProcessingProfile.js";
 import { ProcessingProfileId } from "../domain/ProcessingProfileId.js";
 import type { ProcessingProfileRepository } from "../domain/ProcessingProfileRepository.js";

@@ -1,7 +1,7 @@
-import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
-import type { KnowledgeRetrievalFacade } from "../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
+import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
+import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
+import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
+import type { KnowledgeRetrievalFacade } from "../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade.js";
 import type { ManifestRepository } from "../contracts/ManifestRepository.js";
 import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort.js";
 import type {
@@ -20,7 +20,7 @@ import type {
   GetManifestInput,
   GetManifestSuccess,
 } from "../contracts/dtos.js";
-import { Result } from "../../../shared/domain/Result";
+import { Result } from "../../../shared/domain/Result.js";
 import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
 import { ExecuteFullPipeline } from "./use-cases/ExecuteFullPipeline.js";
 import { IngestDocument } from "./use-cases/IngestDocument.js";

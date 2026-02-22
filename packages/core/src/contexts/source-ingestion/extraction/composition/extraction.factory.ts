@@ -14,7 +14,7 @@
 import type { ExtractionInfrastructurePolicy, ResolvedExtractionInfra } from "./infra-policies.js";
 import type { ExtractionUseCases } from "../application/index.js";
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 // ─── Factory Result Contract ─────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ export async function extractionFactory(
   policy: ExtractionInfrastructurePolicy,
 ): Promise<ExtractionFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export async function extractionFactory(
     .add("in-memory", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -82,7 +82,7 @@ export async function extractionFactory(
     .add("browser", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -90,7 +90,7 @@ export async function extractionFactory(
     .add("server", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },

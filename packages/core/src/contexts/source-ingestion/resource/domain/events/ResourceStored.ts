@@ -1,4 +1,4 @@
-import type { DomainEvent } from "../../../../../shared/domain/index";
+import type { DomainEvent } from "../../../../../shared/domain/index.js";
 
 export class ResourceStored {
   static readonly EVENT_TYPE = "source-ingestion.resource.stored";

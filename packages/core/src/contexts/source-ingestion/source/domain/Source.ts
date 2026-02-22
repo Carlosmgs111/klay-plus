@@ -1,4 +1,4 @@
-import { AggregateRoot } from "../../../../shared/domain/index";
+import { AggregateRoot } from "../../../../shared/domain/index.js";
 import { SourceId } from "./SourceId.js";
 import type { SourceType } from "./SourceType.js";
 import { SourceVersion } from "./SourceVersion.js";

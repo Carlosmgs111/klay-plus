@@ -1,5 +1,5 @@
 import type { ProcessingProfileRepository } from "../domain/ProcessingProfileRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 import { CreateProcessingProfile } from "./CreateProcessingProfile.js";
 import { UpdateProcessingProfile } from "./UpdateProcessingProfile.js";
 import { DeprecateProcessingProfile } from "./DeprecateProcessingProfile.js";

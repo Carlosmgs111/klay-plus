@@ -2,7 +2,7 @@ import type {
   EmbeddingStrategy,
   EmbeddingResult,
 } from "../../domain/ports/EmbeddingStrategy.js";
-import { hashToVector } from "../../../../../platform/vector/hashVector";
+import { hashToVector } from "../../../../../platform/vector/hashVector.js";
 
 /**
  * Deterministic local embedding strategy.

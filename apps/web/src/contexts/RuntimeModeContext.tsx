@@ -6,8 +6,8 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import type { RuntimeMode } from "../services/types.js";
-import type { PipelineService } from "../services/pipeline-service.js";
+import type { RuntimeMode } from "../services/types";
+import type { PipelineService } from "../services/pipeline-service";
 
 interface RuntimeModeContextValue {
   mode: RuntimeMode;
@@ -48,12 +48,12 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
       try {
         if (mode === "server") {
           const { ServerPipelineService } = await import(
-            "../services/server-pipeline-service.js"
+            "../services/server-pipeline-service"
           );
           if (!cancelled) setService(new ServerPipelineService());
         } else {
           const { BrowserPipelineService } = await import(
-            "../services/browser-pipeline-service.js"
+            "../services/browser-pipeline-service"
           );
           if (!cancelled) setService(new BrowserPipelineService());
         }

@@ -63,9 +63,9 @@ export class KnowledgePipelineComposer {
       { createSemanticKnowledgeFacade },
       { createSemanticProcessingFacade },
     ] = await Promise.all([
-      import("../../../contexts/source-ingestion/facade/index"),
-      import("../../../contexts/semantic-knowledge/facade/index"),
-      import("../../../contexts/semantic-processing/facade/index"),
+      import("../../../contexts/source-ingestion/facade/index.js"),
+      import("../../../contexts/semantic-knowledge/facade/index.js"),
+      import("../../../contexts/semantic-processing/facade/index.js"),
     ]);
 
     const [ingestion, knowledge, processing] = await Promise.all([
@@ -95,7 +95,7 @@ export class KnowledgePipelineComposer {
 
     // ─── Step 2: Create retrieval with cross-context wiring ─────────────────
     const { createKnowledgeRetrievalFacade } = await import(
-      "../../../contexts/knowledge-retrieval/facade/index"
+      "../../../contexts/knowledge-retrieval/facade/index.js"
     );
 
     const retrieval = await createKnowledgeRetrievalFacade({

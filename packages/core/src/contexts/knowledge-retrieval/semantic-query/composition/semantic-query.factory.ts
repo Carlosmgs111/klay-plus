@@ -59,7 +59,7 @@ export async function semanticQueryFactory(
   policy: SemanticQueryInfrastructurePolicy,
 ): Promise<SemanticQueryFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Determine embedder provider name ────────────────────────────────────

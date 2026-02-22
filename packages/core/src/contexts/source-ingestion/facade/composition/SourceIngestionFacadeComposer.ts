@@ -5,7 +5,7 @@ import type {
 import type { SourceInfrastructurePolicy } from "../../source/composition/index.js";
 import type { ExtractionInfrastructurePolicy } from "../../extraction/composition/index.js";
 import type { ResourceInfrastructurePolicy } from "../../resource/composition/index.js";
-import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider";
+import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider.js";
 
 /**
  * Composer for the Source Ingestion Facade.

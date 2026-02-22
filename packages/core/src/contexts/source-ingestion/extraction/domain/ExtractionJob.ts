@@ -1,4 +1,4 @@
-import { AggregateRoot } from "../../../../shared/domain/index";
+import { AggregateRoot } from "../../../../shared/domain/index.js";
 import { ExtractionJobId } from "./ExtractionJobId.js";
 import { ExtractionStatus } from "./ExtractionStatus.js";
 import { ExtractionCompleted } from "./events/ExtractionCompleted.js";

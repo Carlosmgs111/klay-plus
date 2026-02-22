@@ -1,4 +1,4 @@
-import type { Repository } from "../../../../shared/domain/index";
+import type { Repository } from "../../../../shared/domain/index.js";
 import type { ExtractionJob } from "./ExtractionJob.js";
 import type { ExtractionJobId } from "./ExtractionJobId.js";
 import type { ExtractionStatus } from "./ExtractionStatus.js";

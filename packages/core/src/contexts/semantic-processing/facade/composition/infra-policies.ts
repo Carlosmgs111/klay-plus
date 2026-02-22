@@ -1,7 +1,7 @@
 import type { ProjectionUseCases } from "../../projection/application/index.js";
 import type { ProcessingProfileUseCases } from "../../processing-profile/application/index.js";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
-import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../../platform/vector/VectorEntry.js";
 
 // ─── Vector Store Config ────────────────────────────────────────────────────
 

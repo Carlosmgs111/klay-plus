@@ -3,7 +3,7 @@ import type { SemanticProjection } from "../../../domain/SemanticProjection.js";
 import type { ProjectionId } from "../../../domain/ProjectionId.js";
 import type { ProjectionType } from "../../../domain/ProjectionType.js";
 import type { ProjectionStatus } from "../../../domain/ProjectionStatus.js";
-import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore";
+import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore.js";
 import { toDTO, fromDTO, type ProjectionDTO } from "../indexeddb/ProjectionDTO.js";
 
 export class NeDBSemanticProjectionRepository implements SemanticProjectionRepository {

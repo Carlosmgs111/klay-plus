@@ -3,7 +3,7 @@ import {
   ValidationError,
   InvalidStateError,
   OperationError,
-} from "../../../../../shared/domain/errors";
+} from "../../../../../shared/domain/errors/index.js";
 import type { ExtractionStatus } from "../ExtractionStatus.js";
 
 // ─── Not Found Errors ────────────────────────────────────────────────────────

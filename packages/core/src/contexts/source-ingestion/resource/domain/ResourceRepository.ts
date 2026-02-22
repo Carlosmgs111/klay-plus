@@ -1,4 +1,4 @@
-import type { Repository } from "../../../../shared/domain/index";
+import type { Repository } from "../../../../shared/domain/index.js";
 import type { Resource } from "./Resource.js";
 import type { ResourceId } from "./ResourceId.js";
 import type { ResourceStatus } from "./ResourceStatus.js";

@@ -38,7 +38,7 @@ export async function semanticUnitFactory(
   policy: SemanticUnitInfrastructurePolicy,
 ): Promise<SemanticUnitFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────

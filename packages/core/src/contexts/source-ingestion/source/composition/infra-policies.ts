@@ -1,5 +1,5 @@
 import type { SourceRepository } from "../domain/SourceRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 export interface SourceInfrastructurePolicy {
   provider: string;

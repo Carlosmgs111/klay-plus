@@ -1,6 +1,6 @@
-import type { KnowledgeRetrievalFacade } from "../../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
+import type { KnowledgeRetrievalFacade } from "../../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade.js";
 import type { SearchKnowledgeInput, SearchKnowledgeSuccess } from "../../contracts/dtos.js";
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import { KnowledgePipelineError } from "../../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../../domain/PipelineStep.js";
 

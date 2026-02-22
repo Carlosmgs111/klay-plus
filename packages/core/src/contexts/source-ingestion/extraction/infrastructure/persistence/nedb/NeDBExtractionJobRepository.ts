@@ -2,7 +2,7 @@ import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepos
 import type { ExtractionJob } from "../../../domain/ExtractionJob.js";
 import type { ExtractionJobId } from "../../../domain/ExtractionJobId.js";
 import type { ExtractionStatus } from "../../../domain/ExtractionStatus.js";
-import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore";
+import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore.js";
 import { toDTO, fromDTO, type ExtractionJobDTO } from "../indexeddb/ExtractionJobDTO.js";
 
 export class NeDBExtractionJobRepository implements ExtractionJobRepository {

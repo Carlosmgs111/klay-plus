@@ -2,7 +2,7 @@ import type { ResourceRepository } from "../../../domain/ResourceRepository.js";
 import type { Resource } from "../../../domain/Resource.js";
 import type { ResourceId } from "../../../domain/ResourceId.js";
 import type { ResourceStatus } from "../../../domain/ResourceStatus.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore";
+import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
 import { toDTO, fromDTO, type ResourceDTO } from "./ResourceDTO.js";
 
 export class IndexedDBResourceRepository implements ResourceRepository {

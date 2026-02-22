@@ -1,4 +1,4 @@
-import { AggregateRoot } from "../../../../shared/domain/index";
+import { AggregateRoot } from "../../../../shared/domain/index.js";
 import { ProjectionId } from "./ProjectionId.js";
 import { ProjectionStatus } from "./ProjectionStatus.js";
 import type { ProjectionType } from "./ProjectionType.js";

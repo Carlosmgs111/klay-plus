@@ -4,7 +4,7 @@ import type {
 } from "./infra-policies.js";
 import type { SemanticUnitInfrastructurePolicy } from "../../semantic-unit/composition/infra-policies.js";
 import type { LineageInfrastructurePolicy } from "../../lineage/composition/infra-policies.js";
-import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider";
+import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider.js";
 
 /**
  * Composer for the Semantic Knowledge Facade.

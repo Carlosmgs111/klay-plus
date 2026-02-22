@@ -38,10 +38,12 @@ export function usePipelineAction<T, TInput = void>(
           setData(result.data);
           setError(null);
         } else {
+          console.error(result.error);
           setData(null);
           setError(result.error);
         }
       } catch (err) {
+        console.error(err);
         setData(null);
         setError({
           message: err instanceof Error ? err.message : "Unexpected error",

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "src",
     "paths": {
       "@shared/*": ["./src/shared/*"],
       "@semantic-knowledge/*": ["./src/semantic-knowledge/*"],

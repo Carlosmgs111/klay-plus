@@ -49,6 +49,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@ai-sdk/cohere':
+        specifier: ^3.0.21
+        version: 3.0.21(zod@4.3.6)
+      '@ai-sdk/huggingface':
+        specifier: ^1.0.32
+        version: 1.0.32(zod@4.3.6)
       '@ai-sdk/openai':
         specifier: ^3.0.25
         version: 3.0.30(zod@4.3.6)
@@ -89,6 +95,17 @@ importers:
 
 packages:
 
+  /@ai-sdk/cohere@3.0.21(zod@4.3.6):
+    resolution: {integrity: sha512-HDUvNX2UhGpX0VyeAdOStFy07ZvjFtL+hXT5cXcwK/TBNiIhPFovTYHKVNSdNAxbH2eO7zRzygjMVUEX1X0Btw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+    dependencies:
+      '@ai-sdk/provider': 3.0.8
+      '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)
+      zod: 4.3.6
+    dev: false
+
   /@ai-sdk/gateway@3.0.53(zod@4.3.6):
     resolution: {integrity: sha512-QT3FEoNARMRlk8JJVR7L98exiK9C8AGfrEJVbRxBT1yIXKs/N19o/+PsjTRVsARgDJNcy9JbJp1FspKucEat0Q==}
     engines: {node: '>=18'}
@@ -98,6 +115,29 @@ packages:
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)
       '@vercel/oidc': 3.1.0
+      zod: 4.3.6
+    dev: false
+
+  /@ai-sdk/huggingface@1.0.32(zod@4.3.6):
+    resolution: {integrity: sha512-2ucFTypb0liGO60dTn6sAMAn8Nkb7E4OHsXo6gm5pApaK7sLyM2vYNwvtFx0BqlZ0v6eZd0z7hjHszNG9sFV8g==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4
+    dependencies:
+      '@ai-sdk/openai-compatible': 2.0.30(zod@4.3.6)
+      '@ai-sdk/provider': 3.0.8
+      '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)
+      zod: 4.3.6
+    dev: false
+
+  /@ai-sdk/openai-compatible@2.0.30(zod@4.3.6):
+    resolution: {integrity: sha512-iTjumHf1/u4NhjXYFn/aONM2GId3/o7J1Lp5ql8FCbgIMyRwrmanR5xy1S3aaVkfTscuDvLTzWiy1mAbGzK3nQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+    dependencies:
+      '@ai-sdk/provider': 3.0.8
+      '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)
       zod: 4.3.6
     dev: false
 

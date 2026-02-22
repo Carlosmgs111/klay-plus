@@ -1,4 +1,4 @@
-import type { Repository } from "../../../../shared/domain/index";
+import type { Repository } from "../../../../shared/domain/index.js";
 import type { SemanticProjection } from "./SemanticProjection.js";
 import type { ProjectionId } from "./ProjectionId.js";
 import type { ProjectionType } from "./ProjectionType.js";

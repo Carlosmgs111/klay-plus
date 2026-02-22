@@ -60,7 +60,7 @@ export {
   AISdkEmbeddingStrategy,
 } from "./infrastructure/strategies/index.js";
 
-export { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
+export { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore.js";
 
 // ─── Composition & Factory ──────────────────────────────────────────────────
 export {

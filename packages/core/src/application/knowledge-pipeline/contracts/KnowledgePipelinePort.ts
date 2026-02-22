@@ -1,4 +1,4 @@
-import type { Result } from "../../../shared/domain/Result";
+import type { Result } from "../../../shared/domain/Result.js";
 import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
 import type {
   ExecutePipelineInput,

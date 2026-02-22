@@ -22,7 +22,7 @@ import type { ProjectionUseCases } from "../application/index.js";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
 import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
 import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 // ─── Factory Result Contract ────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ export async function projectionFactory(
   profileRepository: ProcessingProfileRepository,
 ): Promise<ProjectionFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────
@@ -85,7 +85,7 @@ export async function projectionFactory(
     .add("in-memory", {
       create: async () => {
         const { InMemoryVectorWriteStore } = await import(
-          "../../../../platform/vector/InMemoryVectorWriteStore"
+          "../../../../platform/vector/InMemoryVectorWriteStore.js"
         );
         return new InMemoryVectorWriteStore();
       },
@@ -117,7 +117,7 @@ export async function projectionFactory(
     .add("in-memory", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -125,7 +125,7 @@ export async function projectionFactory(
     .add("browser", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -133,7 +133,7 @@ export async function projectionFactory(
     .add("server", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },

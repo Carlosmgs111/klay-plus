@@ -3,7 +3,7 @@ import type { SemanticProjection } from "../../../domain/SemanticProjection.js";
 import type { ProjectionId } from "../../../domain/ProjectionId.js";
 import type { ProjectionType } from "../../../domain/ProjectionType.js";
 import type { ProjectionStatus } from "../../../domain/ProjectionStatus.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore";
+import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
 import { toDTO, fromDTO, type ProjectionDTO } from "./ProjectionDTO.js";
 
 export class IndexedDBSemanticProjectionRepository implements SemanticProjectionRepository {

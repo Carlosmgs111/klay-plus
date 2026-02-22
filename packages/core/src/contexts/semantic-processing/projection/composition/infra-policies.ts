@@ -1,6 +1,6 @@
 import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
 import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
 import type { ProcessingProfileMaterializer } from "./ProcessingProfileMaterializer.js";
 

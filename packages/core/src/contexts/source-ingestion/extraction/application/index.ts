@@ -1,5 +1,5 @@
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 // ─── Use Cases ─────────────────────────────────────────────────────
 export { ExecuteExtraction } from "./ExecuteExtraction.js";

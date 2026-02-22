@@ -1,4 +1,4 @@
-import type { DomainEvent } from "../../../../../shared/domain/index";
+import type { DomainEvent } from "../../../../../shared/domain/index.js";
 
 export interface ExtractionCompletedPayload {
   sourceId: string;

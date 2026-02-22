@@ -1,4 +1,4 @@
-import type { Repository } from "../../../../shared/domain/index";
+import type { Repository } from "../../../../shared/domain/index.js";
 import type { ProcessingProfile } from "./ProcessingProfile.js";
 import type { ProcessingProfileId } from "./ProcessingProfileId.js";
 import type { ProfileStatus } from "./ProfileStatus.js";

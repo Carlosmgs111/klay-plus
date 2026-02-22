@@ -2,7 +2,7 @@ import type { ResourceRepository } from "../../../domain/ResourceRepository.js";
 import type { Resource } from "../../../domain/Resource.js";
 import type { ResourceId } from "../../../domain/ResourceId.js";
 import type { ResourceStatus } from "../../../domain/ResourceStatus.js";
-import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore";
+import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore.js";
 import { toDTO, fromDTO, type ResourceDTO } from "../indexeddb/ResourceDTO.js";
 
 export class NeDBResourceRepository implements ResourceRepository {

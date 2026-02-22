@@ -1,4 +1,4 @@
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import type { Resource } from "../domain/Resource.js";
 import { ResourceId } from "../domain/ResourceId.js";
 import type { ResourceRepository } from "../domain/ResourceRepository.js";

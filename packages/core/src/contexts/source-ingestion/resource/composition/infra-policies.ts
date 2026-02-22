@@ -1,6 +1,6 @@
 import type { ResourceRepository } from "../domain/ResourceRepository.js";
 import type { ResourceStorage } from "../domain/ResourceStorage.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 export interface ResourceInfrastructurePolicy {
   provider: string;

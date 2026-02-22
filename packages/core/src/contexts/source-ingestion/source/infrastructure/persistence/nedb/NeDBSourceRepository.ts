@@ -2,7 +2,7 @@ import type { SourceRepository } from "../../../domain/SourceRepository.js";
 import type { Source } from "../../../domain/Source.js";
 import type { SourceId } from "../../../domain/SourceId.js";
 import type { SourceType } from "../../../domain/SourceType.js";
-import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore";
+import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore.js";
 import { toDTO, fromDTO, type SourceDTO } from "../indexeddb/SourceDTO.js";
 
 export class NeDBSourceRepository implements SourceRepository {

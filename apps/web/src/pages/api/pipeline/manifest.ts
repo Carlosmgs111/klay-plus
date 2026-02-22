@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getServerAdapter } from "../../../server/pipeline-singleton.js";
+import { getServerAdapter } from "../../../server/pipeline-singleton";
 
 export const GET: APIRoute = async ({ url }) => {
   const adapter = await getServerAdapter();

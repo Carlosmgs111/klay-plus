@@ -8,8 +8,8 @@ import { SourceType as SourceTypeEnum } from "../source/domain/SourceType.js";
 import { SourceId } from "../source/domain/SourceId.js";
 import { SourceNotFoundError } from "../source/domain/errors/index.js";
 import type { ResolvedSourceIngestionModules } from "./composition/infra-policies.js";
-import { Result } from "../../../shared/domain/Result";
-import type { DomainError } from "../../../shared/domain/errors";
+import { Result } from "../../../shared/domain/Result.js";
+import type { DomainError } from "../../../shared/domain/errors/index.js";
 
 // ─── SourceType to MIME Type Mapping ─────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import type { ProcessingProfileRepository } from "../../../domain/ProcessingProf
 import type { ProcessingProfile } from "../../../domain/ProcessingProfile.js";
 import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId.js";
 import type { ProfileStatus } from "../../../domain/ProfileStatus.js";
-import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore";
+import { NeDBStore } from "../../../../../../platform/persistence/nedb/NeDBStore.js";
 import { toDTO, fromDTO, type ProfileDTO } from "../indexeddb/ProfileDTO.js";
 
 export class NeDBProcessingProfileRepository implements ProcessingProfileRepository {

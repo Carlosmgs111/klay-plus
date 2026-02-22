@@ -3,7 +3,7 @@ import type {
   ResolvedProcessingProfileInfra,
 } from "./infra-policies.js";
 import type { ProcessingProfileRepository } from "../domain/ProcessingProfileRepository.js";
-import type { ProviderRegistry } from "../../../../shared/domain/ProviderRegistry";
+import type { ProviderRegistry } from "../../../../shared/domain/ProviderRegistry.js";
 
 /**
  * Composer for the Processing Profile Module.

@@ -1,5 +1,5 @@
-import type { EventPublisher } from "../../../../shared/domain/index";
-import { Result } from "../../../../shared/domain/Result";
+import type { EventPublisher } from "../../../../shared/domain/index.js";
+import { Result } from "../../../../shared/domain/Result.js";
 import { ResourceId } from "../domain/ResourceId.js";
 import type { ResourceRepository } from "../domain/ResourceRepository.js";
 import type { ResourceStorage } from "../domain/ResourceStorage.js";

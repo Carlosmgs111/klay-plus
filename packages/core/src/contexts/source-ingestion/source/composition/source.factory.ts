@@ -14,7 +14,7 @@
 import type { SourceInfrastructurePolicy, ResolvedSourceInfra } from "./infra-policies.js";
 import type { SourceUseCases } from "../application/index.js";
 import type { SourceRepository } from "../domain/SourceRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 // ─── Factory Result Contract ─────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ export async function sourceFactory(
   policy: SourceInfrastructurePolicy,
 ): Promise<SourceFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export async function sourceFactory(
     .add("in-memory", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -82,7 +82,7 @@ export async function sourceFactory(
     .add("browser", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -90,7 +90,7 @@ export async function sourceFactory(
     .add("server", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },

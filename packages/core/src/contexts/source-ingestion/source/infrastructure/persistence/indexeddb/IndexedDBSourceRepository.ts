@@ -2,7 +2,7 @@ import type { SourceRepository } from "../../../domain/SourceRepository.js";
 import type { Source } from "../../../domain/Source.js";
 import type { SourceId } from "../../../domain/SourceId.js";
 import type { SourceType } from "../../../domain/SourceType.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore";
+import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
 import { toDTO, fromDTO, type SourceDTO } from "./SourceDTO.js";
 
 export class IndexedDBSourceRepository implements SourceRepository {

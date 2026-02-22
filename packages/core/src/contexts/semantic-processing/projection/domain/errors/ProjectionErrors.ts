@@ -4,7 +4,7 @@ import {
   ValidationError,
   InvalidStateError,
   OperationError,
-} from "../../../../../shared/domain/errors";
+} from "../../../../../shared/domain/errors/index.js";
 import type { ProjectionStatus } from "../ProjectionStatus.js";
 
 // ─── Not Found Errors ────────────────────────────────────────────────────────

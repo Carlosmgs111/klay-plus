@@ -2,8 +2,8 @@ import type { ProjectionUseCases } from "../projection/application/index.js";
 import type { ProcessingProfileUseCases } from "../processing-profile/application/index.js";
 import type { ProjectionType } from "../projection/domain/ProjectionType.js";
 import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "./composition/infra-policies.js";
-import { Result } from "../../../shared/domain/Result";
-import type { DomainError } from "../../../shared/domain/errors";
+import { Result } from "../../../shared/domain/Result.js";
+import type { DomainError } from "../../../shared/domain/errors/index.js";
 
 // ─── Facade Result Types ────────────────────────────────────────────────────
 

@@ -15,7 +15,7 @@ import type { ResourceInfrastructurePolicy, ResolvedResourceInfra } from "./infr
 import type { ResourceUseCases } from "../application/index.js";
 import type { ResourceRepository } from "../domain/ResourceRepository.js";
 import type { ResourceStorage } from "../domain/ResourceStorage.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 // ─── Factory Result Contract ─────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ export async function resourceFactory(
   policy: ResourceInfrastructurePolicy,
 ): Promise<ResourceFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────
@@ -106,7 +106,7 @@ export async function resourceFactory(
     .add("in-memory", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -114,7 +114,7 @@ export async function resourceFactory(
     .add("browser", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },
@@ -122,7 +122,7 @@ export async function resourceFactory(
     .add("server", {
       create: async () => {
         const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher"
+          "../../../../platform/eventing/InMemoryEventPublisher.js"
         );
         return new InMemoryEventPublisher();
       },

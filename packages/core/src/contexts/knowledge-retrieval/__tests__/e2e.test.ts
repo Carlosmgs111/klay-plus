@@ -12,10 +12,10 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { createKnowledgeRetrievalFacade } from "../facade/index.js";
-import { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
-import { hashToVector } from "../../../platform/vector/hashVector";
+import { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore.js";
+import { hashToVector } from "../../../platform/vector/hashVector.js";
 import type { KnowledgeRetrievalFacade } from "../facade/KnowledgeRetrievalFacade.js";
-import type { VectorEntry } from "../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../platform/vector/VectorEntry.js";
 
 describe("Knowledge Retrieval Context E2E", () => {
   let facade: KnowledgeRetrievalFacade;

@@ -1,4 +1,4 @@
-import { AggregateRoot } from "../../../../shared/domain/index";
+import { AggregateRoot } from "../../../../shared/domain/index.js";
 import { ProcessingProfileId } from "./ProcessingProfileId.js";
 import { ProfileStatus } from "./ProfileStatus.js";
 import { ProfileCreated } from "./events/ProfileCreated.js";

@@ -28,6 +28,60 @@
         "convenciones",
         "checklist módulo"
       ]
+    },
+    "modular-monolith-patterns": {
+      "path": "./skills/modular-monolith-patterns.md",
+      "description": "Patrones genéricos de monolito modular: boundaries de módulo, comunicación síncrona/asíncrona, ACL, Composition Root, Outbox Pattern, Module Client Pattern y tests arquitectónicos.",
+      "triggers": [
+        "modular monolith",
+        "monolito modular",
+        "module boundaries",
+        "comunicación entre módulos",
+        "anti-corruption layer",
+        "ACL",
+        "composition root",
+        "outbox pattern",
+        "extraer módulo",
+        "module client",
+        "data boundary",
+        "tests arquitectónicos"
+      ]
+    },
+    "ddd-tactical-patterns": {
+      "path": "./skills/ddd-tactical-patterns.md",
+      "description": "Patrones tácticos genéricos DDD: Aggregates, Value Objects, Entities, Domain Events, Specifications, Repositories, Domain Services y Result Pattern. Referencia agnóstica de framework.",
+      "triggers": [
+        "aggregate root",
+        "value object",
+        "domain event",
+        "specification pattern",
+        "result pattern",
+        "domain service",
+        "entity vs value object",
+        "tactical DDD",
+        "patrones tácticos",
+        "domain error",
+        "repository pattern",
+        "invariantes"
+      ]
+    },
+    "plugin-system-architecture": {
+      "path": "./skills/plugin-system-architecture.md",
+      "description": "Arquitectura de sistemas de plugins: registry inmutable, provider contracts, lifecycle management, aislamiento, circuit breaker, dependency resolution y contract testing. Alineado con el modelo registry+provider de klay+.",
+      "triggers": [
+        "plugin system",
+        "plugin architecture",
+        "registry pattern",
+        "provider pattern",
+        "extensibility",
+        "plugin contract",
+        "plugin lifecycle",
+        "circuit breaker",
+        "plugin isolation",
+        "contract testing",
+        "plugin manager",
+        "capability pattern"
+      ]
     }
   }
 }

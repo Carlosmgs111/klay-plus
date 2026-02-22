@@ -1,4 +1,4 @@
-import { AggregateRoot } from "../../../../shared/domain/index";
+import { AggregateRoot } from "../../../../shared/domain/index.js";
 import { ResourceId } from "./ResourceId.js";
 import type { ResourceStatus as ResourceStatusType } from "./ResourceStatus.js";
 import { ResourceStatus } from "./ResourceStatus.js";

@@ -1,6 +1,6 @@
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
 import type { ContentExtractor } from "../domain/ContentExtractor.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
 /**
  * Map of MIME types to their corresponding content extractors.

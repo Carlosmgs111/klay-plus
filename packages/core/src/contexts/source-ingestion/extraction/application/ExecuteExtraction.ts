@@ -1,5 +1,5 @@
-import type { EventPublisher } from "../../../../shared/domain/index";
-import { Result } from "../../../../shared/domain/Result";
+import type { EventPublisher } from "../../../../shared/domain/index.js";
+import { Result } from "../../../../shared/domain/Result.js";
 import { ExtractionJob } from "../domain/ExtractionJob.js";
 import { ExtractionJobId } from "../domain/ExtractionJobId.js";
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";

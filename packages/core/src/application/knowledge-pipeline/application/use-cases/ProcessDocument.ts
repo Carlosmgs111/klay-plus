@@ -1,7 +1,7 @@
-import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType";
+import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
+import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType.js";
 import type { ProcessDocumentInput, ProcessDocumentSuccess } from "../../contracts/dtos.js";
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import { KnowledgePipelineError } from "../../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../../domain/PipelineStep.js";
 

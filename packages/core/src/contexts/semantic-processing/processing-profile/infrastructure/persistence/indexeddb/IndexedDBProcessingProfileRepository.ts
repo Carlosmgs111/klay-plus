@@ -2,7 +2,7 @@ import type { ProcessingProfileRepository } from "../../../domain/ProcessingProf
 import type { ProcessingProfile } from "../../../domain/ProcessingProfile.js";
 import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId.js";
 import type { ProfileStatus } from "../../../domain/ProfileStatus.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore";
+import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
 import { toDTO, fromDTO, type ProfileDTO } from "./ProfileDTO.js";
 
 export class IndexedDBProcessingProfileRepository implements ProcessingProfileRepository {

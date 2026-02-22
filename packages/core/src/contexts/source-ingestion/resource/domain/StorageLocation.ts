@@ -1,4 +1,4 @@
-import { ValueObject } from "../../../../shared/domain/index";
+import { ValueObject } from "../../../../shared/domain/index.js";
 
 interface StorageLocationProps {
   provider: string;

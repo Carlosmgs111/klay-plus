@@ -1,12 +1,12 @@
-import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
-import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType";
-import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType";
+import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
+import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
+import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
+import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType.js";
+import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType.js";
 import type { ExecutePipelineInput, ExecutePipelineSuccess } from "../../contracts/dtos.js";
 import type { ManifestRepository } from "../../contracts/ManifestRepository.js";
 import type { ContentManifestEntry } from "../../domain/ContentManifest.js";
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import { KnowledgePipelineError } from "../../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../../domain/PipelineStep.js";
 

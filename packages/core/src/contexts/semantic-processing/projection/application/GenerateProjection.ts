@@ -1,12 +1,12 @@
-import type { EventPublisher } from "../../../../shared/domain/index";
-import { Result } from "../../../../shared/domain/Result";
+import type { EventPublisher } from "../../../../shared/domain/index.js";
+import { Result } from "../../../../shared/domain/Result.js";
 import { SemanticProjection } from "../domain/SemanticProjection.js";
 import { ProjectionId } from "../domain/ProjectionId.js";
 import { ProjectionResult } from "../domain/ProjectionResult.js";
 import type { ProjectionType } from "../domain/ProjectionType.js";
 import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
 import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
-import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../../platform/vector/VectorEntry.js";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
 import type { ProcessingProfileMaterializer } from "../composition/ProcessingProfileMaterializer.js";
 import { ProcessingProfileId } from "../../processing-profile/domain/ProcessingProfileId.js";

@@ -93,12 +93,12 @@ export class ProcessingProfileMaterializer {
     let configProvider;
     if (this.policy.configOverrides) {
       const { InMemoryConfigProvider } = await import(
-        "../../../../platform/config/InMemoryConfigProvider"
+        "../../../../platform/config/InMemoryConfigProvider.js"
       );
       configProvider = new InMemoryConfigProvider(this.policy.configOverrides);
     } else {
       const { NodeConfigProvider } = await import(
-        "../../../../platform/config/NodeConfigProvider"
+        "../../../../platform/config/NodeConfigProvider.js"
       );
       configProvider = new NodeConfigProvider();
     }

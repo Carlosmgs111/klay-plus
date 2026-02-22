@@ -38,7 +38,7 @@ export async function lineageFactory(
   policy: LineageInfrastructurePolicy,
 ): Promise<LineageFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+    "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
   // ─── Repository Registry ─────────────────────────────────────────────────

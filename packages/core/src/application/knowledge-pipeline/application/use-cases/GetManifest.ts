@@ -1,6 +1,6 @@
 import type { ManifestRepository } from "../../contracts/ManifestRepository.js";
 import type { GetManifestInput, GetManifestSuccess } from "../../contracts/dtos.js";
-import { Result } from "../../../../shared/domain/Result";
+import { Result } from "../../../../shared/domain/Result.js";
 import { KnowledgePipelineError } from "../../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../../domain/PipelineStep.js";
 

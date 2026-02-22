@@ -4,8 +4,8 @@ import type {
 } from "./infra-policies.js";
 import type { ResourceRepository } from "../domain/ResourceRepository.js";
 import type { ResourceStorage } from "../domain/ResourceStorage.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
-import type { ProviderRegistry } from "../../../../shared/domain/ProviderRegistry";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
+import type { ProviderRegistry } from "../../../../shared/domain/ProviderRegistry.js";
 
 /**
  * Composer for the Resource Module.
