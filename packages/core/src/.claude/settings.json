@@ -82,6 +82,23 @@
         "plugin manager",
         "capability pattern"
       ]
+    },
+    "agent-knowledge-architecture": {
+      "path": "./skills/agent-knowledge-architecture.md",
+      "description": "Guia para crear documentacion jerarquica CLAUDE.md que permite a agentes AI comprender la arquitectura, capacidades y estructura de un proyecto DDD/monolito modular.",
+      "triggers": [
+        "CLAUDE.md",
+        "documentar contexto",
+        "documentar modulo",
+        "documentar arquitectura",
+        "agent knowledge",
+        "knowledge architecture",
+        "crear documentacion",
+        "actualizar documentacion",
+        "nueva documentacion",
+        "product capabilities",
+        "documentar capacidades"
+      ]
     }
   }
 }
