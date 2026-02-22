@@ -1,0 +1,8 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { DashboardShell } from "../components/layout/DashboardShell";
+---
+
+<DashboardLayout title="Semantic Search">
+  <DashboardShell client:load activePage="search" />
+</DashboardLayout>

@@ -1,0 +1,11 @@
+Event Sourcing stores all changes to application state as a sequence of events.
+Instead of storing the current state, it records every state change as an event.
+The current state is reconstructed by replaying all events from the beginning.
+
+CQRS (Command Query Responsibility Segregation) separates read and write models.
+Commands change state. Queries return data without side effects.
+Combined with Event Sourcing, CQRS provides a powerful architecture pattern
+for complex domains with high audit requirements.
+
+Benefits: Complete audit trail, temporal queries, event-driven integration,
+and the ability to rebuild projections from the event store.

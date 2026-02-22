@@ -1,0 +1,33 @@
+{
+  "skills": {
+    "ddd-context-design": {
+      "path": "./skills/ddd-context-design.md",
+      "description": "Guía completa para diseñar Bounded Contexts y Módulos siguiendo DDD, Arquitectura Hexagonal, Composers y Result Pattern. Define la diferencia entre contexto y módulo, rol de composition, reglas anti-errores.",
+      "triggers": [
+        "crear contexto",
+        "nuevo bounded context",
+        "diseñar módulo",
+        "implementar aggregate",
+        "crear use case",
+        "arquitectura DDD",
+        "domain driven design",
+        "hexagonal architecture",
+        "nuevo módulo",
+        "composer",
+        "orquestador",
+        "facade"
+      ]
+    },
+    "ddd-quick-reference": {
+      "path": "./skills/ddd-quick-reference.md",
+      "description": "Referencia rápida: estructura, patrones, naming y reglas anti-errores para módulos DDD en klay+",
+      "triggers": [
+        "quick reference DDD",
+        "referencia rápida",
+        "patrones DDD",
+        "convenciones",
+        "checklist módulo"
+      ]
+    }
+  }
+}

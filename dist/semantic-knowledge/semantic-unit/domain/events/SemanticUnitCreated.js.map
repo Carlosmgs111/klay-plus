@@ -1,1 +1,0 @@
-{"version":3,"file":"SemanticUnitCreated.js","sourceRoot":"","sources":["../../../../../src/semantic-knowledge/semantic-unit/domain/events/SemanticUnitCreated.ts"],"names":[],"mappings":"AAEA,MAAM,OAAO,mBAAmB;IAC9B,MAAM,CAAU,UAAU,GAAG,0CAA0C,CAAC;IAExE,MAAM,CAAC,EAAE,CAAC,KAAkB;QAC1B,OAAO,KAAK,CAAC,SAAS,KAAK,mBAAmB,CAAC,UAAU,CAAC;IAC5D,CAAC"}

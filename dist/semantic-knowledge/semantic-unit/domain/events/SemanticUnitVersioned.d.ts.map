@@ -1,1 +1,0 @@
-{"version":3,"file":"SemanticUnitVersioned.d.ts","sourceRoot":"","sources":["../../../../../src/semantic-knowledge/semantic-unit/domain/events/SemanticUnitVersioned.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,oCAAoC,CAAC;AAEtE,qBAAa,qBAAqB;IAChC,MAAM,CAAC,QAAQ,CAAC,UAAU,gDAAgD;IAE1E,MAAM,CAAC,EAAE,CAAC,KAAK,EAAE,WAAW,GAAG,OAAO;CAGvC"}

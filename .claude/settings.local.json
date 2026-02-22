@@ -8,7 +8,37 @@
       "Bash(npm run test:*)",
       "Bash(npm run test:source-ingestion:*)",
       "Bash(npm run rebuild:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "WebFetch(domain:docs.astro.build)",
+      "Bash(find:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run check:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run test:source-ingestion:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(timeout 15 pnpm run dev:*)",
+      "Bash(dir:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsx:*)",
+      "Bash(git config:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(shared\\): add ConfigProvider layer with automatic embedding provider selection\n\n- ConfigProvider port with Node, Astro, and InMemory adapters\n- Auto-resolve AI SDK embedding models \\(OpenAI, Cohere, HuggingFace\\) from config\n- Support configOverrides for explicit API key injection\n- Simplify AISdkEmbeddingStrategy to receive pre-configured models\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx vitest run:*)",
+      "Bash(done)",
+      "WebSearch",
+      "WebFetch(domain:colinhacks.com)",
+      "WebFetch(domain:nx.dev)",
+      "WebFetch(domain:www.thecandidstartup.org)",
+      "WebFetch(domain:github.com)",
+      "Bash(cd D:\\\\Documentos\\\\Desktop\\\\klay+:*)",
+      "Bash(cd \"D:\\\\Documentos\\\\Desktop\\\\klay+\" && pnpm --filter @klay/core check 2>&1)",
+      "Bash(tail:*)",
+      "Bash(cd \"D:\\\\Documentos\\\\Desktop\\\\klay+\" && pnpm --filter @klay/web build 2>&1)"
     ]
+  },
+  "mcpServers": {
+    "engram": {
+      "command": "engram",
+      "args": ["mcp"]
+    }
   }
 }

@@ -1,1 +1,0 @@
-{"version":3,"file":"SemanticState.d.ts","sourceRoot":"","sources":["../../../../src/semantic-knowledge/semantic-unit/domain/SemanticState.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,aAAa;;;;;CAKhB,CAAC;AAEX,MAAM,MAAM,aAAa,GAAG,CAAC,OAAO,aAAa,CAAC,CAAC,MAAM,OAAO,aAAa,CAAC,CAAC;AAE/E,wBAAgB,aAAa,CAAC,IAAI,EAAE,aAAa,EAAE,EAAE,EAAE,aAAa,GAAG,OAAO,CAS7E"}

@@ -1,1 +1,0 @@
-{"version":3,"file":"LineageComposer.d.ts","sourceRoot":"","sources":["../../../../src/semantic-knowledge/lineage/composition/LineageComposer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,2BAA2B,EAC3B,oBAAoB,EACrB,MAAM,qBAAqB,CAAC;AAE7B,qBAAa,eAAe;WACb,OAAO,CAClB,MAAM,EAAE,2BAA2B,GAClC,OAAO,CAAC,oBAAoB,CAAC;CA4CjC"}

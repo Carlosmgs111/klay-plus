@@ -1,0 +1,7 @@
+import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+
+export interface VectorWriteStore {
+  upsert(entries: VectorEntry[]): Promise<void>;
+  delete(ids: string[]): Promise<void>;
+  deleteBySemanticUnitId(semanticUnitId: string): Promise<void>;
+}

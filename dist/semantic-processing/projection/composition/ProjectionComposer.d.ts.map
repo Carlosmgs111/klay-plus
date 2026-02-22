@@ -1,1 +1,0 @@
-{"version":3,"file":"ProjectionComposer.d.ts","sourceRoot":"","sources":["../../../../src/semantic-processing/projection/composition/ProjectionComposer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,8BAA8B,EAC9B,uBAAuB,EACxB,MAAM,qBAAqB,CAAC;AAE7B,qBAAa,kBAAkB;WAChB,OAAO,CAClB,MAAM,EAAE,8BAA8B,GACrC,OAAO,CAAC,uBAAuB,CAAC;CAsFpC"}

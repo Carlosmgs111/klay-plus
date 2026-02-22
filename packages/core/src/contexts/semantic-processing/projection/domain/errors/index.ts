@@ -1,0 +1,16 @@
+export {
+  ProjectionNotFoundError,
+  ProjectionAlreadyExistsError,
+  ProjectionSemanticUnitIdRequiredError,
+  ProjectionContentRequiredError,
+  ProjectionInvalidTypeError,
+  ProjectionInvalidStateError,
+  ProjectionCannotProcessError,
+  ProjectionCannotCompleteError,
+  ProjectionCannotFailError,
+  ChunkingFailedError,
+  EmbeddingFailedError,
+  VectorStoreFailedError,
+  ProjectionProcessingError,
+  type ProjectionError,
+} from "./ProjectionErrors.js";

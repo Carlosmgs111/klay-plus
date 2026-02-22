@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@semantic-knowledge/*": ["./src/semantic-knowledge/*"],
+      "@source-ingestion/*": ["./src/source-ingestion/*"],
+      "@semantic-processing/*": ["./src/semantic-processing/*"],
+      "@knowledge-retrieval/*": ["./src/knowledge-retrieval/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

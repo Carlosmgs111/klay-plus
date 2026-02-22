@@ -1,0 +1,11 @@
+Clean Architecture separates concerns into concentric layers.
+The innermost layer contains enterprise business rules (Entities),
+followed by application business rules (Use Cases),
+interface adapters, and frameworks/drivers on the outermost layer.
+
+The Dependency Rule states that source code dependencies can only point inward.
+Nothing in an inner circle can know anything about something in an outer circle.
+This includes functions, classes, variables, or any software entity.
+
+Benefits: Independent of frameworks, testable business rules,
+independent of UI, database, and external agencies.

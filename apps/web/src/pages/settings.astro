@@ -1,0 +1,8 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { DashboardShell } from "../components/layout/DashboardShell";
+---
+
+<DashboardLayout title="Settings">
+  <DashboardShell client:load activePage="settings" />
+</DashboardLayout>

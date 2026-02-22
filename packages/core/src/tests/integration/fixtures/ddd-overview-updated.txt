@@ -1,0 +1,15 @@
+Domain-Driven Design (DDD) is a software development approach that focuses on
+modeling software to match a domain according to input from domain experts.
+
+Key Concepts (Updated with Strategic Patterns):
+1. Bounded Context: A boundary within which a particular domain model is defined.
+2. Aggregate: A cluster of domain objects treated as a single unit.
+3. Entity: An object defined by its identity rather than its attributes.
+4. Value Object: An object defined by its attributes, immutable and shareable.
+5. Repository: Encapsulates storage, retrieval, and search for aggregate roots.
+6. Context Map: Shows relationships between bounded contexts.
+7. Anti-Corruption Layer: Protects domain from external model corruption.
+8. Shared Kernel: A shared model subset agreed upon by multiple teams.
+
+Strategic DDD emphasizes the importance of context boundaries and team topology.
+Tactical DDD focuses on patterns within a single bounded context.

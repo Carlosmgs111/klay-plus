@@ -1,0 +1,12 @@
+Domain-Driven Design (DDD) is a software development approach that focuses on
+modeling software to match a domain according to input from domain experts.
+
+Key Concepts:
+1. Bounded Context: A boundary within which a particular domain model is defined.
+2. Aggregate: A cluster of domain objects treated as a single unit.
+3. Entity: An object defined by its identity rather than its attributes.
+4. Value Object: An object defined by its attributes, immutable and shareable.
+5. Repository: Encapsulates storage, retrieval, and search for aggregate roots.
+
+Benefits: Better alignment between software and business requirements,
+improved communication through ubiquitous language, clear boundaries.

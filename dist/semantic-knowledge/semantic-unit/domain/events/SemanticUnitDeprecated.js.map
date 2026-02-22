@@ -1,1 +1,0 @@
-{"version":3,"file":"SemanticUnitDeprecated.js","sourceRoot":"","sources":["../../../../../src/semantic-knowledge/semantic-unit/domain/events/SemanticUnitDeprecated.ts"],"names":[],"mappings":"AAEA,MAAM,OAAO,sBAAsB;IACjC,MAAM,CAAU,UAAU,GAAG,6CAA6C,CAAC;IAE3E,MAAM,CAAC,EAAE,CAAC,KAAkB;QAC1B,OAAO,KAAK,CAAC,SAAS,KAAK,sBAAsB,CAAC,UAAU,CAAC;IAC/D,CAAC"}

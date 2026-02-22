@@ -1,31 +1,10 @@
 {
-  "name": "knowledge-platform",
-  "version": "0.1.0",
-  "description": "Semantic Knowledge Management Platform",
-  "type": "module",
+  "name": "klay-plus",
+  "private": true,
   "scripts": {
-    "build": "tsc",
-    "clean": "rimraf dist",
-    "rebuild": "npm run clean && npm run build",
-    "check": "tsc --noEmit",
-    "test": "npm run build && npm run test:all",
-    "test:all": "npm run test:source-ingestion",
-    "test:source-ingestion": "node dist/source-ingestion/__tests__/e2e.test.js",
-    "test:source-ingestion:watch": "npm run build && node --watch dist/source-ingestion/__tests__/e2e.test.js"
-  },
-  "devDependencies": {
-    "@types/node": "^25.2.1",
-    "@types/pdfjs-dist": "^2.10.378",
-    "rimraf": "^5.0.0",
-    "tsx": "^4.7.0",
-    "typescript": "^5.4.0"
-  },
-  "dependencies": {
-    "@ai-sdk/openai": "^3.0.25",
-    "@mlc-ai/web-llm": "^0.2.80",
-    "ai": "^6.0.72",
-    "nedb-promises": "^6.2.3",
-    "pdf-extraction": "^1.0.2",
-    "pdfjs-dist": "^5.4.624"
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:core": "pnpm --filter @klay/core test",
+    "dev": "pnpm --filter @klay/web dev"
   }
 }

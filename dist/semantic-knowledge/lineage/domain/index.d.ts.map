@@ -1,1 +1,0 @@
-{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../../src/semantic-knowledge/lineage/domain/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,gBAAgB,EAAE,MAAM,uBAAuB,CAAC;AACzD,OAAO,EAAE,SAAS,EAAE,MAAM,gBAAgB,CAAC;AAC3C,OAAO,EAAE,cAAc,EAAE,kBAAkB,EAAE,MAAM,qBAAqB,CAAC;AACzE,OAAO,EAAE,KAAK,EAAE,MAAM,YAAY,CAAC;AACnC,YAAY,EAAE,0BAA0B,EAAE,MAAM,iCAAiC,CAAC"}

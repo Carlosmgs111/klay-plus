@@ -1,1 +1,0 @@
-{"version":3,"file":"ExtractionFailed.js","sourceRoot":"","sources":["../../../../../src/source-ingestion/extraction/domain/events/ExtractionFailed.ts"],"names":[],"mappings":"AAEA,MAAM,OAAO,gBAAgB;IAC3B,MAAM,CAAU,UAAU,GAAG,oCAAoC,CAAC;IAElE,MAAM,CAAC,EAAE,CAAC,KAAkB;QAC1B,OAAO,KAAK,CAAC,SAAS,KAAK,gBAAgB,CAAC,UAAU,CAAC;IACzD,CAAC"}

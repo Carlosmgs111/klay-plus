@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(npx vitest:*)",
+      "Bash(pnpm run test:integration:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm run test:knowledge-retrieval:*)",
+      "Bash(pnpm run test:semantic-knowledge:*)",
+      "Bash(npx tsc:*)",
+      "Bash(PDF_PATH=node_modules/pdf-extraction/test/data/05-versions-space.pdf npx vitest run:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run test:integration:pdf:*)",
+      "Bash(powershell:*)",
+      "Bash(PDF_PATH=\"D:\\\\Documentos\\\\Documents\\\\pdfs\\\\Introduccion a Typescript.pdf\" npx vitest run:*)",
+      "Bash(git mv:*)",
+      "Bash(python:*)",
+      "Bash(echo:*)",
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(\"D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\\\\_fix_imports.ps1\" << 'ENDSCRIPT'\nGet-ChildItem -Path 'D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\\\\__tests__' -Recurse -Filter '*.ts' | ForEach-Object {\n    $content = Get-Content $_.FullName -Raw\n    $content = $content -replace '../../source-ingestion/', '../../contexts/source-ingestion/'\n    $content = $content -replace '../../semantic-processing/', '../../contexts/semantic-processing/'\n    $content = $content -replace '../../semantic-knowledge/', '../../contexts/semantic-knowledge/'\n    $content = $content -replace '../../knowledge-retrieval/', '../../contexts/knowledge-retrieval/'\n    Set-Content $_.FullName $content -NoNewline\n}\nENDSCRIPT)",
+      "Bash(\"D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\\\\_verify.ps1\" << 'ENDSCRIPT'\nSelect-String -Path 'D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\\\\__tests__\\\\integration\\\\full-pipeline.e2e.test.ts' -Pattern 'import|from' | ForEach-Object { Write-Output $_.Line.Trim\\(\\) }\nENDSCRIPT)",
+      "Bash(/tmp/fix-imports.ps1 << 'PSEOF'\n$basePath = 'D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\\\\contexts'\n$files = Get-ChildItem -Path $basePath -Recurse -Filter '*.ts'\n$updatedCount = 0\n\nforeach \\($file in $files\\) {\n    $content = Get-Content $file.FullName -Raw\n    if \\($null -eq $content\\) { continue }\n    \n    $original = $content\n    \n    # Add one more ../ before any relative path that targets shared/\n    # Pattern: captures all the ../ sequences followed by shared/\n    $content = [regex]::Replace\\($content, '\\(\\(?:\\\\.\\\\./\\)+\\)\\(shared/\\)', { \n        param\\($m\\) \n        '../' + $m.Value \n    }\\)\n    \n    # Add one more ../ before any relative path that targets platform/\n    $content = [regex]::Replace\\($content, '\\(\\(?:\\\\.\\\\./\\)+\\)\\(platform/\\)', { \n        param\\($m\\) \n        '../' + $m.Value \n    }\\)\n    \n    if \\($content -ne $original\\) {\n        Set-Content $file.FullName $content -NoNewline\n        $updatedCount++\n        Write-Host \"Updated: $\\($file.FullName\\)\"\n    }\n}\n\nWrite-Host \"`nTotal files updated: $updatedCount\"\nPSEOF)",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\" diff --stat)",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\" diff --name-only)",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+\" diff -- \"src/backend/klay+/orchestrator/\" \"src/backend/klay+/__tests__/\")",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\" diff -- \"src/backend/klay+/orchestrator/\" \"src/backend/klay+/__tests__/\")",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\" diff --cached --name-only)",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\" diff --name-only)",
+      "Bash(git -C \"D:\\\\Documentos\\\\Desktop\\\\klay\" diff -- \"src/backend/klay+/orchestrator/\")",
+      "Bash(git checkout:*)",
+      "Bash(/tmp/fix_imports2.ps1 << 'SCRIPT'\n$base = 'D:\\\\Documentos\\\\Desktop\\\\klay\\\\src\\\\backend\\\\klay+'\n\n# Fix IndexedDBVectorWriteStore.ts\n$f1 = Join-Path $base 'contexts\\\\semantic-processing\\\\projection\\\\infrastructure\\\\adapters\\\\IndexedDBVectorWriteStore.ts'\n$c1 = [System.IO.File]::ReadAllText\\($f1\\)\n$c1 = $c1.Replace\\('from \"../../../../../shared/domain/VectorEntry\"', 'PLACEHOLDER_REPLACED'\\)\n# Now we have two PLACEHOLDER_REPLACED - line 2 is VectorEntry type, line 4 is toDTO\n# Replace the first occurrence \\(VectorEntry type\\) with platform/vector/VectorEntry\n$idx1 = $c1.IndexOf\\('PLACEHOLDER_REPLACED'\\)\n$c1 = $c1.Remove\\($idx1, 'PLACEHOLDER_REPLACED'.Length\\).Insert\\($idx1, 'from \"../../../../../platform/vector/VectorEntry\"'\\)\n# Replace the second occurrence \\(toDTO\\) with platform/vector/VectorEntrySerialization\n$idx2 = $c1.IndexOf\\('PLACEHOLDER_REPLACED'\\)\n$c1 = $c1.Remove\\($idx2, 'PLACEHOLDER_REPLACED'.Length\\).Insert\\($idx2, 'from \"../../../../../platform/vector/VectorEntrySerialization\"'\\)\n[System.IO.File]::WriteAllText\\($f1, $c1\\)\nWrite-Host \"Fixed IndexedDBVectorWriteStore.ts\"\n\n# Fix NeDBVectorWriteStore.ts\n$f2 = Join-Path $base 'contexts\\\\semantic-processing\\\\projection\\\\infrastructure\\\\adapters\\\\NeDBVectorWriteStore.ts'\n$c2 = [System.IO.File]::ReadAllText\\($f2\\)\n$c2 = $c2.Replace\\('from \"../../../../../shared/domain/VectorEntry\"', 'PLACEHOLDER_REPLACED'\\)\n$idx3 = $c2.IndexOf\\('PLACEHOLDER_REPLACED'\\)\n$c2 = $c2.Remove\\($idx3, 'PLACEHOLDER_REPLACED'.Length\\).Insert\\($idx3, 'from \"../../../../../platform/vector/VectorEntry\"'\\)\n$idx4 = $c2.IndexOf\\('PLACEHOLDER_REPLACED'\\)\n$c2 = $c2.Remove\\($idx4, 'PLACEHOLDER_REPLACED'.Length\\).Insert\\($idx4, 'from \"../../../../../platform/vector/VectorEntrySerialization\"'\\)\n[System.IO.File]::WriteAllText\\($f2, $c2\\)\nWrite-Host \"Fixed NeDBVectorWriteStore.ts\"\nSCRIPT)",
+      "Bash(npm test:*)",
+      "Bash(while read file)",
+      "Bash(do:*)",
+      "Bash(perl -pi -e:*)",
+      "Bash(pnpm test)"
+    ]
+  },
+  "mcpServers": {
+    "engram": {
+      "command": "engram",
+      "args": ["mcp"]
+    }
+  }
+}
