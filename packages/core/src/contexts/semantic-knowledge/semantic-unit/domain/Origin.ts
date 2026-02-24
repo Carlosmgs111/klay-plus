@@ -4,6 +4,7 @@ interface OriginProps {
   sourceId: string;
   extractedAt: Date;
   sourceType: string;
+  resourceId?: string;
 }
 
 export class Origin extends ValueObject<OriginProps> {
@@ -19,9 +20,18 @@ export class Origin extends ValueObject<OriginProps> {
     return this.props.sourceType;
   }
 
-  static create(sourceId: string, extractedAt: Date, sourceType: string): Origin {
+  get resourceId(): string | undefined {
+    return this.props.resourceId;
+  }
+
+  static create(
+    sourceId: string,
+    extractedAt: Date,
+    sourceType: string,
+    resourceId?: string,
+  ): Origin {
     if (!sourceId) throw new Error("Origin sourceId is required");
     if (!sourceType) throw new Error("Origin sourceType is required");
-    return new Origin({ sourceId, extractedAt, sourceType });
+    return new Origin({ sourceId, extractedAt, sourceType, resourceId });
   }
 }

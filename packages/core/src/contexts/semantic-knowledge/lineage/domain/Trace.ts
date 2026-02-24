@@ -35,4 +35,13 @@ export class Trace extends ValueObject<TraceProps> {
       createdAt: new Date(),
     });
   }
+
+  static reconstitute(
+    fromUnitId: string,
+    toUnitId: string,
+    relationship: string,
+    createdAt: Date,
+  ): Trace {
+    return new Trace({ fromUnitId, toUnitId, relationship, createdAt });
+  }
 }

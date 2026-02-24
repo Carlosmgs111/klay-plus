@@ -19,7 +19,9 @@ export class InMemorySemanticUnitRepository implements SemanticUnitRepository {
   }
 
   async findByOriginSourceId(sourceId: string): Promise<SemanticUnit[]> {
-    return [...this.store.values()].filter((u) => u.origin.sourceId === sourceId);
+    return [...this.store.values()].filter((u) =>
+      u.origins.some((o) => o.sourceId === sourceId),
+    );
   }
 
   async findByState(state: SemanticState): Promise<SemanticUnit[]> {

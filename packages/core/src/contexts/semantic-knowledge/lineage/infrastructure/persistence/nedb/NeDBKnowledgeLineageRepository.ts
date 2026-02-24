@@ -28,4 +28,11 @@ export class NeDBKnowledgeLineageRepository implements KnowledgeLineageRepositor
     const found = await this.store.findOne((d) => d.semanticUnitId === semanticUnitId);
     return found ? fromDTO(found) : null;
   }
+
+  async findByTraceTargetUnitId(targetUnitId: string): Promise<KnowledgeLineage[]> {
+    const results = await this.store.find((d) =>
+      d.traces.some((t) => t.toUnitId === targetUnitId),
+    );
+    return results.map(fromDTO);
+  }
 }

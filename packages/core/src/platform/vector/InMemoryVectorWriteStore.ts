@@ -30,6 +30,14 @@ export class InMemoryVectorWriteStore {
     }
   }
 
+  async deleteByProjectionId(projectionId: string): Promise<void> {
+    for (const [id, entry] of this.entries) {
+      if (entry.metadata?.projectionId === projectionId) {
+        this.entries.delete(id);
+      }
+    }
+  }
+
   /**
    * Exposes the internal entries Map for cross-context in-memory wiring.
    * The knowledge-retrieval context receives this Map to create its VectorReadStore.

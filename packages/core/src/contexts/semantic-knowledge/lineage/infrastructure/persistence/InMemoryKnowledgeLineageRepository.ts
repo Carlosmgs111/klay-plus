@@ -25,4 +25,10 @@ export class InMemoryKnowledgeLineageRepository implements KnowledgeLineageRepos
     }
     return null;
   }
+
+  async findByTraceTargetUnitId(targetUnitId: string): Promise<KnowledgeLineage[]> {
+    return [...this.store.values()].filter((l) =>
+      l.traces.some((t) => t.toUnitId === targetUnitId),
+    );
+  }
 }

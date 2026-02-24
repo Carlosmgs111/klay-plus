@@ -19,6 +19,12 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
+  AttachOriginInput,
+  AttachOriginSuccess,
+  AddProjectionInput,
+  AddProjectionSuccess,
+  LinkUnitsInput,
+  LinkUnitsSuccess,
 } from "../contracts/dtos.js";
 import { Result } from "../../../shared/domain/Result.js";
 import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
@@ -30,6 +36,7 @@ import { SearchKnowledge } from "./use-cases/SearchKnowledge.js";
 import { GetManifest } from "./use-cases/GetManifest.js";
 import { KnowledgePipelineError as PipelineError } from "../domain/KnowledgePipelineError.js";
 import { PipelineStep } from "../domain/PipelineStep.js";
+import type { ProjectionType } from "../../../contexts/semantic-processing/projection/domain/ProjectionType.js";
 
 /**
  * Resolved dependencies for the KnowledgePipelineOrchestrator.
@@ -60,6 +67,7 @@ export interface ResolvedPipelineDependencies {
  */
 export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   private readonly _processing: SemanticProcessingFacade;
+  private readonly _knowledge: SemanticKnowledgeFacade;
   private readonly _executeFullPipeline: ExecuteFullPipeline;
   private readonly _ingestDocument: IngestDocument;
   private readonly _processDocument: ProcessDocument;
@@ -69,6 +77,7 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
 
   constructor(deps: ResolvedPipelineDependencies) {
     this._processing = deps.processing;
+    this._knowledge = deps.knowledge;
 
     // Create use cases with only the facades they need
     this._executeFullPipeline = new ExecuteFullPipeline(
@@ -147,5 +156,74 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     input: GetManifestInput,
   ): Promise<Result<KnowledgePipelineError, GetManifestSuccess>> {
     return this._getManifest.execute(input);
+  }
+
+  // ─── New Operations: Multi-Origin, Multi-Projection, Unit Linking ──────────
+
+  async attachOrigin(
+    input: AttachOriginInput,
+  ): Promise<Result<KnowledgePipelineError, AttachOriginSuccess>> {
+    const result = await this._knowledge.addOriginToSemanticUnit({
+      unitId: input.semanticUnitId,
+      sourceId: input.sourceId,
+      sourceType: input.sourceType,
+      resourceId: input.resourceId,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, result.error, []),
+      );
+    }
+
+    return Result.ok({ semanticUnitId: input.semanticUnitId });
+  }
+
+  async addProjection(
+    input: AddProjectionInput,
+  ): Promise<Result<KnowledgePipelineError, AddProjectionSuccess>> {
+    const result = await this._processing.processContent({
+      projectionId: input.projectionId,
+      semanticUnitId: input.semanticUnitId,
+      semanticUnitVersion: input.semanticUnitVersion,
+      content: input.content,
+      type: (input.projectionType ?? "EMBEDDING") as ProjectionType,
+      processingProfileId: input.processingProfileId,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Processing, result.error, []),
+      );
+    }
+
+    return Result.ok({
+      projectionId: result.value.projectionId,
+      chunksCount: result.value.chunksCount,
+      dimensions: result.value.dimensions,
+      model: result.value.model,
+    });
+  }
+
+  async linkUnits(
+    input: LinkUnitsInput,
+  ): Promise<Result<KnowledgePipelineError, LinkUnitsSuccess>> {
+    const result = await this._knowledge.linkSemanticUnits({
+      fromUnitId: input.fromUnitId,
+      toUnitId: input.toUnitId,
+      relationship: input.relationship,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, result.error, []),
+      );
+    }
+
+    return Result.ok({
+      fromUnitId: input.fromUnitId,
+      toUnitId: input.toUnitId,
+      relationship: input.relationship,
+    });
   }
 }

@@ -29,4 +29,11 @@ export class IndexedDBKnowledgeLineageRepository implements KnowledgeLineageRepo
     const found = all.find((d) => d.semanticUnitId === semanticUnitId);
     return found ? fromDTO(found) : null;
   }
+
+  async findByTraceTargetUnitId(targetUnitId: string): Promise<KnowledgeLineage[]> {
+    const all = await this.store.getAll();
+    return all
+      .filter((d) => d.traces.some((t) => t.toUnitId === targetUnitId))
+      .map(fromDTO);
+  }
 }

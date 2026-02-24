@@ -55,7 +55,7 @@ export function fromDTO(dto: LineageDTO): KnowledgeLineage {
   );
 
   const traces = dto.traces.map((t) =>
-    Trace.create(t.fromUnitId, t.toUnitId, t.relationship),
+    Trace.reconstitute(t.fromUnitId, t.toUnitId, t.relationship, new Date(t.createdAt)),
   );
 
   return KnowledgeLineage.reconstitute(

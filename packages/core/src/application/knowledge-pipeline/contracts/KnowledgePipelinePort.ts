@@ -15,6 +15,12 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
+  AttachOriginInput,
+  AttachOriginSuccess,
+  AddProjectionInput,
+  AddProjectionSuccess,
+  LinkUnitsInput,
+  LinkUnitsSuccess,
 } from "./dtos.js";
 
 /**
@@ -83,4 +89,27 @@ export interface KnowledgePipelinePort {
   getManifest(
     input: GetManifestInput,
   ): Promise<Result<KnowledgePipelineError, GetManifestSuccess>>;
+
+  /**
+   * Attaches a new origin (provenance reference) to an existing semantic unit.
+   */
+  attachOrigin(
+    input: AttachOriginInput,
+  ): Promise<Result<KnowledgePipelineError, AttachOriginSuccess>>;
+
+  /**
+   * Creates an additional projection for an existing semantic unit.
+   * Multiple projections can coexist for the same unit (different profiles/types).
+   */
+  addProjection(
+    input: AddProjectionInput,
+  ): Promise<Result<KnowledgePipelineError, AddProjectionSuccess>>;
+
+  /**
+   * Links two semantic units with a named relationship.
+   * Creates a flat reference (e.g., "related-to", "derived-from", "contradicts").
+   */
+  linkUnits(
+    input: LinkUnitsInput,
+  ): Promise<Result<KnowledgePipelineError, LinkUnitsSuccess>>;
 }

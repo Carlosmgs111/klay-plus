@@ -9,7 +9,14 @@ import type { SemanticState } from "../../../domain/SemanticState.js";
 export interface SemanticUnitDTO {
   id: string;
   state: string;
-  origin: { sourceId: string; extractedAt: string; sourceType: string };
+  /** @deprecated Kept for backward-compat reading of old data. Use `origins`. */
+  origin?: { sourceId: string; extractedAt: string; sourceType: string };
+  origins: Array<{
+    sourceId: string;
+    extractedAt: string;
+    sourceType: string;
+    resourceId?: string;
+  }>;
   currentVersionIndex: number;
   versions: Array<{
     version: number;
@@ -30,10 +37,16 @@ export function toDTO(unit: SemanticUnit): SemanticUnitDTO {
   return {
     id: unit.id.value,
     state: unit.state,
+    origins: [...unit.origins].map((o) => ({
+      sourceId: o.sourceId,
+      extractedAt: o.extractedAt.toISOString(),
+      sourceType: o.sourceType,
+      resourceId: o.resourceId,
+    })),
     origin: {
-      sourceId: unit.origin.sourceId,
-      extractedAt: unit.origin.extractedAt.toISOString(),
-      sourceType: unit.origin.sourceType,
+      sourceId: unit.primaryOrigin.sourceId,
+      extractedAt: unit.primaryOrigin.extractedAt.toISOString(),
+      sourceType: unit.primaryOrigin.sourceType,
     },
     currentVersionIndex: unit.currentVersion.version,
     versions: [...unit.versions].map((v) => ({
@@ -58,13 +71,22 @@ export function toDTO(unit: SemanticUnit): SemanticUnitDTO {
 }
 
 export function fromDTO(dto: SemanticUnitDTO): SemanticUnit {
+  // Backward compat: prefer `origins` array, fall back to single `origin`
+  const originsData =
+    dto.origins?.length > 0
+      ? dto.origins
+      : dto.origin
+        ? [dto.origin]
+        : [];
+
+  const origins = originsData.map((o) =>
+    Origin.create(o.sourceId, new Date(o.extractedAt), o.sourceType, o.resourceId),
+  );
+
   const versions = dto.versions.map((v) => {
     const meaning = Meaning.create(v.meaning.content, v.meaning.language, v.meaning.topics, v.meaning.summary);
-    // Use reconstitute-style: build SemanticVersion via initial + next chain
     return { version: v.version, meaning, createdAt: new Date(v.createdAt), reason: v.reason };
   });
-
-  const origin = Origin.create(dto.origin.sourceId, new Date(dto.origin.extractedAt), dto.origin.sourceType);
 
   // Build SemanticVersion chain
   const firstMeaning = versions[0].meaning;
@@ -83,7 +105,7 @@ export function fromDTO(dto: SemanticUnitDTO): SemanticUnit {
   return SemanticUnit.reconstitute(
     SemanticUnitId.create(dto.id),
     dto.state as SemanticState,
-    origin,
+    origins,
     currentVersion,
     svList,
     metadata,

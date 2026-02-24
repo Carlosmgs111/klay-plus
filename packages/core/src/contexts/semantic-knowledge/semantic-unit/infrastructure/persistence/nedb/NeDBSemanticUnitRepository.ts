@@ -26,7 +26,9 @@ export class NeDBSemanticUnitRepository implements SemanticUnitRepository {
   }
 
   async findByOriginSourceId(sourceId: string): Promise<SemanticUnit[]> {
-    const results = await this.store.find((d) => d.origin.sourceId === sourceId);
+    const results = await this.store.find(
+      (d) => d.origins?.some((o) => o.sourceId === sourceId) ?? d.origin?.sourceId === sourceId,
+    );
     return results.map(fromDTO);
   }
 

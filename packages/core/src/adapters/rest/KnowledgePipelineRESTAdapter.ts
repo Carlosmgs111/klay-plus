@@ -7,6 +7,9 @@ import type {
   SearchKnowledgeInput,
   CreateProcessingProfileInput,
   GetManifestInput,
+  AttachOriginInput,
+  AddProjectionInput,
+  LinkUnitsInput,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
 
 // ─── REST Types ─────────────────────────────────────────────────────────────
@@ -91,6 +94,24 @@ export class KnowledgePipelineRESTAdapter {
       manifestId: req.params?.manifestId ?? req.query?.manifestId ?? (req.body as any)?.manifestId,
     };
     const result = await this._pipeline.getManifest(input);
+    return this._toResponse(result);
+  }
+
+  async attachOrigin(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as AttachOriginInput;
+    const result = await this._pipeline.attachOrigin(input);
+    return this._toResponse(result);
+  }
+
+  async addProjection(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as AddProjectionInput;
+    const result = await this._pipeline.addProjection(input);
+    return this._toResponse(result);
+  }
+
+  async linkUnits(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as LinkUnitsInput;
+    const result = await this._pipeline.linkUnits(input);
     return this._toResponse(result);
   }
 

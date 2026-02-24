@@ -2,3 +2,9 @@ node_modules/
 dist/
 .env
 *.db
+uploads
+uploads/*
+data
+data/*
+database
+database/*

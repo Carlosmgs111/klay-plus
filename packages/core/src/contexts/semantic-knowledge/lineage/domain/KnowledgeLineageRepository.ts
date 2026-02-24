@@ -4,4 +4,5 @@ import type { LineageId } from "./LineageId.js";
 
 export interface KnowledgeLineageRepository extends Repository<KnowledgeLineage, LineageId> {
   findBySemanticUnitId(semanticUnitId: string): Promise<KnowledgeLineage | null>;
+  findByTraceTargetUnitId(targetUnitId: string): Promise<KnowledgeLineage[]>;
 }

@@ -35,6 +35,12 @@ export class GetManifest {
         return Result.ok({ manifests });
       }
 
+      // Query by semantic unit ID
+      if (input.semanticUnitId) {
+        const manifests = await this.repository.findBySemanticUnitId(input.semanticUnitId);
+        return Result.ok({ manifests });
+      }
+
       // No filter — return all
       const manifests = await this.repository.findAll();
       return Result.ok({ manifests });

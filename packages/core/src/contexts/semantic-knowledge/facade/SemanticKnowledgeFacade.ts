@@ -378,4 +378,93 @@ export class SemanticKnowledgeFacade {
 
     return Result.ok(lineage);
   }
+
+  /**
+   * Attaches an additional origin (provenance reference) to an existing semantic unit.
+   */
+  async addOriginToSemanticUnit(params: {
+    unitId: string;
+    sourceId: string;
+    sourceType: string;
+    resourceId?: string;
+  }): Promise<Result<DomainError, { unitId: string }>> {
+    const result = await tryCatchAsync(
+      () =>
+        this._semanticUnit.addOrigin.execute({
+          unitId: params.unitId,
+          sourceId: params.sourceId,
+          sourceType: params.sourceType,
+          extractedAt: new Date(),
+          resourceId: params.resourceId,
+        }),
+      (error) => {
+        if (error instanceof Error && error.message.includes("not found")) {
+          return new SemanticUnitNotFoundError(params.unitId);
+        }
+        return new SemanticUnitOperationError("addOrigin", String(error));
+      },
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
+    }
+
+    return Result.ok({ unitId: params.unitId });
+  }
+
+  /**
+   * Links two semantic units with a named relationship.
+   */
+  async linkSemanticUnits(params: {
+    fromUnitId: string;
+    toUnitId: string;
+    relationship: string;
+  }): Promise<Result<DomainError, { fromUnitId: string; toUnitId: string }>> {
+    const result = await tryCatchAsync(
+      () => this._lineage.linkSemanticUnits.execute(params),
+      (error) =>
+        new LineageOperationError("linkSemanticUnits", String(error)),
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
+    }
+
+    return Result.ok({
+      fromUnitId: params.fromUnitId,
+      toUnitId: params.toUnitId,
+    });
+  }
+
+  /**
+   * Gets all linked units for a semantic unit (both inbound and outbound).
+   */
+  async getLinkedUnits(params: {
+    unitId: string;
+    relationship?: string;
+  }): Promise<
+    Result<
+      DomainError,
+      {
+        links: Array<{
+          fromUnitId: string;
+          toUnitId: string;
+          relationship: string;
+          createdAt: Date;
+        }>;
+      }
+    >
+  > {
+    const result = await tryCatchAsync(
+      () => this._lineage.getLinkedUnits.execute(params),
+      (error) =>
+        new LineageOperationError("getLinkedUnits", String(error)),
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
+    }
+
+    return Result.ok({ links: result.value });
+  }
 }

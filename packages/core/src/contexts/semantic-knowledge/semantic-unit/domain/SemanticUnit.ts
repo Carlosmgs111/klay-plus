@@ -9,10 +9,11 @@ import { SemanticUnitCreated } from "./events/SemanticUnitCreated.js";
 import { SemanticUnitVersioned } from "./events/SemanticUnitVersioned.js";
 import { SemanticUnitDeprecated } from "./events/SemanticUnitDeprecated.js";
 import { SemanticUnitReprocessRequested } from "./events/SemanticUnitReprocessRequested.js";
+import { SemanticUnitOriginAdded } from "./events/SemanticUnitOriginAdded.js";
 
 export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
   private _state: SemanticState;
-  private _origin: Origin;
+  private _origins: Origin[];
   private _currentVersion: SemanticVersion;
   private _versions: SemanticVersion[];
   private _metadata: UnitMetadata;
@@ -20,14 +21,14 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
   private constructor(
     id: SemanticUnitId,
     state: SemanticState,
-    origin: Origin,
+    origins: Origin[],
     currentVersion: SemanticVersion,
     versions: SemanticVersion[],
     metadata: UnitMetadata,
   ) {
     super(id);
     this._state = state;
-    this._origin = origin;
+    this._origins = origins;
     this._currentVersion = currentVersion;
     this._versions = versions;
     this._metadata = metadata;
@@ -37,8 +38,17 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     return this._state;
   }
 
+  /** Backward-compatible accessor — returns the primary (first) origin. */
   get origin(): Origin {
-    return this._origin;
+    return this._origins[0];
+  }
+
+  get origins(): ReadonlyArray<Origin> {
+    return [...this._origins];
+  }
+
+  get primaryOrigin(): Origin {
+    return this._origins[0];
   }
 
   get currentVersion(): SemanticVersion {
@@ -63,7 +73,7 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     const unit = new SemanticUnit(
       id,
       SemanticState.Draft,
-      origin,
+      [origin],
       initialVersion,
       [initialVersion],
       metadata,
@@ -75,6 +85,13 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
       eventType: SemanticUnitCreated.EVENT_TYPE,
       aggregateId: id.value,
       payload: {
+        origins: [
+          {
+            sourceId: origin.sourceId,
+            sourceType: origin.sourceType,
+            resourceId: origin.resourceId,
+          },
+        ],
         origin: { sourceId: origin.sourceId, sourceType: origin.sourceType },
         language: meaning.language,
         state: SemanticState.Draft,
@@ -87,12 +104,65 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
   static reconstitute(
     id: SemanticUnitId,
     state: SemanticState,
-    origin: Origin,
+    origins: Origin[],
     currentVersion: SemanticVersion,
     versions: SemanticVersion[],
     metadata: UnitMetadata,
   ): SemanticUnit {
-    return new SemanticUnit(id, state, origin, currentVersion, versions, metadata);
+    return new SemanticUnit(
+      id,
+      state,
+      origins,
+      currentVersion,
+      versions,
+      metadata,
+    );
+  }
+
+  addOrigin(origin: Origin): void {
+    if (this._state === SemanticState.Archived) {
+      throw new Error("Cannot add origin to an archived semantic unit");
+    }
+
+    const exists = this._origins.some(
+      (o) => o.sourceId === origin.sourceId,
+    );
+    if (exists) {
+      throw new Error(
+        `Origin with sourceId '${origin.sourceId}' already attached`,
+      );
+    }
+
+    this._origins.push(origin);
+    this._metadata = this._metadata.withUpdatedTimestamp();
+
+    this.record({
+      eventId: crypto.randomUUID(),
+      occurredOn: new Date(),
+      eventType: SemanticUnitOriginAdded.EVENT_TYPE,
+      aggregateId: this.id.value,
+      payload: {
+        sourceId: origin.sourceId,
+        sourceType: origin.sourceType,
+        resourceId: origin.resourceId,
+      },
+    });
+  }
+
+  removeOrigin(sourceId: string): void {
+    if (this._origins.length <= 1) {
+      throw new Error(
+        "Cannot remove the last origin — at least one origin is required",
+      );
+    }
+
+    const index = this._origins.findIndex((o) => o.sourceId === sourceId);
+    if (index === -1) {
+      throw new Error(`Origin with sourceId '${sourceId}' not found`);
+    }
+
+    this._origins.splice(index, 1);
+    this._metadata = this._metadata.withUpdatedTimestamp();
   }
 
   addVersion(meaning: Meaning, reason: string): void {

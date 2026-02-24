@@ -94,7 +94,7 @@ export class GenerateProjection {
 
       // ─── Vector Store ───────────────────────────────────────────────────
       const vectorEntries: VectorEntry[] = chunks.map((chunk, i) => ({
-        id: `${command.semanticUnitId}-${command.semanticUnitVersion}-${chunk.index}`,
+        id: `${command.semanticUnitId}-${command.projectionId}-${chunk.index}`,
         semanticUnitId: command.semanticUnitId,
         vector: embeddings[i].vector,
         content: chunk.content,
@@ -102,11 +102,13 @@ export class GenerateProjection {
           version: command.semanticUnitVersion,
           chunkIndex: chunk.index,
           model: embeddings[i].model,
+          projectionId: command.projectionId,
+          processingProfileId: command.processingProfileId,
           ...chunk.metadata,
         },
       }));
 
-      await this.vectorStore.deleteBySemanticUnitId(command.semanticUnitId);
+      await this.vectorStore.deleteByProjectionId(command.projectionId);
       await this.vectorStore.upsert(vectorEntries);
 
       // ─── Complete Projection ────────────────────────────────────────────

@@ -27,7 +27,11 @@ export class IndexedDBSemanticUnitRepository implements SemanticUnitRepository {
 
   async findByOriginSourceId(sourceId: string): Promise<SemanticUnit[]> {
     const all = await this.store.getAll();
-    return all.filter((d) => d.origin.sourceId === sourceId).map(fromDTO);
+    return all
+      .filter((d) =>
+        d.origins?.some((o) => o.sourceId === sourceId) ?? d.origin?.sourceId === sourceId,
+      )
+      .map(fromDTO);
   }
 
   async findByState(state: SemanticState): Promise<SemanticUnit[]> {

@@ -161,8 +161,55 @@ export interface GetManifestInput {
   sourceId?: string;
   /** Query by manifest ID */
   manifestId?: string;
+  /** Query by semantic unit ID */
+  semanticUnitId?: string;
 }
 
 export interface GetManifestSuccess {
   manifests: import("../domain/ContentManifest.js").ContentManifestEntry[];
+}
+
+// ─── Attach Origin ──────────────────────────────────────────────────────────
+
+export interface AttachOriginInput {
+  semanticUnitId: string;
+  sourceId: string;
+  sourceType: string;
+  resourceId?: string;
+}
+
+export interface AttachOriginSuccess {
+  semanticUnitId: string;
+}
+
+// ─── Add Projection ─────────────────────────────────────────────────────────
+
+export interface AddProjectionInput {
+  projectionId: string;
+  semanticUnitId: string;
+  semanticUnitVersion: number;
+  content: string;
+  projectionType?: string;
+  processingProfileId: string;
+}
+
+export interface AddProjectionSuccess {
+  projectionId: string;
+  chunksCount: number;
+  dimensions: number;
+  model: string;
+}
+
+// ─── Link Units ─────────────────────────────────────────────────────────────
+
+export interface LinkUnitsInput {
+  fromUnitId: string;
+  toUnitId: string;
+  relationship: string;
+}
+
+export interface LinkUnitsSuccess {
+  fromUnitId: string;
+  toUnitId: string;
+  relationship: string;
 }

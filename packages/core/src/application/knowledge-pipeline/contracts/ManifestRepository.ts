@@ -19,6 +19,9 @@ export interface ManifestRepository {
   /** Find all manifests for a given source */
   findBySourceId(sourceId: string): Promise<ContentManifestEntry[]>;
 
+  /** Find all manifests for a given semantic unit */
+  findBySemanticUnitId(semanticUnitId: string): Promise<ContentManifestEntry[]>;
+
   /** Retrieve all manifests */
   findAll(): Promise<ContentManifestEntry[]>;
 }

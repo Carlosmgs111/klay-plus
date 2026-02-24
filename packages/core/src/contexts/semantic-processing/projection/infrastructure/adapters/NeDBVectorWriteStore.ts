@@ -30,4 +30,13 @@ export class NeDBVectorWriteStore implements VectorWriteStore {
       await this.store.remove(dto.id);
     }
   }
+
+  async deleteByProjectionId(projectionId: string): Promise<void> {
+    const matching = await this.store.find(
+      (d) => d.metadata?.projectionId === projectionId,
+    );
+    for (const dto of matching) {
+      await this.store.remove(dto.id);
+    }
+  }
 }

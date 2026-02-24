@@ -13,23 +13,17 @@ interface MetricCardProps {
 
 const VARIANT_ACCENT = {
   default:
-    "from-blue-200 via-blue-400 to-blue-200 dark:from-blue-500 dark:via-blue-600 dark:to-blue-500 border-2 border-blue-300 dark:border-blue-600 shadow-lg shadow-blue-600/80",
+    "from-blue-300 via-blue-400 to-blue-300 dark:from-blue-500 dark:via-blue-600 dark:to-blue-600 border-2 border-blue-300 dark:border-blue-600 shadow-lg shadow-blue-600/80",
   success:
-    "from-green-200 via-green-400 to-green-200 dark:from-green-500 dark:via-green-600 dark:to-green-500 border-2 border-green-300 dark:border-green-600 shadow-lg shadow-green-600/80",
+    "from-green-300 via-green-400 to-green-300 dark:from-green-600 dark:via-green-600 dark:to-green-600 border-2 border-green-300 dark:border-green-700 shadow-lg shadow-green-600/80",
   danger:
-    "from-red-200 via-red-400 to-red-200 dark:from-red-500 dark:via-red-600 dark:to-red-500 border-2 border-red-300 dark:border-red-600 shadow-lg shadow-red-600/80",
-};
-
-const VARIANT_ICON_BG = {
-  default: "var(--accent-primary-muted)",
-  success: "var(--semantic-success-muted)",
-  danger: "var(--semantic-danger-muted)",
+    "from-red-300 via-red-400 to-red-300 dark:from-red-600 dark:via-red-500 dark:to-red-600 border-2 border-red-300 dark:border-red-700 shadow-lg shadow-red-600/80",
 };
 
 const TREND_CONFIG = {
-  up: { icon: "arrow-up" as IconName, color: "var(--semantic-success)" },
-  down: { icon: "arrow-down" as IconName, color: "var(--semantic-danger)" },
-  neutral: { icon: "chevron-right" as IconName, color: "var(--text-tertiary)" },
+  up: { icon: "arrow-up" as IconName },
+  down: { icon: "arrow-down" as IconName },
+  neutral: { icon: "chevron-right" as IconName },
 };
 
 export function MetricCard({
@@ -58,10 +52,7 @@ export function MetricCard({
           )}
         </div>
         {icon && (
-          <div
-            className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: VARIANT_ICON_BG[variant] }}
-          >
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center">
             <Icon name={icon} className="text-3xl" />
           </div>
         )}

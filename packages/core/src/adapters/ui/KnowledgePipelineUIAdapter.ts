@@ -14,6 +14,12 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
+  AttachOriginInput,
+  AttachOriginSuccess,
+  AddProjectionInput,
+  AddProjectionSuccess,
+  LinkUnitsInput,
+  LinkUnitsSuccess,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
 
 // ─── UI Result Type ─────────────────────────────────────────────────────────
@@ -82,6 +88,21 @@ export class KnowledgePipelineUIAdapter {
 
   async getManifest(input: GetManifestInput): Promise<UIResult<GetManifestSuccess>> {
     const result = await this._pipeline.getManifest(input);
+    return this._unwrap(result);
+  }
+
+  async attachOrigin(input: AttachOriginInput): Promise<UIResult<AttachOriginSuccess>> {
+    const result = await this._pipeline.attachOrigin(input);
+    return this._unwrap(result);
+  }
+
+  async addProjection(input: AddProjectionInput): Promise<UIResult<AddProjectionSuccess>> {
+    const result = await this._pipeline.addProjection(input);
+    return this._unwrap(result);
+  }
+
+  async linkUnits(input: LinkUnitsInput): Promise<UIResult<LinkUnitsSuccess>> {
+    const result = await this._pipeline.linkUnits(input);
     return this._unwrap(result);
   }
 
