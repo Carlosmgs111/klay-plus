@@ -1,75 +1,160 @@
 import { useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
+import { useTheme } from "../../../contexts/ThemeContext.js";
+import { useToast } from "../../../contexts/ToastContext.js";
 import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
 import { Card, CardHeader, CardBody } from "../../shared/Card.js";
 import { Button } from "../../shared/Button.js";
+import { Icon } from "../../shared/Icon.js";
 import { Spinner } from "../../shared/Spinner.js";
 import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
 import type { SearchKnowledgeInput } from "@klay/core";
 
 export function SettingsPage() {
   const { mode, setMode, service, isInitializing } = useRuntimeMode();
+  const { theme, setTheme } = useTheme();
+  const { addToast } = useToast();
 
   const healthCheck = useCallback(
     (input: SearchKnowledgeInput) => service!.searchKnowledge(input),
     [service],
   );
 
-  const { data, error, isLoading, execute } = usePipelineAction(healthCheck);
+  const { error, isLoading, execute } = usePipelineAction(healthCheck);
 
-  const runHealthCheck = () => {
-    execute({ queryText: "health check test", topK: 1 });
+  const runHealthCheck = async () => {
+    const result = await execute({ queryText: "health check test", topK: 1 });
+    if (result) {
+      addToast(`Pipeline is operational. Search returned ${result.totalFound} results.`, "success");
+    }
   };
+
+  const themeOptions = [
+    { value: "light" as const, label: "Light", icon: "sun" as const },
+    { value: "dark" as const, label: "Dark", icon: "moon" as const },
+    { value: "system" as const, label: "System", icon: "settings" as const },
+  ];
 
   return (
     <div className="space-y-6">
+      {/* Theme */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Icon name="sun" size={16} style={{ color: "var(--text-tertiary)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              Appearance
+            </h2>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <div className="grid grid-cols-3 gap-3">
+            {themeOptions.map((opt) => {
+              const isActive = theme === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setTheme(opt.value)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2"
+                  style={{
+                    borderColor: isActive ? "var(--accent-primary)" : "var(--border-default)",
+                    backgroundColor: isActive ? "var(--accent-primary-muted)" : "var(--surface-2)",
+                    boxShadow: isActive ? "var(--shadow-glow)" : undefined,
+                    transition: "all 200ms cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                >
+                  <Icon
+                    name={opt.icon}
+                    size={20}
+                    style={{ color: isActive ? "var(--accent-primary)" : "var(--text-tertiary)" }}
+                  />
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: isActive ? "var(--accent-primary)" : "var(--text-secondary)" }}
+                  >
+                    {opt.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </CardBody>
+      </Card>
+
       {/* Runtime Mode */}
       <Card>
         <CardHeader>
-          <h2 className="text-base font-semibold text-gray-900">Runtime Mode</h2>
+          <div className="flex items-center gap-2">
+            <Icon name="server" size={16} style={{ color: "var(--text-tertiary)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              Runtime Mode
+            </h2>
+          </div>
         </CardHeader>
         <CardBody>
-          <div className="space-y-4">
-            <div className="flex gap-4">
-              <button
-                onClick={() => setMode("server")}
-                className={`flex-1 p-4 rounded-card border-2 transition-colors ${
-                  mode === "server"
-                    ? "border-primary-500 bg-primary-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
+          <div className="flex gap-4">
+            <button
+              onClick={() => setMode("server")}
+              className={`mode-card ${mode === "server" ? "mode-card-active-server" : ""}`}
+            >
+              <div className="flex items-center gap-2.5 mb-2">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    backgroundColor: mode === "server" ? "var(--accent-primary-muted)" : "var(--surface-3)",
+                  }}
+                >
+                  <Icon
+                    name="server"
+                    size={16}
+                    style={{ color: mode === "server" ? "var(--accent-primary)" : "var(--text-tertiary)" }}
+                  />
+                </div>
                 <h3
-                  className={`font-semibold ${
-                    mode === "server" ? "text-primary-700" : "text-gray-900"
-                  }`}
+                  className="font-semibold text-sm"
+                  style={{
+                    color: mode === "server" ? "var(--accent-primary)" : "var(--text-primary)",
+                    letterSpacing: "-0.02em",
+                  }}
                 >
                   Server Mode (SSR)
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Astro API routes + NeDB + OpenAI/Hash embeddings
-                </p>
-              </button>
-              <button
-                onClick={() => setMode("browser")}
-                className={`flex-1 p-4 rounded-card border-2 transition-colors ${
-                  mode === "browser"
-                    ? "border-success-500 bg-success-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
+              </div>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                Astro API routes + NeDB + OpenAI/Hash embeddings
+              </p>
+            </button>
+            <button
+              onClick={() => setMode("browser")}
+              className={`mode-card ${mode === "browser" ? "mode-card-active-browser" : ""}`}
+            >
+              <div className="flex items-center gap-2.5 mb-2">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    backgroundColor: mode === "browser" ? "var(--semantic-success-muted)" : "var(--surface-3)",
+                  }}
+                >
+                  <Icon
+                    name="globe"
+                    size={16}
+                    style={{ color: mode === "browser" ? "var(--semantic-success)" : "var(--text-tertiary)" }}
+                  />
+                </div>
                 <h3
-                  className={`font-semibold ${
-                    mode === "browser" ? "text-success-700" : "text-gray-900"
-                  }`}
+                  className="font-semibold text-sm"
+                  style={{
+                    color: mode === "browser" ? "var(--semantic-success)" : "var(--text-primary)",
+                    letterSpacing: "-0.02em",
+                  }}
                 >
                   Browser Mode
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Direct import + IndexedDB + WebLLM/Hash embeddings
-                </p>
-              </button>
-            </div>
+              </div>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                Direct import + IndexedDB + WebLLM/Hash embeddings
+              </p>
+            </button>
           </div>
         </CardBody>
       </Card>
@@ -77,12 +162,22 @@ export function SettingsPage() {
       {/* Architecture Diagram */}
       <Card>
         <CardHeader>
-          <h2 className="text-base font-semibold text-gray-900">
-            Architecture Flow
-          </h2>
+          <div className="flex items-center gap-2">
+            <Icon name="layers" size={16} style={{ color: "var(--text-tertiary)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              Architecture Flow
+            </h2>
+          </div>
         </CardHeader>
         <CardBody>
-          <div className="font-mono text-xs text-gray-600 bg-gray-50 rounded-lg p-4 overflow-x-auto">
+          <div
+            className="font-mono text-xs rounded-lg p-5 overflow-x-auto leading-relaxed"
+            style={{
+              backgroundColor: "var(--code-bg)",
+              color: "var(--text-secondary)",
+              border: "1px solid var(--border-subtle)",
+            }}
+          >
             {mode === "server" ? (
               <pre>{`React Component
   → usePipelineService()
@@ -111,13 +206,17 @@ export function SettingsPage() {
       {/* Health Check */}
       <Card>
         <CardHeader>
-          <h2 className="text-base font-semibold text-gray-900">Health Check</h2>
+          <div className="flex items-center gap-2">
+            <Icon name="zap" size={16} style={{ color: "var(--text-tertiary)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              Health Check
+            </h2>
+          </div>
         </CardHeader>
         <CardBody>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500">
-              Run a test search to verify the pipeline is operational in the current
-              mode.
+          <div className="space-y-4">
+            <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+              Run a test search to verify the pipeline is operational in the current mode.
             </p>
             <Button
               onClick={runHealthCheck}
@@ -129,17 +228,14 @@ export function SettingsPage() {
                   <Spinner size="sm" /> Running...
                 </span>
               ) : (
-                "Run Health Check"
+                <>
+                  <Icon name="zap" size={16} />
+                  Run Health Check
+                </>
               )}
             </Button>
 
             {error && <ErrorDisplay {...error} />}
-
-            {data && (
-              <div className="bg-success-50 border border-success-500/30 rounded-card p-3 text-sm text-success-700">
-                Pipeline is operational. Search returned {data.totalFound} results.
-              </div>
-            )}
           </div>
         </CardBody>
       </Card>

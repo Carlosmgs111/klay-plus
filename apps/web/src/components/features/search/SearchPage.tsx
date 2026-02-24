@@ -2,8 +2,9 @@ import { useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
 import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
 import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { Spinner } from "../../shared/Spinner.js";
+import { Icon } from "../../shared/Icon.js";
 import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
+import { SkeletonCard } from "../../shared/Skeleton.js";
 import { SearchBar } from "./SearchBar.js";
 import { SearchResults } from "./SearchResults.js";
 import type { SearchKnowledgeInput } from "@klay/core";
@@ -24,8 +25,9 @@ export function SearchPage() {
 
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" />
+      <div className="space-y-6 animate-fade-in">
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
     );
   }
@@ -34,9 +36,12 @@ export function SearchPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <h2 className="text-base font-semibold text-gray-900">
-            Semantic Search
-          </h2>
+          <div className="flex items-center gap-2">
+            <Icon name="search" size={16} style={{ color: "var(--text-tertiary)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              Semantic Search
+            </h2>
+          </div>
         </CardHeader>
         <CardBody>
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
@@ -45,8 +50,24 @@ export function SearchPage() {
 
       {error && <ErrorDisplay {...error} />}
 
+      {isLoading && !data && (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      )}
+
       {data && (
         <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Icon name="layers" size={16} style={{ color: "var(--text-tertiary)" }} />
+              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                Found <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{data.totalFound}</span> result{data.totalFound !== 1 ? "s" : ""} for "{data.queryText}"
+              </p>
+            </div>
+          </CardHeader>
           <CardBody>
             <SearchResults
               items={data.items}

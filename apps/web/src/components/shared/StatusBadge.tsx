@@ -1,19 +1,31 @@
 type BadgeStatus = "complete" | "failed" | "pending" | "processing" | "partial";
 
-const BADGE_CLASS: Record<BadgeStatus, string> = {
-  complete: "badge-complete",
-  failed: "badge-failed",
-  pending: "badge-pending",
-  processing: "badge-processing",
-  partial: "badge-pending",
-};
-
-const BADGE_LABEL: Record<BadgeStatus, string> = {
-  complete: "Complete",
-  failed: "Failed",
-  pending: "Pending",
-  processing: "Processing",
-  partial: "Partial",
+const BADGE_CONFIG: Record<BadgeStatus, { className: string; label: string; dotColor: string }> = {
+  complete: {
+    className: "badge-complete",
+    label: "Complete",
+    dotColor: "var(--semantic-success)",
+  },
+  failed: {
+    className: "badge-failed",
+    label: "Failed",
+    dotColor: "var(--semantic-danger)",
+  },
+  pending: {
+    className: "badge-pending",
+    label: "Pending",
+    dotColor: "var(--semantic-warning)",
+  },
+  processing: {
+    className: "badge-processing",
+    label: "Processing",
+    dotColor: "var(--accent-primary)",
+  },
+  partial: {
+    className: "badge-pending",
+    label: "Partial",
+    dotColor: "var(--semantic-warning)",
+  },
 };
 
 interface StatusBadgeProps {
@@ -21,9 +33,15 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
+  const config = BADGE_CONFIG[status] ?? { className: "badge", label: status, dotColor: "var(--text-tertiary)" };
+
   return (
-    <span className={BADGE_CLASS[status] ?? "badge"}>
-      {BADGE_LABEL[status] ?? status}
+    <span className={config.className}>
+      <span
+        className="w-1.5 h-1.5 rounded-full"
+        style={{ backgroundColor: config.dotColor }}
+      />
+      {config.label}
     </span>
   );
 }

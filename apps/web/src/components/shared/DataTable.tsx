@@ -21,7 +21,7 @@ export function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   if (rows.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400 text-sm">{emptyMessage}</div>
+      <div className="text-center py-8 text-sm" style={{ color: "var(--text-tertiary)" }}>{emptyMessage}</div>
     );
   }
 

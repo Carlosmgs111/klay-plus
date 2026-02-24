@@ -18,7 +18,10 @@ export function SemanticUnitsList({
       render: (row: ContentManifestEntry) => (
         <button
           onClick={() => onSelectManifest(row)}
-          className="font-mono text-xs text-primary-600 hover:text-primary-800 hover:underline"
+          className="font-mono text-xs hover:underline"
+          style={{ color: "var(--accent-primary)", transition: "opacity 150ms" }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.8"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
         >
           {row.semanticUnitId.slice(0, 12)}...
         </button>

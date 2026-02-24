@@ -20,7 +20,7 @@ export function Input({ label, error, className = "", id, ...props }: InputProps
         className={`input ${error ? "input-error" : ""} ${className}`}
         {...props}
       />
-      {error && <p className="mt-1 text-sm text-danger-600">{error}</p>}
+      {error && <p className="mt-1 text-sm" style={{ color: "var(--semantic-danger)" }}>{error}</p>}
     </div>
   );
 }

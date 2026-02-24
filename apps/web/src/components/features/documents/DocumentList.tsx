@@ -1,12 +1,37 @@
 import { DataTable } from "../../shared/DataTable.js";
 import { StatusBadge } from "../../shared/StatusBadge.js";
+import { SkeletonTableRow } from "../../shared/Skeleton.js";
 import type { ContentManifestEntry } from "@klay/core";
 
 interface DocumentListProps {
   manifests: ContentManifestEntry[];
+  isLoading?: boolean;
 }
 
-export function DocumentList({ manifests }: DocumentListProps) {
+export function DocumentList({ manifests, isLoading }: DocumentListProps) {
+  if (isLoading) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Source ID</th>
+              <th>Status</th>
+              <th>Chunks</th>
+              <th>Dimensions</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonTableRow key={i} columns={5} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   const columns = [
     { key: "sourceId", header: "Source ID" },
     {

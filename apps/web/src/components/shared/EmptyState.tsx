@@ -1,28 +1,46 @@
+import { Icon } from "./Icon.js";
+import { Button } from "./Button.js";
+import type { IconName } from "./Icon.js";
+import type { ReactNode } from "react";
+
 interface EmptyStateProps {
   title: string;
   description?: string;
+  icon?: IconName;
+  action?: { label: string; onClick: () => void };
+  children?: ReactNode;
 }
 
-export function EmptyState({ title, description }: EmptyStateProps) {
+export function EmptyState({ title, description, icon, action, children }: EmptyStateProps) {
   return (
     <div className="text-center py-12">
-      <svg
-        className="mx-auto w-12 h-12 text-gray-300"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1}
-        viewBox="0 0 24 24"
+      <div
+        className="mx-auto w-14 h-14 rounded-lg flex items-center justify-center mb-4"
+        style={{ backgroundColor: "var(--surface-3)" }}
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+        <Icon
+          name={icon ?? "layers"}
+          size={28}
+          className="opacity-40"
+          style={{ color: "var(--text-tertiary)" }}
         />
-      </svg>
-      <h3 className="mt-3 text-sm font-medium text-gray-900">{title}</h3>
+      </div>
+      <h3 className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+        {title}
+      </h3>
       {description && (
-        <p className="mt-1 text-sm text-gray-500">{description}</p>
+        <p className="mt-1 text-sm max-w-sm mx-auto" style={{ color: "var(--text-tertiary)" }}>
+          {description}
+        </p>
       )}
+      {action && (
+        <div className="mt-4">
+          <Button variant="secondary" size="sm" onClick={action.onClick}>
+            {action.label}
+          </Button>
+        </div>
+      )}
+      {children}
     </div>
   );
 }

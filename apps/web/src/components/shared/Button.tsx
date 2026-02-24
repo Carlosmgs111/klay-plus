@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
 }
 
@@ -9,6 +9,7 @@ const VARIANT_CLASS = {
   primary: "btn-primary",
   secondary: "btn-secondary",
   danger: "btn-danger",
+  ghost: "btn-ghost",
 };
 
 const SIZE_CLASS = {

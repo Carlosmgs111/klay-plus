@@ -2,8 +2,9 @@ import { useEffect, useCallback, useState } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
 import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
 import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { Spinner } from "../../shared/Spinner.js";
+import { Icon } from "../../shared/Icon.js";
 import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
+import { SkeletonLine } from "../../shared/Skeleton.js";
 import { SemanticUnitsList } from "./SemanticUnitsList.js";
 import { ManifestDetail } from "./ManifestDetail.js";
 import type { GetManifestInput, ContentManifestEntry } from "@klay/core";
@@ -28,8 +29,13 @@ export function KnowledgePage() {
 
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" />
+      <div className="space-y-6 animate-fade-in">
+        <div className="card p-6 space-y-4">
+          <SkeletonLine className="w-1/4 h-5" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonLine key={i} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -48,10 +54,13 @@ export function KnowledgePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">
-              Semantic Units
-            </h2>
-            {isLoading && <Spinner size="sm" />}
+            <div className="flex items-center gap-2">
+              <Icon name="brain" size={16} style={{ color: "var(--text-tertiary)" }} />
+              <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+                Semantic Units
+              </h2>
+            </div>
+            {isLoading && <div className="skeleton w-4 h-4 rounded-full" />}
           </div>
         </CardHeader>
         <CardBody>

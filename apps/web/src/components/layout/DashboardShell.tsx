@@ -1,26 +1,41 @@
 import { lazy, Suspense } from "react";
 import { RuntimeModeProvider } from "../../contexts/RuntimeModeContext.js";
+import { ThemeProvider } from "../../contexts/ThemeContext.js";
+import { ToastProvider } from "../../contexts/ToastContext.js";
 import { Sidebar } from "./Sidebar.js";
 import { Header } from "./Header.js";
-import { Spinner } from "../shared/Spinner.js";
+import { ToastContainer } from "../shared/Toast.js";
+import { SkeletonPage } from "../shared/Skeleton.js";
 
 const DashboardPage = lazy(() =>
-  import("../features/dashboard/DashboardPage.js").then((m) => ({ default: m.DashboardPage })),
+  import("../features/dashboard/DashboardPage.js").then((m) => ({
+    default: m.DashboardPage,
+  }))
 );
 const DocumentsPage = lazy(() =>
-  import("../features/documents/DocumentsPage.js").then((m) => ({ default: m.DocumentsPage })),
+  import("../features/documents/DocumentsPage.js").then((m) => ({
+    default: m.DocumentsPage,
+  }))
 );
 const KnowledgePage = lazy(() =>
-  import("../features/knowledge/KnowledgePage.js").then((m) => ({ default: m.KnowledgePage })),
+  import("../features/knowledge/KnowledgePage.js").then((m) => ({
+    default: m.KnowledgePage,
+  }))
 );
 const SearchPage = lazy(() =>
-  import("../features/search/SearchPage.js").then((m) => ({ default: m.SearchPage })),
+  import("../features/search/SearchPage.js").then((m) => ({
+    default: m.SearchPage,
+  }))
 );
 const ProfilesPage = lazy(() =>
-  import("../features/profiles/ProfilesPage.js").then((m) => ({ default: m.ProfilesPage })),
+  import("../features/profiles/ProfilesPage.js").then((m) => ({
+    default: m.ProfilesPage,
+  }))
 );
 const SettingsPage = lazy(() =>
-  import("../features/settings/SettingsPage.js").then((m) => ({ default: m.SettingsPage })),
+  import("../features/settings/SettingsPage.js").then((m) => ({
+    default: m.SettingsPage,
+  }))
 );
 
 const PAGE_TITLES: Record<string, string> = {
@@ -50,26 +65,31 @@ export function DashboardShell({ activePage }: DashboardShellProps) {
   const PageComponent = PAGE_COMPONENTS[activePage];
 
   return (
-    <RuntimeModeProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar activePage={activePage} />
-        <Header title={title} />
-        <main className="ml-sidebar mt-header p-6">
-          {PageComponent ? (
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center py-20">
-                  <Spinner size="lg" />
-                </div>
-              }
-            >
-              <PageComponent />
-            </Suspense>
-          ) : (
-            <p className="text-gray-400">Page not found</p>
-          )}
-        </main>
-      </div>
-    </RuntimeModeProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <RuntimeModeProvider>
+          <div className="h-screen flex flex-row w-full">
+            <Sidebar activePage={activePage} />
+            <div className=" min-h-screen overflow-y-auto w-full">
+              <Header title={title} />
+              <main className="p-8 max-w-6xl mx-auto">
+                {PageComponent ? (
+                  <Suspense fallback={<SkeletonPage />}>
+                    <div className="animate-fade-in max-w-6xl">
+                      <PageComponent />
+                    </div>
+                  </Suspense>
+                ) : (
+                  <p style={{ color: "var(--text-tertiary)" }}>
+                    Page not found
+                  </p>
+                )}
+              </main>
+            </div>
+            <ToastContainer />
+          </div>
+        </RuntimeModeProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

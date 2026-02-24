@@ -1,4 +1,6 @@
 import { useRuntimeMode } from "../../contexts/RuntimeModeContext.js";
+import { useTheme } from "../../contexts/ThemeContext.js";
+import { Icon } from "../shared/Icon.js";
 
 interface HeaderProps {
   title: string;
@@ -6,50 +8,93 @@ interface HeaderProps {
 
 export function Header({ title }: HeaderProps) {
   const { mode, setMode, isInitializing } = useRuntimeMode();
+  const { resolved, toggleTheme } = useTheme();
 
   return (
-    <header className="fixed top-0 left-sidebar right-0 h-header bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10">
+    <header className="sticky top-0 left-0 flex items-center justify-between px-6 z-10 backdrop-blur-xl w-full h-20">
       {/* Page Title */}
-      <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+      <h1 className="text-lg font-semibold letter-spacing-[-0.02em]">{title}</h1>
 
-      {/* Runtime Mode Toggle */}
-      <div className="flex items-center gap-3">
+      {/* Controls */}
+      <div className="flex items-center gap-2">
         {isInitializing && (
-          <span className="text-xs text-gray-400 animate-pulse">Initializing...</span>
+          <span className="text-xs animate-pulse mr-2">Initializing...</span>
         )}
 
-        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+        {/* Runtime Mode Toggle */}
+        <div className="flex items-center rounded-lg p-[3px]">
           <button
             onClick={() => setMode("server")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              mode === "server"
-                ? "bg-white text-primary-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium text-black dark:text-white"
+            style={{
+              backgroundColor:
+                mode === "server" ? "var(--accent-primary)" : "transparent",
+              boxShadow: mode === "server" ? "var(--shadow-xs)" : "none",
+              transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
-                mode === "server" ? "bg-primary-500" : "bg-gray-300"
-              }`}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                backgroundColor: mode === "server" ? "#fff" : "currentColor",
+                opacity: mode === "server" ? 1 : 0.3,
+                boxShadow:
+                  mode === "server" ? "0 0 4px rgba(255,255,255,0.6)" : "none",
+                transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
             />
             Server
           </button>
           <button
             onClick={() => setMode("browser")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              mode === "browser"
-                ? "bg-white text-success-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium text-black dark:text-white"
+            style={{
+              backgroundColor:
+                mode === "browser" ? "var(--semantic-success)" : "transparent",
+              boxShadow: mode === "browser" ? "var(--shadow-xs)" : "none",
+              transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
-                mode === "browser" ? "bg-success-500" : "bg-gray-300"
-              }`}
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                backgroundColor: mode === "browser" ? "#fff" : "currentColor",
+                opacity: mode === "browser" ? 1 : 0.3,
+                boxShadow:
+                  mode === "browser" ? "0 0 4px rgba(255,255,255,0.6)" : "none",
+                transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
             />
             Browser
           </button>
         </div>
+
+        {/* Divider */}
+        <div
+          className="w-px h-5 mx-1"
+          style={{ backgroundColor: "var(--border-default)" }}
+        />
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg"
+          style={{
+            color: "var(--text-tertiary)",
+            transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "var(--surface-3)";
+            e.currentTarget.style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "var(--text-tertiary)";
+          }}
+          aria-label="Toggle theme"
+        >
+          <Icon name={resolved === "dark" ? "sun" : "moon"} />
+        </button>
       </div>
     </header>
   );

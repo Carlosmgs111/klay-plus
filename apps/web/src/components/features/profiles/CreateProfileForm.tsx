@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
+import { useToast } from "../../../contexts/ToastContext.js";
 import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
 import { Button } from "../../shared/Button.js";
 import { Input } from "../../shared/Input.js";
@@ -25,6 +26,7 @@ interface CreateProfileFormProps {
 
 export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
   const { service } = useRuntimeMode();
+  const { addToast } = useToast();
   const [name, setName] = useState("");
   const [chunkingStrategyId, setChunkingStrategyId] = useState("recursive");
   const [embeddingStrategyId, setEmbeddingStrategyId] = useState("hash");
@@ -34,20 +36,21 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
     [service],
   );
 
-  const { data, error, isLoading, execute } = usePipelineAction(createProfile);
+  const { error, isLoading, execute } = usePipelineAction(createProfile);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!service) return;
 
-    await execute({
+    const result = await execute({
       id: crypto.randomUUID(),
       name,
       chunkingStrategyId,
       embeddingStrategyId,
     });
 
-    if (data) {
+    if (result) {
+      addToast(`Profile created. ID: ${result.profileId}, Version: ${result.version}`, "success");
       setName("");
       onSuccess?.();
     }
@@ -78,12 +81,6 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
       </div>
 
       {error && <ErrorDisplay {...error} />}
-
-      {data && (
-        <div className="bg-success-50 border border-success-500/30 rounded-card p-3 text-sm text-success-700">
-          Profile created. ID: {data.profileId}, Version: {data.version}
-        </div>
-      )}
 
       <Button type="submit" disabled={isLoading || !service}>
         {isLoading ? (

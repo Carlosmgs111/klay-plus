@@ -5,12 +5,13 @@ interface PipelineActionState<T> {
   data: T | null;
   error: { message: string; code: string; step?: string; completedSteps?: string[] } | null;
   isLoading: boolean;
-  execute: (...args: any[]) => Promise<void>;
+  execute: (...args: any[]) => Promise<T | null>;
 }
 
 /**
  * Generic hook for pipeline actions.
  * Manages loading/success/error states automatically.
+ * Returns the data from execute() for inline usage (e.g. toast notifications).
  *
  * @example
  * ```tsx
@@ -18,6 +19,8 @@ interface PipelineActionState<T> {
  * const { data, error, isLoading, execute } = usePipelineAction(
  *   (input: SearchKnowledgeInput) => service.searchKnowledge(input)
  * );
+ * const result = await execute(input);
+ * if (result) addToast("Success!", "success");
  * ```
  */
 export function usePipelineAction<T, TInput = void>(
@@ -28,7 +31,7 @@ export function usePipelineAction<T, TInput = void>(
   const [isLoading, setIsLoading] = useState(false);
 
   const execute = useCallback(
-    async (input: TInput) => {
+    async (input: TInput): Promise<T | null> => {
       setIsLoading(true);
       setError(null);
 
@@ -37,10 +40,12 @@ export function usePipelineAction<T, TInput = void>(
         if (result.success) {
           setData(result.data);
           setError(null);
+          return result.data;
         } else {
           console.error(result.error);
           setData(null);
           setError(result.error);
+          return null;
         }
       } catch (err) {
         console.error(err);
@@ -49,6 +54,7 @@ export function usePipelineAction<T, TInput = void>(
           message: err instanceof Error ? err.message : "Unexpected error",
           code: "UNEXPECTED_ERROR",
         });
+        return null;
       } finally {
         setIsLoading(false);
       }

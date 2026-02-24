@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
+import { useToast } from "../../../contexts/ToastContext.js";
 import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
 import { Button } from "../../shared/Button.js";
 import { Input } from "../../shared/Input.js";
@@ -20,6 +21,7 @@ interface DocumentUploadFormProps {
 
 export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
   const { service } = useRuntimeMode();
+  const { addToast } = useToast();
   const [sourceName, setSourceName] = useState("");
   const [uri, setUri] = useState("");
   const [sourceType, setSourceType] = useState("PLAIN_TEXT");
@@ -31,7 +33,7 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
     [service],
   );
 
-  const { data, error, isLoading, execute } = usePipelineAction(executePipeline);
+  const { error, isLoading, execute } = usePipelineAction(executePipeline);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +54,12 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       createdBy,
     };
 
-    await execute(input);
-    if (data) {
+    const result = await execute(input);
+    if (result) {
+      addToast(
+        `Document processed successfully. Chunks: ${result.chunksCount}, Dimensions: ${result.dimensions}`,
+        "success",
+      );
       setSourceName("");
       setUri("");
       onSuccess?.();
@@ -62,49 +68,56 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        label="Source Name"
-        value={sourceName}
-        onChange={(e) => setSourceName(e.target.value)}
-        placeholder="My Document"
-        required
-      />
-      <Input
-        label="URI"
-        value={uri}
-        onChange={(e) => setUri(e.target.value)}
-        placeholder="/path/to/file.txt or https://..."
-        required
-      />
-      <div className="grid grid-cols-2 gap-4">
-        <Select
-          label="Source Type"
-          options={SOURCE_TYPES}
-          value={sourceType}
-          onChange={(e) => setSourceType(e.target.value)}
+      <div className="space-y-4">
+        <Input
+          label="Source Name"
+          value={sourceName}
+          onChange={(e) => setSourceName(e.target.value)}
+          placeholder="My Document"
+          required
         />
         <Input
-          label="Language"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          placeholder="en"
+          label="URI"
+          value={uri}
+          onChange={(e) => setUri(e.target.value)}
+          placeholder="/path/to/file.txt or https://..."
+          required
         />
       </div>
-      <Input
-        label="Created By"
-        value={createdBy}
-        onChange={(e) => setCreatedBy(e.target.value)}
-        placeholder="user name"
-      />
+
+      <div
+        className="pt-4"
+        style={{ borderTop: "1px solid var(--border-subtle)" }}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <Select
+            label="Source Type"
+            options={SOURCE_TYPES}
+            value={sourceType}
+            onChange={(e) => setSourceType(e.target.value)}
+          />
+          <Input
+            label="Language"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            placeholder="en"
+          />
+        </div>
+      </div>
+
+      <div
+        className="pt-4"
+        style={{ borderTop: "1px solid var(--border-subtle)" }}
+      >
+        <Input
+          label="Created By"
+          value={createdBy}
+          onChange={(e) => setCreatedBy(e.target.value)}
+          placeholder="user name"
+        />
+      </div>
 
       {error && <ErrorDisplay {...error} />}
-
-      {data && (
-        <div className="bg-success-50 border border-success-500/30 rounded-card p-3 text-sm text-success-700">
-          Document processed successfully. Chunks: {data.chunksCount}, Dimensions:{" "}
-          {data.dimensions}
-        </div>
-      )}
 
       <Button type="submit" disabled={isLoading || !service}>
         {isLoading ? (

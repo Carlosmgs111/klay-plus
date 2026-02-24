@@ -1,3 +1,5 @@
+import { Icon } from "./Icon.js";
+
 interface ErrorDisplayProps {
   message: string;
   code: string;
@@ -12,32 +14,27 @@ export function ErrorDisplay({
   completedSteps,
 }: ErrorDisplayProps) {
   return (
-    <div className="bg-danger-50 border border-danger-200 rounded-card p-4">
+    <div
+      className="rounded-lg p-4"
+      style={{
+        backgroundColor: "var(--semantic-danger-muted)",
+        border: "1px solid var(--semantic-danger)",
+        borderColor: "rgba(240, 104, 104, 0.2)",
+      }}
+    >
       <div className="flex items-start gap-3">
-        <svg
-          className="w-5 h-5 text-danger-500 mt-0.5 flex-shrink-0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+        <Icon name="alert-circle" size={18} style={{ color: "var(--semantic-danger)", marginTop: "2px", flexShrink: 0 }} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-danger-800">{message}</p>
-          <p className="text-xs text-danger-600 mt-1 font-mono">{code}</p>
+          <p className="text-sm font-medium" style={{ color: "var(--semantic-danger)" }}>{message}</p>
+          <p className="text-xs mt-1 font-mono" style={{ color: "var(--text-tertiary)" }}>{code}</p>
           {step && (
-            <p className="text-xs text-danger-600 mt-1">
-              Failed at step: <span className="font-medium">{step}</span>
+            <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+              Failed at step: <span className="font-medium" style={{ color: "var(--text-secondary)" }}>{step}</span>
             </p>
           )}
           {completedSteps && completedSteps.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs text-gray-500">Completed steps:</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Completed steps:</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {completedSteps.map((s) => (
                   <span key={s} className="badge-complete text-xs">

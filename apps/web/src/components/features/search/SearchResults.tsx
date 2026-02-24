@@ -15,21 +15,19 @@ interface SearchResultsProps {
   queryText: string;
 }
 
-export function SearchResults({ items, totalFound, queryText }: SearchResultsProps) {
+export function SearchResults({ items, queryText }: SearchResultsProps) {
   if (items.length === 0) {
     return (
       <EmptyState
         title="No results found"
         description={`No matches for "${queryText}". Try a different query.`}
+        icon="search"
       />
     );
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-500">
-        Found {totalFound} result{totalFound !== 1 ? "s" : ""} for "{queryText}"
-      </p>
       {items.map((item, idx) => (
         <SearchResultCard
           key={`${item.semanticUnitId}-${idx}`}
