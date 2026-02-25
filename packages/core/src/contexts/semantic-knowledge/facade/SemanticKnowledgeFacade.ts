@@ -44,34 +44,39 @@ export class LineageOperationError extends OperationError {
 
 // ─── Facade Result Types ─────────────────────────────────────────────────────
 
-export interface CreateSemanticUnitWithLineageSuccess {
+export interface CreateSemanticUnitSuccess {
   unitId: string;
 }
 
-export interface VersionSemanticUnitWithLineageSuccess {
+export interface AddSourceSuccess {
   unitId: string;
-  newVersion: number;
+  version: number;
+}
+
+export interface RemoveSourceSuccess {
+  unitId: string;
+  version: number;
+}
+
+export interface ReprocessSuccess {
+  unitId: string;
+  version: number;
+}
+
+export interface RollbackSuccess {
+  unitId: string;
+  targetVersion: number;
 }
 
 export interface DeprecateSemanticUnitWithLineageSuccess {
   unitId: string;
 }
 
+// Backward-compat aliases
+export type CreateSemanticUnitWithLineageSuccess = CreateSemanticUnitSuccess;
+
 // ─── Facade ──────────────────────────────────────────────────────────────────
 
-/**
- * Application Facade for the Semantic Knowledge bounded context.
- *
- * Provides a unified entry point to all modules within the context,
- * coordinating use cases for semantic units and their lineage tracking.
- *
- * This is an Application Layer component - it does NOT contain domain logic.
- * It only coordinates existing use cases and handles cross-module workflows.
- *
- * The facade coordinates the flow:
- * 1. Semantic Unit creation/versioning/deprecation
- * 2. Lineage registration for transformations
- */
 export class SemanticKnowledgeFacade {
   private readonly _semanticUnit: SemanticUnitUseCases;
   private readonly _lineage: LineageUseCases;
@@ -98,33 +103,24 @@ export class SemanticKnowledgeFacade {
   // ─── Workflow Operations ───────────────────────────────────────────────────
 
   /**
-   * Creates a semantic unit and registers its creation in the lineage.
-   * This is the main entry point for creating new semantic units.
+   * Creates a semantic unit (empty, no sources yet) and registers lineage.
    */
-  async createSemanticUnitWithLineage(params: {
+  async createSemanticUnit(params: {
     id: string;
-    sourceId: string;
-    sourceType: string;
-    content: string;
+    name: string;
+    description: string;
     language: string;
     createdBy: string;
-    topics?: string[];
-    summary?: string;
     tags?: string[];
     attributes?: Record<string, string>;
-  }): Promise<Result<DomainError, CreateSemanticUnitWithLineageSuccess>> {
-    // 1. Create the semantic unit
+  }): Promise<Result<DomainError, CreateSemanticUnitSuccess>> {
     const createResult = await tryCatchAsync(
       () =>
         this._semanticUnit.createSemanticUnit.execute({
           id: params.id,
-          sourceId: params.sourceId,
-          sourceType: params.sourceType,
-          extractedAt: new Date(),
-          content: params.content,
+          name: params.name,
+          description: params.description,
           language: params.language,
-          topics: params.topics,
-          summary: params.summary,
           createdBy: params.createdBy,
           tags: params.tags,
           attributes: params.attributes,
@@ -144,18 +140,16 @@ export class SemanticKnowledgeFacade {
       return Result.fail(createResult.error);
     }
 
-    // 2. Register lineage for creation (extraction transformation)
-    const lineageResult = await tryCatchAsync(
+    // Register lineage for creation
+    await tryCatchAsync(
       () =>
         this._lineage.registerTransformation.execute({
           semanticUnitId: params.id,
           transformationType: TransformationType.Extraction,
-          strategyUsed: "initial-extraction",
+          strategyUsed: "initial-creation",
           inputVersion: 0,
-          outputVersion: 1,
+          outputVersion: 0,
           parameters: {
-            sourceId: params.sourceId,
-            sourceType: params.sourceType,
             createdBy: params.createdBy,
           },
         }),
@@ -166,74 +160,93 @@ export class SemanticKnowledgeFacade {
         )
     );
 
-    if (lineageResult.isFail()) {
-      // Note: Semantic unit was created but lineage failed
-      // In production, consider compensation/saga pattern
-      return Result.fail(lineageResult.error);
-    }
-
     return Result.ok({ unitId: params.id });
   }
 
   /**
-   * Versions a semantic unit and registers the transformation in the lineage.
+   * Backward-compat: alias for createSemanticUnit.
+   * Legacy callers that pass content/sourceId/sourceType will have those fields ignored.
    */
-  async versionSemanticUnitWithLineage(params: {
-    unitId: string;
-    content: string;
+  async createSemanticUnitWithLineage(params: {
+    id: string;
+    name?: string;
+    description?: string;
+    sourceId?: string;
+    sourceType?: string;
+    content?: string;
     language: string;
-    reason: string;
-    transformationType?: typeof TransformationType[keyof typeof TransformationType];
-    strategyUsed?: string;
+    createdBy: string;
     topics?: string[];
     summary?: string;
-    parameters?: Record<string, unknown>;
-  }): Promise<Result<DomainError, VersionSemanticUnitWithLineageSuccess>> {
-    // 1. Get current version
-    const unitId = SemanticUnitId.create(params.unitId);
-    const unit = await this._semanticUnitRepository.findById(unitId);
+    tags?: string[];
+    attributes?: Record<string, string>;
+  }): Promise<Result<DomainError, CreateSemanticUnitSuccess>> {
+    return this.createSemanticUnit({
+      id: params.id,
+      name: params.name ?? params.content?.slice(0, 50) ?? "Untitled",
+      description: params.description ?? params.summary ?? "",
+      language: params.language,
+      createdBy: params.createdBy,
+      tags: params.tags,
+      attributes: params.attributes,
+    });
+  }
 
-    if (!unit) {
-      return Result.fail(new SemanticUnitNotFoundError(params.unitId));
-    }
-
-    const currentVersion = unit.currentVersion.version;
-
-    // 2. Version the semantic unit
-    const versionResult = await tryCatchAsync(
+  /**
+   * Adds a source to a semantic unit (creates a new version).
+   */
+  async addSourceToSemanticUnit(params: {
+    unitId: string;
+    sourceId: string;
+    sourceType: string;
+    resourceId?: string;
+    extractedContent: string;
+    contentHash: string;
+    processingProfileId: string;
+    processingProfileVersion: number;
+  }): Promise<Result<DomainError, AddSourceSuccess>> {
+    const result = await tryCatchAsync(
       () =>
-        this._semanticUnit.versionSemanticUnit.execute({
+        this._semanticUnit.addSource.execute({
           unitId: params.unitId,
-          content: params.content,
-          language: params.language,
-          reason: params.reason,
-          topics: params.topics,
-          summary: params.summary,
+          sourceId: params.sourceId,
+          sourceType: params.sourceType,
+          resourceId: params.resourceId,
+          extractedContent: params.extractedContent,
+          contentHash: params.contentHash,
+          processingProfileId: params.processingProfileId,
+          processingProfileVersion: params.processingProfileVersion,
         }),
-      (error) =>
-        new SemanticUnitOperationError(
-          "versionSemanticUnit",
-          `Version semantic unit failed: ${error}`
-        )
+      (error) => {
+        if (error instanceof Error && error.message.includes("not found")) {
+          return new SemanticUnitNotFoundError(params.unitId);
+        }
+        return new SemanticUnitOperationError("addSource", String(error));
+      }
     );
 
-    if (versionResult.isFail()) {
-      return Result.fail(versionResult.error);
+    if (result.isFail()) {
+      return Result.fail(result.error);
     }
 
-    // 3. Register lineage for versioning
-    const newVersion = currentVersion + 1;
-    const lineageResult = await tryCatchAsync(
+    // Get the new version number
+    const unitId = SemanticUnitId.create(params.unitId);
+    const unit = await this._semanticUnitRepository.findById(unitId);
+    const version = unit?.currentVersion?.version ?? 1;
+
+    // Register lineage
+    await tryCatchAsync(
       () =>
         this._lineage.registerTransformation.execute({
           semanticUnitId: params.unitId,
-          transformationType: params.transformationType ?? TransformationType.Enrichment,
-          strategyUsed: params.strategyUsed ?? "manual-version",
-          inputVersion: currentVersion,
-          outputVersion: newVersion,
+          transformationType: TransformationType.Extraction,
+          strategyUsed: "source-addition",
+          inputVersion: version - 1,
+          outputVersion: version,
           parameters: {
-            reason: params.reason,
-            ...params.parameters,
+            sourceId: params.sourceId,
+            sourceType: params.sourceType,
+            processingProfileId: params.processingProfileId,
           },
         }),
       (error) =>
@@ -243,11 +256,103 @@ export class SemanticKnowledgeFacade {
         )
     );
 
-    if (lineageResult.isFail()) {
-      return Result.fail(lineageResult.error);
+    return Result.ok({ unitId: params.unitId, version });
+  }
+
+  /**
+   * Removes a source from a semantic unit (creates a new version without it).
+   */
+  async removeSourceFromSemanticUnit(params: {
+    unitId: string;
+    sourceId: string;
+  }): Promise<Result<DomainError, RemoveSourceSuccess>> {
+    const result = await tryCatchAsync(
+      () =>
+        this._semanticUnit.removeSource.execute({
+          unitId: params.unitId,
+          sourceId: params.sourceId,
+        }),
+      (error) => {
+        if (error instanceof Error && error.message.includes("not found")) {
+          return new SemanticUnitNotFoundError(params.unitId);
+        }
+        return new SemanticUnitOperationError("removeSource", String(error));
+      }
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
     }
 
-    return Result.ok({ unitId: params.unitId, newVersion });
+    const unitId = SemanticUnitId.create(params.unitId);
+    const unit = await this._semanticUnitRepository.findById(unitId);
+    const version = unit?.currentVersion?.version ?? 0;
+
+    return Result.ok({ unitId: params.unitId, version });
+  }
+
+  /**
+   * Reprocesses all sources of a semantic unit with a new processing profile.
+   */
+  async reprocessSemanticUnit(params: {
+    unitId: string;
+    processingProfileId: string;
+    processingProfileVersion: number;
+    reason: string;
+  }): Promise<Result<DomainError, ReprocessSuccess>> {
+    const result = await tryCatchAsync(
+      () =>
+        this._semanticUnit.reprocessSemanticUnit.execute({
+          unitId: params.unitId,
+          processingProfileId: params.processingProfileId,
+          processingProfileVersion: params.processingProfileVersion,
+          reason: params.reason,
+        }),
+      (error) => {
+        if (error instanceof Error && error.message.includes("not found")) {
+          return new SemanticUnitNotFoundError(params.unitId);
+        }
+        return new SemanticUnitOperationError("reprocess", String(error));
+      }
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
+    }
+
+    const unitId = SemanticUnitId.create(params.unitId);
+    const unit = await this._semanticUnitRepository.findById(unitId);
+    const version = unit?.currentVersion?.version ?? 0;
+
+    return Result.ok({ unitId: params.unitId, version });
+  }
+
+  /**
+   * Rolls back a semantic unit to a previous version (non-destructive pointer move).
+   */
+  async rollbackSemanticUnit(params: {
+    unitId: string;
+    targetVersion: number;
+  }): Promise<Result<DomainError, RollbackSuccess>> {
+    const result = await tryCatchAsync(
+      () =>
+        this._semanticUnit.rollbackSemanticUnit.execute({
+          unitId: params.unitId,
+          targetVersion: params.targetVersion,
+        }),
+      (error) => {
+        if (error instanceof Error && error.message.includes("not found")) {
+          return new SemanticUnitNotFoundError(params.unitId);
+        }
+        return new SemanticUnitOperationError("rollback", String(error));
+      }
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
+    }
+
+    return Result.ok({ unitId: params.unitId, targetVersion: params.targetVersion });
   }
 
   /**
@@ -257,7 +362,6 @@ export class SemanticKnowledgeFacade {
     unitId: string;
     reason: string;
   }): Promise<Result<DomainError, DeprecateSemanticUnitWithLineageSuccess>> {
-    // 1. Get current version
     const unitId = SemanticUnitId.create(params.unitId);
     const unit = await this._semanticUnitRepository.findById(unitId);
 
@@ -265,9 +369,8 @@ export class SemanticKnowledgeFacade {
       return Result.fail(new SemanticUnitNotFoundError(params.unitId));
     }
 
-    const currentVersion = unit.currentVersion.version;
+    const currentVersion = unit.currentVersion?.version ?? 0;
 
-    // 2. Deprecate the semantic unit
     const deprecateResult = await tryCatchAsync(
       () =>
         this._semanticUnit.deprecateSemanticUnit.execute({
@@ -285,15 +388,14 @@ export class SemanticKnowledgeFacade {
       return Result.fail(deprecateResult.error);
     }
 
-    // 3. Register lineage for deprecation (special transformation)
-    const lineageResult = await tryCatchAsync(
+    await tryCatchAsync(
       () =>
         this._lineage.registerTransformation.execute({
           semanticUnitId: params.unitId,
-          transformationType: TransformationType.Merge, // Using Merge as "deprecation" marker
+          transformationType: TransformationType.Merge,
           strategyUsed: "deprecation",
           inputVersion: currentVersion,
-          outputVersion: currentVersion, // No new version on deprecation
+          outputVersion: currentVersion,
           parameters: {
             reason: params.reason,
             deprecated: true,
@@ -306,10 +408,6 @@ export class SemanticKnowledgeFacade {
         )
     );
 
-    if (lineageResult.isFail()) {
-      return Result.fail(lineageResult.error);
-    }
-
     return Result.ok({ unitId: params.unitId });
   }
 
@@ -319,9 +417,11 @@ export class SemanticKnowledgeFacade {
   async batchCreateSemanticUnitsWithLineage(
     units: Array<{
       id: string;
-      sourceId: string;
-      sourceType: string;
-      content: string;
+      name?: string;
+      description?: string;
+      sourceId?: string;
+      sourceType?: string;
+      content?: string;
       language: string;
       createdBy: string;
       topics?: string[];
@@ -377,39 +477,6 @@ export class SemanticKnowledgeFacade {
     }
 
     return Result.ok(lineage);
-  }
-
-  /**
-   * Attaches an additional origin (provenance reference) to an existing semantic unit.
-   */
-  async addOriginToSemanticUnit(params: {
-    unitId: string;
-    sourceId: string;
-    sourceType: string;
-    resourceId?: string;
-  }): Promise<Result<DomainError, { unitId: string }>> {
-    const result = await tryCatchAsync(
-      () =>
-        this._semanticUnit.addOrigin.execute({
-          unitId: params.unitId,
-          sourceId: params.sourceId,
-          sourceType: params.sourceType,
-          extractedAt: new Date(),
-          resourceId: params.resourceId,
-        }),
-      (error) => {
-        if (error instanceof Error && error.message.includes("not found")) {
-          return new SemanticUnitNotFoundError(params.unitId);
-        }
-        return new SemanticUnitOperationError("addOrigin", String(error));
-      },
-    );
-
-    if (result.isFail()) {
-      return Result.fail(result.error);
-    }
-
-    return Result.ok({ unitId: params.unitId });
   }
 
   /**

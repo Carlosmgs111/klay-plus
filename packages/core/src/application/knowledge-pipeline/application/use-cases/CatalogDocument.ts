@@ -18,16 +18,13 @@ export class CatalogDocument {
     input: CatalogDocumentInput,
     completedSteps: PipelineStep[] = [],
   ): Promise<Result<KnowledgePipelineError, CatalogDocumentSuccess>> {
-    const result = await this._knowledge.createSemanticUnitWithLineage({
-      id: input.id,
-      sourceId: input.sourceId,
-      sourceType: input.sourceType,
-      content: input.content,
+    const result = await this._knowledge.createSemanticUnit({
+      id: input.semanticUnitId,
+      name: input.name,
+      description: input.description,
       language: input.language,
       createdBy: input.createdBy,
-      topics: input.topics,
       tags: input.tags,
-      summary: input.summary,
       attributes: input.attributes,
     });
 

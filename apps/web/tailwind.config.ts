@@ -39,6 +39,10 @@ export default {
         "3xl": "1.875rem",
         "4xl": "2.25rem",
       },
+      borderRadius: {
+        "3xl": "20px",
+        "4xl": "24px",
+      },
       textColor: {
         primary: "var(--text-primary)",
         secondary: "var(--text-secondary)",
@@ -53,9 +57,6 @@ export default {
       fontFamily: {
         sans: ["ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["ui-mono", "JetBrains Mono", "Menlo", "monospace"],
-      },
-      borderRadius: {
-        card: "8px",
       },
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",

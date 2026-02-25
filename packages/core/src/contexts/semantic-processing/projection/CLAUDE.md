@@ -11,6 +11,7 @@ Constructor privado + `create()` / `reconstitute()`.
 **Propiedades**:
 - `semanticUnitId` — referencia a la unidad semantica
 - `semanticUnitVersion` — version proyectada
+- `sourceId` — referencia a la fuente especifica (`string | null`, nullable para backward compat con proyecciones pre-hub)
 - `type` — `ProjectionType`
 - `status` — `ProjectionStatus`
 - `result` — `ProjectionResult | null`
@@ -64,10 +65,10 @@ Constructor privado + `create()` / `reconstitute()`.
 
 | Port | Responsabilidad |
 |------|----------------|
-| `SemanticProjectionRepository` | CRUD de proyecciones |
+| `SemanticProjectionRepository` | CRUD de proyecciones + `findBySourceId()`, `deleteBySourceId()` |
 | `ChunkingStrategy` | Segmentacion de texto (interfaz: `strategyId`, `version`, `chunk()`) |
 | `EmbeddingStrategy` | Generacion de embeddings (interfaz: `embed()`, `embedBatch()`) |
-| `VectorWriteStore` | Escritura de vectores (interfaz: `upsert()`, `delete()`, `deleteBySemanticUnitId()`) |
+| `VectorWriteStore` | Escritura de vectores (interfaz: `upsert()`, `delete()`, `deleteBySemanticUnitId()`, `deleteBySourceId()`) |
 
 ## Implementaciones de Chunking
 

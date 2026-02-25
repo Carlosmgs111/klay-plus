@@ -1,6 +1,6 @@
-import { useRuntimeMode } from "../../contexts/RuntimeModeContext.js";
-import { useTheme } from "../../contexts/ThemeContext.js";
-import { Icon } from "../shared/Icon.js";
+import { useRuntimeMode } from "../../contexts/RuntimeModeContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import { Icon } from "../shared/Icon";
 
 interface HeaderProps {
   title: string;

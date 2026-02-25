@@ -12,10 +12,16 @@ Punto de entrada unico. Primary port en el sentido hexagonal: los adaptadores (U
 
 | Operacion | Descripcion | Contextos coordinados |
 |-----------|-------------|----------------------|
-| `execute` | Pipeline completo: Ingest → Catalog → Process | Ingestion, Knowledge, Processing |
+| `execute` | Pipeline completo: Ingest → CreateUnit → AddSource → Process | Ingestion, Knowledge, Processing |
 | `ingestDocument` | Registra source + extrae texto | Ingestion |
 | `processDocument` | Chunking + embeddings + vector storage | Processing |
 | `catalogDocument` | Crea semantic unit + lineage | Knowledge |
+| `addSource` | Agrega fuente a unidad existente (crea nueva version) | Knowledge |
+| `removeSource` | Elimina fuente de unidad existente | Knowledge |
+| `reprocessUnit` | Reprocesa todas las fuentes con nuevo profile | Knowledge |
+| `rollbackUnit` | Rollback a version anterior (mueve puntero) | Knowledge |
+| `addProjection` | Crea proyeccion adicional para unidad existente | Processing |
+| `linkUnits` | Enlaza dos unidades con relacion nombrada | Knowledge |
 | `searchKnowledge` | Busqueda semantica por similitud | Retrieval |
 | `createProcessingProfile` | Crea perfil de procesamiento | Processing |
 | `getManifest` | Consulta trazabilidad cross-context | ManifestRepository |
@@ -80,6 +86,22 @@ Error standalone (no extiende `DomainError` de shared/). Trackea en que step fal
 
 Contratos de datos puros en `contracts/dtos.ts`. Sin logica de dominio, sin dependencias de framework. Solo valores primitivos/JSON-safe. Los adaptadores construyen estos DTOs desde sus propios formatos de input.
 
+### DTOs principales
+
+| DTO | Descripcion |
+|-----|-------------|
+| `ExecutePipelineInput/Success` | Pipeline completo |
+| `IngestDocumentInput/Success` | Solo ingesta |
+| `ProcessDocumentInput/Success` | Solo procesamiento |
+| `CatalogDocumentInput/Success` | Solo catalogacion (usa name/description) |
+| `AddSourceInput/Success` | Agregar fuente a unidad |
+| `RemoveSourceInput/Success` | Eliminar fuente de unidad |
+| `ReprocessUnitInput/Success` | Reprocesar con nuevo profile |
+| `RollbackUnitInput/Success` | Rollback a version anterior |
+| `AddProjectionInput/Success` | Crear proyeccion adicional |
+| `LinkUnitsInput/Success` | Enlazar unidades |
+| `SearchKnowledgeInput/Success` | Busqueda semantica |
+
 ## Port de Persistencia
 
 `ManifestRepository` — `save`, `findById`, `findByResourceId`, `findBySourceId`, `findAll`
@@ -110,13 +132,16 @@ Input (sourceId, uri, type, profileId, ...)
 [1. Ingestion] → registra source + extrae texto → contentHash, extractedText
     |
     v
-[2. Cataloging] → crea SemanticUnit + registra lineage → unitId
+[2. Cataloging] → crea SemanticUnit (name, description) + registra lineage → unitId
     |
     v
-[3. Processing] → chunking + embedding + vector storage → projectionId
+[3. AddSource] → agrega fuente a la unidad → version 1 con snapshot
     |
     v
-[4. Manifest] → registra ContentManifest con todos los IDs
+[4. Processing] → chunking + embedding + vector storage → projectionId
+    |
+    v
+[5. Manifest] → registra ContentManifest con todos los IDs
     |
     v
 Result<Error, { sourceId, unitId, projectionId, contentHash, ... }>

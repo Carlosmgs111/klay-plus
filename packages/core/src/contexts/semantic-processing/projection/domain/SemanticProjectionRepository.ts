@@ -11,4 +11,6 @@ export interface SemanticProjectionRepository extends Repository<SemanticProject
     type: ProjectionType,
   ): Promise<SemanticProjection | null>;
   findByStatus(status: ProjectionStatus): Promise<SemanticProjection[]>;
+  findBySourceId(sourceId: string): Promise<SemanticProjection[]>;
+  deleteBySourceId(sourceId: string): Promise<void>;
 }

@@ -61,11 +61,58 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Ingestion);
 
-    // ─── Step 2: Process ────────────────────────────────────────────────────────
+    // ─── Step 2: Create Semantic Unit ──────────────────────────────────────────
+    const catalogResult = await this._knowledge.createSemanticUnit({
+      id: input.semanticUnitId,
+      name: input.sourceName ?? "Untitled",
+      description: input.summary ?? "",
+      language: input.language,
+      createdBy: input.createdBy,
+      tags: input.tags,
+      attributes: input.attributes,
+    });
+
+    if (catalogResult.isFail()) {
+      await this._recordManifest(input, manifestId, "failed", completedSteps, PipelineStep.Cataloging);
+      return Result.fail(
+        KnowledgePipelineError.fromStep(
+          PipelineStep.Cataloging,
+          catalogResult.error,
+          completedSteps,
+        ),
+      );
+    }
+
+    completedSteps.push(PipelineStep.Cataloging);
+
+    // ─── Step 3: Add Source ─────────────────────────────────────────────────────
+    const addSourceResult = await this._knowledge.addSourceToSemanticUnit({
+      unitId: input.semanticUnitId,
+      sourceId: input.sourceId,
+      sourceType: input.sourceType,
+      resourceId: input.resourceId,
+      extractedContent: ingestionResult.value.extractedText,
+      contentHash: ingestionResult.value.contentHash,
+      processingProfileId: input.processingProfileId,
+      processingProfileVersion: 1,
+    });
+
+    if (addSourceResult.isFail()) {
+      await this._recordManifest(input, manifestId, "failed", completedSteps, PipelineStep.Cataloging);
+      return Result.fail(
+        KnowledgePipelineError.fromStep(
+          PipelineStep.Cataloging,
+          addSourceResult.error,
+          completedSteps,
+        ),
+      );
+    }
+
+    // ─── Step 4: Process ────────────────────────────────────────────────────────
     const processingResult = await this._processing.processContent({
       projectionId: input.projectionId,
       semanticUnitId: input.semanticUnitId,
-      semanticUnitVersion: 1,
+      semanticUnitVersion: addSourceResult.value.version,
       content: ingestionResult.value.extractedText,
       type: (input.projectionType ?? DEFAULT_PROJECTION_TYPE) as ProjectionType,
       processingProfileId: input.processingProfileId,
@@ -83,31 +130,6 @@ export class ExecuteFullPipeline {
     }
 
     completedSteps.push(PipelineStep.Processing);
-
-    // ─── Step 3: Catalog ────────────────────────────────────────────────────────
-    const catalogResult = await this._knowledge.createSemanticUnitWithLineage({
-      id: input.semanticUnitId,
-      sourceId: input.sourceId,
-      sourceType: input.sourceType,
-      content: ingestionResult.value.extractedText,
-      language: input.language,
-      createdBy: input.createdBy,
-      topics: input.topics,
-      tags: input.tags,
-      summary: input.summary,
-      attributes: input.attributes,
-    });
-
-    if (catalogResult.isFail()) {
-      await this._recordManifest(input, manifestId, "failed", completedSteps, PipelineStep.Cataloging);
-      return Result.fail(
-        KnowledgePipelineError.fromStep(
-          PipelineStep.Cataloging,
-          catalogResult.error,
-          completedSteps,
-        ),
-      );
-    }
 
     // ─── Record Manifest (if tracking enabled) ───────────────────────────────
     await this._recordManifest(input, manifestId, "complete", completedSteps, undefined, {

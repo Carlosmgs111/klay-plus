@@ -19,8 +19,14 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-  AttachOriginInput,
-  AttachOriginSuccess,
+  AddSourceInput,
+  AddSourceSuccess,
+  RemoveSourceInput,
+  RemoveSourceSuccess,
+  ReprocessUnitInput,
+  ReprocessUnitSuccess,
+  RollbackUnitInput,
+  RollbackUnitSuccess,
   AddProjectionInput,
   AddProjectionSuccess,
   LinkUnitsInput,
@@ -158,16 +164,20 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     return this._getManifest.execute(input);
   }
 
-  // ─── New Operations: Multi-Origin, Multi-Projection, Unit Linking ──────────
+  // ─── New Operations: Source Management, Reprocessing, Rollback ──────────────
 
-  async attachOrigin(
-    input: AttachOriginInput,
-  ): Promise<Result<KnowledgePipelineError, AttachOriginSuccess>> {
-    const result = await this._knowledge.addOriginToSemanticUnit({
-      unitId: input.semanticUnitId,
+  async addSource(
+    input: AddSourceInput,
+  ): Promise<Result<KnowledgePipelineError, AddSourceSuccess>> {
+    const result = await this._knowledge.addSourceToSemanticUnit({
+      unitId: input.unitId,
       sourceId: input.sourceId,
       sourceType: input.sourceType,
       resourceId: input.resourceId,
+      extractedContent: input.extractedContent,
+      contentHash: input.contentHash,
+      processingProfileId: input.processingProfileId,
+      processingProfileVersion: input.processingProfileVersion,
     });
 
     if (result.isFail()) {
@@ -176,8 +186,63 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
       );
     }
 
-    return Result.ok({ semanticUnitId: input.semanticUnitId });
+    return Result.ok(result.value);
   }
+
+  async removeSource(
+    input: RemoveSourceInput,
+  ): Promise<Result<KnowledgePipelineError, RemoveSourceSuccess>> {
+    const result = await this._knowledge.removeSourceFromSemanticUnit({
+      unitId: input.unitId,
+      sourceId: input.sourceId,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, result.error, []),
+      );
+    }
+
+    return Result.ok(result.value);
+  }
+
+  async reprocessUnit(
+    input: ReprocessUnitInput,
+  ): Promise<Result<KnowledgePipelineError, ReprocessUnitSuccess>> {
+    const result = await this._knowledge.reprocessSemanticUnit({
+      unitId: input.unitId,
+      processingProfileId: input.processingProfileId,
+      processingProfileVersion: input.processingProfileVersion,
+      reason: input.reason,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, result.error, []),
+      );
+    }
+
+    return Result.ok(result.value);
+  }
+
+  async rollbackUnit(
+    input: RollbackUnitInput,
+  ): Promise<Result<KnowledgePipelineError, RollbackUnitSuccess>> {
+    const result = await this._knowledge.rollbackSemanticUnit({
+      unitId: input.unitId,
+      targetVersion: input.targetVersion,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, result.error, []),
+      );
+    }
+
+    return Result.ok(result.value);
+  }
+
+  // ─── Projection & Linking ─────────────────────────────────────────────────
 
   async addProjection(
     input: AddProjectionInput,

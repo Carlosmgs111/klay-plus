@@ -44,7 +44,9 @@
       "WebFetch(domain:vercel.com)",
       "WebFetch(domain:superdevresources.com)",
       "WebFetch(domain:blog.logrocket.com)",
-      "WebFetch(domain:mobbin.com)"
+      "WebFetch(domain:mobbin.com)",
+      "Bash(grep:*)",
+      "mcp__plugin_engram_engram__mem_session_summary"
     ]
   },
   "mcpServers": {

@@ -13,17 +13,17 @@ export function ProfilesPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icon name="sliders" size={16} style={{ color: "var(--text-tertiary)" }} />
+              <Icon name="sliders" style={{ color: "var(--text-tertiary)" }} />
               <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
                 Processing Profiles
               </h2>
             </div>
             <Button
+            className="text-lg flex items-center gap-2"
               variant={showForm ? "ghost" : "secondary"}
-              size="sm"
               onClick={() => setShowForm(!showForm)}
             >
-              <Icon name={showForm ? "x" : "plus"} size={14} />
+              <Icon className="text-2xl" name={showForm ? "x" : "plus"} />
               {showForm ? "Close" : "New Profile"}
             </Button>
           </div>
@@ -40,7 +40,7 @@ export function ProfilesPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="info" size={16} style={{ color: "var(--text-tertiary)" }} />
+            <Icon name="info" style={{ color: "var(--text-tertiary)" }} />
             <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
               About Processing Profiles
             </h2>

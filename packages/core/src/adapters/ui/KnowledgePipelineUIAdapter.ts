@@ -14,8 +14,14 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-  AttachOriginInput,
-  AttachOriginSuccess,
+  AddSourceInput,
+  AddSourceSuccess,
+  RemoveSourceInput,
+  RemoveSourceSuccess,
+  ReprocessUnitInput,
+  ReprocessUnitSuccess,
+  RollbackUnitInput,
+  RollbackUnitSuccess,
   AddProjectionInput,
   AddProjectionSuccess,
   LinkUnitsInput,
@@ -91,8 +97,23 @@ export class KnowledgePipelineUIAdapter {
     return this._unwrap(result);
   }
 
-  async attachOrigin(input: AttachOriginInput): Promise<UIResult<AttachOriginSuccess>> {
-    const result = await this._pipeline.attachOrigin(input);
+  async addSource(input: AddSourceInput): Promise<UIResult<AddSourceSuccess>> {
+    const result = await this._pipeline.addSource(input);
+    return this._unwrap(result);
+  }
+
+  async removeSource(input: RemoveSourceInput): Promise<UIResult<RemoveSourceSuccess>> {
+    const result = await this._pipeline.removeSource(input);
+    return this._unwrap(result);
+  }
+
+  async reprocessUnit(input: ReprocessUnitInput): Promise<UIResult<ReprocessUnitSuccess>> {
+    const result = await this._pipeline.reprocessUnit(input);
+    return this._unwrap(result);
+  }
+
+  async rollbackUnit(input: RollbackUnitInput): Promise<UIResult<RollbackUnitSuccess>> {
+    const result = await this._pipeline.rollbackUnit(input);
     return this._unwrap(result);
   }
 

@@ -37,4 +37,12 @@ export class IndexedDBVectorWriteStore implements VectorWriteStore {
       await this.store.remove(dto.id);
     }
   }
+
+  async deleteBySourceId(sourceId: string): Promise<void> {
+    const all = await this.store.getAll();
+    const matching = all.filter((d) => d.metadata?.sourceId === sourceId);
+    for (const dto of matching) {
+      await this.store.remove(dto.id);
+    }
+  }
 }

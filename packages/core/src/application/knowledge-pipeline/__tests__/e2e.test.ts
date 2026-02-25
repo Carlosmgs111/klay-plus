@@ -165,16 +165,12 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
 
     it("should catalog a document independently", async () => {
-      const content = loadFixture("clean-architecture.txt");
-
       const result = await pipeline.catalogDocument({
-        id: "unit-clean-001",
-        sourceId: "src-clean-001",
-        sourceType: "PLAIN_TEXT",
-        content,
+        semanticUnitId: "unit-clean-001",
+        name: "Clean Architecture",
+        description: "Clean Architecture principles and patterns",
         language: "en",
         createdBy: "test",
-        topics: ["architecture", "clean-code"],
         tags: ["software-design"],
       });
 
@@ -271,7 +267,6 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
       if (second.isFail()) {
         expect(second.error.step).toBe(PipelineStep.Cataloging);
         expect(second.error.completedSteps).toContain(PipelineStep.Ingestion);
-        expect(second.error.completedSteps).toContain(PipelineStep.Processing);
         expect(second.error.completedSteps).not.toContain(PipelineStep.Cataloging);
       }
     });
@@ -400,6 +395,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
           expect(manifest.sourceId).toBe(sourceId);
           expect(manifest.status).toBe("complete");
           expect(manifest.completedSteps).toContain("ingestion");
+          expect(manifest.completedSteps).toContain("cataloging");
           expect(manifest.completedSteps).toContain("processing");
           expect(manifest.contentHash).toBeTruthy();
           expect(manifest.extractedTextLength).toBeGreaterThan(0);

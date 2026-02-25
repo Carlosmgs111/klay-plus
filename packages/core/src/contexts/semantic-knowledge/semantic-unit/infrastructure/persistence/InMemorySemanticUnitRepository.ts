@@ -18,9 +18,9 @@ export class InMemorySemanticUnitRepository implements SemanticUnitRepository {
     this.store.delete(id.value);
   }
 
-  async findByOriginSourceId(sourceId: string): Promise<SemanticUnit[]> {
+  async findBySourceId(sourceId: string): Promise<SemanticUnit[]> {
     return [...this.store.values()].filter((u) =>
-      u.origins.some((o) => o.sourceId === sourceId),
+      u.allSources.some((s) => s.sourceId === sourceId),
     );
   }
 

@@ -46,4 +46,17 @@ export class IndexedDBSemanticProjectionRepository implements SemanticProjection
     const all = await this.store.getAll();
     return all.filter((d) => d.status === status).map(fromDTO);
   }
+
+  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
+    const all = await this.store.getAll();
+    return all.filter((d) => d.sourceId === sourceId).map(fromDTO);
+  }
+
+  async deleteBySourceId(sourceId: string): Promise<void> {
+    const all = await this.store.getAll();
+    const matching = all.filter((d) => d.sourceId === sourceId);
+    for (const dto of matching) {
+      await this.store.remove(dto.id);
+    }
+  }
 }

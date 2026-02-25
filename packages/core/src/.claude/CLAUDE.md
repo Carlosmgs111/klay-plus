@@ -37,10 +37,10 @@ Responsable de recibir contenido desde diversas fuentes externas (archivos PDF, 
 ### 2. Semantic Knowledge (`contexts/semantic-knowledge/`)
 > **Subdominio**: Representacion y lineage del conocimiento
 
-Transforma contenido extraido en unidades semanticas versionadas con ciclo de vida completo (Draft → Active → Deprecated → Archived). Mantiene trazabilidad total de cada transformacion aplicada (extraction, chunking, enrichment, embedding).
+Gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen contenido, con versiones inmutables tipo snapshot que capturan el estado completo (fuentes + estrategia + proyecciones) en cada punto. Ciclo de vida completo (Draft → Active → Deprecated → Archived). Mantiene trazabilidad total de cada transformacion y enlaces entre unidades.
 
 **Modulos**: `semantic-unit`, `lineage`
-**Facade**: `SemanticKnowledgeFacade` — expone creacion/versionado/deprecacion de unidades semanticas con lineage automatico
+**Facade**: `SemanticKnowledgeFacade` — expone creacion de unidades, gestion de fuentes (add/remove), reprocesamiento, rollback, deprecacion, enlaces entre unidades, todo con lineage automatico
 **Ver**: `contexts/semantic-knowledge/CLAUDE.md`
 
 ### 3. Semantic Processing (`contexts/semantic-processing/`)
@@ -68,16 +68,22 @@ El lado de lectura del sistema. Recibe consultas en lenguaje natural, las convie
 
 Expone un API unificado (`KnowledgePipelinePort`) que orquesta el flujo completo:
 ```
-Contenido crudo → [Ingestion] → [Processing] → [Cataloging] → [Search]
+Contenido crudo → [Ingestion] → [CreateUnit] → [AddSource] → [Processing] → [Search]
 ```
 
 Gestiona **ContentManifest**: un tracker cross-context que asocia todos los artefactos producidos por un documento (resourceId, sourceId, extractionJobId, semanticUnitId, projectionId).
 
 **Operaciones**:
-- `execute` — Pipeline completo: ingestar + procesar + catalogar
+- `execute` — Pipeline completo: ingestar + crear unit + agregar fuente + procesar
 - `ingestDocument` — Solo ingesta y extraccion
 - `processDocument` — Solo chunking + embeddings + vector storage
 - `catalogDocument` — Solo creacion de unidad semantica + lineage
+- `addSource` — Agregar fuente a unidad existente (crea nueva version)
+- `removeSource` — Eliminar fuente de unidad existente
+- `reprocessUnit` — Reprocesar todas las fuentes con nuevo profile
+- `rollbackUnit` — Rollback a version anterior
+- `addProjection` — Crear proyeccion adicional para unidad existente
+- `linkUnits` — Enlazar dos unidades con relacion nombrada
 - `searchKnowledge` — Busqueda semantica
 - `createProcessingProfile` — Crear perfil de procesamiento
 - `getManifest` — Consultar trazabilidad del pipeline
@@ -112,9 +118,14 @@ Archivo/URL/API
     | texto extraido + contentHash
     v
 [Semantic Knowledge]
-    SemanticUnit creation + Lineage registration
+    SemanticUnit creation (empty hub) + Lineage registration
     |
-    | semanticUnitId + content
+    | unitId
+    v
+[Semantic Knowledge]
+    AddSource → nueva version con snapshot de fuente
+    |
+    | unitId + version + extractedContent
     v
 [Semantic Processing]
     Chunking + Embedding + Vector storage (guiado por ProcessingProfile)
@@ -125,7 +136,7 @@ Archivo/URL/API
     Semantic query + Ranking → RetrievalResult
 ```
 
-## Catalogo de Eventos de Dominio (18 eventos)
+## Catalogo de Eventos de Dominio (21 eventos)
 
 | Contexto | Evento | Significado |
 |----------|--------|-------------|
@@ -136,10 +147,13 @@ Archivo/URL/API
 | Source Ingestion / Resource | `ResourceDeleted` | Resource eliminado |
 | Source Ingestion / Extraction | `ExtractionCompleted` | Texto extraido exitosamente |
 | Source Ingestion / Extraction | `ExtractionFailed` | Extraccion fallida |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitCreated` | Nueva unidad de conocimiento |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitVersioned` | Nueva version de contenido |
+| Semantic Knowledge / Semantic Unit | `SemanticUnitCreated` | Nueva unidad de conocimiento (hub vacio) |
+| Semantic Knowledge / Semantic Unit | `SemanticUnitSourceAdded` | Fuente agregada a la unidad |
+| Semantic Knowledge / Semantic Unit | `SemanticUnitSourceRemoved` | Fuente eliminada de la unidad |
+| Semantic Knowledge / Semantic Unit | `SemanticUnitVersioned` | Nueva version creada (snapshot inmutable) |
 | Semantic Knowledge / Semantic Unit | `SemanticUnitDeprecated` | Unidad deprecada |
 | Semantic Knowledge / Semantic Unit | `SemanticUnitReprocessRequested` | Reprocesamiento solicitado |
+| Semantic Knowledge / Semantic Unit | `SemanticUnitRolledBack` | Rollback a version anterior |
 | Semantic Processing / Projection | `ProjectionGenerated` | Vectores generados exitosamente |
 | Semantic Processing / Projection | `ProjectionFailed` | Generacion de vectores fallida |
 | Semantic Processing / Profile | `ProfileCreated` | Nuevo perfil de procesamiento |

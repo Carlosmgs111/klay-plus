@@ -1,39 +1,39 @@
 import { lazy, Suspense } from "react";
-import { RuntimeModeProvider } from "../../contexts/RuntimeModeContext.js";
-import { ThemeProvider } from "../../contexts/ThemeContext.js";
-import { ToastProvider } from "../../contexts/ToastContext.js";
-import { Sidebar } from "./Sidebar.js";
-import { Header } from "./Header.js";
-import { ToastContainer } from "../shared/Toast.js";
-import { SkeletonPage } from "../shared/Skeleton.js";
+import { RuntimeModeProvider } from "../../contexts/RuntimeModeContext";
+import { ThemeProvider } from "../../contexts/ThemeContext";
+import { ToastProvider } from "../../contexts/ToastContext";
+import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
+import { ToastContainer } from "../shared/Toast";
+import { SkeletonPage } from "../shared/Skeleton";
 
 const DashboardPage = lazy(() =>
-  import("../features/dashboard/DashboardPage.js").then((m) => ({
+  import("../features/dashboard/DashboardPage").then((m) => ({
     default: m.DashboardPage,
   }))
 );
 const DocumentsPage = lazy(() =>
-  import("../features/documents/DocumentsPage.js").then((m) => ({
+  import("../features/documents/DocumentsPage").then((m) => ({
     default: m.DocumentsPage,
   }))
 );
 const KnowledgePage = lazy(() =>
-  import("../features/knowledge/KnowledgePage.js").then((m) => ({
+  import("../features/knowledge/KnowledgePage").then((m) => ({
     default: m.KnowledgePage,
   }))
 );
 const SearchPage = lazy(() =>
-  import("../features/search/SearchPage.js").then((m) => ({
+  import("../features/search/SearchPage").then((m) => ({
     default: m.SearchPage,
   }))
 );
 const ProfilesPage = lazy(() =>
-  import("../features/profiles/ProfilesPage.js").then((m) => ({
+  import("../features/profiles/ProfilesPage").then((m) => ({
     default: m.ProfilesPage,
   }))
 );
 const SettingsPage = lazy(() =>
-  import("../features/settings/SettingsPage.js").then((m) => ({
+  import("../features/settings/SettingsPage").then((m) => ({
     default: m.SettingsPage,
   }))
 );

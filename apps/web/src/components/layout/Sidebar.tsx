@@ -1,6 +1,6 @@
-import { Icon } from "../shared/Icon.js";
-import { useTheme } from "../../contexts/ThemeContext.js";
-import type { IconName } from "../shared/Icon.js";
+import { Icon } from "../shared/Icon";
+import { useTheme } from "../../contexts/ThemeContext";
+import type { IconName } from "../shared/Icon";
 
 const NAV_ITEMS: { label: string; href: string; icon: IconName }[] = [
   { label: "Dashboard", href: "/dashboard", icon: "grid" },
@@ -39,8 +39,9 @@ export function Sidebar({ activePage }: SidebarProps) {
             <a
               key={item.href}
               href={item.href}
-              className={`px-6 py-3 font-thin text-lg bg-slate-200/60 dark:bg-slate-800/60 hover:bg-slate-200/60 
-                dark:hover:bg-slate-700/60 rounded-lg block flex items-center gap-2 text-slate-800 dark:text-slate-200 ${isActive && "bg-slate-200/60 dark:bg-slate-600/60"}`}
+              className={`px-6 py-3 font-thin text-lg bg-slate-300/60 dark:bg-slate-800/60 hover:bg-slate-200/60 
+                dark:hover:bg-slate-700/60 rounded-lg block flex items-center gap-2 text-slate-800 dark:text-slate-200
+                ${isActive && "bg-slate-200/60 dark:bg-slate-600/60"} transition-all duration-150 ease-in-out`}
             >
               <Icon name={item.icon} className="flex-shrink-0 mr-2" />
               {item.label}

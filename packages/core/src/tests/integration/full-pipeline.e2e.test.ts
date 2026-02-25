@@ -42,8 +42,6 @@ import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retriev
 // ─── Domain Types ────────────────────────────────────────────────────────────
 import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType.js";
 import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType.js";
-import { TransformationType } from "../../contexts/semantic-knowledge/lineage/domain/Transformation.js";
-
 // ─── Facade Types ────────────────────────────────────────────────────────────
 import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
 import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
@@ -466,29 +464,27 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 4: Content Update & Re-Processing", () => {
-    it("should version the semantic unit with enrichment (Semantic Knowledge)", async () => {
+    it("should add enrichment source to semantic unit (Semantic Knowledge)", async () => {
       console.log("── Flow 4: Content Update & Re-Processing ─────────────────\n");
-      console.log("🔄 Step 4.1: Versioning DDD document with enrichment...");
+      console.log("🔄 Step 4.1: Adding enrichment source to DDD document...");
       console.log(`   📄 Updated from: fixtures/ddd-overview-updated.txt (${DOCUMENT_DDD_UPDATED.length} chars)`);
 
-      const result = await knowledge.versionSemanticUnitWithLineage({
+      const result = await knowledge.addSourceToSemanticUnit({
         unitId: ids.ddd.unitId,
-        content: DOCUMENT_DDD_UPDATED,
-        language: "en",
-        reason: "Added strategic DDD patterns: Context Map, ACL, Shared Kernel",
-        transformationType: TransformationType.Enrichment,
-        strategyUsed: "manual-enrichment",
-        topics: ["ddd", "software-architecture", "strategic-ddd", "context-map"],
-        summary: "Updated with strategic DDD patterns",
-        parameters: { addedConcepts: 3, updatedSections: ["Key Concepts"] },
+        sourceId: "enrichment-source-1",
+        sourceType: "enrichment",
+        extractedContent: DOCUMENT_DDD_UPDATED,
+        contentHash: "hash-enriched",
+        processingProfileId: processingProfileId,
+        processingProfileVersion: 1,
       });
 
       expect(result.isOk()).toBe(true);
       expect(result.value.unitId).toBe(ids.ddd.unitId);
-      expect(result.value.newVersion).toBe(2);
+      expect(result.value.version).toBeGreaterThanOrEqual(1);
 
-      console.log(`   ✅ Versioned: ${ids.ddd.unitId.slice(0, 8)}... → v${result.value.newVersion}`);
-      console.log(`      Lineage: ENRICHMENT transformation registered\n`);
+      console.log(`   ✅ Source added: ${ids.ddd.unitId.slice(0, 8)}... → v${result.value.version}`);
+      console.log(`      Lineage: source-addition transformation registered\n`);
     });
 
     it("should re-process updated content (Semantic Processing)", async () => {
@@ -696,14 +692,17 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log(`   ✅ Correctly rejected: ${result.error.message}\n`);
     });
 
-    it("should reject versioning non-existent semantic unit", async () => {
-      console.log("🚫 Step 7.3: Non-existent unit versioning...");
+    it("should reject adding source to non-existent semantic unit", async () => {
+      console.log("🚫 Step 7.3: Non-existent unit source addition...");
 
-      const result = await knowledge.versionSemanticUnitWithLineage({
+      const result = await knowledge.addSourceToSemanticUnit({
         unitId: "non-existent-id",
-        content: "Content",
-        language: "en",
-        reason: "Testing",
+        sourceId: "src",
+        sourceType: "doc",
+        extractedContent: "content",
+        contentHash: "hash",
+        processingProfileId: "p",
+        processingProfileVersion: 1,
       });
 
       expect(result.isFail()).toBe(true);

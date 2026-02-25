@@ -44,4 +44,16 @@ export class InMemorySemanticProjectionRepository implements SemanticProjectionR
   async findByStatus(status: ProjectionStatus): Promise<SemanticProjection[]> {
     return [...this.store.values()].filter((p) => p.status === status);
   }
+
+  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
+    return [...this.store.values()].filter((p) => p.sourceId === sourceId);
+  }
+
+  async deleteBySourceId(sourceId: string): Promise<void> {
+    for (const [id, projection] of this.store) {
+      if (projection.sourceId === sourceId) {
+        this.store.delete(id);
+      }
+    }
+  }
 }

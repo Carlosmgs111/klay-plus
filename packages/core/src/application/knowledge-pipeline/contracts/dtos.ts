@@ -100,16 +100,14 @@ export interface ProcessDocumentSuccess {
 // ─── Granular: Catalog Document ──────────────────────────────────────────────
 
 export interface CatalogDocumentInput {
-  id: string;
-  sourceId: string;
-  sourceType: string;
-  content: string;
+  semanticUnitId: string;
+  name: string;
+  description: string;
   language: string;
   createdBy: string;
-  topics?: string[];
   tags?: string[];
-  summary?: string;
   attributes?: Record<string, string>;
+  completedSteps?: string[];
 }
 
 export interface CatalogDocumentSuccess {
@@ -169,17 +167,60 @@ export interface GetManifestSuccess {
   manifests: import("../domain/ContentManifest.js").ContentManifestEntry[];
 }
 
-// ─── Attach Origin ──────────────────────────────────────────────────────────
+// ─── Add Source ─────────────────────────────────────────────────────────────
 
-export interface AttachOriginInput {
-  semanticUnitId: string;
+export interface AddSourceInput {
+  unitId: string;
   sourceId: string;
   sourceType: string;
   resourceId?: string;
+  extractedContent: string;
+  contentHash: string;
+  processingProfileId: string;
+  processingProfileVersion: number;
 }
 
-export interface AttachOriginSuccess {
-  semanticUnitId: string;
+export interface AddSourceSuccess {
+  unitId: string;
+  version: number;
+}
+
+// ─── Remove Source ──────────────────────────────────────────────────────────
+
+export interface RemoveSourceInput {
+  unitId: string;
+  sourceId: string;
+}
+
+export interface RemoveSourceSuccess {
+  unitId: string;
+  version: number;
+}
+
+// ─── Reprocess Unit ─────────────────────────────────────────────────────────
+
+export interface ReprocessUnitInput {
+  unitId: string;
+  processingProfileId: string;
+  processingProfileVersion: number;
+  reason: string;
+}
+
+export interface ReprocessUnitSuccess {
+  unitId: string;
+  version: number;
+}
+
+// ─── Rollback Unit ──────────────────────────────────────────────────────────
+
+export interface RollbackUnitInput {
+  unitId: string;
+  targetVersion: number;
+}
+
+export interface RollbackUnitSuccess {
+  unitId: string;
+  targetVersion: number;
 }
 
 // ─── Add Projection ─────────────────────────────────────────────────────────

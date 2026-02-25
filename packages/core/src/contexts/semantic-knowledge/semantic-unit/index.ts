@@ -2,15 +2,18 @@
 export {
   SemanticUnit,
   SemanticUnitId,
-  SemanticVersion,
+  UnitSource,
+  UnitVersion,
+  VersionSourceSnapshot,
   SemanticState,
-  Origin,
-  Meaning,
   UnitMetadata,
   SemanticUnitCreated,
   SemanticUnitVersioned,
   SemanticUnitDeprecated,
   SemanticUnitReprocessRequested,
+  SemanticUnitSourceAdded,
+  SemanticUnitSourceRemoved,
+  SemanticUnitRolledBack,
 } from "./domain/index.js";
 
 export type { SemanticUnitRepository } from "./domain/index.js";
@@ -18,7 +21,9 @@ export type { SemanticUnitRepository } from "./domain/index.js";
 // ─── Application ───────────────────────────────────────────────────
 export {
   CreateSemanticUnit,
-  VersionSemanticUnit,
+  AddSourceToSemanticUnit,
+  RemoveSourceFromSemanticUnit,
+  RollbackSemanticUnit,
   DeprecateSemanticUnit,
   ReprocessSemanticUnit,
   SemanticUnitUseCases,
@@ -26,7 +31,9 @@ export {
 
 export type {
   CreateSemanticUnitCommand,
-  VersionSemanticUnitCommand,
+  AddSourceCommand,
+  RemoveSourceCommand,
+  RollbackSemanticUnitCommand,
   DeprecateSemanticUnitCommand,
   ReprocessSemanticUnitCommand,
 } from "./application/index.js";

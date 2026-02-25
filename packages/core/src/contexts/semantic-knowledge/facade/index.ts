@@ -9,8 +9,12 @@ export {
 } from "./SemanticKnowledgeFacade.js";
 
 export type {
+  CreateSemanticUnitSuccess,
   CreateSemanticUnitWithLineageSuccess,
-  VersionSemanticUnitWithLineageSuccess,
+  AddSourceSuccess,
+  RemoveSourceSuccess,
+  ReprocessSuccess,
+  RollbackSuccess,
   DeprecateSemanticUnitWithLineageSuccess,
 } from "./SemanticKnowledgeFacade.js";
 

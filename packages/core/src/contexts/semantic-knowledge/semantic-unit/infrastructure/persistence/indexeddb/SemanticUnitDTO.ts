@@ -1,29 +1,38 @@
 import { SemanticUnit } from "../../../domain/SemanticUnit.js";
 import { SemanticUnitId } from "../../../domain/SemanticUnitId.js";
-import { Origin } from "../../../domain/Origin.js";
-import { Meaning } from "../../../domain/Meaning.js";
-import { SemanticVersion } from "../../../domain/SemanticVersion.js";
+import { UnitSource } from "../../../domain/UnitSource.js";
+import { UnitVersion } from "../../../domain/UnitVersion.js";
+import { VersionSourceSnapshot } from "../../../domain/VersionSourceSnapshot.js";
 import { UnitMetadata } from "../../../domain/UnitMetadata.js";
 import type { SemanticState } from "../../../domain/SemanticState.js";
 
 export interface SemanticUnitDTO {
   id: string;
+  name: string;
+  description: string;
+  language: string;
   state: string;
-  /** @deprecated Kept for backward-compat reading of old data. Use `origins`. */
-  origin?: { sourceId: string; extractedAt: string; sourceType: string };
-  origins: Array<{
+  sources: Array<{
     sourceId: string;
-    extractedAt: string;
     sourceType: string;
     resourceId?: string;
+    extractedContent: string;
+    contentHash: string;
+    addedAt: string;
   }>;
-  currentVersionIndex: number;
   versions: Array<{
     version: number;
-    meaning: { content: string; summary: string | null; language: string; topics: string[] };
+    processingProfileId: string;
+    processingProfileVersion: number;
+    sourceSnapshots: Array<{
+      sourceId: string;
+      contentHash: string;
+      projectionIds: string[];
+    }>;
     createdAt: string;
     reason: string;
   }>;
+  currentVersionNumber: number | null;
   metadata: {
     createdAt: string;
     updatedAt: string;
@@ -31,35 +40,40 @@ export interface SemanticUnitDTO {
     tags: string[];
     attributes: Record<string, string>;
   };
+  // Legacy fields for backward compat
+  origin?: unknown;
+  origins?: unknown;
+  currentVersionIndex?: number;
 }
 
 export function toDTO(unit: SemanticUnit): SemanticUnitDTO {
   return {
     id: unit.id.value,
+    name: unit.name,
+    description: unit.description,
+    language: unit.language,
     state: unit.state,
-    origins: [...unit.origins].map((o) => ({
-      sourceId: o.sourceId,
-      extractedAt: o.extractedAt.toISOString(),
-      sourceType: o.sourceType,
-      resourceId: o.resourceId,
+    sources: [...unit.allSources].map((s) => ({
+      sourceId: s.sourceId,
+      sourceType: s.sourceType,
+      resourceId: s.resourceId,
+      extractedContent: s.extractedContent,
+      contentHash: s.contentHash,
+      addedAt: s.addedAt.toISOString(),
     })),
-    origin: {
-      sourceId: unit.primaryOrigin.sourceId,
-      extractedAt: unit.primaryOrigin.extractedAt.toISOString(),
-      sourceType: unit.primaryOrigin.sourceType,
-    },
-    currentVersionIndex: unit.currentVersion.version,
     versions: [...unit.versions].map((v) => ({
       version: v.version,
-      meaning: {
-        content: v.meaning.content,
-        summary: v.meaning.summary,
-        language: v.meaning.language,
-        topics: [...v.meaning.topics],
-      },
+      processingProfileId: v.processingProfileId,
+      processingProfileVersion: v.processingProfileVersion,
+      sourceSnapshots: [...v.sourceSnapshots].map((ss) => ({
+        sourceId: ss.sourceId,
+        contentHash: ss.contentHash,
+        projectionIds: [...ss.projectionIds],
+      })),
       createdAt: v.createdAt.toISOString(),
       reason: v.reason,
     })),
+    currentVersionNumber: unit.currentVersion?.version ?? null,
     metadata: {
       createdAt: unit.metadata.createdAt.toISOString(),
       updatedAt: unit.metadata.updatedAt.toISOString(),
@@ -71,43 +85,137 @@ export function toDTO(unit: SemanticUnit): SemanticUnitDTO {
 }
 
 export function fromDTO(dto: SemanticUnitDTO): SemanticUnit {
-  // Backward compat: prefer `origins` array, fall back to single `origin`
-  const originsData =
-    dto.origins?.length > 0
-      ? dto.origins
-      : dto.origin
-        ? [dto.origin]
-        : [];
+  // Detect legacy format: has `origins` array and old `versions` format with `meaning` objects
+  const isLegacy = !dto.sources && ((dto as any).origins?.length > 0 || (dto as any).origin);
 
-  const origins = originsData.map((o) =>
-    Origin.create(o.sourceId, new Date(o.extractedAt), o.sourceType, o.resourceId),
+  if (isLegacy) {
+    return fromLegacyDTO(dto);
+  }
+
+  return fromNewDTO(dto);
+}
+
+function fromNewDTO(dto: SemanticUnitDTO): SemanticUnit {
+  const sources = dto.sources.map((s) =>
+    UnitSource.reconstitute(
+      s.sourceId,
+      s.sourceType,
+      s.extractedContent,
+      s.contentHash,
+      new Date(s.addedAt),
+      s.resourceId,
+    ),
   );
 
   const versions = dto.versions.map((v) => {
-    const meaning = Meaning.create(v.meaning.content, v.meaning.language, v.meaning.topics, v.meaning.summary);
-    return { version: v.version, meaning, createdAt: new Date(v.createdAt), reason: v.reason };
+    const snapshots = v.sourceSnapshots.map((ss) =>
+      VersionSourceSnapshot.create(ss.sourceId, ss.contentHash, ss.projectionIds),
+    );
+    return UnitVersion.reconstitute(
+      v.version,
+      v.processingProfileId,
+      v.processingProfileVersion,
+      snapshots,
+      new Date(v.createdAt),
+      v.reason,
+    );
   });
 
-  // Build SemanticVersion chain
-  const firstMeaning = versions[0].meaning;
-  let currentSV = SemanticVersion.initial(firstMeaning);
-  const svList: SemanticVersion[] = [currentSV];
-
-  for (let i = 1; i < versions.length; i++) {
-    currentSV = currentSV.next(versions[i].meaning, versions[i].reason);
-    svList.push(currentSV);
-  }
-
-  const currentVersion = svList[svList.length - 1];
-
-  const metadata = UnitMetadata.create(dto.metadata.createdBy, dto.metadata.tags, dto.metadata.attributes);
+  const metadata = UnitMetadata.create(
+    dto.metadata.createdBy,
+    dto.metadata.tags,
+    dto.metadata.attributes,
+  );
 
   return SemanticUnit.reconstitute(
     SemanticUnitId.create(dto.id),
+    dto.name,
+    dto.description,
+    dto.language,
     dto.state as SemanticState,
-    origins,
-    currentVersion,
-    svList,
+    sources,
+    versions,
+    dto.currentVersionNumber,
+    metadata,
+  );
+}
+
+function fromLegacyDTO(dto: SemanticUnitDTO): SemanticUnit {
+  // Extract origins from legacy format
+  const legacyOrigins: Array<{
+    sourceId: string;
+    extractedAt: string;
+    sourceType: string;
+    resourceId?: string;
+  }> =
+    (dto as any).origins?.length > 0
+      ? (dto as any).origins
+      : (dto as any).origin
+        ? [(dto as any).origin]
+        : [];
+
+  // Extract legacy versions (with meaning objects)
+  const legacyVersions: Array<{
+    version: number;
+    meaning: { content: string; summary: string | null; language: string; topics: string[] };
+    createdAt: string;
+    reason: string;
+  }> = (dto as any).versions ?? [];
+
+  // Extract name, description, language from first version's meaning
+  const firstMeaning = legacyVersions.length > 0 ? legacyVersions[0].meaning : null;
+  const name = firstMeaning
+    ? firstMeaning.content.substring(0, 50).trim() || "Migrated Unit"
+    : "Migrated Unit";
+  const description = firstMeaning?.summary ?? "";
+  const language = firstMeaning?.language ?? "en";
+
+  // Convert each legacy origin to a UnitSource
+  const sources = legacyOrigins.map((o) =>
+    UnitSource.reconstitute(
+      o.sourceId,
+      o.sourceType,
+      firstMeaning?.content ?? "",
+      "legacy-hash",
+      new Date(o.extractedAt),
+      o.resourceId,
+    ),
+  );
+
+  // Create UnitVersion objects from old versions (with empty sourceSnapshots since legacy data has no snapshot info)
+  const versions = legacyVersions.map((v) =>
+    UnitVersion.reconstitute(
+      v.version,
+      "legacy-profile",
+      1,
+      [],
+      new Date(v.createdAt),
+      v.reason,
+    ),
+  );
+
+  const currentVersionNumber =
+    dto.currentVersionIndex !== undefined && dto.currentVersionIndex !== null
+      ? dto.currentVersionIndex
+      : versions.length > 0
+        ? versions[versions.length - 1].version
+        : null;
+
+  const metadata = UnitMetadata.create(
+    dto.metadata.createdBy,
+    dto.metadata.tags,
+    dto.metadata.attributes,
+  );
+
+  return SemanticUnit.reconstitute(
+    SemanticUnitId.create(dto.id),
+    name,
+    description,
+    language,
+    dto.state as SemanticState,
+    sources,
+    versions,
+    currentVersionNumber,
     metadata,
   );
 }

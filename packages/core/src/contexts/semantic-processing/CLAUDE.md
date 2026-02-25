@@ -42,7 +42,7 @@ El `vectorStoreConfig` se expone para que Knowledge Retrieval pueda leer del mis
 
 **Aggregate Root**: `SemanticProjection`
 - Ciclo de vida: `Pending` → `Processing` → `Completed` / `Failed`
-- Registra: semanticUnitId, semanticUnitVersion, projectionType, resultado
+- Registra: semanticUnitId, semanticUnitVersion, sourceId (nullable), projectionType, resultado
 
 **Value Objects**:
 - `ProjectionId` — identidad unica
@@ -57,10 +57,10 @@ El `vectorStoreConfig` se expone para que Knowledge Retrieval pueda leer del mis
 **Use Cases**: `GenerateProjection`
 
 **Ports**:
-- `SemanticProjectionRepository` — persistencia de proyecciones
+- `SemanticProjectionRepository` — persistencia de proyecciones + `findBySourceId()`, `deleteBySourceId()`
 - `ChunkingStrategy` — segmentacion de texto en chunks
 - `EmbeddingStrategy` — generacion de embeddings vectoriales
-- `VectorWriteStore` — escritura de vectores (upsert, delete)
+- `VectorWriteStore` — escritura de vectores (upsert, delete, deleteBySourceId)
 
 **Implementaciones de Chunking**:
 - `FixedSizeChunker` — chunks de tamano fijo por caracteres

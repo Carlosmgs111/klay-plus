@@ -2,20 +2,18 @@ import type { EventPublisher } from "../../../../shared/domain/index.js";
 import { SemanticUnitId } from "../domain/SemanticUnitId.js";
 import type { SemanticUnitRepository } from "../domain/SemanticUnitRepository.js";
 
-export interface ReprocessSemanticUnitCommand {
+export interface RemoveSourceCommand {
   unitId: string;
-  processingProfileId: string;
-  processingProfileVersion: number;
-  reason: string;
+  sourceId: string;
 }
 
-export class ReprocessSemanticUnit {
+export class RemoveSourceFromSemanticUnit {
   constructor(
     private readonly repository: SemanticUnitRepository,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
-  async execute(command: ReprocessSemanticUnitCommand): Promise<void> {
+  async execute(command: RemoveSourceCommand): Promise<void> {
     const unitId = SemanticUnitId.create(command.unitId);
     const unit = await this.repository.findById(unitId);
 
@@ -23,11 +21,7 @@ export class ReprocessSemanticUnit {
       throw new Error(`SemanticUnit ${command.unitId} not found`);
     }
 
-    unit.reprocess(
-      command.processingProfileId,
-      command.processingProfileVersion,
-      command.reason,
-    );
+    unit.removeSource(command.sourceId);
 
     await this.repository.save(unit);
     await this.eventPublisher.publishAll(unit.clearEvents());

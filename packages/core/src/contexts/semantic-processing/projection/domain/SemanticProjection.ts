@@ -14,6 +14,7 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
   private _result: ProjectionResult | null;
   private _error: string | null;
   private _createdAt: Date;
+  private _sourceId: string | null;
 
   private constructor(
     id: ProjectionId,
@@ -24,6 +25,7 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
     result: ProjectionResult | null,
     error: string | null,
     createdAt: Date,
+    sourceId: string | null = null,
   ) {
     super(id);
     this._semanticUnitId = semanticUnitId;
@@ -33,6 +35,7 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
     this._result = result;
     this._error = error;
     this._createdAt = createdAt;
+    this._sourceId = sourceId;
   }
 
   get semanticUnitId(): string {
@@ -63,11 +66,16 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
     return this._createdAt;
   }
 
+  get sourceId(): string | null {
+    return this._sourceId;
+  }
+
   static create(
     id: ProjectionId,
     semanticUnitId: string,
     semanticUnitVersion: number,
     type: ProjectionType,
+    sourceId?: string,
   ): SemanticProjection {
     if (!semanticUnitId) throw new Error("semanticUnitId is required");
     return new SemanticProjection(
@@ -79,6 +87,7 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
       null,
       null,
       new Date(),
+      sourceId ?? null,
     );
   }
 
@@ -91,9 +100,10 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
     result: ProjectionResult | null,
     error: string | null,
     createdAt: Date,
+    sourceId?: string | null,
   ): SemanticProjection {
     return new SemanticProjection(
-      id, semanticUnitId, semanticUnitVersion, type, status, result, error, createdAt,
+      id, semanticUnitId, semanticUnitVersion, type, status, result, error, createdAt, sourceId ?? null,
     );
   }
 
@@ -122,6 +132,7 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
         projectionType: this._type,
         processingProfileId: result.processingProfileId,
         processingProfileVersion: result.processingProfileVersion,
+        sourceId: this._sourceId,
       },
     });
   }

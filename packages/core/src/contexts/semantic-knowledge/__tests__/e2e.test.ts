@@ -4,7 +4,7 @@
  * Tests the complete flow:
  * 1. Create facade with in-memory infrastructure
  * 2. Create semantic unit with lineage tracking
- * 3. Version semantic unit with lineage tracking
+ * 3. Add sources to semantic unit (implicit versioning)
  * 4. Verify lineage history
  * 5. Test batch operations
  * 6. Test error handling
@@ -12,7 +12,6 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { createSemanticKnowledgeFacade } from "../facade/index.js";
-import { TransformationType } from "../lineage/domain/Transformation.js";
 import type { SemanticKnowledgeFacade } from "../facade/SemanticKnowledgeFacade.js";
 
 describe("Semantic Knowledge Context E2E", () => {
@@ -51,50 +50,42 @@ describe("Semantic Knowledge Context E2E", () => {
     console.log(`      Lineage registered with EXTRACTION transformation\n`);
   });
 
-  it("should version semantic unit with enrichment transformation", async () => {
-    console.log("🔄 Versioning semantic unit with lineage tracking...");
+  it("should add source to semantic unit", async () => {
+    console.log("🔄 Adding source to semantic unit...");
 
-    const versionResult = await facade.versionSemanticUnitWithLineage({
+    const addSourceResult = await facade.addSourceToSemanticUnit({
       unitId: unitId,
-      content: "This is the enriched content after processing and enrichment.",
-      language: "en",
-      reason: "Enriched with additional context from knowledge graph",
-      transformationType: TransformationType.Enrichment,
-      strategyUsed: "knowledge-graph-enrichment",
-      topics: ["knowledge", "extraction", "enrichment"],
-      summary: "Enriched semantic unit",
-      parameters: {
-        enrichmentSource: "knowledge-graph",
-        addedConcepts: 5,
-      },
+      sourceId: "enrichment-source",
+      sourceType: "enrichment",
+      extractedContent: "enriched content",
+      contentHash: "hash-enriched",
+      processingProfileId: "profile-1",
+      processingProfileVersion: 1,
     });
 
-    expect(versionResult.isOk()).toBe(true);
-    console.log(`   ✅ Semantic unit versioned: ${versionResult.value.unitId}`);
-    console.log(`      New version: ${versionResult.value.newVersion}`);
-    console.log(`      Lineage registered with ENRICHMENT transformation\n`);
+    expect(addSourceResult.isOk()).toBe(true);
+    console.log(`   ✅ Source added to unit: ${addSourceResult.value.unitId}`);
+    console.log(`      Version: ${addSourceResult.value.version}`);
+    console.log(`      Lineage registered with source addition\n`);
   });
 
-  it("should version semantic unit with chunking transformation", async () => {
-    console.log("🔄 Versioning again (chunking transformation)...");
+  it("should add a second source", async () => {
+    console.log("🔄 Adding a second source to semantic unit...");
 
-    const chunkResult = await facade.versionSemanticUnitWithLineage({
+    const addSourceResult = await facade.addSourceToSemanticUnit({
       unitId: unitId,
-      content: "This is a chunk of the enriched content optimized for embedding.",
-      language: "en",
-      reason: "Chunked for optimal embedding size",
-      transformationType: TransformationType.Chunking,
-      strategyUsed: "recursive-chunker",
-      parameters: {
-        chunkSize: 512,
-        overlap: 50,
-      },
+      sourceId: "chunk-source",
+      sourceType: "web",
+      extractedContent: "chunked content",
+      contentHash: "hash-chunk",
+      processingProfileId: "profile-1",
+      processingProfileVersion: 1,
     });
 
-    expect(chunkResult.isOk()).toBe(true);
-    console.log(`   ✅ Semantic unit versioned: ${chunkResult.value.unitId}`);
-    console.log(`      New version: ${chunkResult.value.newVersion}`);
-    console.log(`      Lineage registered with CHUNKING transformation\n`);
+    expect(addSourceResult.isOk()).toBe(true);
+    console.log(`   ✅ Second source added to unit: ${addSourceResult.value.unitId}`);
+    console.log(`      Version: ${addSourceResult.value.version}`);
+    console.log(`      Lineage registered with source addition\n`);
   });
 
   it("should retrieve lineage history for a unit", async () => {
@@ -204,14 +195,17 @@ describe("Semantic Knowledge Context E2E", () => {
     console.log(`   ✅ Correctly rejected duplicate: ${duplicateResult.error.message}\n`);
   });
 
-  it("should reject versioning non-existent unit", async () => {
+  it("should reject adding source to non-existent unit", async () => {
     console.log("🔍 Testing not found error handling...");
 
-    const notFoundResult = await facade.versionSemanticUnitWithLineage({
+    const notFoundResult = await facade.addSourceToSemanticUnit({
       unitId: "non-existent-id",
-      content: "Some content",
-      language: "en",
-      reason: "Testing",
+      sourceId: "src",
+      sourceType: "doc",
+      extractedContent: "content",
+      contentHash: "hash",
+      processingProfileId: "p",
+      processingProfileVersion: 1,
     });
 
     expect(notFoundResult.isFail()).toBe(true);

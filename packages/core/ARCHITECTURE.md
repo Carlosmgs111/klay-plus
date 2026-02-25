@@ -63,6 +63,8 @@ El sistema es una **biblioteca TypeScript** (`@klay/core`) empaquetada como un p
 
 **Estilo arquitectonico principal**: Hexagonal Architecture (Ports & Adapters) combinada con Domain-Driven Design tactico (Aggregates, Value Objects, Domain Events, Repositories).
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 2. Principios Arquitectonicos
@@ -99,6 +101,8 @@ La unica jerarquia de herencia profunda es la de los building blocks DDD (`Entit
 - Las state machines (SemanticState, ExtractionStatus) validan transiciones explicitas
 - `Result<E, T>` fuerza al consumidor a verificar el exito antes de acceder al valor
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 3. Layered Architecture — Las 5 Capas
@@ -123,6 +127,8 @@ src/
 | `adapters/` | `application/` (solo port interface) | `contexts/`, `platform/`, `shared/` |
 
 **Observacion critica**: Los bounded contexts **no se importan entre si**. Toda coordinacion cross-context pasa por la capa de application.
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -275,6 +281,8 @@ interface InfrastructurePolicy {
 
 **Razon**: Permite que cada factory interprete la policy de forma diferente sin modificar la interfaz base. El patron `[key: string]: unknown` evita un arbol de herencia de policies.
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 5. Bounded Contexts — Organizacion Interna
@@ -416,6 +424,8 @@ El perfil almacena **intenciones**, no implementaciones. El `Materializer` resue
 
 **Requisito critico**: El `QueryEmbedder` **debe usar el mismo modelo de embedding** que la `EmbeddingStrategy` de Semantic Processing. Esto se garantiza en la composicion, no en el dominio.
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 6. Platform — Infraestructura Compartida
@@ -518,6 +528,8 @@ new ProviderRegistryBuilder<RepositoryFactory>()
 
 **Deteccion de duplicados**: Lanza si se registra el mismo nombre dos veces.
 **Errores descriptivos**: Si `resolve()` falla, lista los providers disponibles en el mensaje.
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -636,6 +648,8 @@ class KnowledgePipelineError extends Error {
 
 **Nota**: No extiende `DomainError` del shared kernel. Es independiente de la jerarquia de errores de los bounded contexts. Esto es intencional — el pipeline wrap los errores de contexto en su propio formato.
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 8. Adapters — Integracion con el Exterior
@@ -689,6 +703,8 @@ RESTAdapter   → KnowledgePipelinePort (interfaz)
 ```
 
 Los adapters reciben el **port** por constructor, no la implementacion. Esto permite testear adapters con mocks y cambiar la implementacion sin modificar adapters.
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -765,6 +781,8 @@ KnowledgePipelinePolicy (nivel pipeline)
 ```
 
 Las policies "cascadean" desde el nivel pipeline hacia abajo. Cada nivel puede override settings para necesidades especificas.
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -847,6 +865,8 @@ Consumer llama: pipeline.searchKnowledge({ query: "machine learning", topK: 5 })
 Result.ok({ queryText, items: [{ semanticUnitId, content, score, ... }], totalFound })
 ```
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 11. Patrones de Diseno Catalogados
@@ -891,6 +911,8 @@ Result.ok({ queryText, items: [{ semanticUnitId, content, score, ... }], totalFo
 | **Async Factory** | `createKnowledgePipeline()` | Async porque la composicion requiere I/O |
 | **Dynamic Import Factory** | Composers | `import()` dentro de factories para tree-shaking |
 | **Builder** | `ProviderRegistryBuilder` | `.add().add().build()` fluent API |
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -949,6 +971,8 @@ Pipeline:
   PIPELINE_INGESTION_FAILED, PIPELINE_PROCESSING_FAILED, PIPELINE_CATALOGING_FAILED
 ```
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 13. Domain Events y Comunicacion Interna
@@ -1002,6 +1026,8 @@ Los bounded contexts **no se comunican directamente**. La coordinacion es:
 
 **No hay sagas ni event choreography** — la coordinacion es explicita y orquestada.
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 14. Estrategia Multi-Runtime
@@ -1047,6 +1073,8 @@ El **unico parametro** que cambia la infraestructura completa es `policy.provide
 | Config Source | InMemoryConfig | process.env | import.meta.env |
 
 **Implicacion**: IndexedDB repositories deben cargar todos los registros y filtrar en memoria para queries complejas. Esto es aceptable para el volumen de datos esperado pero no escalaria a millones de registros.
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -1116,6 +1144,8 @@ El **unico parametro** que cambia la infraestructura completa es `policy.provide
 - El Orchestrator (es implementacion privada)
 - Ningun Composer ni factory interno
 
+[Indice ⤴](#tabla-de-contenidos)
+
 ---
 
 ## 16. Invariantes Arquitectonicas
@@ -1144,6 +1174,8 @@ Reglas que **nunca deben violarse** para mantener la integridad del sistema:
 12. **Manifest recording es best-effort** — no falla el pipeline
 13. **Result<E,T> es inmutable** despues de creacion (`Object.freeze`)
 14. **ProviderRegistry es inmutable** despues de `build()`
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -1214,6 +1246,8 @@ Reglas que **nunca deben violarse** para mantener la integridad del sistema:
 - (+) Los profiles son reproducibles (mismo ID siempre produce misma estrategia)
 - (-) Un nivel de indireccion adicional (Materializer)
 - (-) El Materializer necesita conocer todas las estrategias disponibles
+
+[Indice ⤴](#tabla-de-contenidos)
 
 ---
 
@@ -1311,3 +1345,5 @@ Reglas que **nunca deben violarse** para mantener la integridad del sistema:
 ---
 
 > **Nota final**: Esta guia refleja el estado actual de la arquitectura. Las decisiones documentadas aqui no son permanentes — son trade-offs conscientes que deben reevaluarse conforme evolucionen los requisitos del sistema.
+
+[Indice ⤴](#tabla-de-contenidos)

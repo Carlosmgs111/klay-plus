@@ -81,11 +81,11 @@ export function DashboardPage() {
         {/* Pipeline Status */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
               <div className="flex items-center gap-2">
                 <Icon name="zap" />
                 <h2
-                  className="text-sm font-semibold"
+                  className="text-lg font-semibold"
                   style={{
                     color: "var(--text-primary)",
                     letterSpacing: "-0.02em",

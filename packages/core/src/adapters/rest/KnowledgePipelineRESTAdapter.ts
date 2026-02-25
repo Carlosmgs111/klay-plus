@@ -7,7 +7,10 @@ import type {
   SearchKnowledgeInput,
   CreateProcessingProfileInput,
   GetManifestInput,
-  AttachOriginInput,
+  AddSourceInput,
+  RemoveSourceInput,
+  ReprocessUnitInput,
+  RollbackUnitInput,
   AddProjectionInput,
   LinkUnitsInput,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
@@ -97,9 +100,27 @@ export class KnowledgePipelineRESTAdapter {
     return this._toResponse(result);
   }
 
-  async attachOrigin(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as AttachOriginInput;
-    const result = await this._pipeline.attachOrigin(input);
+  async addSource(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as AddSourceInput;
+    const result = await this._pipeline.addSource(input);
+    return this._toResponse(result);
+  }
+
+  async removeSource(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as RemoveSourceInput;
+    const result = await this._pipeline.removeSource(input);
+    return this._toResponse(result);
+  }
+
+  async reprocessUnit(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as ReprocessUnitInput;
+    const result = await this._pipeline.reprocessUnit(input);
+    return this._toResponse(result);
+  }
+
+  async rollbackUnit(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as RollbackUnitInput;
+    const result = await this._pipeline.rollbackUnit(input);
     return this._toResponse(result);
   }
 

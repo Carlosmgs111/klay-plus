@@ -2,7 +2,7 @@
 
 ## Responsabilidad
 
-Mantiene el grafo de proveniencia completo para cada unidad semantica. Registra cada transformacion aplicada (extraccion, chunking, enrichment, embedding, merge, split) con la estrategia exacta usada, las versiones de entrada/salida y los parametros. Es un registro de auditoria inmutable.
+Mantiene el grafo de proveniencia completo para cada unidad semantica. Registra cada transformacion aplicada (extraccion, chunking, enrichment, embedding, merge, split) con la estrategia exacta usada, las versiones de entrada/salida y los parametros. Tambien gestiona enlaces entre unidades semanticas (relaciones nombradas). Es un registro de auditoria inmutable.
 
 ## Aggregate Root: `KnowledgeLineage`
 
@@ -27,13 +27,17 @@ Asociado 1:1 con un `SemanticUnit` (via `semanticUnitId`). Se crea on-demand cua
 ## Ejemplo de Lineage
 
 ```
-SemanticUnit creada (v1)
-  → RegisterTransformation(EXTRACTION, "text-extractor", v0 → v1)
-  → RegisterTransformation(CHUNKING, "recursive-512", v1 → v1)
-  → RegisterTransformation(EMBEDDING, "openai-text-embedding-3-small", v1 → v1)
+SemanticUnit creada (sin fuentes)
+  → RegisterTransformation(EXTRACTION, "initial-creation", v0 → v0)
 
-SemanticUnit versionada (v2)
-  → RegisterTransformation(ENRICHMENT, "keyword-extractor", v1 → v2)
+addSource(src-1) → v1
+  → RegisterTransformation(EXTRACTION, "source-addition", v0 → v1, {sourceId: "src-1"})
+
+addSource(src-2) → v2
+  → RegisterTransformation(EXTRACTION, "source-addition", v1 → v2, {sourceId: "src-2"})
+
+deprecate("outdated")
+  → RegisterTransformation(MERGE, "deprecation", v2 → v2, {deprecated: true})
 ```
 
 ## Use Cases
@@ -41,6 +45,8 @@ SemanticUnit versionada (v2)
 | Use Case | Descripcion |
 |----------|-------------|
 | `RegisterTransformation` | Registra una transformacion para una unidad (busca o crea lineage) |
+| `LinkSemanticUnits` | Enlaza dos unidades semanticas con una relacion nombrada (ej: "related-to", "derived-from") |
+| `GetLinkedUnits` | Obtiene unidades enlazadas a una unidad (inbound + outbound), opcionalmente filtrado por relacion |
 
 ## Port
 

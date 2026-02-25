@@ -1,61 +1,74 @@
 import { AggregateRoot } from "../../../../shared/domain/index.js";
 import { SemanticUnitId } from "./SemanticUnitId.js";
-import { SemanticVersion } from "./SemanticVersion.js";
 import { SemanticState, canTransition } from "./SemanticState.js";
-import { Origin } from "./Origin.js";
-import { Meaning } from "./Meaning.js";
+import type { UnitSource } from "./UnitSource.js";
+import { UnitVersion } from "./UnitVersion.js";
+import { VersionSourceSnapshot } from "./VersionSourceSnapshot.js";
 import { UnitMetadata } from "./UnitMetadata.js";
 import { SemanticUnitCreated } from "./events/SemanticUnitCreated.js";
 import { SemanticUnitVersioned } from "./events/SemanticUnitVersioned.js";
 import { SemanticUnitDeprecated } from "./events/SemanticUnitDeprecated.js";
 import { SemanticUnitReprocessRequested } from "./events/SemanticUnitReprocessRequested.js";
-import { SemanticUnitOriginAdded } from "./events/SemanticUnitOriginAdded.js";
+import { SemanticUnitSourceAdded } from "./events/SemanticUnitSourceAdded.js";
+import { SemanticUnitSourceRemoved } from "./events/SemanticUnitSourceRemoved.js";
+import { SemanticUnitRolledBack } from "./events/SemanticUnitRolledBack.js";
 
 export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
+  private _name: string;
+  private _description: string;
+  private _language: string;
   private _state: SemanticState;
-  private _origins: Origin[];
-  private _currentVersion: SemanticVersion;
-  private _versions: SemanticVersion[];
+  private _sources: UnitSource[];
+  private _versions: UnitVersion[];
+  private _currentVersionNumber: number | null;
   private _metadata: UnitMetadata;
 
   private constructor(
     id: SemanticUnitId,
+    name: string,
+    description: string,
+    language: string,
     state: SemanticState,
-    origins: Origin[],
-    currentVersion: SemanticVersion,
-    versions: SemanticVersion[],
+    sources: UnitSource[],
+    versions: UnitVersion[],
+    currentVersionNumber: number | null,
     metadata: UnitMetadata,
   ) {
     super(id);
+    this._name = name;
+    this._description = description;
+    this._language = language;
     this._state = state;
-    this._origins = origins;
-    this._currentVersion = currentVersion;
+    this._sources = sources;
     this._versions = versions;
+    this._currentVersionNumber = currentVersionNumber;
     this._metadata = metadata;
+  }
+
+  // ─── Getters ──────────────────────────────────────────────────────
+
+  get name(): string {
+    return this._name;
+  }
+
+  get description(): string {
+    return this._description;
+  }
+
+  get language(): string {
+    return this._language;
   }
 
   get state(): SemanticState {
     return this._state;
   }
 
-  /** Backward-compatible accessor — returns the primary (first) origin. */
-  get origin(): Origin {
-    return this._origins[0];
+  get currentVersion(): UnitVersion | null {
+    if (this._currentVersionNumber === null) return null;
+    return this._versions.find((v) => v.version === this._currentVersionNumber) ?? null;
   }
 
-  get origins(): ReadonlyArray<Origin> {
-    return [...this._origins];
-  }
-
-  get primaryOrigin(): Origin {
-    return this._origins[0];
-  }
-
-  get currentVersion(): SemanticVersion {
-    return this._currentVersion;
-  }
-
-  get versions(): ReadonlyArray<SemanticVersion> {
+  get versions(): ReadonlyArray<UnitVersion> {
     return [...this._versions];
   }
 
@@ -63,19 +76,37 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     return this._metadata;
   }
 
+  /** Sources included in the current active version. */
+  get activeSources(): ReadonlyArray<UnitSource> {
+    const cv = this.currentVersion;
+    if (!cv) return [];
+    const activeSourceIds = new Set(cv.sourceSnapshots.map((s) => s.sourceId));
+    return this._sources.filter((s) => activeSourceIds.has(s.sourceId));
+  }
+
+  /** All sources in the pool (including those not in current version). */
+  get allSources(): ReadonlyArray<UnitSource> {
+    return [...this._sources];
+  }
+
+  // ─── Factory ──────────────────────────────────────────────────────
+
   static create(
     id: SemanticUnitId,
-    origin: Origin,
-    meaning: Meaning,
+    name: string,
+    description: string,
+    language: string,
     metadata: UnitMetadata,
   ): SemanticUnit {
-    const initialVersion = SemanticVersion.initial(meaning);
     const unit = new SemanticUnit(
       id,
+      name,
+      description,
+      language,
       SemanticState.Draft,
-      [origin],
-      initialVersion,
-      [initialVersion],
+      [],
+      [],
+      null,
       metadata,
     );
 
@@ -85,15 +116,9 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
       eventType: SemanticUnitCreated.EVENT_TYPE,
       aggregateId: id.value,
       payload: {
-        origins: [
-          {
-            sourceId: origin.sourceId,
-            sourceType: origin.sourceType,
-            resourceId: origin.resourceId,
-          },
-        ],
-        origin: { sourceId: origin.sourceId, sourceType: origin.sourceType },
-        language: meaning.language,
+        name,
+        description,
+        language,
         state: SemanticState.Draft,
       },
     });
@@ -103,77 +128,188 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
 
   static reconstitute(
     id: SemanticUnitId,
+    name: string,
+    description: string,
+    language: string,
     state: SemanticState,
-    origins: Origin[],
-    currentVersion: SemanticVersion,
-    versions: SemanticVersion[],
+    sources: UnitSource[],
+    versions: UnitVersion[],
+    currentVersionNumber: number | null,
     metadata: UnitMetadata,
   ): SemanticUnit {
     return new SemanticUnit(
       id,
+      name,
+      description,
+      language,
       state,
-      origins,
-      currentVersion,
+      sources,
       versions,
+      currentVersionNumber,
       metadata,
     );
   }
 
-  addOrigin(origin: Origin): void {
+  // ─── Commands ─────────────────────────────────────────────────────
+
+  addSource(
+    source: UnitSource,
+    profileId: string,
+    profileVersion: number,
+  ): UnitVersion {
     if (this._state === SemanticState.Archived) {
-      throw new Error("Cannot add origin to an archived semantic unit");
+      throw new Error("Cannot add source to an archived semantic unit");
     }
 
-    const exists = this._origins.some(
-      (o) => o.sourceId === origin.sourceId,
-    );
+    const exists = this._sources.some((s) => s.sourceId === source.sourceId);
     if (exists) {
       throw new Error(
-        `Origin with sourceId '${origin.sourceId}' already attached`,
+        `Source with sourceId '${source.sourceId}' already attached`,
       );
     }
 
-    this._origins.push(origin);
+    // Add source to the pool
+    this._sources.push(source);
+
+    // Build snapshots: existing active sources + new source
+    const snapshots = this.buildSnapshotsForCurrentSources();
+    const newSnapshot = VersionSourceSnapshot.create(source.sourceId, source.contentHash);
+    snapshots.push(newSnapshot);
+
+    // Create version
+    const newVersion = this._currentVersionNumber === null
+      ? UnitVersion.initial(profileId, profileVersion, snapshots)
+      : this.currentVersion!.next(profileId, profileVersion, snapshots, `Source added: ${source.sourceId}`);
+
+    this._versions.push(newVersion);
+    this._currentVersionNumber = newVersion.version;
     this._metadata = this._metadata.withUpdatedTimestamp();
 
     this.record({
       eventId: crypto.randomUUID(),
       occurredOn: new Date(),
-      eventType: SemanticUnitOriginAdded.EVENT_TYPE,
+      eventType: SemanticUnitSourceAdded.EVENT_TYPE,
       aggregateId: this.id.value,
       payload: {
-        sourceId: origin.sourceId,
-        sourceType: origin.sourceType,
-        resourceId: origin.resourceId,
+        sourceId: source.sourceId,
+        sourceType: source.sourceType,
+        resourceId: source.resourceId,
       },
     });
+
+    this.record({
+      eventId: crypto.randomUUID(),
+      occurredOn: new Date(),
+      eventType: SemanticUnitVersioned.EVENT_TYPE,
+      aggregateId: this.id.value,
+      payload: {
+        version: newVersion.version,
+        reason: newVersion.reason,
+      },
+    });
+
+    return newVersion;
   }
 
-  removeOrigin(sourceId: string): void {
-    if (this._origins.length <= 1) {
+  removeSource(sourceId: string): UnitVersion {
+    if (this._state === SemanticState.Archived) {
+      throw new Error("Cannot remove source from an archived semantic unit");
+    }
+
+    const sourceIndex = this._sources.findIndex((s) => s.sourceId === sourceId);
+    if (sourceIndex === -1) {
+      throw new Error(`Source with sourceId '${sourceId}' not found`);
+    }
+
+    // Must have at least one source remaining in the version
+    const cv = this.currentVersion;
+    if (!cv) {
+      throw new Error("Cannot remove source when no version exists");
+    }
+
+    const activeSourceIds = cv.sourceSnapshots.map((s) => s.sourceId);
+    const remainingActive = activeSourceIds.filter((id) => id !== sourceId);
+    if (remainingActive.length === 0) {
       throw new Error(
-        "Cannot remove the last origin — at least one origin is required",
+        "Cannot remove the last active source — at least one source is required in a version",
       );
     }
 
-    const index = this._origins.findIndex((o) => o.sourceId === sourceId);
-    if (index === -1) {
-      throw new Error(`Origin with sourceId '${sourceId}' not found`);
-    }
+    // Build new version without the removed source's snapshot
+    const newSnapshots = cv.sourceSnapshots
+      .filter((s) => s.sourceId !== sourceId)
+      .map((s) => VersionSourceSnapshot.create(s.sourceId, s.contentHash, [...s.projectionIds]));
 
-    this._origins.splice(index, 1);
+    const newVersion = cv.next(
+      cv.processingProfileId,
+      cv.processingProfileVersion,
+      newSnapshots,
+      `Source removed: ${sourceId}`,
+    );
+
+    this._versions.push(newVersion);
+    this._currentVersionNumber = newVersion.version;
     this._metadata = this._metadata.withUpdatedTimestamp();
+
+    this.record({
+      eventId: crypto.randomUUID(),
+      occurredOn: new Date(),
+      eventType: SemanticUnitSourceRemoved.EVENT_TYPE,
+      aggregateId: this.id.value,
+      payload: { sourceId },
+    });
+
+    this.record({
+      eventId: crypto.randomUUID(),
+      occurredOn: new Date(),
+      eventType: SemanticUnitVersioned.EVENT_TYPE,
+      aggregateId: this.id.value,
+      payload: {
+        version: newVersion.version,
+        reason: newVersion.reason,
+      },
+    });
+
+    return newVersion;
   }
 
-  addVersion(meaning: Meaning, reason: string): void {
+  reprocess(
+    profileId: string,
+    profileVersion: number,
+    reason: string,
+  ): UnitVersion {
     if (this._state === SemanticState.Archived) {
-      throw new Error("Cannot version an archived semantic unit");
+      throw new Error("Cannot reprocess an archived semantic unit");
     }
 
-    const newVersion = this._currentVersion.next(meaning, reason);
-    this._currentVersion = newVersion;
+    const cv = this.currentVersion;
+    if (!cv) {
+      throw new Error("Cannot reprocess a semantic unit with no version");
+    }
+
+    // New version with same sources but new processing profile (projectionIds reset)
+    const newSnapshots = cv.sourceSnapshots.map((s) =>
+      VersionSourceSnapshot.create(s.sourceId, s.contentHash),
+    );
+
+    const newVersion = cv.next(profileId, profileVersion, newSnapshots, reason);
+
     this._versions.push(newVersion);
+    this._currentVersionNumber = newVersion.version;
     this._metadata = this._metadata.withUpdatedTimestamp();
+
+    this.record({
+      eventId: crypto.randomUUID(),
+      occurredOn: new Date(),
+      eventType: SemanticUnitReprocessRequested.EVENT_TYPE,
+      aggregateId: this.id.value,
+      payload: {
+        currentVersion: newVersion.version,
+        reason,
+        processingProfileId: profileId,
+        processingProfileVersion: profileVersion,
+      },
+    });
 
     this.record({
       eventId: crypto.randomUUID(),
@@ -185,7 +321,63 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
         reason,
       },
     });
+
+    return newVersion;
   }
+
+  rollbackToVersion(targetVersion: number): void {
+    const target = this._versions.find((v) => v.version === targetVersion);
+    if (!target) {
+      throw new Error(`Version ${targetVersion} not found`);
+    }
+
+    const previousVersion = this._currentVersionNumber;
+    this._currentVersionNumber = targetVersion;
+    this._metadata = this._metadata.withUpdatedTimestamp();
+
+    this.record({
+      eventId: crypto.randomUUID(),
+      occurredOn: new Date(),
+      eventType: SemanticUnitRolledBack.EVENT_TYPE,
+      aggregateId: this.id.value,
+      payload: {
+        fromVersion: previousVersion,
+        toVersion: targetVersion,
+      },
+    });
+  }
+
+  recordProjectionForSource(sourceId: string, projectionId: string): void {
+    const cv = this.currentVersion;
+    if (!cv) {
+      throw new Error("Cannot record projection when no version exists");
+    }
+
+    const versionIndex = this._versions.findIndex((v) => v.version === cv.version);
+    if (versionIndex === -1) return;
+
+    const snapshotIndex = cv.sourceSnapshots.findIndex((s) => s.sourceId === sourceId);
+    if (snapshotIndex === -1) {
+      throw new Error(`Source '${sourceId}' not found in current version`);
+    }
+
+    // Rebuild the version with the updated snapshot
+    const updatedSnapshots = [...cv.sourceSnapshots];
+    updatedSnapshots[snapshotIndex] = updatedSnapshots[snapshotIndex].withProjectionId(projectionId);
+
+    const updatedVersion = UnitVersion.reconstitute(
+      cv.version,
+      cv.processingProfileId,
+      cv.processingProfileVersion,
+      updatedSnapshots,
+      cv.createdAt,
+      cv.reason,
+    );
+
+    this._versions[versionIndex] = updatedVersion;
+  }
+
+  // ─── State Machine ────────────────────────────────────────────────
 
   activate(): void {
     this.transitionTo(SemanticState.Active);
@@ -207,23 +399,6 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     this.transitionTo(SemanticState.Archived);
   }
 
-  requestReprocessing(reason: string): void {
-    if (this._state === SemanticState.Archived) {
-      throw new Error("Cannot reprocess an archived semantic unit");
-    }
-
-    this.record({
-      eventId: crypto.randomUUID(),
-      occurredOn: new Date(),
-      eventType: SemanticUnitReprocessRequested.EVENT_TYPE,
-      aggregateId: this.id.value,
-      payload: {
-        currentVersion: this._currentVersion.version,
-        reason,
-      },
-    });
-  }
-
   private transitionTo(newState: SemanticState): void {
     if (!canTransition(this._state, newState)) {
       throw new Error(
@@ -232,5 +407,17 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     }
     this._state = newState;
     this._metadata = this._metadata.withUpdatedTimestamp();
+  }
+
+  // ─── Private Helpers ──────────────────────────────────────────────
+
+  private buildSnapshotsForCurrentSources(): VersionSourceSnapshot[] {
+    const cv = this.currentVersion;
+    if (!cv) return [];
+
+    // Carry over existing snapshots (preserving projectionIds)
+    return cv.sourceSnapshots.map((s) =>
+      VersionSourceSnapshot.create(s.sourceId, s.contentHash, [...s.projectionIds]),
+    );
   }
 }

@@ -25,11 +25,13 @@ export class IndexedDBSemanticUnitRepository implements SemanticUnitRepository {
     await this.store.remove(id.value);
   }
 
-  async findByOriginSourceId(sourceId: string): Promise<SemanticUnit[]> {
+  async findBySourceId(sourceId: string): Promise<SemanticUnit[]> {
     const all = await this.store.getAll();
     return all
       .filter((d) =>
-        d.origins?.some((o) => o.sourceId === sourceId) ?? d.origin?.sourceId === sourceId,
+        d.sources?.some((s) => s.sourceId === sourceId) ??
+        (d as any).origins?.some((o: any) => o.sourceId === sourceId) ??
+        (d as any).origin?.sourceId === sourceId,
       )
       .map(fromDTO);
   }

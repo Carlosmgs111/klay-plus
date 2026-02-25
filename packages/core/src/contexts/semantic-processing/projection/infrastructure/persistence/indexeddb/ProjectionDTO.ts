@@ -19,6 +19,7 @@ export interface ProjectionDTO {
   } | null;
   error: string | null;
   createdAt: string;
+  sourceId: string | null;
 }
 
 export function toDTO(projection: SemanticProjection): ProjectionDTO {
@@ -39,6 +40,7 @@ export function toDTO(projection: SemanticProjection): ProjectionDTO {
       : null,
     error: projection.error,
     createdAt: projection.createdAt.toISOString(),
+    sourceId: projection.sourceId,
   };
 }
 
@@ -61,5 +63,6 @@ export function fromDTO(dto: ProjectionDTO): SemanticProjection {
     result,
     dto.error,
     new Date(dto.createdAt),
+    dto.sourceId ?? null,
   );
 }

@@ -45,4 +45,16 @@ export class NeDBSemanticProjectionRepository implements SemanticProjectionRepos
     const results = await this.store.find((d) => d.status === status);
     return results.map(fromDTO);
   }
+
+  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
+    const results = await this.store.find((d) => d.sourceId === sourceId);
+    return results.map(fromDTO);
+  }
+
+  async deleteBySourceId(sourceId: string): Promise<void> {
+    const matching = await this.store.find((d) => d.sourceId === sourceId);
+    for (const dto of matching) {
+      await this.store.remove(dto.id);
+    }
+  }
 }

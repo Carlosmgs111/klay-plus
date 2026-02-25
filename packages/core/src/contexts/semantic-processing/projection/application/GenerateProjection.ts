@@ -24,6 +24,7 @@ export interface GenerateProjectionCommand {
   content: string;
   type: ProjectionType;
   processingProfileId: string;
+  sourceId?: string;
 }
 
 export interface GenerateProjectionResult {
@@ -80,6 +81,7 @@ export class GenerateProjection {
       command.semanticUnitId,
       command.semanticUnitVersion,
       command.type,
+      command.sourceId,
     );
 
     projection.markProcessing();
@@ -104,6 +106,7 @@ export class GenerateProjection {
           model: embeddings[i].model,
           projectionId: command.projectionId,
           processingProfileId: command.processingProfileId,
+          sourceId: command.sourceId,
           ...chunk.metadata,
         },
       }));

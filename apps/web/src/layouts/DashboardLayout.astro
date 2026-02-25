@@ -19,25 +19,7 @@ const { title = "klay+" } = Astro.props;
       href="https://cdn.boxicons.com/3.0.3/fonts/basic/boxicons.min.css"
       rel="stylesheet"
     />
-
     <ClientRouter />
-    <script is:inline>
-      (function () {
-        try {
-          var stored = localStorage.getItem("klay-theme");
-          var prefersDark = window.matchMedia(
-            "(prefers-color-scheme: dark)"
-          ).matches;
-          var isDark = stored === "dark" || (stored !== "light" && prefersDark);
-          if (isDark) {
-            document.documentElement.classList.add("dark");
-            document.documentElement.style.colorScheme = "dark";
-          } else {
-            document.documentElement.style.colorScheme = "light";
-          }
-        } catch (e) {}
-      })();
-    </script>
   </head>
   <body class="bg-slate-50 dark:bg-slate-950">
     <div class="fixed inset-0 pointer-events-none opacity-20">
@@ -65,3 +47,21 @@ const { title = "klay+" } = Astro.props;
     <slot />
   </body>
 </html>
+
+<script is:inline>
+  (function () {
+    try {
+      var stored = localStorage.getItem("klay-theme");
+      var prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      var isDark = stored === "dark" || (stored !== "light" && prefersDark);
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+        document.documentElement.style.colorScheme = "dark";
+      } else {
+        document.documentElement.style.colorScheme = "light";
+      }
+    } catch (e) {}
+  })();
+</script>

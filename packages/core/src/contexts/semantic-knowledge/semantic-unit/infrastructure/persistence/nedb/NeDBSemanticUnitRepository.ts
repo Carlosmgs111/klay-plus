@@ -25,9 +25,12 @@ export class NeDBSemanticUnitRepository implements SemanticUnitRepository {
     await this.store.remove(id.value);
   }
 
-  async findByOriginSourceId(sourceId: string): Promise<SemanticUnit[]> {
+  async findBySourceId(sourceId: string): Promise<SemanticUnit[]> {
     const results = await this.store.find(
-      (d) => d.origins?.some((o) => o.sourceId === sourceId) ?? d.origin?.sourceId === sourceId,
+      (d) =>
+        d.sources?.some((s) => s.sourceId === sourceId) ??
+        (d as any).origins?.some((o: any) => o.sourceId === sourceId) ??
+        (d as any).origin?.sourceId === sourceId,
     );
     return results.map(fromDTO);
   }

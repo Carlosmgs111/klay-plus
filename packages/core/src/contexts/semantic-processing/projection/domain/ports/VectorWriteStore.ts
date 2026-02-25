@@ -5,4 +5,5 @@ export interface VectorWriteStore {
   delete(ids: string[]): Promise<void>;
   deleteBySemanticUnitId(semanticUnitId: string): Promise<void>;
   deleteByProjectionId(projectionId: string): Promise<void>;
+  deleteBySourceId(sourceId: string): Promise<void>;
 }
