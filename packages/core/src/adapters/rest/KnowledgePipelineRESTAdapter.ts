@@ -7,12 +7,6 @@ import type {
   SearchKnowledgeInput,
   CreateProcessingProfileInput,
   GetManifestInput,
-  AddSourceInput,
-  RemoveSourceInput,
-  ReprocessUnitInput,
-  RollbackUnitInput,
-  AddProjectionInput,
-  LinkUnitsInput,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
 
 // ─── REST Types ─────────────────────────────────────────────────────────────
@@ -97,42 +91,6 @@ export class KnowledgePipelineRESTAdapter {
       manifestId: req.params?.manifestId ?? req.query?.manifestId ?? (req.body as any)?.manifestId,
     };
     const result = await this._pipeline.getManifest(input);
-    return this._toResponse(result);
-  }
-
-  async addSource(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as AddSourceInput;
-    const result = await this._pipeline.addSource(input);
-    return this._toResponse(result);
-  }
-
-  async removeSource(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as RemoveSourceInput;
-    const result = await this._pipeline.removeSource(input);
-    return this._toResponse(result);
-  }
-
-  async reprocessUnit(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as ReprocessUnitInput;
-    const result = await this._pipeline.reprocessUnit(input);
-    return this._toResponse(result);
-  }
-
-  async rollbackUnit(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as RollbackUnitInput;
-    const result = await this._pipeline.rollbackUnit(input);
-    return this._toResponse(result);
-  }
-
-  async addProjection(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as AddProjectionInput;
-    const result = await this._pipeline.addProjection(input);
-    return this._toResponse(result);
-  }
-
-  async linkUnits(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as LinkUnitsInput;
-    const result = await this._pipeline.linkUnits(input);
     return this._toResponse(result);
   }
 

@@ -31,15 +31,15 @@ export function DataTable<T extends Record<string, any>>({
         <thead>
           <tr>
             {columns.map((col) => (
-              <th key={col.key}>{col.header}</th>
+              <th className="p-4 w-full" key={col.key}>{col.header}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={keyExtractor(row)}>
+            <tr className="w-full" key={keyExtractor(row)}>
               {columns.map((col) => (
-                <td key={col.key}>
+                <td className="p-4" key={col.key}>
                   {col.render ? col.render(row) : String(row[col.key] ?? "")}
                 </td>
               ))}

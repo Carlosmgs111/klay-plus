@@ -15,18 +15,6 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-  AddSourceInput,
-  AddSourceSuccess,
-  RemoveSourceInput,
-  RemoveSourceSuccess,
-  ReprocessUnitInput,
-  ReprocessUnitSuccess,
-  RollbackUnitInput,
-  RollbackUnitSuccess,
-  AddProjectionInput,
-  AddProjectionSuccess,
-  LinkUnitsInput,
-  LinkUnitsSuccess,
 } from "./dtos.js";
 
 /**
@@ -95,48 +83,4 @@ export interface KnowledgePipelinePort {
   getManifest(
     input: GetManifestInput,
   ): Promise<Result<KnowledgePipelineError, GetManifestSuccess>>;
-
-  /**
-   * Adds a source to an existing semantic unit (creates a new version).
-   */
-  addSource(
-    input: AddSourceInput,
-  ): Promise<Result<KnowledgePipelineError, AddSourceSuccess>>;
-
-  /**
-   * Removes a source from an existing semantic unit (creates a new version without it).
-   */
-  removeSource(
-    input: RemoveSourceInput,
-  ): Promise<Result<KnowledgePipelineError, RemoveSourceSuccess>>;
-
-  /**
-   * Reprocesses all sources of a semantic unit with a new processing profile.
-   */
-  reprocessUnit(
-    input: ReprocessUnitInput,
-  ): Promise<Result<KnowledgePipelineError, ReprocessUnitSuccess>>;
-
-  /**
-   * Rolls back a semantic unit to a previous version (non-destructive pointer move).
-   */
-  rollbackUnit(
-    input: RollbackUnitInput,
-  ): Promise<Result<KnowledgePipelineError, RollbackUnitSuccess>>;
-
-  /**
-   * Creates an additional projection for an existing semantic unit.
-   * Multiple projections can coexist for the same unit (different profiles/types).
-   */
-  addProjection(
-    input: AddProjectionInput,
-  ): Promise<Result<KnowledgePipelineError, AddProjectionSuccess>>;
-
-  /**
-   * Links two semantic units with a named relationship.
-   * Creates a flat reference (e.g., "related-to", "derived-from", "contradicts").
-   */
-  linkUnits(
-    input: LinkUnitsInput,
-  ): Promise<Result<KnowledgePipelineError, LinkUnitsSuccess>>;
 }

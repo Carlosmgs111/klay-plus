@@ -37,18 +37,6 @@ export type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-  AddSourceInput,
-  AddSourceSuccess,
-  RemoveSourceInput,
-  RemoveSourceSuccess,
-  ReprocessUnitInput,
-  ReprocessUnitSuccess,
-  RollbackUnitInput,
-  RollbackUnitSuccess,
-  AddProjectionInput,
-  AddProjectionSuccess,
-  LinkUnitsInput,
-  LinkUnitsSuccess,
 } from "./contracts/dtos.js";
 
 // ─── Domain ──────────────────────────────────────────────────────────────────

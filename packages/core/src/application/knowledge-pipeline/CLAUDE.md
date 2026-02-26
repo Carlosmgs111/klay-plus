@@ -16,15 +16,11 @@ Punto de entrada unico. Primary port en el sentido hexagonal: los adaptadores (U
 | `ingestDocument` | Registra source + extrae texto | Ingestion |
 | `processDocument` | Chunking + embeddings + vector storage | Processing |
 | `catalogDocument` | Crea semantic unit + lineage | Knowledge |
-| `addSource` | Agrega fuente a unidad existente (crea nueva version) | Knowledge |
-| `removeSource` | Elimina fuente de unidad existente | Knowledge |
-| `reprocessUnit` | Reprocesa todas las fuentes con nuevo profile | Knowledge |
-| `rollbackUnit` | Rollback a version anterior (mueve puntero) | Knowledge |
-| `addProjection` | Crea proyeccion adicional para unidad existente | Processing |
-| `linkUnits` | Enlaza dos unidades con relacion nombrada | Knowledge |
 | `searchKnowledge` | Busqueda semantica por similitud | Retrieval |
 | `createProcessingProfile` | Crea perfil de procesamiento | Processing |
 | `getManifest` | Consulta trazabilidad cross-context | ManifestRepository |
+
+> **Nota**: Las operaciones de lifecycle (addSource, removeSource, reprocessUnit, rollbackUnit, addProjection, linkUnits) fueron extraidas al modulo `knowledge-management/`. Ver `application/knowledge-management/CLAUDE.md`.
 
 Todos los metodos retornan `Result<KnowledgePipelineError, Success>` para error handling funcional con tracking de pipeline steps.
 
@@ -94,13 +90,11 @@ Contratos de datos puros en `contracts/dtos.ts`. Sin logica de dominio, sin depe
 | `IngestDocumentInput/Success` | Solo ingesta |
 | `ProcessDocumentInput/Success` | Solo procesamiento |
 | `CatalogDocumentInput/Success` | Solo catalogacion (usa name/description) |
-| `AddSourceInput/Success` | Agregar fuente a unidad |
-| `RemoveSourceInput/Success` | Eliminar fuente de unidad |
-| `ReprocessUnitInput/Success` | Reprocesar con nuevo profile |
-| `RollbackUnitInput/Success` | Rollback a version anterior |
-| `AddProjectionInput/Success` | Crear proyeccion adicional |
-| `LinkUnitsInput/Success` | Enlazar unidades |
 | `SearchKnowledgeInput/Success` | Busqueda semantica |
+| `CreateProcessingProfileInput/Success` | Crear perfil de procesamiento |
+| `GetManifestInput/Success` | Consultar trazabilidad |
+
+> **Nota**: Los DTOs de lifecycle (AddSource, RemoveSource, etc.) se re-exportan desde `knowledge-management/` para backward compat.
 
 ## Port de Persistencia
 

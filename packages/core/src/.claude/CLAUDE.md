@@ -64,7 +64,7 @@ El lado de lectura del sistema. Recibe consultas en lenguaje natural, las convie
 ## Application Layer (`application/`)
 
 ### Knowledge Pipeline Orchestrator (`application/knowledge-pipeline/`) — [Ver detalle](../application/knowledge-pipeline/CLAUDE.md)
-> **No es un bounded context** — es la capa de orquestacion que coordina los 4 contextos
+> **No es un bounded context** — es la capa de orquestacion que coordina los 4 contextos para **construccion inicial**
 
 Expone un API unificado (`KnowledgePipelinePort`) que orquesta el flujo completo:
 ```
@@ -78,15 +78,19 @@ Gestiona **ContentManifest**: un tracker cross-context que asocia todos los arte
 - `ingestDocument` — Solo ingesta y extraccion
 - `processDocument` — Solo chunking + embeddings + vector storage
 - `catalogDocument` — Solo creacion de unidad semantica + lineage
-- `addSource` — Agregar fuente a unidad existente (crea nueva version)
-- `removeSource` — Eliminar fuente de unidad existente
-- `reprocessUnit` — Reprocesar todas las fuentes con nuevo profile
-- `rollbackUnit` — Rollback a version anterior
-- `addProjection` — Crear proyeccion adicional para unidad existente
-- `linkUnits` — Enlazar dos unidades con relacion nombrada
 - `searchKnowledge` — Busqueda semantica
 - `createProcessingProfile` — Crear perfil de procesamiento
 - `getManifest` — Consultar trazabilidad del pipeline
+
+### Knowledge Management Orchestrator (`application/knowledge-management/`) — [Ver detalle](../application/knowledge-management/CLAUDE.md)
+> **No es un bounded context** — es la capa de orquestacion para **flujos multi-step de ciclo de vida** sobre unidades semanticas existentes
+
+Complementa al Pipeline (construccion inicial) con flujos multi-step que coordinan multiples contextos. Usa `KnowledgeManagementError` con `step: ManagementStep` + `completedSteps` (misma estructura que el pipeline error). Las operaciones atomicas (removeSource, rollbackUnit, etc.) se llaman directamente en la facade.
+
+**Operaciones**:
+- `ingestAndAddSource` — Ingesta contenido + agrega como source a unidad existente + procesa embeddings (3 steps: Ingestion → AddSource → Processing)
+
+**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` resuelve ambos orchestrators compartiendo facades.
 
 ## Platform (`platform/`)
 

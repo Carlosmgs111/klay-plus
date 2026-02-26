@@ -14,18 +14,6 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-  AddSourceInput,
-  AddSourceSuccess,
-  RemoveSourceInput,
-  RemoveSourceSuccess,
-  ReprocessUnitInput,
-  ReprocessUnitSuccess,
-  RollbackUnitInput,
-  RollbackUnitSuccess,
-  AddProjectionInput,
-  AddProjectionSuccess,
-  LinkUnitsInput,
-  LinkUnitsSuccess,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
 
 // ─── UI Result Type ─────────────────────────────────────────────────────────
@@ -94,36 +82,6 @@ export class KnowledgePipelineUIAdapter {
 
   async getManifest(input: GetManifestInput): Promise<UIResult<GetManifestSuccess>> {
     const result = await this._pipeline.getManifest(input);
-    return this._unwrap(result);
-  }
-
-  async addSource(input: AddSourceInput): Promise<UIResult<AddSourceSuccess>> {
-    const result = await this._pipeline.addSource(input);
-    return this._unwrap(result);
-  }
-
-  async removeSource(input: RemoveSourceInput): Promise<UIResult<RemoveSourceSuccess>> {
-    const result = await this._pipeline.removeSource(input);
-    return this._unwrap(result);
-  }
-
-  async reprocessUnit(input: ReprocessUnitInput): Promise<UIResult<ReprocessUnitSuccess>> {
-    const result = await this._pipeline.reprocessUnit(input);
-    return this._unwrap(result);
-  }
-
-  async rollbackUnit(input: RollbackUnitInput): Promise<UIResult<RollbackUnitSuccess>> {
-    const result = await this._pipeline.rollbackUnit(input);
-    return this._unwrap(result);
-  }
-
-  async addProjection(input: AddProjectionInput): Promise<UIResult<AddProjectionSuccess>> {
-    const result = await this._pipeline.addProjection(input);
-    return this._unwrap(result);
-  }
-
-  async linkUnits(input: LinkUnitsInput): Promise<UIResult<LinkUnitsSuccess>> {
-    const result = await this._pipeline.linkUnits(input);
     return this._unwrap(result);
   }
 
