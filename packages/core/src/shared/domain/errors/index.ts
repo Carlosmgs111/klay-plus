@@ -5,4 +5,4 @@ export {
   ValidationError,
   InvalidStateError,
   OperationError,
-} from "./DomainError.js";
+} from "./DomainError";

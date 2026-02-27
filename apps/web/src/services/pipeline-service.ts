@@ -1,4 +1,4 @@
-import type { ServiceResult } from "./types.js";
+import type { ServiceResult } from "./types";
 import type {
   ExecutePipelineInput,
   ExecutePipelineSuccess,

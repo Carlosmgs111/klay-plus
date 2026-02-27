@@ -3,7 +3,7 @@ import {
   AlreadyExistsError,
   ValidationError,
   OperationError,
-} from "../../../../../shared/domain/errors/index.js";
+} from "../../../../../shared/domain/errors";
 
 export class ResourceNotFoundError extends NotFoundError {
   constructor(resourceId: string) {

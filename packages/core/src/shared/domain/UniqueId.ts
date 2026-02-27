@@ -1,4 +1,4 @@
-import { ValueObject } from "./ValueObject.js";
+import { ValueObject } from "./ValueObject";
 
 interface UniqueIdProps {
   value: string;

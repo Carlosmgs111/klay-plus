@@ -1,12 +1,12 @@
 import { useEffect, useCallback } from "react";
-import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
-import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
-import { MetricCard } from "../../shared/MetricCard.js";
-import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { StatusBadge } from "../../shared/StatusBadge.js";
-import { Icon } from "../../shared/Icon.js";
-import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
-import { SkeletonMetricCards, SkeletonLine } from "../../shared/Skeleton.js";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import { usePipelineAction } from "../../../hooks/usePipelineAction";
+import { MetricCard } from "../../shared/MetricCard";
+import { Card, CardHeader, CardBody } from "../../shared/Card";
+import { StatusBadge } from "../../shared/StatusBadge";
+import { Icon } from "../../shared/Icon";
+import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { SkeletonMetricCards, SkeletonLine } from "../../shared/Skeleton";
 import type { GetManifestInput } from "@klay/core";
 
 export function DashboardPage() {

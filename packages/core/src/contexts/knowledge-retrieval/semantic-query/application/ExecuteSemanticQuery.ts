@@ -1,8 +1,8 @@
-import { Query } from "../domain/Query.js";
-import { RetrievalResult, RetrievalItem } from "../domain/RetrievalResult.js";
-import type { QueryEmbedder } from "../domain/ports/QueryEmbedder.js";
-import type { VectorReadStore } from "../domain/ports/VectorReadStore.js";
-import type { RankingStrategy } from "../domain/ports/RankingStrategy.js";
+import { Query } from "../domain/Query";
+import { RetrievalResult, RetrievalItem } from "../domain/RetrievalResult";
+import type { QueryEmbedder } from "../domain/ports/QueryEmbedder";
+import type { VectorReadStore } from "../domain/ports/VectorReadStore";
+import type { RankingStrategy } from "../domain/ports/RankingStrategy";
 
 export interface ExecuteSemanticQueryCommand {
   text: string;

@@ -1,13 +1,13 @@
 import { useCallback } from "react";
-import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
-import { useTheme } from "../../../contexts/ThemeContext.js";
-import { useToast } from "../../../contexts/ToastContext.js";
-import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
-import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { Button } from "../../shared/Button.js";
-import { Icon } from "../../shared/Icon.js";
-import { Spinner } from "../../shared/Spinner.js";
-import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { useToast } from "../../../contexts/ToastContext";
+import { usePipelineAction } from "../../../hooks/usePipelineAction";
+import { Card, CardHeader, CardBody } from "../../shared/Card";
+import { Button } from "../../shared/Button";
+import { Icon } from "../../shared/Icon";
+import { Spinner } from "../../shared/Spinner";
+import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import type { SearchKnowledgeInput } from "@klay/core";
 
 export function SettingsPage() {

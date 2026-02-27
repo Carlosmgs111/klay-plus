@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { VersionSourceSnapshot } from "../VersionSourceSnapshot.js";
+import { VersionSourceSnapshot } from "../VersionSourceSnapshot";
 
 describe("VersionSourceSnapshot", () => {
   it("should create a valid snapshot", () => {

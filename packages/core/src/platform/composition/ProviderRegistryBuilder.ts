@@ -1,5 +1,5 @@
-import type { ProviderFactory } from "../../shared/domain/ProviderFactory.js";
-import type { ProviderRegistry } from "../../shared/domain/ProviderRegistry.js";
+import type { ProviderFactory } from "../../shared/domain/ProviderFactory";
+import type { ProviderRegistry } from "../../shared/domain/ProviderRegistry";
 
 /**
  * ProviderRegistryBuilder<TContract>

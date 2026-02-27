@@ -14,11 +14,11 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { createKnowledgePlatform } from "../../composition/knowledge-platform.factory.js";
-import type { KnowledgePipelinePort } from "../../knowledge-pipeline/contracts/KnowledgePipelinePort.js";
-import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort.js";
-import { KnowledgeManagementError } from "../domain/KnowledgeManagementError.js";
-import { ManagementStep } from "../domain/ManagementStep.js";
+import { createKnowledgePlatform } from "../../composition/knowledge-platform.factory";
+import type { KnowledgePipelinePort } from "../../knowledge-pipeline/contracts/KnowledgePipelinePort";
+import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
+import { KnowledgeManagementError } from "../domain/KnowledgeManagementError";
+import { ManagementStep } from "../domain/ManagementStep";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

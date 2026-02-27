@@ -18,7 +18,7 @@
  * - Facades
  */
 
-export type { KnowledgePipelinePort } from "./contracts/KnowledgePipelinePort.js";
+export type { KnowledgePipelinePort } from "./contracts/KnowledgePipelinePort";
 
 export type {
   ExecutePipelineInput,
@@ -35,13 +35,13 @@ export type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-} from "./contracts/dtos.js";
+} from "./contracts/dtos";
 
-export { KnowledgePipelineError } from "./domain/KnowledgePipelineError.js";
-export { PipelineStep } from "./domain/PipelineStep.js";
-export type { PipelineStep as PipelineStepType } from "./domain/PipelineStep.js";
-export type { ContentManifestEntry } from "./domain/ContentManifest.js";
+export { KnowledgePipelineError } from "./domain/KnowledgePipelineError";
+export { PipelineStep } from "./domain/PipelineStep";
+export type { PipelineStep as PipelineStepType } from "./domain/PipelineStep";
+export type { ContentManifestEntry } from "./domain/ContentManifest";
 
-export { createKnowledgePipeline } from "./composition/knowledge-pipeline.factory.js";
+export { createKnowledgePipeline } from "./composition/knowledge-pipeline.factory";
 
-export type { KnowledgePipelinePolicy } from "./composition/KnowledgePipelineComposer.js";
+export type { KnowledgePipelinePolicy } from "./composition/knowledge-pipeline.factory";

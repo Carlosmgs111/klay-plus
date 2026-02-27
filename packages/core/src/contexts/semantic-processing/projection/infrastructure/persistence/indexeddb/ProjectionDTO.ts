@@ -1,8 +1,8 @@
-import { SemanticProjection } from "../../../domain/SemanticProjection.js";
-import { ProjectionId } from "../../../domain/ProjectionId.js";
-import { ProjectionResult } from "../../../domain/ProjectionResult.js";
-import type { ProjectionType } from "../../../domain/ProjectionType.js";
-import type { ProjectionStatus } from "../../../domain/ProjectionStatus.js";
+import { SemanticProjection } from "../../../domain/SemanticProjection";
+import { ProjectionId } from "../../../domain/ProjectionId";
+import { ProjectionResult } from "../../../domain/ProjectionResult";
+import type { ProjectionType } from "../../../domain/ProjectionType";
+import type { ProjectionStatus } from "../../../domain/ProjectionStatus";
 
 export interface ProjectionDTO {
   id: string;

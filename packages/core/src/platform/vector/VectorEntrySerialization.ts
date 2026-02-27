@@ -4,7 +4,7 @@
  * serialization concerns in infrastructure.
  */
 
-import type { VectorEntry } from "./VectorEntry.js";
+import type { VectorEntry } from "./VectorEntry";
 
 export interface VectorEntryDTO {
   id: string;

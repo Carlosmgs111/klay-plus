@@ -13,8 +13,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createSemanticProcessingFacade } from "../facade/index.js";
-import { ProjectionType } from "../projection/domain/ProjectionType.js";
+import { createSemanticProcessingFacade } from "../facade";
+import { ProjectionType } from "../projection/domain/ProjectionType";
 
 describe("Semantic Processing Context E2E", () => {
   it("should process content end-to-end with a processing profile", async () => {
@@ -26,8 +26,8 @@ describe("Semantic Processing Context E2E", () => {
 
     expect(facade).toBeDefined();
     expect(facade.projection).toBeDefined();
-    expect(facade.processingProfile).toBeDefined();
     expect(facade.vectorStoreConfig).toBeDefined();
+    expect(facade.createProcessingProfile).toBeDefined();
 
     const profileId = crypto.randomUUID();
     const createProfileResult = await facade.createProcessingProfile({

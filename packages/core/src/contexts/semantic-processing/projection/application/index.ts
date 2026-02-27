@@ -1,16 +1,16 @@
-import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
-import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
-import type { ProcessingProfileMaterializer } from "../composition/ProcessingProfileMaterializer.js";
+import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository";
+import type { VectorWriteStore } from "../domain/ports/VectorWriteStore";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository";
+import type { ProcessingProfileMaterializer } from "../composition/ProcessingProfileMaterializer";
 
-export { GenerateProjection } from "./GenerateProjection.js";
+export { GenerateProjection } from "./GenerateProjection";
 export type {
   GenerateProjectionCommand,
   GenerateProjectionResult,
-} from "./GenerateProjection.js";
+} from "./GenerateProjection";
 
-import { GenerateProjection } from "./GenerateProjection.js";
+import { GenerateProjection } from "./GenerateProjection";
 
 export class ProjectionUseCases {
   readonly generateProjection: GenerateProjection;

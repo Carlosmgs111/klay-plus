@@ -1,8 +1,8 @@
-import type { Repository } from "../../../../shared/domain/index.js";
-import type { SemanticProjection } from "./SemanticProjection.js";
-import type { ProjectionId } from "./ProjectionId.js";
-import type { ProjectionType } from "./ProjectionType.js";
-import type { ProjectionStatus } from "./ProjectionStatus.js";
+import type { Repository } from "../../../../shared/domain";
+import type { SemanticProjection } from "./SemanticProjection";
+import type { ProjectionId } from "./ProjectionId";
+import type { ProjectionType } from "./ProjectionType";
+import type { ProjectionStatus } from "./ProjectionStatus";
 
 export interface SemanticProjectionRepository extends Repository<SemanticProjection, ProjectionId> {
   findBySemanticUnitId(semanticUnitId: string): Promise<SemanticProjection[]>;

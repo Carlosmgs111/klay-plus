@@ -1,6 +1,6 @@
-import type { VectorReadStore, SearchHit } from "../../domain/ports/VectorReadStore.js";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry.js";
-import { cosineSimilarity } from "../../../../../platform/vector/hashVector.js";
+import type { VectorReadStore, SearchHit } from "../../domain/ports/VectorReadStore";
+import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import { cosineSimilarity } from "../../../../../platform/vector/hashVector";
 
 /**
  * In-memory VectorReadStore implementation.

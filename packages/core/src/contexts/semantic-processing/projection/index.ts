@@ -27,7 +27,7 @@ export {
   EmbeddingFailedError,
   VectorStoreFailedError,
   ProjectionProcessingError,
-} from "./domain/index.js";
+} from "./domain";
 
 export type {
   SemanticProjectionRepository,
@@ -38,13 +38,13 @@ export type {
   VectorWriteStore,
   VectorEntry,
   ProjectionError,
-} from "./domain/index.js";
+} from "./domain";
 
-export { GenerateProjection, ProjectionUseCases } from "./application/index.js";
+export { GenerateProjection, ProjectionUseCases } from "./application";
 export type {
   GenerateProjectionCommand,
   GenerateProjectionResult,
-} from "./application/index.js";
+} from "./application";
 
 export {
   BaseChunker,
@@ -55,18 +55,17 @@ export {
   HashEmbeddingStrategy,
   WebLLMEmbeddingStrategy,
   AISdkEmbeddingStrategy,
-} from "./infrastructure/strategies/index.js";
+} from "./infrastructure/strategies";
 
-export { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore.js";
+export { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
 
 export {
-  ProjectionComposer,
   projectionFactory,
   ProcessingProfileMaterializer,
-} from "./composition/index.js";
+} from "./composition";
 export type {
   ProjectionInfrastructurePolicy,
   ResolvedProjectionInfra,
   ProjectionFactoryResult,
   MaterializedStrategies,
-} from "./composition/index.js";
+} from "./composition";

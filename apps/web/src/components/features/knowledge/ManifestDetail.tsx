@@ -1,6 +1,6 @@
-import { StatusBadge } from "../../shared/StatusBadge.js";
-import { Icon } from "../../shared/Icon.js";
-import { Button } from "../../shared/Button.js";
+import { StatusBadge } from "../../shared/StatusBadge";
+import { Icon } from "../../shared/Icon";
+import { Button } from "../../shared/Button";
 import type { ContentManifestEntry } from "@klay/core";
 
 interface ManifestDetailProps {

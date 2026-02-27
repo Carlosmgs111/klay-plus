@@ -1,11 +1,11 @@
-import type { QueryEmbedder } from "../domain/ports/QueryEmbedder.js";
-import type { VectorReadStore } from "../domain/ports/VectorReadStore.js";
-import type { RankingStrategy } from "../domain/ports/RankingStrategy.js";
+import type { QueryEmbedder } from "../domain/ports/QueryEmbedder";
+import type { VectorReadStore } from "../domain/ports/VectorReadStore";
+import type { RankingStrategy } from "../domain/ports/RankingStrategy";
 
-export { ExecuteSemanticQuery } from "./ExecuteSemanticQuery.js";
-export type { ExecuteSemanticQueryCommand } from "./ExecuteSemanticQuery.js";
+export { ExecuteSemanticQuery } from "./ExecuteSemanticQuery";
+export type { ExecuteSemanticQueryCommand } from "./ExecuteSemanticQuery";
 
-import { ExecuteSemanticQuery } from "./ExecuteSemanticQuery.js";
+import { ExecuteSemanticQuery } from "./ExecuteSemanticQuery";
 
 export class SemanticQueryUseCases {
   readonly executeSemanticQuery: ExecuteSemanticQuery;

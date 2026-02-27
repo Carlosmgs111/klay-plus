@@ -1,7 +1,7 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { LineageId } from "./LineageId.js";
-import { Transformation } from "./Transformation.js";
-import { Trace } from "./Trace.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { LineageId } from "./LineageId";
+import { Transformation } from "./Transformation";
+import { Trace } from "./Trace";
 
 export class KnowledgeLineage extends AggregateRoot<LineageId> {
   private _semanticUnitId: string;

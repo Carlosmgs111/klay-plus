@@ -1,5 +1,5 @@
-import type { QueryEmbedder } from "../../domain/ports/QueryEmbedder.js";
-import { hashToVector } from "../../../../../platform/vector/hashVector.js";
+import type { QueryEmbedder } from "../../domain/ports/QueryEmbedder";
+import { hashToVector } from "../../../../../platform/vector/hashVector";
 
 /**
  * Deterministic local query embedder.

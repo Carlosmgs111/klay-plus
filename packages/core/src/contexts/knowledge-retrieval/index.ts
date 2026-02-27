@@ -6,7 +6,6 @@ export {
   RetrievalItem,
   ExecuteSemanticQuery,
   SemanticQueryUseCases,
-  SemanticQueryComposer,
   HashQueryEmbedder,
   WebLLMQueryEmbedder,
   AISdkQueryEmbedder,
@@ -15,7 +14,7 @@ export {
   IndexedDBVectorReadStore,
   PassthroughRankingStrategy,
   semanticQueryFactory,
-} from "./semantic-query/index.js";
+} from "./semantic-query";
 
 export type {
   VectorReadStore,
@@ -27,16 +26,15 @@ export type {
   SemanticQueryInfrastructurePolicy,
   ResolvedSemanticQueryInfra,
   SemanticQueryFactoryResult,
-} from "./semantic-query/index.js";
+} from "./semantic-query";
 
 // Facade Module (Recommended Entry Point)
 export {
   KnowledgeRetrievalFacade,
-  KnowledgeRetrievalFacadeComposer,
   createKnowledgeRetrievalFacade,
-} from "./facade/index.js";
+} from "./facade";
 
 export type {
   KnowledgeRetrievalFacadePolicy,
   ResolvedKnowledgeRetrievalModules,
-} from "./facade/index.js";
+} from "./facade";

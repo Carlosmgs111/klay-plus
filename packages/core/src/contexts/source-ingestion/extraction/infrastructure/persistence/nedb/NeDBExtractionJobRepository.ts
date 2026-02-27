@@ -1,8 +1,8 @@
-import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepository.js";
-import type { ExtractionJob } from "../../../domain/ExtractionJob.js";
-import type { ExtractionStatus } from "../../../domain/ExtractionStatus.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type ExtractionJobDTO } from "../indexeddb/ExtractionJobDTO.js";
+import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepository";
+import type { ExtractionJob } from "../../../domain/ExtractionJob";
+import type { ExtractionStatus } from "../../../domain/ExtractionStatus";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type ExtractionJobDTO } from "../indexeddb/ExtractionJobDTO";
 
 export class NeDBExtractionJobRepository
   extends BaseNeDBRepository<ExtractionJob, ExtractionJobDTO>

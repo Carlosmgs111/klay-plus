@@ -47,7 +47,13 @@
       "WebFetch(domain:mobbin.com)",
       "Bash(grep:*)",
       "mcp__plugin_engram_engram__mem_session_summary",
-      "Bash(cd \"D:/Documentos/Desktop/klay+\" && pnpm --filter @klay/core test 2>&1)"
+      "Bash(cd \"D:/Documentos/Desktop/klay+\" && pnpm --filter @klay/core test 2>&1)",
+      "Bash(wc:*)",
+      "Bash(tail:)",
+      "Bash(cd:*)",
+      "Bash(HOME=\"/c/Users/RYZEN 7\" git config:*)",
+      "Bash(export:*)",
+      "Bash(echo:*)"
     ]
   },
   "mcpServers": {

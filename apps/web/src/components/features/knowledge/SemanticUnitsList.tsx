@@ -1,5 +1,5 @@
-import { DataTable } from "../../shared/DataTable.js";
-import { StatusBadge } from "../../shared/StatusBadge.js";
+import { DataTable } from "../../shared/DataTable";
+import { StatusBadge } from "../../shared/StatusBadge";
 import type { ContentManifestEntry } from "@klay/core";
 
 interface SemanticUnitsListProps {

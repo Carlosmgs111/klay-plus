@@ -1,7 +1,7 @@
-import type { KnowledgeLineageRepository } from "../../../domain/KnowledgeLineageRepository.js";
-import type { KnowledgeLineage } from "../../../domain/KnowledgeLineage.js";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
-import { toDTO, fromDTO, type LineageDTO } from "./LineageDTO.js";
+import type { KnowledgeLineageRepository } from "../../../domain/KnowledgeLineageRepository";
+import type { KnowledgeLineage } from "../../../domain/KnowledgeLineage";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { toDTO, fromDTO, type LineageDTO } from "./LineageDTO";
 
 export class IndexedDBKnowledgeLineageRepository
   extends BaseIndexedDBRepository<KnowledgeLineage, LineageDTO>

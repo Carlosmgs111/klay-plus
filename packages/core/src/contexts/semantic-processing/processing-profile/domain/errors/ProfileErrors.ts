@@ -4,7 +4,7 @@ import {
   InvalidStateError,
   AlreadyExistsError,
   NotFoundError,
-} from "../../../../../shared/domain/errors/DomainError.js";
+} from "../../../../../shared/domain/errors/DomainError";
 
 export class ProfileNameRequiredError extends ValidationError {
   constructor() {

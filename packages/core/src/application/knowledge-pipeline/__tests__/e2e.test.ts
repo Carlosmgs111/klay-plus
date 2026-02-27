@@ -15,10 +15,10 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { createKnowledgePipeline } from "../composition/knowledge-pipeline.factory.js";
-import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort.js";
-import { PipelineStep } from "../domain/PipelineStep.js";
-import { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
+import { createKnowledgePipeline } from "../composition/knowledge-pipeline.factory";
+import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort";
+import { PipelineStep } from "../domain/PipelineStep";
+import { KnowledgePipelineError } from "../domain/KnowledgePipelineError";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

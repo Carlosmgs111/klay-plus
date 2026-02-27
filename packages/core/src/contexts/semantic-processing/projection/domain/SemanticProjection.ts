@@ -1,10 +1,10 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { ProjectionId } from "./ProjectionId.js";
-import { ProjectionStatus } from "./ProjectionStatus.js";
-import type { ProjectionType } from "./ProjectionType.js";
-import { ProjectionResult } from "./ProjectionResult.js";
-import { ProjectionGenerated } from "./events/ProjectionGenerated.js";
-import { ProjectionFailed } from "./events/ProjectionFailed.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { ProjectionId } from "./ProjectionId";
+import { ProjectionStatus } from "./ProjectionStatus";
+import type { ProjectionType } from "./ProjectionType";
+import { ProjectionResult } from "./ProjectionResult";
+import { ProjectionGenerated } from "./events/ProjectionGenerated";
+import { ProjectionFailed } from "./events/ProjectionFailed";
 
 export class SemanticProjection extends AggregateRoot<ProjectionId> {
   private _semanticUnitId: string;

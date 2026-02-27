@@ -1,4 +1,4 @@
-import type { Chunk, ChunkingStrategy } from "../../domain/ports/ChunkingStrategy.js";
+import type { Chunk, ChunkingStrategy } from "../../domain/ports/ChunkingStrategy";
 
 /**
  * Template Method base for all chunking strategies.

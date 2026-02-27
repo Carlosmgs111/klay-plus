@@ -1,7 +1,7 @@
-import type { Repository } from "../../../../shared/domain/index.js";
-import type { ProcessingProfile } from "./ProcessingProfile.js";
-import type { ProcessingProfileId } from "./ProcessingProfileId.js";
-import type { ProfileStatus } from "./ProfileStatus.js";
+import type { Repository } from "../../../../shared/domain";
+import type { ProcessingProfile } from "./ProcessingProfile";
+import type { ProcessingProfileId } from "./ProcessingProfileId";
+import type { ProfileStatus } from "./ProfileStatus";
 
 export interface ProcessingProfileRepository
   extends Repository<ProcessingProfile, ProcessingProfileId> {

@@ -1,5 +1,5 @@
-import type { DomainEvent } from "../../shared/domain/DomainEvent.js";
-import type { EventPublisher } from "../../shared/domain/EventPublisher.js";
+import type { DomainEvent } from "../../shared/domain/DomainEvent";
+import type { EventPublisher } from "../../shared/domain/EventPublisher";
 
 type EventHandler = (event: DomainEvent) => void | Promise<void>;
 

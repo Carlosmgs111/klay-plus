@@ -2,7 +2,7 @@
  * Generic IndexedDB repository with DTO serialization.
  * Subclass, provide toDTO/fromDTO, and add domain-specific queries.
  */
-import { IndexedDBStore } from "./indexeddb/IndexedDBStore.js";
+import { IndexedDBStore } from "./indexeddb/IndexedDBStore";
 
 export abstract class BaseIndexedDBRepository<
   TEntity extends { id: { value: string } },

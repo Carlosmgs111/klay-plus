@@ -1,4 +1,4 @@
-import { ValueObject } from "../../../../shared/domain/index.js";
+import { ValueObject } from "../../../../shared/domain";
 
 interface VersionSourceSnapshotProps {
   sourceId: string;

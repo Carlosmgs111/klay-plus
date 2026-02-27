@@ -1,11 +1,11 @@
-export { ProcessingProfile } from "./ProcessingProfile.js";
-export { ProcessingProfileId } from "./ProcessingProfileId.js";
-export { ProfileStatus } from "./ProfileStatus.js";
-export type { ProcessingProfileRepository } from "./ProcessingProfileRepository.js";
+export { ProcessingProfile } from "./ProcessingProfile";
+export { ProcessingProfileId } from "./ProcessingProfileId";
+export { ProfileStatus } from "./ProfileStatus";
+export type { ProcessingProfileRepository } from "./ProcessingProfileRepository";
 
-export { ProfileCreated } from "./events/ProfileCreated.js";
-export { ProfileUpdated } from "./events/ProfileUpdated.js";
-export { ProfileDeprecated } from "./events/ProfileDeprecated.js";
+export { ProfileCreated } from "./events/ProfileCreated";
+export { ProfileUpdated } from "./events/ProfileUpdated";
+export { ProfileDeprecated } from "./events/ProfileDeprecated";
 
 export {
   ProfileNameRequiredError,
@@ -15,6 +15,6 @@ export {
   ProfileNotFoundError,
   ProfileDeprecatedError,
   ProfileAlreadyDeprecatedError,
-} from "./errors/index.js";
+} from "./errors";
 
-export type { ProfileError } from "./errors/index.js";
+export type { ProfileError } from "./errors";

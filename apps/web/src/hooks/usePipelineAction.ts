@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { ServiceResult } from "../services/types.js";
+import type { ServiceResult } from "../services/types";
 
 interface PipelineActionState<T> {
   data: T | null;

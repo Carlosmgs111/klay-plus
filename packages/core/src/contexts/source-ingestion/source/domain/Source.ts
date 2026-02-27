@@ -1,9 +1,9 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { SourceId } from "./SourceId.js";
-import type { SourceType } from "./SourceType.js";
-import { SourceVersion } from "./SourceVersion.js";
-import { SourceRegistered } from "./events/SourceRegistered.js";
-import { SourceUpdated } from "./events/SourceUpdated.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { SourceId } from "./SourceId";
+import type { SourceType } from "./SourceType";
+import { SourceVersion } from "./SourceVersion";
+import { SourceRegistered } from "./events/SourceRegistered";
+import { SourceUpdated } from "./events/SourceUpdated";
 
 /**
  * Source aggregate - represents a reference to an external content source.

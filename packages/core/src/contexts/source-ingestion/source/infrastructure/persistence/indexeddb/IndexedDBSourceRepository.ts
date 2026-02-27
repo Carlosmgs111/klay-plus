@@ -1,8 +1,8 @@
-import type { SourceRepository } from "../../../domain/SourceRepository.js";
-import type { Source } from "../../../domain/Source.js";
-import type { SourceType } from "../../../domain/SourceType.js";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
-import { toDTO, fromDTO, type SourceDTO } from "./SourceDTO.js";
+import type { SourceRepository } from "../../../domain/SourceRepository";
+import type { Source } from "../../../domain/Source";
+import type { SourceType } from "../../../domain/SourceType";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { toDTO, fromDTO, type SourceDTO } from "./SourceDTO";
 
 export class IndexedDBSourceRepository
   extends BaseIndexedDBRepository<Source, SourceDTO>

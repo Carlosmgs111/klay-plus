@@ -1,4 +1,4 @@
-import { Icon } from "./Icon.js";
+import { Icon } from "./Icon";
 
 interface ErrorDisplayProps {
   message: string;

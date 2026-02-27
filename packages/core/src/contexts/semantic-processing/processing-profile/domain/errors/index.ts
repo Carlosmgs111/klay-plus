@@ -6,6 +6,6 @@ export {
   ProfileNotFoundError,
   ProfileDeprecatedError,
   ProfileAlreadyDeprecatedError,
-} from "./ProfileErrors.js";
+} from "./ProfileErrors";
 
-export type { ProfileError } from "./ProfileErrors.js";
+export type { ProfileError } from "./ProfileErrors";

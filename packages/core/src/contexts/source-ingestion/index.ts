@@ -7,21 +7,15 @@ export {
   SourceRegistered,
   SourceUpdated,
   SourceExtracted,
-  SourceUseCases,
-  SourceComposer,
-  RegisterSource,
-  UpdateSource,
   sourceFactory,
-} from "./source/index.js";
+} from "./source";
 
 export type {
   SourceRepository,
   SourceInfrastructurePolicy,
   ResolvedSourceInfra,
-  RegisterSourceCommand,
-  UpdateSourceCommand,
   SourceFactoryResult,
-} from "./source/index.js";
+} from "./source";
 
 // Resource Module
 export {
@@ -31,12 +25,6 @@ export {
   StorageLocation,
   ResourceStored,
   ResourceDeleted,
-  ResourceUseCases,
-  ResourceComposer,
-  StoreResource,
-  RegisterExternalResource,
-  DeleteResource,
-  GetResource,
   resourceFactory,
   // Domain Errors
   ResourceNotFoundError,
@@ -44,7 +32,7 @@ export {
   ResourceInvalidNameError,
   ResourceInvalidMimeTypeError,
   ResourceStorageFailedError,
-} from "./resource/index.js";
+} from "./resource";
 
 export type {
   ResourceRepository,
@@ -52,13 +40,8 @@ export type {
   ResourceError,
   ResourceInfrastructurePolicy,
   ResolvedResourceInfra,
-  StoreResourceCommand,
-  StoreResourceResult,
-  RegisterExternalResourceCommand,
-  RegisterExternalResourceResult,
-  DeleteResourceCommand,
   ResourceFactoryResult,
-} from "./resource/index.js";
+} from "./resource";
 
 // Extraction Module
 export {
@@ -68,7 +51,6 @@ export {
   ExtractionCompleted,
   ExtractionFailed,
   ExtractionUseCases,
-  ExtractionComposer,
   ExecuteExtraction,
   extractionFactory,
   UnsupportedMimeTypeError,
@@ -76,7 +58,7 @@ export {
   TextContentExtractor,
   BrowserPdfContentExtractor,
   ServerPdfContentExtractor,
-} from "./extraction/index.js";
+} from "./extraction";
 
 export type {
   ExtractionJobRepository,
@@ -88,17 +70,16 @@ export type {
   ExecuteExtractionResult,
   ExtractionFactoryResult,
   ExtractorMap,
-} from "./extraction/index.js";
+} from "./extraction";
 
 // Context Facade (Application Layer Entry Point)
 export {
   SourceIngestionFacade,
-  SourceIngestionFacadeComposer,
   createSourceIngestionFacade,
-} from "./facade/index.js";
+} from "./facade";
 
 export type {
   SourceIngestionFacadePolicy,
   ResolvedSourceIngestionModules,
   IngestFileSuccess,
-} from "./facade/index.js";
+} from "./facade";

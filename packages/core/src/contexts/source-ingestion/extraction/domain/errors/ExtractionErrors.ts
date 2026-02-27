@@ -3,8 +3,8 @@ import {
   ValidationError,
   InvalidStateError,
   OperationError,
-} from "../../../../../shared/domain/errors/index.js";
-import type { ExtractionStatus } from "../ExtractionStatus.js";
+} from "../../../../../shared/domain/errors";
+import type { ExtractionStatus } from "../ExtractionStatus";
 
 export class ExtractionJobNotFoundError extends NotFoundError {
   constructor(jobId: string) {

@@ -1,8 +1,8 @@
-import type { SemanticUnitRepository } from "../../../domain/SemanticUnitRepository.js";
-import type { SemanticUnit } from "../../../domain/SemanticUnit.js";
-import type { SemanticState } from "../../../domain/SemanticState.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type SemanticUnitDTO } from "../indexeddb/SemanticUnitDTO.js";
+import type { SemanticUnitRepository } from "../../../domain/SemanticUnitRepository";
+import type { SemanticUnit } from "../../../domain/SemanticUnit";
+import type { SemanticState } from "../../../domain/SemanticState";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type SemanticUnitDTO } from "../indexeddb/SemanticUnitDTO";
 
 export class NeDBSemanticUnitRepository
   extends BaseNeDBRepository<SemanticUnit, SemanticUnitDTO>

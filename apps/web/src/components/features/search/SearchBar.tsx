@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button } from "../../shared/Button.js";
-import { Icon } from "../../shared/Icon.js";
-import { Spinner } from "../../shared/Spinner.js";
+import { Button } from "../../shared/Button";
+import { Icon } from "../../shared/Icon";
+import { Spinner } from "../../shared/Spinner";
 
 interface SearchBarProps {
   onSearch: (query: string, topK: number, minScore: number) => void;

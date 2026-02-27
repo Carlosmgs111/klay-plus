@@ -1,9 +1,9 @@
-import type { Result } from "../../../shared/domain/Result.js";
-import type { KnowledgeManagementError } from "../domain/KnowledgeManagementError.js";
+import type { Result } from "../../../shared/domain/Result";
+import type { KnowledgeManagementError } from "../domain/KnowledgeManagementError";
 import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "./dtos.js";
+} from "./dtos";
 
 /**
  * KnowledgeManagementPort — the single public entry point for multi-step

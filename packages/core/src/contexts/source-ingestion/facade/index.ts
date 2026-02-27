@@ -1,32 +1,28 @@
-export { SourceIngestionFacade } from "./SourceIngestionFacade.js";
+export { SourceIngestionFacade } from "./SourceIngestionFacade";
 export type {
   RegisterSourceSuccess,
   ExtractSourceSuccess,
   IngestAndExtractSuccess,
-  IngestExtractAndReturnSuccess,
   IngestFileSuccess,
-} from "./SourceIngestionFacade.js";
+  StoreResourceSuccess,
+  RegisterExternalResourceSuccess,
+} from "./SourceIngestionFacade";
 
-export { SourceIngestionFacadeComposer } from "./composition/SourceIngestionFacadeComposer.js";
 export type {
   SourceIngestionFacadePolicy,
   ResolvedSourceIngestionModules,
-} from "./composition/infra-policies.js";
+} from "./composition/factory";
 
-import type { SourceIngestionFacadePolicy } from "./composition/infra-policies.js";
-import type { SourceIngestionFacade as _Facade } from "./SourceIngestionFacade.js";
+import type { SourceIngestionFacadePolicy } from "./composition/factory";
+import type { SourceIngestionFacade as _Facade } from "./SourceIngestionFacade";
 
-/**
- * Factory function to create a fully configured SourceIngestionFacade.
- * This is the main entry point for consuming the Source Ingestion context.
- */
 export async function createSourceIngestionFacade(
   policy: SourceIngestionFacadePolicy,
 ): Promise<_Facade> {
-  const { SourceIngestionFacadeComposer } = await import(
-    "./composition/SourceIngestionFacadeComposer.js"
+  const { resolveSourceIngestionModules } = await import(
+    "./composition/factory"
   );
-  const { SourceIngestionFacade } = await import("./SourceIngestionFacade.js");
-  const modules = await SourceIngestionFacadeComposer.resolve(policy);
+  const { SourceIngestionFacade } = await import("./SourceIngestionFacade");
+  const modules = await resolveSourceIngestionModules(policy);
   return new SourceIngestionFacade(modules);
 }

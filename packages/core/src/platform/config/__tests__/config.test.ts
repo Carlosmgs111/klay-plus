@@ -6,7 +6,7 @@ import {
   InMemoryConfigProvider,
   NodeConfigProvider,
   ConfigurationError,
-} from "../index.js";
+} from "..";
 
 async function runTests() {
   console.log("========================================================");

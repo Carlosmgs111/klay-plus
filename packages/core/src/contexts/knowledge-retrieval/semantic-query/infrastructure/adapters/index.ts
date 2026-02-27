@@ -1,7 +1,7 @@
-export { HashQueryEmbedder } from "./HashQueryEmbedder.js";
-export { WebLLMQueryEmbedder } from "./WebLLMQueryEmbedder.js";
-export { AISdkQueryEmbedder } from "./AISdkQueryEmbedder.js";
-export { InMemoryVectorReadStore } from "./InMemoryVectorReadStore.js";
-export { NeDBVectorReadStore } from "./NeDBVectorReadStore.js";
-export { IndexedDBVectorReadStore } from "./IndexedDBVectorReadStore.js";
-export { PassthroughRankingStrategy } from "./PassthroughRankingStrategy.js";
+export { HashQueryEmbedder } from "./HashQueryEmbedder";
+export { WebLLMQueryEmbedder } from "./WebLLMQueryEmbedder";
+export { AISdkQueryEmbedder } from "./AISdkQueryEmbedder";
+export { InMemoryVectorReadStore } from "./InMemoryVectorReadStore";
+export { NeDBVectorReadStore } from "./NeDBVectorReadStore";
+export { IndexedDBVectorReadStore } from "./IndexedDBVectorReadStore";
+export { PassthroughRankingStrategy } from "./PassthroughRankingStrategy";

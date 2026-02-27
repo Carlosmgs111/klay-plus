@@ -1,9 +1,21 @@
-import type { ProjectionUseCases } from "../projection/application/index.js";
-import type { ProcessingProfileUseCases } from "../processing-profile/application/index.js";
-import type { ProjectionType } from "../projection/domain/ProjectionType.js";
-import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "./composition/infra-policies.js";
-import { Result } from "../../../shared/domain/Result.js";
-import type { DomainError } from "../../../shared/domain/errors/index.js";
+import type { ProjectionUseCases } from "../projection/application";
+import type { ProcessingProfileRepository } from "../processing-profile/domain/ProcessingProfileRepository";
+import type { EventPublisher } from "../../../shared/domain/EventPublisher";
+import type { ProjectionType } from "../projection/domain/ProjectionType";
+import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "./composition/factory";
+import { ProcessingProfile } from "../processing-profile/domain/ProcessingProfile";
+import { ProcessingProfileId } from "../processing-profile/domain/ProcessingProfileId";
+import {
+  ProfileAlreadyExistsError,
+  ProfileNameRequiredError,
+  ProfileChunkingStrategyRequiredError,
+  ProfileEmbeddingStrategyRequiredError,
+  ProfileNotFoundError,
+  ProfileDeprecatedError,
+  ProfileAlreadyDeprecatedError,
+} from "../processing-profile/domain/errors";
+import { Result } from "../../../shared/domain/Result";
+import type { DomainError } from "../../../shared/domain/errors";
 
 export interface ProcessContentSuccess {
   projectionId: string;
@@ -26,25 +38,16 @@ export interface DeprecateProfileSuccess {
   profileId: string;
 }
 
-/**
- * Application Facade for the Semantic Processing bounded context.
- *
- * Provides a unified entry point to all modules within the context,
- * coordinating use cases for content projection and processing profile management.
- *
- * This is an Application Layer component - it does NOT contain domain logic.
- * It only coordinates existing use cases and handles cross-module workflows.
- *
- * This is a CONTEXT-LEVEL facade. Individual modules do NOT have facades.
- */
 export class SemanticProcessingFacade {
   private readonly _projection: ProjectionUseCases;
-  private readonly _processingProfile: ProcessingProfileUseCases;
+  private readonly _profileRepository: ProcessingProfileRepository;
+  private readonly _profileEventPublisher: EventPublisher;
   private readonly _vectorStoreConfig: VectorStoreConfig;
 
   constructor(modules: ResolvedSemanticProcessingModules) {
     this._projection = modules.projection;
-    this._processingProfile = modules.processingProfile;
+    this._profileRepository = modules.profileRepository;
+    this._profileEventPublisher = modules.profileEventPublisher;
     this._vectorStoreConfig = modules.vectorStoreConfig;
   }
 
@@ -52,22 +55,12 @@ export class SemanticProcessingFacade {
     return this._projection;
   }
 
-  get processingProfile(): ProcessingProfileUseCases {
-    return this._processingProfile;
-  }
-
-  /**
-   * Exposes the vector store configuration for cross-context wiring.
-   * The knowledge-retrieval context uses this config to create its own
-   * VectorReadStore pointing to the same physical resource.
-   */
   get vectorStoreConfig(): VectorStoreConfig {
     return this._vectorStoreConfig;
   }
 
-  /**
-   * Creates a new processing profile.
-   */
+  // ── Processing Profile operations ────────────────────────────────────
+
   async createProcessingProfile(params: {
     id: string;
     name: string;
@@ -75,27 +68,39 @@ export class SemanticProcessingFacade {
     embeddingStrategyId: string;
     configuration?: Record<string, unknown>;
   }): Promise<Result<DomainError, CreateProfileSuccess>> {
-    const result = await this._processingProfile.createProfile.execute({
-      id: params.id,
+    if (!params.name || params.name.trim() === "") {
+      return Result.fail(new ProfileNameRequiredError());
+    }
+    if (!params.chunkingStrategyId || params.chunkingStrategyId.trim() === "") {
+      return Result.fail(new ProfileChunkingStrategyRequiredError());
+    }
+    if (!params.embeddingStrategyId || params.embeddingStrategyId.trim() === "") {
+      return Result.fail(new ProfileEmbeddingStrategyRequiredError());
+    }
+
+    const profileId = ProcessingProfileId.create(params.id);
+    const existing = await this._profileRepository.findById(profileId);
+    if (existing) {
+      return Result.fail(new ProfileAlreadyExistsError(params.id));
+    }
+
+    const profile = ProcessingProfile.create({
+      id: profileId,
       name: params.name,
       chunkingStrategyId: params.chunkingStrategyId,
       embeddingStrategyId: params.embeddingStrategyId,
       configuration: params.configuration,
     });
 
-    if (result.isFail()) {
-      return Result.fail(result.error);
-    }
+    await this._profileRepository.save(profile);
+    await this._profileEventPublisher.publishAll(profile.clearEvents());
 
     return Result.ok({
-      profileId: result.value.id.value,
-      version: result.value.version,
+      profileId: profile.id.value,
+      version: profile.version,
     });
   }
 
-  /**
-   * Updates an existing processing profile.
-   */
   async updateProcessingProfile(params: {
     id: string;
     name?: string;
@@ -103,50 +108,58 @@ export class SemanticProcessingFacade {
     embeddingStrategyId?: string;
     configuration?: Record<string, unknown>;
   }): Promise<Result<DomainError, UpdateProfileSuccess>> {
-    const result = await this._processingProfile.updateProfile.execute({
-      id: params.id,
+    const profileId = ProcessingProfileId.create(params.id);
+    const profile = await this._profileRepository.findById(profileId);
+
+    if (!profile) {
+      return Result.fail(new ProfileNotFoundError(params.id));
+    }
+
+    if (profile.isDeprecated) {
+      return Result.fail(new ProfileDeprecatedError(params.id));
+    }
+
+    profile.update({
       name: params.name,
       chunkingStrategyId: params.chunkingStrategyId,
       embeddingStrategyId: params.embeddingStrategyId,
       configuration: params.configuration,
     });
 
-    if (result.isFail()) {
-      return Result.fail(result.error);
-    }
+    await this._profileRepository.save(profile);
+    await this._profileEventPublisher.publishAll(profile.clearEvents());
 
     return Result.ok({
-      profileId: result.value.id.value,
-      version: result.value.version,
+      profileId: profile.id.value,
+      version: profile.version,
     });
   }
 
-  /**
-   * Deprecates a processing profile.
-   */
   async deprecateProcessingProfile(params: {
     id: string;
     reason: string;
   }): Promise<Result<DomainError, DeprecateProfileSuccess>> {
-    const result = await this._processingProfile.deprecateProfile.execute({
-      id: params.id,
-      reason: params.reason,
-    });
+    const profileId = ProcessingProfileId.create(params.id);
+    const profile = await this._profileRepository.findById(profileId);
 
-    if (result.isFail()) {
-      return Result.fail(result.error);
+    if (!profile) {
+      return Result.fail(new ProfileNotFoundError(params.id));
     }
 
-    return Result.ok({ profileId: result.value.id.value });
+    if (profile.isDeprecated) {
+      return Result.fail(new ProfileAlreadyDeprecatedError(params.id));
+    }
+
+    profile.deprecate(params.reason);
+
+    await this._profileRepository.save(profile);
+    await this._profileEventPublisher.publishAll(profile.clearEvents());
+
+    return Result.ok({ profileId: profile.id.value });
   }
 
-  /**
-   * Processes content into semantic projections.
-   * Chunks the content, generates embeddings, and stores vectors.
-   *
-   * Now requires a processingProfileId — the profile determines
-   * which chunking and embedding strategies are materialized at runtime.
-   */
+  // ── Content processing ───────────────────────────────────────────────
+
   async processContent(params: {
     projectionId: string;
     semanticUnitId: string;
@@ -176,9 +189,6 @@ export class SemanticProcessingFacade {
     });
   }
 
-  /**
-   * Batch processes multiple semantic units.
-   */
   async batchProcess(
     items: Array<{
       projectionId: string;

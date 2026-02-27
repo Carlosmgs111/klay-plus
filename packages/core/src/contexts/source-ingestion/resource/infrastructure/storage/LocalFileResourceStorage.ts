@@ -1,4 +1,4 @@
-import type { ResourceStorage } from "../../domain/ResourceStorage.js";
+import type { ResourceStorage } from "../../domain/ResourceStorage";
 
 /**
  * Local filesystem resource storage.

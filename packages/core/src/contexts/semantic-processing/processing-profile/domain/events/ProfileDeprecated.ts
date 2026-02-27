@@ -1,3 +1,3 @@
-import { defineDomainEvent } from "../../../../../shared/domain/index.js";
+import { defineDomainEvent } from "../../../../../shared/domain";
 
 export const ProfileDeprecated = defineDomainEvent("semantic-processing.profile.deprecated");

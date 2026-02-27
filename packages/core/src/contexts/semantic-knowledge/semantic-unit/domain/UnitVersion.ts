@@ -1,5 +1,5 @@
-import { ValueObject } from "../../../../shared/domain/index.js";
-import type { VersionSourceSnapshot } from "./VersionSourceSnapshot.js";
+import { ValueObject } from "../../../../shared/domain";
+import type { VersionSourceSnapshot } from "./VersionSourceSnapshot";
 
 interface UnitVersionProps {
   version: number;

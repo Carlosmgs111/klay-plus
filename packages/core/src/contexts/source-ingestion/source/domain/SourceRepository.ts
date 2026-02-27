@@ -1,7 +1,7 @@
-import type { Repository } from "../../../../shared/domain/index.js";
-import type { Source } from "./Source.js";
-import type { SourceId } from "./SourceId.js";
-import type { SourceType } from "./SourceType.js";
+import type { Repository } from "../../../../shared/domain";
+import type { Source } from "./Source";
+import type { SourceId } from "./SourceId";
+import type { SourceType } from "./SourceType";
 
 export interface SourceRepository extends Repository<Source, SourceId> {
   findByType(type: SourceType): Promise<Source[]>;

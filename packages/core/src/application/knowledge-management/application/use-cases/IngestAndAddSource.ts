@@ -1,12 +1,12 @@
-import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
-import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
-import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
-import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType.js";
-import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType.js";
-import type { IngestAndAddSourceInput, IngestAndAddSourceSuccess } from "../../contracts/dtos.js";
-import { Result } from "../../../../shared/domain/Result.js";
-import { KnowledgeManagementError } from "../../domain/KnowledgeManagementError.js";
-import { ManagementStep } from "../../domain/ManagementStep.js";
+import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade";
+import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
+import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType";
+import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType";
+import type { IngestAndAddSourceInput, IngestAndAddSourceSuccess } from "../../contracts/dtos";
+import { Result } from "../../../../shared/domain/Result";
+import { KnowledgeManagementError } from "../../domain/KnowledgeManagementError";
+import { ManagementStep } from "../../domain/ManagementStep";
 
 // Default projection type when not specified
 const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
@@ -35,7 +35,7 @@ export class IngestAndAddSource {
   ): Promise<Result<KnowledgeManagementError, IngestAndAddSourceSuccess>> {
     const completedSteps: ManagementStep[] = [];
 
-    const ingestionResult = await this._ingestion.ingestExtractAndReturn({
+    const ingestionResult = await this._ingestion.ingestAndExtract({
       sourceId: input.sourceId,
       sourceName: input.sourceName,
       uri: input.uri,

@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
-import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
-import { useToast } from "../../../contexts/ToastContext.js";
-import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
-import { Button } from "../../shared/Button.js";
-import { Input } from "../../shared/Input.js";
-import { Select } from "../../shared/Select.js";
-import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
-import { Spinner } from "../../shared/Spinner.js";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import { useToast } from "../../../contexts/ToastContext";
+import { usePipelineAction } from "../../../hooks/usePipelineAction";
+import { Button } from "../../shared/Button";
+import { Input } from "../../shared/Input";
+import { Select } from "../../shared/Select";
+import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { Spinner } from "../../shared/Spinner";
 import type { CreateProcessingProfileInput } from "@klay/core";
 
 const CHUNKING_STRATEGIES = [

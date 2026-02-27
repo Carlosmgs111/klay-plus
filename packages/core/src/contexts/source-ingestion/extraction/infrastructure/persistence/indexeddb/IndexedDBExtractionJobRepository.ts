@@ -1,8 +1,8 @@
-import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepository.js";
-import type { ExtractionJob } from "../../../domain/ExtractionJob.js";
-import type { ExtractionStatus } from "../../../domain/ExtractionStatus.js";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
-import { toDTO, fromDTO, type ExtractionJobDTO } from "./ExtractionJobDTO.js";
+import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepository";
+import type { ExtractionJob } from "../../../domain/ExtractionJob";
+import type { ExtractionStatus } from "../../../domain/ExtractionStatus";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { toDTO, fromDTO, type ExtractionJobDTO } from "./ExtractionJobDTO";
 
 export class IndexedDBExtractionJobRepository
   extends BaseIndexedDBRepository<ExtractionJob, ExtractionJobDTO>

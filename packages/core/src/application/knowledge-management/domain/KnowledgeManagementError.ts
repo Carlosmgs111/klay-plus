@@ -1,5 +1,5 @@
-import { BaseOrchestratorError, extractCode, extractMessage } from "../../BaseOrchestratorError.js";
-import type { ManagementStep } from "./ManagementStep.js";
+import { BaseOrchestratorError, extractCode, extractMessage } from "../../BaseOrchestratorError";
+import type { ManagementStep } from "./ManagementStep";
 
 export class KnowledgeManagementError extends BaseOrchestratorError<ManagementStep> {
   static fromStep(

@@ -1,10 +1,10 @@
-import { SemanticUnit } from "../../../domain/SemanticUnit.js";
-import { SemanticUnitId } from "../../../domain/SemanticUnitId.js";
-import { UnitSource } from "../../../domain/UnitSource.js";
-import { UnitVersion } from "../../../domain/UnitVersion.js";
-import { VersionSourceSnapshot } from "../../../domain/VersionSourceSnapshot.js";
-import { UnitMetadata } from "../../../domain/UnitMetadata.js";
-import type { SemanticState } from "../../../domain/SemanticState.js";
+import { SemanticUnit } from "../../../domain/SemanticUnit";
+import { SemanticUnitId } from "../../../domain/SemanticUnitId";
+import { UnitSource } from "../../../domain/UnitSource";
+import { UnitVersion } from "../../../domain/UnitVersion";
+import { VersionSourceSnapshot } from "../../../domain/VersionSourceSnapshot";
+import { UnitMetadata } from "../../../domain/UnitMetadata";
+import type { SemanticState } from "../../../domain/SemanticState";
 
 export interface SemanticUnitDTO {
   id: string;

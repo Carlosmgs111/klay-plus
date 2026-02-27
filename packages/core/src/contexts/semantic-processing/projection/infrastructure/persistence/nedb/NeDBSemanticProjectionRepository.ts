@@ -1,9 +1,9 @@
-import type { SemanticProjectionRepository } from "../../../domain/SemanticProjectionRepository.js";
-import type { SemanticProjection } from "../../../domain/SemanticProjection.js";
-import type { ProjectionType } from "../../../domain/ProjectionType.js";
-import type { ProjectionStatus } from "../../../domain/ProjectionStatus.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type ProjectionDTO } from "../indexeddb/ProjectionDTO.js";
+import type { SemanticProjectionRepository } from "../../../domain/SemanticProjectionRepository";
+import type { SemanticProjection } from "../../../domain/SemanticProjection";
+import type { ProjectionType } from "../../../domain/ProjectionType";
+import type { ProjectionStatus } from "../../../domain/ProjectionStatus";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type ProjectionDTO } from "../indexeddb/ProjectionDTO";
 
 export class NeDBSemanticProjectionRepository
   extends BaseNeDBRepository<SemanticProjection, ProjectionDTO>

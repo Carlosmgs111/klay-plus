@@ -1,4 +1,4 @@
-import type { ContentExtractor, ExtractionResult } from "../../domain/ContentExtractor.js";
+import type { ContentExtractor, ExtractionResult } from "../../domain/ContentExtractor";
 
 /**
  * MIME types supported by the text extractor.

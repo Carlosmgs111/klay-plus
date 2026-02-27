@@ -1,5 +1,5 @@
-import { useToast } from "../../contexts/ToastContext.js";
-import { Icon } from "./Icon.js";
+import { useToast } from "../../contexts/ToastContext";
+import { Icon } from "./Icon";
 
 const TYPE_ICON: Record<string, string> = {
   success: "check-circle",

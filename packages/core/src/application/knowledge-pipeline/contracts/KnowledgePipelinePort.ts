@@ -1,5 +1,5 @@
-import type { Result } from "../../../shared/domain/Result.js";
-import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
+import type { Result } from "../../../shared/domain/Result";
+import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError";
 import type {
   ExecutePipelineInput,
   ExecutePipelineSuccess,
@@ -15,7 +15,7 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-} from "./dtos.js";
+} from "./dtos";
 
 /**
  * KnowledgePipelinePort — the single public entry point for the orchestrator.

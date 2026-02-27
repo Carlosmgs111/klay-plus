@@ -1,12 +1,12 @@
-export { Resource } from "./Resource.js";
-export { ResourceId } from "./ResourceId.js";
-export { ResourceStatus } from "./ResourceStatus.js";
-export { StorageLocation } from "./StorageLocation.js";
-export type { ResourceStorage } from "./ResourceStorage.js";
-export type { ResourceRepository } from "./ResourceRepository.js";
+export { Resource } from "./Resource";
+export { ResourceId } from "./ResourceId";
+export { ResourceStatus } from "./ResourceStatus";
+export { StorageLocation } from "./StorageLocation";
+export type { ResourceStorage } from "./ResourceStorage";
+export type { ResourceRepository } from "./ResourceRepository";
 
-export { ResourceStored } from "./events/ResourceStored.js";
-export { ResourceDeleted } from "./events/ResourceDeleted.js";
+export { ResourceStored } from "./events/ResourceStored";
+export { ResourceDeleted } from "./events/ResourceDeleted";
 
 // Domain Errors
 export {
@@ -16,4 +16,4 @@ export {
   ResourceInvalidMimeTypeError,
   ResourceStorageFailedError,
   type ResourceError,
-} from "./errors/index.js";
+} from "./errors";

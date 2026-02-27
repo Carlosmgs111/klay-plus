@@ -1,12 +1,12 @@
 import { useEffect, useCallback, useState } from "react";
-import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
-import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
-import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { Icon } from "../../shared/Icon.js";
-import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
-import { SkeletonLine } from "../../shared/Skeleton.js";
-import { SemanticUnitsList } from "./SemanticUnitsList.js";
-import { ManifestDetail } from "./ManifestDetail.js";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import { usePipelineAction } from "../../../hooks/usePipelineAction";
+import { Card, CardHeader, CardBody } from "../../shared/Card";
+import { Icon } from "../../shared/Icon";
+import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { SkeletonLine } from "../../shared/Skeleton";
+import { SemanticUnitsList } from "./SemanticUnitsList";
+import { ManifestDetail } from "./ManifestDetail";
 import type { GetManifestInput, ContentManifestEntry } from "@klay/core";
 
 export function KnowledgePage() {

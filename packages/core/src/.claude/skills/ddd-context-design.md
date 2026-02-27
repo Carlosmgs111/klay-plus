@@ -124,12 +124,12 @@ MÓDULO (dentro del contexto)
     └── {module}.factory.ts           # Retorna { useCases, infra }
 ```
 
-### 1.2 composition/index.ts (OBLIGATORIO)
+### 1.2 composition.ts (OBLIGATORIO)
 
-Cada módulo DEBE tener un `composition/index.ts` que re-exporta todo:
+Cada módulo DEBE tener un `composition.ts` que re-exporta todo:
 
 ```typescript
-// composition/index.ts
+// composition.ts
 export { ModuleComposer } from "./ModuleComposer";
 export type {
   ModuleInfraPolicy,
@@ -164,7 +164,7 @@ Política viene de arriba (context)       Adapter lee process.env o window
 Factory retorna { useCases, infra }      Factory retorna solo useCases
 Métodos privados separados por concern   Un solo switch que resuelve todo
 Factory en {module}.factory.ts           Factory inline en index.ts del módulo
-composition/index.ts re-exporta todo     No hay index.ts en composition/
+composition.ts re-exporta todo     No hay index.ts en composition/
 FacadeComposer usa ConfigProvider        API keys/paths hardcodeados
 configOverrides permite testing          Tests dependen de environment real
 ```
@@ -335,10 +335,10 @@ source-ingestion/
 └── extraction/                        ← Módulo (NO tiene facade propio)
 ```
 
-### 3.2 facade/index.ts (Patrón Obligatorio)
+### 3.2 facade.ts (Patrón Obligatorio)
 
 ```typescript
-// facade/index.ts
+// facade.ts
 export { ContextFacade } from "./ContextFacade";
 export { ContextFacadeComposer } from "./composition/ContextFacadeComposer";
 export type {
@@ -563,13 +563,13 @@ export class PipelineComposer {
   static async resolve(policy: PipelinePolicy): Promise<ResolvedPipelineFacades> {
     // 1. Contextos sin dependencias cross-context (paralelo)
     const [ingestion, knowledge] = await Promise.all([
-      import("../../source-ingestion/facade/index.js").then(
+      import("../../source-ingestion/facade.js").then(
         (m) => m.createSourceIngestionFacade({
           type: policy.type,
           ...policy.overrides?.ingestion,
         }),
       ),
-      import("../../semantic-knowledge/facade/index.js").then(
+      import("../../semantic-knowledge/facade.js").then(
         (m) => m.createSemanticKnowledgeFacade({
           type: policy.type,
           ...policy.overrides?.knowledge,
@@ -578,7 +578,7 @@ export class PipelineComposer {
     ]);
 
     // 2. SemanticProcessing (independiente, pero expone vectorStore)
-    const processing = await import("../../semantic-processing/facade/index.js").then(
+    const processing = await import("../../semantic-processing/facade.js").then(
       (m) => m.createSemanticProcessingFacade({
         type: policy.type,
         ...policy.overrides?.processing,
@@ -586,7 +586,7 @@ export class PipelineComposer {
     );
 
     // 3. KnowledgeRetrieval (depende del vectorStore de processing)
-    const retrieval = await import("../../knowledge-retrieval/facade/index.js").then(
+    const retrieval = await import("../../knowledge-retrieval/facade.js").then(
       (m) => m.createKnowledgeRetrievalFacade({
         type: policy.type,
         vectorStoreRef: processing.vectorStore,  // Wiring cross-context
@@ -766,10 +766,10 @@ export class PipelineFacade {
 }
 ```
 
-### 4.9 pipeline/index.ts (Patrón Obligatorio)
+### 4.9 pipeline.ts (Patrón Obligatorio)
 
 ```typescript
-// pipeline/index.ts
+// pipeline.ts
 export { PipelineFacade } from "./PipelineFacade.js";
 export { PipelineComposer } from "./composition/PipelineComposer.js";
 export { PipelineError } from "./PipelineError.js";
@@ -981,9 +981,9 @@ Antes de finalizar un módulo, verificar:
 - [ ] ¿Los Use Cases reciben TODAS sus dependencias por constructor?
 - [ ] ¿La coordinación entre módulos está SOLO en el Facade?
 - [ ] ¿Factory retorna `{ useCases, infra }`?
-- [ ] ¿Existe `composition/index.ts` que re-exporta todo?
+- [ ] ¿Existe `composition.ts` que re-exporta todo?
 - [ ] ¿FacadeComposer usa ConfigProvider para configuración?
-- [ ] ¿Existe `facade/index.ts` con `create{Context}Facade`?
+- [ ] ¿Existe `facade.ts` con `create{Context}Facade`?
 - [ ] ¿Existe `__tests__/e2e.test.ts` para el contexto?
 
 ---
@@ -1247,7 +1247,7 @@ const result = await pipeline.ingestDocument({ ... });
 - [ ] Implementar repositorios (InMemory mínimo)
 - [ ] **Crear Composer** (obligatorio)
 - [ ] **Crear Factory** retornando `{ useCases, infra }`
-- [ ] **Crear `composition/index.ts`** (obligatorio)
+- [ ] **Crear `composition.ts`** (obligatorio)
 - [ ] Configurar index.ts del módulo
 
 ## 12. Checklist para Nuevo Contexto
@@ -1256,9 +1256,9 @@ const result = await pipeline.ingestDocument({ ... });
 - [ ] Implementar módulos individuales (con factories)
 - [ ] **Crear `facade/composition/infra-policies.ts`**
 - [ ] **Crear FacadeComposer** con ConfigProvider
-- [ ] **Crear `facade/composition/index.ts`** (obligatorio)
+- [ ] **Crear `facade/composition.ts`** (obligatorio)
 - [ ] Crear Facade con errores específicos de coordinación
-- [ ] **Crear `facade/index.ts`** con `create{Context}Facade()`
+- [ ] **Crear `facade.ts`** con `create{Context}Facade()`
 - [ ] Definir políticas de contexto con `configOverrides`
 - [ ] **Escribir `__tests__/e2e.test.ts`** (obligatorio)
 - [ ] Configurar index.ts del contexto
@@ -1272,7 +1272,7 @@ const result = await pipeline.ingestDocument({ ... });
 - [ ] `execute()` retorna `Result<PipelineError, Success>`
 - [ ] Cada paso invoca facade → verifica `isFail()` → propaga con `PipelineError.fromStep()`
 - [ ] `completedSteps` acumula pasos exitosos
-- [ ] Exportar workflow desde `workflows/index.ts`
+- [ ] Exportar workflow desde `workflows.ts`
 - [ ] Registrar workflow en `PipelineFacade`
 - [ ] Agregar tests en `__tests__/e2e.test.ts`
 
@@ -1282,10 +1282,10 @@ const result = await pipeline.ingestDocument({ ... });
 - [ ] **Crear `composition/infra-policies.ts`** con PipelinePolicy
 - [ ] **Crear PipelineComposer** (instancia facades en orden correcto)
 - [ ] **Crear `composition/pipeline.factory.ts`**
-- [ ] **Crear `composition/index.ts`** (obligatorio)
+- [ ] **Crear `composition.ts`** (obligatorio)
 - [ ] Crear `PipelineError` con step + completedSteps
 - [ ] Crear `PipelineFacade` con workflows y facade accessors
-- [ ] Crear `pipeline/index.ts` con `createPipeline()`
+- [ ] Crear `pipeline.ts` con `createPipeline()`
 - [ ] Implementar workflows identificados
 - [ ] **Escribir `__tests__/e2e.test.ts`** (obligatorio)
 
@@ -1295,12 +1295,12 @@ const result = await pipeline.ingestDocument({ ... });
 
 | Nivel | Archivo | Contenido |
 |-------|---------|-----------|
-| Módulo | `composition/index.ts` | Re-exports de Composer, policies, factory |
+| Módulo | `composition.ts` | Re-exports de Composer, policies, factory |
 | Módulo | `composition/{module}.factory.ts` | Retorna `{ useCases, infra }` |
-| Contexto | `facade/composition/index.ts` | Re-exports de FacadeComposer, policies |
-| Contexto | `facade/index.ts` | `create{Context}Facade()` factory |
+| Contexto | `facade/composition.ts` | Re-exports de FacadeComposer, policies |
+| Contexto | `facade.ts` | `create{Context}Facade()` factory |
 | Contexto | `__tests__/e2e.test.ts` | Test E2E completo del contexto |
-| Pipeline | `composition/index.ts` | Re-exports de PipelineComposer, policies |
+| Pipeline | `composition.ts` | Re-exports de PipelineComposer, policies |
 | Pipeline | `index.ts` | `createPipeline()` factory |
 | Pipeline | `PipelineFacade.ts` | Workflows + facade accessors |
 | Pipeline | `PipelineError.ts` | Error con step + completedSteps |

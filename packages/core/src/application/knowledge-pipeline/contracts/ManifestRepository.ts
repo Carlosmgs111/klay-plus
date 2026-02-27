@@ -1,4 +1,4 @@
-import type { ContentManifestEntry } from "../domain/ContentManifest.js";
+import type { ContentManifestEntry } from "../domain/ContentManifest";
 
 /**
  * Repository port for ContentManifest persistence.

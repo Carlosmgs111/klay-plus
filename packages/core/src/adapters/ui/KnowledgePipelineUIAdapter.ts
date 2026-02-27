@@ -1,4 +1,4 @@
-import type { KnowledgePipelinePort } from "../../application/knowledge-pipeline/contracts/KnowledgePipelinePort.js";
+import type { KnowledgePipelinePort } from "../../application/knowledge-pipeline/contracts/KnowledgePipelinePort";
 import type {
   ExecutePipelineInput,
   ExecutePipelineSuccess,
@@ -14,7 +14,7 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-} from "../../application/knowledge-pipeline/contracts/dtos.js";
+} from "../../application/knowledge-pipeline/contracts/dtos";
 
 /**
  * Generic result type for UI consumption.

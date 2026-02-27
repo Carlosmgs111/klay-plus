@@ -1,5 +1,5 @@
-import type { ConfigProvider } from "./ConfigProvider.js";
-import { ConfigurationError } from "./ConfigurationError.js";
+import type { ConfigProvider } from "./ConfigProvider";
+import { ConfigurationError } from "./ConfigurationError";
 
 /**
  * Configuration provider for Node.js environments.

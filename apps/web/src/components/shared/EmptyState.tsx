@@ -1,6 +1,6 @@
-import { Icon } from "./Icon.js";
-import { Button } from "./Button.js";
-import type { IconName } from "./Icon.js";
+import { Icon } from "./Icon";
+import { Button } from "./Button";
+import type { IconName } from "./Icon";
 import type { ReactNode } from "react";
 
 interface EmptyStateProps {

@@ -1,5 +1,5 @@
-import type { ContentManifestEntry } from "../domain/ContentManifest.js";
-import type { ManifestRepository } from "../contracts/ManifestRepository.js";
+import type { ContentManifestEntry } from "../domain/ContentManifest";
+import type { ManifestRepository } from "../contracts/ManifestRepository";
 
 export class InMemoryManifestRepository implements ManifestRepository {
   private store = new Map<string, ContentManifestEntry>();

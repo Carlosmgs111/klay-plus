@@ -1,21 +1,21 @@
-import type { EventPublisher } from "../../../../shared/domain/index.js";
-import { Result } from "../../../../shared/domain/Result.js";
-import { SemanticProjection } from "../domain/SemanticProjection.js";
-import { ProjectionId } from "../domain/ProjectionId.js";
-import { ProjectionResult } from "../domain/ProjectionResult.js";
-import type { ProjectionType } from "../domain/ProjectionType.js";
-import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
-import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
-import type { VectorEntry } from "../../../../platform/vector/VectorEntry.js";
-import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
-import type { ProcessingProfileMaterializer } from "../composition/ProcessingProfileMaterializer.js";
-import { ProcessingProfileId } from "../../processing-profile/domain/ProcessingProfileId.js";
+import type { EventPublisher } from "../../../../shared/domain";
+import { Result } from "../../../../shared/domain/Result";
+import { SemanticProjection } from "../domain/SemanticProjection";
+import { ProjectionId } from "../domain/ProjectionId";
+import { ProjectionResult } from "../domain/ProjectionResult";
+import type { ProjectionType } from "../domain/ProjectionType";
+import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository";
+import type { VectorWriteStore } from "../domain/ports/VectorWriteStore";
+import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
+import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository";
+import type { ProcessingProfileMaterializer } from "../composition/ProcessingProfileMaterializer";
+import { ProcessingProfileId } from "../../processing-profile/domain/ProcessingProfileId";
 import {
   ProjectionSemanticUnitIdRequiredError,
   ProjectionContentRequiredError,
   ProjectionProcessingError,
   type ProjectionError,
-} from "../domain/errors/index.js";
+} from "../domain/errors";
 
 export interface GenerateProjectionCommand {
   projectionId: string;

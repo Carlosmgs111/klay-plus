@@ -1,3 +1,3 @@
-export { KnowledgePipelineRESTAdapter } from "./KnowledgePipelineRESTAdapter.js";
-export type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter.js";
-export { KnowledgeManagementRESTAdapter } from "./KnowledgeManagementRESTAdapter.js";
+export { KnowledgePipelineRESTAdapter } from "./KnowledgePipelineRESTAdapter";
+export type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter";
+export { KnowledgeManagementRESTAdapter } from "./KnowledgeManagementRESTAdapter";

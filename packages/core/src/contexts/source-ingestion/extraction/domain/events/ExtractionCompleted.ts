@@ -1,4 +1,4 @@
-import { defineDomainEventWithPayload } from "../../../../../shared/domain/index.js";
+import { defineDomainEventWithPayload } from "../../../../../shared/domain";
 
 export interface ExtractionCompletedPayload {
   sourceId: string;

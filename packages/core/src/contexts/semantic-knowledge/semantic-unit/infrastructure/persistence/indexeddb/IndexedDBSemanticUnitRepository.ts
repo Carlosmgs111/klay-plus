@@ -1,8 +1,8 @@
-import type { SemanticUnitRepository } from "../../../domain/SemanticUnitRepository.js";
-import type { SemanticUnit } from "../../../domain/SemanticUnit.js";
-import type { SemanticState } from "../../../domain/SemanticState.js";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
-import { toDTO, fromDTO, type SemanticUnitDTO } from "./SemanticUnitDTO.js";
+import type { SemanticUnitRepository } from "../../../domain/SemanticUnitRepository";
+import type { SemanticUnit } from "../../../domain/SemanticUnit";
+import type { SemanticState } from "../../../domain/SemanticState";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { toDTO, fromDTO, type SemanticUnitDTO } from "./SemanticUnitDTO";
 
 export class IndexedDBSemanticUnitRepository
   extends BaseIndexedDBRepository<SemanticUnit, SemanticUnitDTO>

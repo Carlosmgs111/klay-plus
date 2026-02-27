@@ -1,17 +1,17 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { SemanticUnitId } from "./SemanticUnitId.js";
-import { SemanticState, canTransition } from "./SemanticState.js";
-import type { UnitSource } from "./UnitSource.js";
-import { UnitVersion } from "./UnitVersion.js";
-import { VersionSourceSnapshot } from "./VersionSourceSnapshot.js";
-import { UnitMetadata } from "./UnitMetadata.js";
-import { SemanticUnitCreated } from "./events/SemanticUnitCreated.js";
-import { SemanticUnitVersioned } from "./events/SemanticUnitVersioned.js";
-import { SemanticUnitDeprecated } from "./events/SemanticUnitDeprecated.js";
-import { SemanticUnitReprocessRequested } from "./events/SemanticUnitReprocessRequested.js";
-import { SemanticUnitSourceAdded } from "./events/SemanticUnitSourceAdded.js";
-import { SemanticUnitSourceRemoved } from "./events/SemanticUnitSourceRemoved.js";
-import { SemanticUnitRolledBack } from "./events/SemanticUnitRolledBack.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { SemanticUnitId } from "./SemanticUnitId";
+import { SemanticState, canTransition } from "./SemanticState";
+import type { UnitSource } from "./UnitSource";
+import { UnitVersion } from "./UnitVersion";
+import { VersionSourceSnapshot } from "./VersionSourceSnapshot";
+import { UnitMetadata } from "./UnitMetadata";
+import { SemanticUnitCreated } from "./events/SemanticUnitCreated";
+import { SemanticUnitVersioned } from "./events/SemanticUnitVersioned";
+import { SemanticUnitDeprecated } from "./events/SemanticUnitDeprecated";
+import { SemanticUnitReprocessRequested } from "./events/SemanticUnitReprocessRequested";
+import { SemanticUnitSourceAdded } from "./events/SemanticUnitSourceAdded";
+import { SemanticUnitSourceRemoved } from "./events/SemanticUnitSourceRemoved";
+import { SemanticUnitRolledBack } from "./events/SemanticUnitRolledBack";
 
 export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
   private _name: string;

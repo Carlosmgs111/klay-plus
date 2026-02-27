@@ -69,7 +69,7 @@ Consumers usan solo el contrato público   Consumers importan internos del módu
 Cada módulo exporta **solo** su contrato público. Los internos son inaccesibles.
 
 ```typescript
-// module/index.ts — SOLO exports públicos
+// module.ts — SOLO exports públicos
 export { OrderFacade } from "./public/OrderFacade";
 export type { OrderDTO, CreateOrderRequest } from "./public/types";
 export { OrderCreatedEvent, OrderPaidEvent } from "./public/OrderEvents";
@@ -435,7 +435,7 @@ describe("Module Boundaries", () => {
   });
 
   it("Each module should export only from public/", () => {
-    const moduleIndexes = glob("src/modules/*/index.ts");
+    const moduleIndexes = glob("src/modules/*.ts");
     for (const index of moduleIndexes) {
       const exports = analyzeExports(index);
       const leaks = exports.filter(exp => !exp.includes("/public/"));

@@ -1,5 +1,5 @@
-import type { PipelineService } from "./pipeline-service.js";
-import type { ServiceResult } from "./types.js";
+import type { PipelineService } from "./pipeline-service";
+import type { ServiceResult } from "./types";
 import type { KnowledgePipelineUIAdapter, UIResult } from "@klay/core/adapters/ui";
 import type {
   ExecutePipelineInput,

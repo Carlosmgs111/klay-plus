@@ -1,9 +1,9 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { ProcessingProfileId } from "./ProcessingProfileId.js";
-import { ProfileStatus } from "./ProfileStatus.js";
-import { ProfileCreated } from "./events/ProfileCreated.js";
-import { ProfileUpdated } from "./events/ProfileUpdated.js";
-import { ProfileDeprecated } from "./events/ProfileDeprecated.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { ProcessingProfileId } from "./ProcessingProfileId";
+import { ProfileStatus } from "./ProfileStatus";
+import { ProfileCreated } from "./events/ProfileCreated";
+import { ProfileUpdated } from "./events/ProfileUpdated";
+import { ProfileDeprecated } from "./events/ProfileDeprecated";
 
 /**
  * ProcessingProfile — Aggregate Root

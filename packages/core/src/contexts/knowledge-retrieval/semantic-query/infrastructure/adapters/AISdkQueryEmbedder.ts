@@ -1,4 +1,4 @@
-import type { QueryEmbedder } from "../../domain/ports/QueryEmbedder.js";
+import type { QueryEmbedder } from "../../domain/ports/QueryEmbedder";
 
 /**
  * Server-side query embedder using Vercel AI SDK.

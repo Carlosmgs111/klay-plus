@@ -1,4 +1,4 @@
-import type { ProviderFactory } from "./ProviderFactory.js";
+import type { ProviderFactory } from "./ProviderFactory";
 
 /**
  * ProviderRegistry<TContract> — immutable, read-only resolver.

@@ -1,1 +1,1 @@
-export { NeDBStore } from "./NeDBStore.js";
+export { NeDBStore } from "./NeDBStore";

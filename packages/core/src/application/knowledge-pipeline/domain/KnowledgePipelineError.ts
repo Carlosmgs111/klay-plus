@@ -1,5 +1,5 @@
-import { BaseOrchestratorError, extractCode, extractMessage } from "../../BaseOrchestratorError.js";
-import type { PipelineStep } from "./PipelineStep.js";
+import { BaseOrchestratorError, extractCode, extractMessage } from "../../BaseOrchestratorError";
+import type { PipelineStep } from "./PipelineStep";
 
 export class KnowledgePipelineError extends BaseOrchestratorError<PipelineStep> {
   static fromStep(

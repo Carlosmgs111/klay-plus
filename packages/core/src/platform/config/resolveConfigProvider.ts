@@ -1,4 +1,4 @@
-import type { ConfigProvider } from "./ConfigProvider.js";
+import type { ConfigProvider } from "./ConfigProvider";
 
 /**
  * Policy shape expected by the config resolver.
@@ -21,15 +21,15 @@ export async function resolveConfigProvider(
   policy: ConfigResolutionPolicy,
 ): Promise<ConfigProvider> {
   if (policy.configOverrides) {
-    const { InMemoryConfigProvider } = await import("./InMemoryConfigProvider.js");
+    const { InMemoryConfigProvider } = await import("./InMemoryConfigProvider");
     return new InMemoryConfigProvider(policy.configOverrides);
   }
 
   if (policy.provider === "browser") {
-    const { InMemoryConfigProvider } = await import("./InMemoryConfigProvider.js");
+    const { InMemoryConfigProvider } = await import("./InMemoryConfigProvider");
     return new InMemoryConfigProvider({});
   }
 
-  const { NodeConfigProvider } = await import("./NodeConfigProvider.js");
+  const { NodeConfigProvider } = await import("./NodeConfigProvider");
   return new NodeConfigProvider();
 }

@@ -14,29 +14,15 @@ export {
   SemanticUnitSourceAdded,
   SemanticUnitSourceRemoved,
   SemanticUnitRolledBack,
-  SemanticUnitUseCases,
-  SemanticUnitComposer,
-  CreateSemanticUnit,
-  AddSourceToSemanticUnit,
-  RemoveSourceFromSemanticUnit,
-  RollbackSemanticUnit,
-  DeprecateSemanticUnit,
-  ReprocessSemanticUnit,
   semanticUnitFactory,
-} from "./semantic-unit/index.js";
+} from "./semantic-unit";
 
 export type {
   SemanticUnitRepository,
   SemanticUnitInfrastructurePolicy,
   ResolvedSemanticUnitInfra,
   SemanticUnitFactoryResult,
-  CreateSemanticUnitCommand,
-  AddSourceCommand,
-  RemoveSourceCommand,
-  RollbackSemanticUnitCommand,
-  DeprecateSemanticUnitCommand,
-  ReprocessSemanticUnitCommand,
-} from "./semantic-unit/index.js";
+} from "./semantic-unit";
 
 // Lineage Module
 export {
@@ -45,31 +31,26 @@ export {
   Transformation,
   TransformationType,
   Trace,
-  LineageUseCases,
-  LineageComposer,
-  RegisterTransformation,
   lineageFactory,
-} from "./lineage/index.js";
+} from "./lineage";
 
 export type {
   KnowledgeLineageRepository,
   LineageInfrastructurePolicy,
   ResolvedLineageInfra,
   LineageFactoryResult,
-  RegisterTransformationCommand,
-} from "./lineage/index.js";
+} from "./lineage";
 
 // Facade Module (Recommended Entry Point)
 export {
   SemanticKnowledgeFacade,
-  SemanticKnowledgeFacadeComposer,
   createSemanticKnowledgeFacade,
   SemanticUnitNotFoundError,
   SemanticUnitAlreadyExistsError,
   SemanticUnitOperationError,
   LineageNotFoundError,
   LineageOperationError,
-} from "./facade/index.js";
+} from "./facade";
 
 export type {
   SemanticKnowledgeFacadePolicy,
@@ -81,4 +62,4 @@ export type {
   ReprocessSuccess,
   RollbackSuccess,
   DeprecateSemanticUnitWithLineageSuccess,
-} from "./facade/index.js";
+} from "./facade";

@@ -1,4 +1,4 @@
-import { UniqueId } from "../../../../shared/domain/index.js";
+import { UniqueId } from "../../../../shared/domain";
 
 export class ProcessingProfileId extends UniqueId {
   static create(value: string): ProcessingProfileId {

@@ -1,4 +1,4 @@
-import { BaseChunker } from "./BaseChunker.js";
+import { BaseChunker } from "./BaseChunker";
 
 export class SentenceChunker extends BaseChunker {
   readonly strategyId = "sentence-chunker";

@@ -23,10 +23,10 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { createSourceIngestionFacade } from "../facade/index.js";
-import { SourceType } from "../source/domain/SourceType.js";
-import { ResourceStatus } from "../resource/domain/ResourceStatus.js";
-import type { SourceIngestionFacade } from "../facade/SourceIngestionFacade.js";
+import { createSourceIngestionFacade } from "../facade";
+import { SourceType } from "../source/domain/SourceType";
+import { ResourceStatus } from "../resource/domain/ResourceStatus";
+import type { SourceIngestionFacade } from "../facade/SourceIngestionFacade";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -47,7 +47,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode(content).buffer;
       const resourceId = crypto.randomUUID();
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: resourceId,
         buffer,
         originalName: "hello.txt",
@@ -74,7 +74,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = combined.buffer;
 
       const resourceId = crypto.randomUUID();
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: resourceId,
         buffer,
         originalName: "document.pdf",
@@ -96,7 +96,7 @@ describe("Resource Buffer Upload — E2E", () => {
       combined.set(pngMagic, 0);
       combined.set(imageData, pngMagic.length);
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer: combined.buffer,
         originalName: "screenshot.png",
@@ -117,7 +117,7 @@ describe("Resource Buffer Upload — E2E", () => {
         crypto.getRandomValues(largeData.subarray(offset, offset + size));
       }
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer: largeData.buffer,
         originalName: "large-file.bin",
@@ -131,7 +131,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should handle an empty buffer (0 bytes)", async () => {
       const emptyBuffer = new ArrayBuffer(0);
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer: emptyBuffer,
         originalName: "empty.txt",
@@ -145,7 +145,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should handle filenames with special characters", async () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "my document (v2) — final.txt",
@@ -166,14 +166,14 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode(content).buffer;
       const resourceId = crypto.randomUUID();
 
-      await facade.resource.storeResource.execute({
+      await facade.storeResource({
         id: resourceId,
         buffer,
         originalName: "state-test.txt",
         mimeType: "text/plain",
       });
 
-      const getResult = await facade.resource.getResource.execute(resourceId);
+      const getResult = await facade.getResource(resourceId);
       expect(getResult.isOk()).toBe(true);
 
       const resource = getResult.value;
@@ -193,7 +193,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const resourceId = crypto.randomUUID();
       const externalUri = "https://cdn.example.com/files/report-2024.pdf";
 
-      await facade.resource.registerExternalResource.execute({
+      await facade.registerExternalResource({
         id: resourceId,
         name: "Annual Report 2024",
         mimeType: "application/pdf",
@@ -201,7 +201,7 @@ describe("Resource Buffer Upload — E2E", () => {
         size: 5_000_000,
       });
 
-      const getResult = await facade.resource.getResource.execute(resourceId);
+      const getResult = await facade.getResource(resourceId);
       expect(getResult.isOk()).toBe(true);
 
       const resource = getResult.value;
@@ -216,14 +216,14 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should generate unique URIs for uploads with the same filename", async () => {
       const buffer = new TextEncoder().encode("content A").buffer;
 
-      const result1 = await facade.resource.storeResource.execute({
+      const result1 = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "same-name.txt",
         mimeType: "text/plain",
       });
 
-      const result2 = await facade.resource.storeResource.execute({
+      const result2 = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer: new TextEncoder().encode("content B").buffer,
         originalName: "same-name.txt",
@@ -246,7 +246,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode(content).buffer;
 
       // Step 1: Store
-      const storeResult = await facade.resource.storeResource.execute({
+      const storeResult = await facade.storeResource({
         id: resourceId,
         buffer,
         originalName: "lifecycle.txt",
@@ -256,24 +256,24 @@ describe("Resource Buffer Upload — E2E", () => {
       const { storageUri } = storeResult.value;
 
       // Step 2: Retrieve — resource exists and is STORED
-      const getResult = await facade.resource.getResource.execute(resourceId);
+      const getResult = await facade.getResource(resourceId);
       expect(getResult.isOk()).toBe(true);
       expect(getResult.value.isStored).toBe(true);
       expect(getResult.value.storageUri).toBe(storageUri);
 
       // Step 3: Delete
-      const deleteResult = await facade.resource.deleteResource.execute({ id: resourceId });
+      const deleteResult = await facade.deleteResource({ id: resourceId });
       expect(deleteResult.isOk()).toBe(true);
 
       // Step 4: Verify — aggregate is now DELETED
-      const getAfterDelete = await facade.resource.getResource.execute(resourceId);
+      const getAfterDelete = await facade.getResource(resourceId);
       expect(getAfterDelete.isOk()).toBe(true);
       expect(getAfterDelete.value.isDeleted).toBe(true);
       expect(getAfterDelete.value.status).toBe(ResourceStatus.Deleted);
     });
 
     it("should fail to delete a non-existent resource", async () => {
-      const result = await facade.resource.deleteResource.execute({
+      const result = await facade.deleteResource({
         id: "non-existent-resource-id",
       });
 
@@ -288,7 +288,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should reject upload with empty originalName", async () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "",
@@ -301,7 +301,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should reject upload with empty mimeType", async () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "valid-name.txt",
@@ -314,7 +314,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should reject upload with whitespace-only originalName", async () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "   ",
@@ -329,7 +329,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
       // First upload succeeds
-      const first = await facade.resource.storeResource.execute({
+      const first = await facade.storeResource({
         id: resourceId,
         buffer,
         originalName: "first.txt",
@@ -338,7 +338,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(first.isOk()).toBe(true);
 
       // Second upload with same ID fails
-      const second = await facade.resource.storeResource.execute({
+      const second = await facade.storeResource({
         id: resourceId,
         buffer: new TextEncoder().encode("different").buffer,
         originalName: "second.txt",
@@ -349,7 +349,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
 
     it("should reject external resource with empty name", async () => {
-      const result = await facade.resource.registerExternalResource.execute({
+      const result = await facade.registerExternalResource({
         id: crypto.randomUUID(),
         name: "",
         mimeType: "application/pdf",
@@ -394,7 +394,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.extractedText.length).toBe(originalContent.length);
 
       // Verify the resource aggregate state
-      const resourceResult = await facade.resource.getResource.execute(resourceId);
+      const resourceResult = await facade.getResource(resourceId);
       expect(resourceResult.isOk()).toBe(true);
       expect(resourceResult.value.originalName).toBe("buffer-test.txt");
       expect(resourceResult.value.mimeType).toBe("text/plain");
@@ -524,7 +524,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.contentHash).toBeTruthy();
 
       // Verify resource is external
-      const resourceResult = await facade.resource.getResource.execute(resourceId);
+      const resourceResult = await facade.getResource(resourceId);
       expect(resourceResult.isOk()).toBe(true);
       expect(resourceResult.value.provider).toBe("external");
       expect(resourceResult.value.isStored).toBe(true);
@@ -533,7 +533,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should NOT physically delete an external resource (only marks as deleted)", async () => {
       const resourceId = crypto.randomUUID();
 
-      await facade.resource.registerExternalResource.execute({
+      await facade.registerExternalResource({
         id: resourceId,
         name: "External to Delete",
         mimeType: "text/plain",
@@ -541,11 +541,11 @@ describe("Resource Buffer Upload — E2E", () => {
       });
 
       // Delete should succeed (marks as deleted, no storage.delete() call)
-      const deleteResult = await facade.resource.deleteResource.execute({ id: resourceId });
+      const deleteResult = await facade.deleteResource({ id: resourceId });
       expect(deleteResult.isOk()).toBe(true);
 
       // Resource is marked deleted but still accessible via repository
-      const getResult = await facade.resource.getResource.execute(resourceId);
+      const getResult = await facade.getResource(resourceId);
       expect(getResult.isOk()).toBe(true);
       expect(getResult.value.isDeleted).toBe(true);
       expect(getResult.value.provider).toBe("external");
@@ -560,7 +560,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const japaneseText = "こんにちは世界"; // 7 characters, 21 bytes in UTF-8
       const buffer = new TextEncoder().encode(japaneseText).buffer;
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "japanese.txt",
@@ -576,7 +576,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const emojiText = "Hello 🌍🚀✨ World";
       const buffer = new TextEncoder().encode(emojiText).buffer;
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "emoji.txt",
@@ -593,7 +593,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const binaryData = new Uint8Array(exactSize);
       crypto.getRandomValues(binaryData);
 
-      const result = await facade.resource.storeResource.execute({
+      const result = await facade.storeResource({
         id: crypto.randomUUID(),
         buffer: binaryData.buffer,
         originalName: "exact-4kb.bin",
@@ -628,7 +628,7 @@ describe("Resource Buffer Upload — E2E", () => {
       it("should store a real PDF buffer and report correct file size", async () => {
         const resourceId = crypto.randomUUID();
 
-        const result = await facade.resource.storeResource.execute({
+        const result = await facade.storeResource({
           id: resourceId,
           buffer: pdfBuffer,
           originalName: path.basename(PDF_PATH),
@@ -641,7 +641,7 @@ describe("Resource Buffer Upload — E2E", () => {
         expect(result.value.storageUri).toMatch(/^mem:\/\//);
 
         // Verify aggregate state
-        const getResult = await facade.resource.getResource.execute(resourceId);
+        const getResult = await facade.getResource(resourceId);
         expect(getResult.isOk()).toBe(true);
         expect(getResult.value.originalName).toBe("archivo-de-educacion.pdf");
         expect(getResult.value.mimeType).toBe("application/pdf");
@@ -738,7 +738,7 @@ describe("Resource Buffer Upload — E2E", () => {
       it("should preserve PDF buffer integrity (size matches original file)", async () => {
         const resourceId = crypto.randomUUID();
 
-        const storeResult = await facade.resource.storeResource.execute({
+        const storeResult = await facade.storeResource({
           id: resourceId,
           buffer: pdfBuffer,
           originalName: "integrity-check.pdf",

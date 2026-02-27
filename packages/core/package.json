@@ -5,19 +5,19 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/application/knowledge-pipeline/index.ts",
-      "import": "./src/application/knowledge-pipeline/index.ts",
-      "default": "./src/application/knowledge-pipeline/index.ts"
+      "types": "./src/application/knowledge-pipeline.ts",
+      "import": "./src/application/knowledge-pipeline.ts",
+      "default": "./src/application/knowledge-pipeline.ts"
     },
     "./adapters/ui": {
-      "types": "./src/adapters/ui/index.ts",
-      "import": "./src/adapters/ui/index.ts",
-      "default": "./src/adapters/ui/index.ts"
+      "types": "./src/adapters/ui.ts",
+      "import": "./src/adapters/ui.ts",
+      "default": "./src/adapters/ui.ts"
     },
     "./adapters/rest": {
-      "types": "./src/adapters/rest/index.ts",
-      "import": "./src/adapters/rest/index.ts",
-      "default": "./src/adapters/rest/index.ts"
+      "types": "./src/adapters/rest.ts",
+      "import": "./src/adapters/rest.ts",
+      "default": "./src/adapters/rest.ts"
     }
   },
   "scripts": {

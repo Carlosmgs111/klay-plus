@@ -1,8 +1,8 @@
-import type { ProcessingProfileRepository } from "../../domain/ProcessingProfileRepository.js";
-import type { ProcessingProfile } from "../../domain/ProcessingProfile.js";
-import type { ProcessingProfileId } from "../../domain/ProcessingProfileId.js";
-import type { ProfileStatus } from "../../domain/ProfileStatus.js";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
+import type { ProcessingProfileRepository } from "../../domain/ProcessingProfileRepository";
+import type { ProcessingProfile } from "../../domain/ProcessingProfile";
+import type { ProcessingProfileId } from "../../domain/ProcessingProfileId";
+import type { ProfileStatus } from "../../domain/ProfileStatus";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
 export class InMemoryProcessingProfileRepository
   extends BaseInMemoryRepository<ProcessingProfile>

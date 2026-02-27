@@ -1,5 +1,5 @@
-import { SearchResultCard } from "./SearchResultCard.js";
-import { EmptyState } from "../../shared/EmptyState.js";
+import { SearchResultCard } from "./SearchResultCard";
+import { EmptyState } from "../../shared/EmptyState";
 
 interface SearchItem {
   semanticUnitId: string;

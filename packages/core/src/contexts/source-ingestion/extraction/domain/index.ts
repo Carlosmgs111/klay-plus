@@ -1,11 +1,11 @@
-export { ExtractionJob } from "./ExtractionJob.js";
-export { ExtractionJobId } from "./ExtractionJobId.js";
-export { ExtractionStatus } from "./ExtractionStatus.js";
-export type { ExtractionJobRepository } from "./ExtractionJobRepository.js";
-export type { ContentExtractor, ExtractionResult } from "./ContentExtractor.js";
+export { ExtractionJob } from "./ExtractionJob";
+export { ExtractionJobId } from "./ExtractionJobId";
+export { ExtractionStatus } from "./ExtractionStatus";
+export type { ExtractionJobRepository } from "./ExtractionJobRepository";
+export type { ContentExtractor, ExtractionResult } from "./ContentExtractor";
 
-export { ExtractionCompleted } from "./events/ExtractionCompleted.js";
-export { ExtractionFailed } from "./events/ExtractionFailed.js";
+export { ExtractionCompleted } from "./events/ExtractionCompleted";
+export { ExtractionFailed } from "./events/ExtractionFailed";
 
 // Domain Errors
 export {
@@ -19,4 +19,4 @@ export {
   UnsupportedMimeTypeError,
   ContentHashingError,
   type ExtractionError,
-} from "./errors/index.js";
+} from "./errors";

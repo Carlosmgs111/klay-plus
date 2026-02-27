@@ -5,4 +5,4 @@ export {
   ResourceInvalidMimeTypeError,
   ResourceStorageFailedError,
   type ResourceError,
-} from "./ResourceErrors.js";
+} from "./ResourceErrors";

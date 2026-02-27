@@ -2,7 +2,7 @@
  * Generic NeDB repository with DTO serialization.
  * Subclass, provide toDTO/fromDTO, and add domain-specific queries.
  */
-import { NeDBStore } from "./nedb/NeDBStore.js";
+import { NeDBStore } from "./nedb/NeDBStore";
 
 export abstract class BaseNeDBRepository<
   TEntity extends { id: { value: string } },

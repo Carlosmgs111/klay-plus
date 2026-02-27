@@ -1,9 +1,9 @@
-import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
-import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
-import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
-import type { KnowledgeRetrievalFacade } from "../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade.js";
-import type { ManifestRepository } from "../contracts/ManifestRepository.js";
-import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort.js";
+import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade";
+import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
+import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { KnowledgeRetrievalFacade } from "../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
+import type { ManifestRepository } from "../contracts/ManifestRepository";
+import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort";
 import type {
   ExecutePipelineInput,
   ExecutePipelineSuccess,
@@ -19,22 +19,17 @@ import type {
   CreateProcessingProfileSuccess,
   GetManifestInput,
   GetManifestSuccess,
-} from "../contracts/dtos.js";
-import { Result } from "../../../shared/domain/Result.js";
-import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
-import { ExecuteFullPipeline } from "./use-cases/ExecuteFullPipeline.js";
-import { IngestDocument } from "./use-cases/IngestDocument.js";
-import { ProcessDocument } from "./use-cases/ProcessDocument.js";
-import { CatalogDocument } from "./use-cases/CatalogDocument.js";
-import { SearchKnowledge } from "./use-cases/SearchKnowledge.js";
-import { GetManifest } from "./use-cases/GetManifest.js";
-import { KnowledgePipelineError as PipelineError } from "../domain/KnowledgePipelineError.js";
-import { PipelineStep } from "../domain/PipelineStep.js";
+} from "../contracts/dtos";
+import type { SourceType } from "../../../contexts/source-ingestion/source/domain/SourceType";
+import type { ProjectionType } from "../../../contexts/semantic-processing/projection/domain/ProjectionType";
+import { Result } from "../../../shared/domain/Result";
+import type { KnowledgePipelineError } from "../domain/KnowledgePipelineError";
+import { KnowledgePipelineError as PipelineError } from "../domain/KnowledgePipelineError";
+import { PipelineStep } from "../domain/PipelineStep";
+import { ExecuteFullPipeline } from "./use-cases/ExecuteFullPipeline";
 
-/**
- * Resolved dependencies for the KnowledgePipelineOrchestrator.
- * Created by the Composer — not read from policy.
- */
+const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
+
 export interface ResolvedPipelineDependencies {
   ingestion: SourceIngestionFacade;
   processing: SemanticProcessingFacade;
@@ -43,45 +38,27 @@ export interface ResolvedPipelineDependencies {
   manifestRepository: ManifestRepository;
 }
 
-/**
- * KnowledgePipelineOrchestrator — Application Boundary.
- *
- * Implements KnowledgePipelinePort as the single public API.
- * Receives 4 facades and a ManifestRepository privately, creates use cases internally.
- *
- * This is NOT a bounded context — it's an application layer that
- * coordinates existing bounded contexts via their facades.
- *
- * Rules:
- * - No facade getters — facades are private implementation details
- * - No policy reading — the Composer handles infrastructure selection
- * - No domain logic — only delegation to use cases
- * - No framework dependencies — pure TypeScript
- */
 export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
+  private readonly _ingestion: SourceIngestionFacade;
   private readonly _processing: SemanticProcessingFacade;
+  private readonly _knowledge: SemanticKnowledgeFacade;
+  private readonly _retrieval: KnowledgeRetrievalFacade;
+  private readonly _manifestRepository: ManifestRepository;
   private readonly _executeFullPipeline: ExecuteFullPipeline;
-  private readonly _ingestDocument: IngestDocument;
-  private readonly _processDocument: ProcessDocument;
-  private readonly _catalogDocument: CatalogDocument;
-  private readonly _searchKnowledge: SearchKnowledge;
-  private readonly _getManifest: GetManifest;
 
   constructor(deps: ResolvedPipelineDependencies) {
+    this._ingestion = deps.ingestion;
     this._processing = deps.processing;
+    this._knowledge = deps.knowledge;
+    this._retrieval = deps.retrieval;
+    this._manifestRepository = deps.manifestRepository;
 
-    // Create use cases with only the facades they need
     this._executeFullPipeline = new ExecuteFullPipeline(
       deps.ingestion,
       deps.processing,
       deps.knowledge,
       deps.manifestRepository,
     );
-    this._ingestDocument = new IngestDocument(deps.ingestion);
-    this._processDocument = new ProcessDocument(deps.processing);
-    this._catalogDocument = new CatalogDocument(deps.knowledge);
-    this._searchKnowledge = new SearchKnowledge(deps.retrieval);
-    this._getManifest = new GetManifest(deps.manifestRepository);
   }
 
   async execute(
@@ -93,25 +70,122 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   async ingestDocument(
     input: IngestDocumentInput,
   ): Promise<Result<KnowledgePipelineError, IngestDocumentSuccess>> {
-    return this._ingestDocument.execute(input);
+    try {
+      const result = await this._ingestion.ingestAndExtract({
+        sourceId: input.sourceId,
+        sourceName: input.sourceName,
+        uri: input.uri,
+        type: input.sourceType as SourceType,
+        extractionJobId: input.extractionJobId,
+      });
+
+      if (result.isFail()) {
+        return Result.fail(
+          PipelineError.fromStep(PipelineStep.Ingestion, result.error, []),
+        );
+      }
+
+      return Result.ok({
+        sourceId: result.value.sourceId,
+        jobId: result.value.jobId,
+        contentHash: result.value.contentHash,
+        extractedText: result.value.extractedText,
+        metadata: result.value.metadata,
+      });
+    } catch (error) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Ingestion, error, []),
+      );
+    }
   }
 
   async processDocument(
     input: ProcessDocumentInput,
   ): Promise<Result<KnowledgePipelineError, ProcessDocumentSuccess>> {
-    return this._processDocument.execute(input);
+    try {
+      const result = await this._processing.processContent({
+        projectionId: input.projectionId,
+        semanticUnitId: input.semanticUnitId,
+        semanticUnitVersion: input.semanticUnitVersion,
+        content: input.content,
+        type: (input.projectionType ?? DEFAULT_PROJECTION_TYPE) as ProjectionType,
+        processingProfileId: input.processingProfileId,
+      });
+
+      if (result.isFail()) {
+        return Result.fail(
+          PipelineError.fromStep(PipelineStep.Processing, result.error, []),
+        );
+      }
+
+      return Result.ok({
+        projectionId: result.value.projectionId,
+        chunksCount: result.value.chunksCount,
+        dimensions: result.value.dimensions,
+        model: result.value.model,
+      });
+    } catch (error) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Processing, error, []),
+      );
+    }
   }
 
   async catalogDocument(
     input: CatalogDocumentInput,
   ): Promise<Result<KnowledgePipelineError, CatalogDocumentSuccess>> {
-    return this._catalogDocument.execute(input);
+    try {
+      const result = await this._knowledge.createSemanticUnit({
+        id: input.semanticUnitId,
+        name: input.name,
+        description: input.description,
+        language: input.language,
+        createdBy: input.createdBy,
+        tags: input.tags,
+        attributes: input.attributes,
+      });
+
+      if (result.isFail()) {
+        return Result.fail(
+          PipelineError.fromStep(PipelineStep.Cataloging, result.error, []),
+        );
+      }
+
+      return Result.ok({ unitId: result.value.unitId });
+    } catch (error) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, error, []),
+      );
+    }
   }
 
   async searchKnowledge(
     input: SearchKnowledgeInput,
   ): Promise<Result<KnowledgePipelineError, SearchKnowledgeSuccess>> {
-    return this._searchKnowledge.execute(input);
+    try {
+      const result = await this._retrieval.query({
+        text: input.queryText,
+        topK: input.topK,
+        minScore: input.minScore,
+        filters: input.filters,
+      });
+
+      return Result.ok({
+        queryText: result.queryText,
+        items: result.items.map((item) => ({
+          semanticUnitId: item.semanticUnitId,
+          content: item.content,
+          score: item.score,
+          version: item.version,
+          metadata: item.metadata as Record<string, unknown>,
+        })),
+        totalFound: result.totalFound,
+      });
+    } catch (error) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Search, error, []),
+      );
+    }
   }
 
   async createProcessingProfile(
@@ -127,11 +201,7 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
 
     if (result.isFail()) {
       return Result.fail(
-        PipelineError.fromStep(
-          PipelineStep.Processing,
-          result.error,
-          [],
-        ),
+        PipelineError.fromStep(PipelineStep.Processing, result.error, []),
       );
     }
 
@@ -144,6 +214,29 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   async getManifest(
     input: GetManifestInput,
   ): Promise<Result<KnowledgePipelineError, GetManifestSuccess>> {
-    return this._getManifest.execute(input);
+    try {
+      if (input.manifestId) {
+        const manifest = await this._manifestRepository.findById(input.manifestId);
+        return Result.ok({ manifests: manifest ? [manifest] : [] });
+      }
+      if (input.resourceId) {
+        const manifests = await this._manifestRepository.findByResourceId(input.resourceId);
+        return Result.ok({ manifests });
+      }
+      if (input.sourceId) {
+        const manifests = await this._manifestRepository.findBySourceId(input.sourceId);
+        return Result.ok({ manifests });
+      }
+      if (input.semanticUnitId) {
+        const manifests = await this._manifestRepository.findBySemanticUnitId(input.semanticUnitId);
+        return Result.ok({ manifests });
+      }
+      const manifests = await this._manifestRepository.findAll();
+      return Result.ok({ manifests });
+    } catch (error) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Search, error, []),
+      );
+    }
   }
 }

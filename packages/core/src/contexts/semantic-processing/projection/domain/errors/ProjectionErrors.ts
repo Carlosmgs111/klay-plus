@@ -4,8 +4,8 @@ import {
   ValidationError,
   InvalidStateError,
   OperationError,
-} from "../../../../../shared/domain/errors/index.js";
-import type { ProjectionStatus } from "../ProjectionStatus.js";
+} from "../../../../../shared/domain/errors";
+import type { ProjectionStatus } from "../ProjectionStatus";
 
 export class ProjectionNotFoundError extends NotFoundError {
   constructor(projectionId: string) {

@@ -1,12 +1,12 @@
 import { useCallback } from "react";
-import { useRuntimeMode } from "../../../contexts/RuntimeModeContext.js";
-import { usePipelineAction } from "../../../hooks/usePipelineAction.js";
-import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { Icon } from "../../shared/Icon.js";
-import { ErrorDisplay } from "../../shared/ErrorDisplay.js";
-import { SkeletonCard } from "../../shared/Skeleton.js";
-import { SearchBar } from "./SearchBar.js";
-import { SearchResults } from "./SearchResults.js";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import { usePipelineAction } from "../../../hooks/usePipelineAction";
+import { Card, CardHeader, CardBody } from "../../shared/Card";
+import { Icon } from "../../shared/Icon";
+import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { SkeletonCard } from "../../shared/Skeleton";
+import { SearchBar } from "./SearchBar";
+import { SearchResults } from "./SearchResults";
 import type { SearchKnowledgeInput } from "@klay/core";
 
 export function SearchPage() {

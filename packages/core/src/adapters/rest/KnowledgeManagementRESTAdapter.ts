@@ -1,6 +1,6 @@
-import type { KnowledgeManagementPort } from "../../application/knowledge-management/contracts/KnowledgeManagementPort.js";
-import type { IngestAndAddSourceInput } from "../../application/knowledge-management/contracts/dtos.js";
-import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter.js";
+import type { KnowledgeManagementPort } from "../../application/knowledge-management/contracts/KnowledgeManagementPort";
+import type { IngestAndAddSourceInput } from "../../application/knowledge-management/contracts/dtos";
+import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter";
 
 /**
  * KnowledgeManagementRESTAdapter — Primary Adapter for REST consumers.

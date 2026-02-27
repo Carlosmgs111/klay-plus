@@ -1,7 +1,7 @@
-import { KnowledgeLineage } from "../../../domain/KnowledgeLineage.js";
-import { LineageId } from "../../../domain/LineageId.js";
-import { Transformation, type TransformationType } from "../../../domain/Transformation.js";
-import { Trace } from "../../../domain/Trace.js";
+import { KnowledgeLineage } from "../../../domain/KnowledgeLineage";
+import { LineageId } from "../../../domain/LineageId";
+import { Transformation, type TransformationType } from "../../../domain/Transformation";
+import { Trace } from "../../../domain/Trace";
 
 export interface LineageDTO {
   id: string;

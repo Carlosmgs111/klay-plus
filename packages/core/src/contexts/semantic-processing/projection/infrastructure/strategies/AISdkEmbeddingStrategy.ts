@@ -1,7 +1,7 @@
 import type {
   EmbeddingStrategy,
   EmbeddingResult,
-} from "../../domain/ports/EmbeddingStrategy.js";
+} from "../../domain/ports/EmbeddingStrategy";
 
 /**
  * Server-side embedding strategy using Vercel AI SDK.

@@ -1,14 +1,14 @@
-import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
-import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
-import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
-import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort.js";
+import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade";
+import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
+import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
 import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "../contracts/dtos.js";
-import type { Result } from "../../../shared/domain/Result.js";
-import type { KnowledgeManagementError } from "../domain/KnowledgeManagementError.js";
-import { IngestAndAddSource } from "./use-cases/IngestAndAddSource.js";
+} from "../contracts/dtos";
+import type { Result } from "../../../shared/domain/Result";
+import type { KnowledgeManagementError } from "../domain/KnowledgeManagementError";
+import { IngestAndAddSource } from "./use-cases/IngestAndAddSource";
 
 /**
  * Resolved dependencies for the KnowledgeManagementOrchestrator.

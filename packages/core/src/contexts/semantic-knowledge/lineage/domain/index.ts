@@ -1,5 +1,5 @@
-export { KnowledgeLineage } from "./KnowledgeLineage.js";
-export { LineageId } from "./LineageId.js";
-export { Transformation, TransformationType } from "./Transformation.js";
-export { Trace } from "./Trace.js";
-export type { KnowledgeLineageRepository } from "./KnowledgeLineageRepository.js";
+export { KnowledgeLineage } from "./KnowledgeLineage";
+export { LineageId } from "./LineageId";
+export { Transformation, TransformationType } from "./Transformation";
+export { Trace } from "./Trace";
+export type { KnowledgeLineageRepository } from "./KnowledgeLineageRepository";

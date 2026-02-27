@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Card, CardHeader, CardBody } from "../../shared/Card.js";
-import { Button } from "../../shared/Button.js";
-import { Icon } from "../../shared/Icon.js";
-import { CreateProfileForm } from "./CreateProfileForm.js";
+import { Card, CardHeader, CardBody } from "../../shared/Card";
+import { Button } from "../../shared/Button";
+import { Icon } from "../../shared/Icon";
+import { CreateProfileForm } from "./CreateProfileForm";
 
 export function ProfilesPage() {
   const [showForm, setShowForm] = useState(false);

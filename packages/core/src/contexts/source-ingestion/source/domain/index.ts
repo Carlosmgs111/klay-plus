@@ -1,12 +1,12 @@
-export { Source } from "./Source.js";
-export { SourceId } from "./SourceId.js";
-export { SourceType } from "./SourceType.js";
-export { SourceVersion } from "./SourceVersion.js";
-export type { SourceRepository } from "./SourceRepository.js";
+export { Source } from "./Source";
+export { SourceId } from "./SourceId";
+export { SourceType } from "./SourceType";
+export { SourceVersion } from "./SourceVersion";
+export type { SourceRepository } from "./SourceRepository";
 
-export { SourceRegistered } from "./events/SourceRegistered.js";
-export { SourceUpdated } from "./events/SourceUpdated.js";
-export { SourceExtracted } from "./events/SourceExtracted.js";
+export { SourceRegistered } from "./events/SourceRegistered";
+export { SourceUpdated } from "./events/SourceUpdated";
+export { SourceExtracted } from "./events/SourceExtracted";
 
 // Domain Errors
 export {
@@ -17,4 +17,4 @@ export {
   SourceInvalidUriError,
   SourceInvalidTypeError,
   type SourceError,
-} from "./errors/index.js";
+} from "./errors";

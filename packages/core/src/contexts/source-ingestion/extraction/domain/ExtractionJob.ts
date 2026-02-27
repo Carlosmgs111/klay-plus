@@ -1,8 +1,8 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { ExtractionJobId } from "./ExtractionJobId.js";
-import { ExtractionStatus } from "./ExtractionStatus.js";
-import { ExtractionCompleted } from "./events/ExtractionCompleted.js";
-import { ExtractionFailed } from "./events/ExtractionFailed.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { ExtractionJobId } from "./ExtractionJobId";
+import { ExtractionStatus } from "./ExtractionStatus";
+import { ExtractionCompleted } from "./events/ExtractionCompleted";
+import { ExtractionFailed } from "./events/ExtractionFailed";
 
 export class ExtractionJob extends AggregateRoot<ExtractionJobId> {
   private _sourceId: string;

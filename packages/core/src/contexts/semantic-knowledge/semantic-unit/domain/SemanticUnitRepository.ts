@@ -1,7 +1,7 @@
-import type { Repository } from "../../../../shared/domain/index.js";
-import type { SemanticUnit } from "./SemanticUnit.js";
-import type { SemanticUnitId } from "./SemanticUnitId.js";
-import type { SemanticState } from "./SemanticState.js";
+import type { Repository } from "../../../../shared/domain";
+import type { SemanticUnit } from "./SemanticUnit";
+import type { SemanticUnitId } from "./SemanticUnitId";
+import type { SemanticState } from "./SemanticState";
 
 export interface SemanticUnitRepository extends Repository<SemanticUnit, SemanticUnitId> {
   findBySourceId(sourceId: string): Promise<SemanticUnit[]>;

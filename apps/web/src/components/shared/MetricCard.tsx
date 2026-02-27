@@ -1,5 +1,5 @@
-import { Icon } from "./Icon.js";
-import type { IconName } from "./Icon.js";
+import { Icon } from "./Icon";
+import type { IconName } from "./Icon";
 import type { ReactNode } from "react";
 
 interface MetricCardProps {

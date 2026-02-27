@@ -9,4 +9,4 @@ export {
   UnsupportedMimeTypeError,
   ContentHashingError,
   type ExtractionError,
-} from "./ExtractionErrors.js";
+} from "./ExtractionErrors";

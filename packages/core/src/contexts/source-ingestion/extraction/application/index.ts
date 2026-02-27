@@ -1,16 +1,16 @@
-import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
+import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
 
-export { ExecuteExtraction } from "./ExecuteExtraction.js";
+export { ExecuteExtraction } from "./ExecuteExtraction";
 export type {
   ExecuteExtractionCommand,
   ExecuteExtractionResult,
   ExtractorMap,
-} from "./ExecuteExtraction.js";
+} from "./ExecuteExtraction";
 
 // Note: UnsupportedMimeTypeError is now exported from domain/errors
 
-import { ExecuteExtraction, type ExtractorMap } from "./ExecuteExtraction.js";
+import { ExecuteExtraction, type ExtractorMap } from "./ExecuteExtraction";
 
 export class ExtractionUseCases {
   readonly executeExtraction: ExecuteExtraction;

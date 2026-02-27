@@ -1,7 +1,7 @@
-import type { KnowledgeLineageRepository } from "../../../domain/KnowledgeLineageRepository.js";
-import type { KnowledgeLineage } from "../../../domain/KnowledgeLineage.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type LineageDTO } from "../indexeddb/LineageDTO.js";
+import type { KnowledgeLineageRepository } from "../../../domain/KnowledgeLineageRepository";
+import type { KnowledgeLineage } from "../../../domain/KnowledgeLineage";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type LineageDTO } from "../indexeddb/LineageDTO";
 
 export class NeDBKnowledgeLineageRepository
   extends BaseNeDBRepository<KnowledgeLineage, LineageDTO>

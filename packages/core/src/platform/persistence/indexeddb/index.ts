@@ -1,1 +1,1 @@
-export { IndexedDBStore } from "./IndexedDBStore.js";
+export { IndexedDBStore } from "./IndexedDBStore";

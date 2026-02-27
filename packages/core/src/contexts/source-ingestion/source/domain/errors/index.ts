@@ -6,4 +6,4 @@ export {
   SourceInvalidUriError,
   SourceInvalidTypeError,
   type SourceError,
-} from "./SourceErrors.js";
+} from "./SourceErrors";

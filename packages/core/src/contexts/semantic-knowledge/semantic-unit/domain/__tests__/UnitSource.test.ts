@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { UnitSource } from "../UnitSource.js";
+import { UnitSource } from "../UnitSource";
 
 describe("UnitSource", () => {
   const validArgs = {

@@ -1,3 +1,3 @@
-export { TextContentExtractor } from "./TextContentExtractor.js";
-export { BrowserPdfContentExtractor } from "./BrowserPdfContentExtractor.js";
-export { ServerPdfContentExtractor } from "./ServerPdfContentExtractor.js";
+export { TextContentExtractor } from "./TextContentExtractor";
+export { BrowserPdfContentExtractor } from "./BrowserPdfContentExtractor";
+export { ServerPdfContentExtractor } from "./ServerPdfContentExtractor";

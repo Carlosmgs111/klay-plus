@@ -1,9 +1,9 @@
-import type { ProcessingProfileRepository } from "../../../domain/ProcessingProfileRepository.js";
-import type { ProcessingProfile } from "../../../domain/ProcessingProfile.js";
-import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId.js";
-import type { ProfileStatus } from "../../../domain/ProfileStatus.js";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
-import { toDTO, fromDTO, type ProfileDTO } from "./ProfileDTO.js";
+import type { ProcessingProfileRepository } from "../../../domain/ProcessingProfileRepository";
+import type { ProcessingProfile } from "../../../domain/ProcessingProfile";
+import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId";
+import type { ProfileStatus } from "../../../domain/ProfileStatus";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { toDTO, fromDTO, type ProfileDTO } from "./ProfileDTO";
 
 export class IndexedDBProcessingProfileRepository
   extends BaseIndexedDBRepository<ProcessingProfile, ProfileDTO>

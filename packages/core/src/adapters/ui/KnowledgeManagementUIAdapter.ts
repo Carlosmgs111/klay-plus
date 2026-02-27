@@ -1,9 +1,9 @@
-import type { KnowledgeManagementPort } from "../../application/knowledge-management/contracts/KnowledgeManagementPort.js";
+import type { KnowledgeManagementPort } from "../../application/knowledge-management/contracts/KnowledgeManagementPort";
 import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "../../application/knowledge-management/contracts/dtos.js";
-import type { UIResult } from "./KnowledgePipelineUIAdapter.js";
+} from "../../application/knowledge-management/contracts/dtos";
+import type { UIResult } from "./KnowledgePipelineUIAdapter";
 
 /**
  * KnowledgeManagementUIAdapter — Primary Adapter for UI consumers.

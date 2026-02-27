@@ -1,30 +1,63 @@
-import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort.js";
-import type { KnowledgeManagementPolicy } from "./KnowledgeManagementComposer.js";
+import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
+import type { ResolvedManagementDependencies } from "../application/KnowledgeManagementOrchestrator";
 
-/**
- * Factory function to create a fully configured KnowledgeManagement orchestrator.
- *
- * This is the main entry point for consuming the management orchestrator.
- * Returns ONLY the port — not the implementation, not the facades.
- *
- * Uses dynamic imports for tree-shaking.
- *
- * @example
- * ```typescript
- * const management = await createKnowledgeManagement({ provider: "server", dbPath: "./data" });
- * const result = await management.addSource({ ... });
- * ```
- */
+export interface KnowledgeManagementPolicy {
+  provider: string;
+  dbPath?: string;
+  dbName?: string;
+  embeddingDimensions?: number;
+  embeddingProvider?: string;
+  embeddingModel?: string;
+  configOverrides?: Record<string, string>;
+}
+
+async function resolveManagementDependencies(
+  policy: KnowledgeManagementPolicy,
+): Promise<ResolvedManagementDependencies> {
+  const [
+    { createSourceIngestionFacade },
+    { createSemanticKnowledgeFacade },
+    { createSemanticProcessingFacade },
+  ] = await Promise.all([
+    import("../../../contexts/source-ingestion/facade"),
+    import("../../../contexts/semantic-knowledge/facade"),
+    import("../../../contexts/semantic-processing/facade"),
+  ]);
+
+  const [ingestion, knowledge, processing] = await Promise.all([
+    createSourceIngestionFacade({
+      provider: policy.provider,
+      dbPath: policy.dbPath,
+      dbName: policy.dbName,
+      configOverrides: policy.configOverrides,
+    }),
+    createSemanticKnowledgeFacade({
+      provider: policy.provider,
+      dbPath: policy.dbPath,
+      dbName: policy.dbName,
+      configOverrides: policy.configOverrides,
+    }),
+    createSemanticProcessingFacade({
+      provider: policy.provider,
+      dbPath: policy.dbPath,
+      dbName: policy.dbName,
+      embeddingDimensions: policy.embeddingDimensions,
+      embeddingProvider: policy.embeddingProvider,
+      embeddingModel: policy.embeddingModel,
+      configOverrides: policy.configOverrides,
+    }),
+  ]);
+
+  return { ingestion, knowledge, processing };
+}
+
 export async function createKnowledgeManagement(
   policy: KnowledgeManagementPolicy,
 ): Promise<KnowledgeManagementPort> {
-  const { KnowledgeManagementComposer } = await import(
-    "./KnowledgeManagementComposer.js"
-  );
   const { KnowledgeManagementOrchestrator } = await import(
-    "../application/KnowledgeManagementOrchestrator.js"
+    "../application/KnowledgeManagementOrchestrator"
   );
 
-  const deps = await KnowledgeManagementComposer.resolve(policy);
+  const deps = await resolveManagementDependencies(policy);
   return new KnowledgeManagementOrchestrator(deps);
 }

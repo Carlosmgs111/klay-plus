@@ -1,12 +1,12 @@
-import type { EventPublisher } from "../../shared/domain/EventPublisher.js";
-import type { ProviderRegistry } from "../../shared/domain/ProviderRegistry.js";
-import { ProviderRegistryBuilder } from "./ProviderRegistryBuilder.js";
+import type { EventPublisher } from "../../shared/domain/EventPublisher";
+import type { ProviderRegistry } from "../../shared/domain/ProviderRegistry";
+import { ProviderRegistryBuilder } from "./ProviderRegistryBuilder";
 
 export function createEventPublisherRegistry(): ProviderRegistry<EventPublisher> {
   const createInMemory = {
     create: async () => {
       const { InMemoryEventPublisher } = await import(
-        "../eventing/InMemoryEventPublisher.js"
+        "../eventing/InMemoryEventPublisher"
       );
       return new InMemoryEventPublisher();
     },

@@ -1,9 +1,9 @@
-export type { ConfigProvider } from "./ConfigProvider.js";
-export { ConfigurationError } from "./ConfigurationError.js";
+export type { ConfigProvider } from "./ConfigProvider";
+export { ConfigurationError } from "./ConfigurationError";
 
-export { AstroConfigProvider } from "./AstroConfigProvider.js";
-export { NodeConfigProvider } from "./NodeConfigProvider.js";
-export { InMemoryConfigProvider } from "./InMemoryConfigProvider.js";
+export { AstroConfigProvider } from "./AstroConfigProvider";
+export { NodeConfigProvider } from "./NodeConfigProvider";
+export { InMemoryConfigProvider } from "./InMemoryConfigProvider";
 
-export { resolveConfigProvider } from "./resolveConfigProvider.js";
-export type { ConfigResolutionPolicy } from "./resolveConfigProvider.js";
+export { resolveConfigProvider } from "./resolveConfigProvider";
+export type { ConfigResolutionPolicy } from "./resolveConfigProvider";

@@ -1,9 +1,9 @@
-export { SemanticProjection } from "./SemanticProjection.js";
-export { ProjectionId } from "./ProjectionId.js";
-export { ProjectionType } from "./ProjectionType.js";
-export { ProjectionStatus } from "./ProjectionStatus.js";
-export { ProjectionResult } from "./ProjectionResult.js";
-export type { SemanticProjectionRepository } from "./SemanticProjectionRepository.js";
+export { SemanticProjection } from "./SemanticProjection";
+export { ProjectionId } from "./ProjectionId";
+export { ProjectionType } from "./ProjectionType";
+export { ProjectionStatus } from "./ProjectionStatus";
+export { ProjectionResult } from "./ProjectionResult";
+export type { SemanticProjectionRepository } from "./SemanticProjectionRepository";
 
 export type {
   EmbeddingStrategy,
@@ -12,10 +12,10 @@ export type {
   Chunk,
   VectorWriteStore,
   VectorEntry,
-} from "./ports/index.js";
+} from "./ports";
 
-export { ProjectionGenerated } from "./events/ProjectionGenerated.js";
-export { ProjectionFailed } from "./events/ProjectionFailed.js";
+export { ProjectionGenerated } from "./events/ProjectionGenerated";
+export { ProjectionFailed } from "./events/ProjectionFailed";
 
 // Domain Errors
 export {
@@ -33,4 +33,4 @@ export {
   VectorStoreFailedError,
   ProjectionProcessingError,
   type ProjectionError,
-} from "./errors/index.js";
+} from "./errors";

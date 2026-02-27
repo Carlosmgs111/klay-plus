@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { SemanticUnit } from "../SemanticUnit.js";
-import { SemanticUnitId } from "../SemanticUnitId.js";
-import { UnitMetadata } from "../UnitMetadata.js";
-import { UnitSource } from "../UnitSource.js";
-import { SemanticState } from "../SemanticState.js";
-import { SemanticUnitCreated } from "../events/SemanticUnitCreated.js";
-import { SemanticUnitSourceAdded } from "../events/SemanticUnitSourceAdded.js";
-import { SemanticUnitSourceRemoved } from "../events/SemanticUnitSourceRemoved.js";
-import { SemanticUnitVersioned } from "../events/SemanticUnitVersioned.js";
-import { SemanticUnitRolledBack } from "../events/SemanticUnitRolledBack.js";
-import { SemanticUnitReprocessRequested } from "../events/SemanticUnitReprocessRequested.js";
+import { SemanticUnit } from "../SemanticUnit";
+import { SemanticUnitId } from "../SemanticUnitId";
+import { UnitMetadata } from "../UnitMetadata";
+import { UnitSource } from "../UnitSource";
+import { SemanticState } from "../SemanticState";
+import { SemanticUnitCreated } from "../events/SemanticUnitCreated";
+import { SemanticUnitSourceAdded } from "../events/SemanticUnitSourceAdded";
+import { SemanticUnitSourceRemoved } from "../events/SemanticUnitSourceRemoved";
+import { SemanticUnitVersioned } from "../events/SemanticUnitVersioned";
+import { SemanticUnitRolledBack } from "../events/SemanticUnitRolledBack";
+import { SemanticUnitReprocessRequested } from "../events/SemanticUnitReprocessRequested";
 
 function makeUnit() {
   const id = SemanticUnitId.create("unit-1");

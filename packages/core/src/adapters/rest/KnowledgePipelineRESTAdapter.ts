@@ -1,4 +1,4 @@
-import type { KnowledgePipelinePort } from "../../application/knowledge-pipeline/contracts/KnowledgePipelinePort.js";
+import type { KnowledgePipelinePort } from "../../application/knowledge-pipeline/contracts/KnowledgePipelinePort";
 import type {
   ExecutePipelineInput,
   IngestDocumentInput,
@@ -7,7 +7,7 @@ import type {
   SearchKnowledgeInput,
   CreateProcessingProfileInput,
   GetManifestInput,
-} from "../../application/knowledge-pipeline/contracts/dtos.js";
+} from "../../application/knowledge-pipeline/contracts/dtos";
 
 /**
  * Framework-agnostic request representation.

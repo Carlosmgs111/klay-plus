@@ -27,33 +27,19 @@ export {
   ProfileNotFoundError,
   ProfileDeprecatedError,
   ProfileAlreadyDeprecatedError,
-} from "./domain/index.js";
+} from "./domain";
 
 export type {
   ProcessingProfileRepository,
   ProfileError,
-} from "./domain/index.js";
+} from "./domain";
 
 export {
-  ProcessingProfileUseCases,
-  CreateProcessingProfile,
-  UpdateProcessingProfile,
-  DeprecateProcessingProfile,
-} from "./application/index.js";
-
-export type {
-  CreateProcessingProfileCommand,
-  UpdateProcessingProfileCommand,
-  DeprecateProcessingProfileCommand,
-} from "./application/index.js";
-
-export {
-  ProcessingProfileComposer,
   processingProfileFactory,
-} from "./composition/index.js";
+} from "./composition";
 
 export type {
   ProcessingProfileInfrastructurePolicy,
   ResolvedProcessingProfileInfra,
   ProcessingProfileFactoryResult,
-} from "./composition/index.js";
+} from "./composition";

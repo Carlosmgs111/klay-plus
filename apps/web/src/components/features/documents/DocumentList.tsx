@@ -1,6 +1,6 @@
-import { DataTable } from "../../shared/DataTable.js";
-import { StatusBadge } from "../../shared/StatusBadge.js";
-import { SkeletonTableRow } from "../../shared/Skeleton.js";
+import { DataTable } from "../../shared/DataTable";
+import { StatusBadge } from "../../shared/StatusBadge";
+import { SkeletonTableRow } from "../../shared/Skeleton";
 import type { ContentManifestEntry } from "@klay/core";
 
 interface DocumentListProps {

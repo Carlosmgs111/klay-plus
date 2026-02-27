@@ -5,7 +5,7 @@ export {
   SemanticUnitOperationError,
   LineageNotFoundError,
   LineageOperationError,
-} from "./SemanticKnowledgeFacade.js";
+} from "./SemanticKnowledgeFacade";
 
 export type {
   CreateSemanticUnitSuccess,
@@ -15,28 +15,23 @@ export type {
   ReprocessSuccess,
   RollbackSuccess,
   DeprecateSemanticUnitWithLineageSuccess,
-} from "./SemanticKnowledgeFacade.js";
+} from "./SemanticKnowledgeFacade";
 
-export { SemanticKnowledgeFacadeComposer } from "./composition/SemanticKnowledgeFacadeComposer.js";
 export type {
   SemanticKnowledgeFacadePolicy,
   ResolvedSemanticKnowledgeModules,
-} from "./composition/infra-policies.js";
+} from "./composition/factory";
 
-import type { SemanticKnowledgeFacadePolicy } from "./composition/infra-policies.js";
-import type { SemanticKnowledgeFacade as _Facade } from "./SemanticKnowledgeFacade.js";
+import type { SemanticKnowledgeFacadePolicy } from "./composition/factory";
+import type { SemanticKnowledgeFacade as _Facade } from "./SemanticKnowledgeFacade";
 
-/**
- * Factory function to create a fully configured SemanticKnowledgeFacade.
- * This is the main entry point for consuming the Semantic Knowledge context.
- */
 export async function createSemanticKnowledgeFacade(
   policy: SemanticKnowledgeFacadePolicy
 ): Promise<_Facade> {
-  const { SemanticKnowledgeFacadeComposer } = await import(
-    "./composition/SemanticKnowledgeFacadeComposer.js"
+  const { resolveSemanticKnowledgeModules } = await import(
+    "./composition/factory"
   );
-  const { SemanticKnowledgeFacade } = await import("./SemanticKnowledgeFacade.js");
-  const modules = await SemanticKnowledgeFacadeComposer.resolve(policy);
+  const { SemanticKnowledgeFacade } = await import("./SemanticKnowledgeFacade");
+  const modules = await resolveSemanticKnowledgeModules(policy);
   return new SemanticKnowledgeFacade(modules);
 }

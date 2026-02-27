@@ -33,17 +33,17 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { createSourceIngestionFacade } from "../../contexts/source-ingestion/facade/index.js";
-import { createSemanticProcessingFacade } from "../../contexts/semantic-processing/facade/index.js";
-import { createSemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/index.js";
-import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/index.js";
+import { createSourceIngestionFacade } from "../../contexts/source-ingestion/facade";
+import { createSemanticProcessingFacade } from "../../contexts/semantic-processing/facade";
+import { createSemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade";
+import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade";
 
-import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType.js";
-import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType.js";
-import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
-import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
-import type { SemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
-import type { KnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade.js";
+import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";
+import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType";
+import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade";
+import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade";
+import type { SemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { KnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
 
 const DIMENSIONS = 128;
 
@@ -377,59 +377,38 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log();
     });
 
-    it("should perform simplified search", async () => {
-      console.log("🔍 Step 3.2: Simplified search...");
+    it("should find best match with topK=1", async () => {
+      console.log("🎯 Step 3.2: Finding most similar...");
 
-      const results = await retrieval.search(
-        "Clean Architecture separates concerns into concentric layers",
-        { limit: 5, threshold: 0.0 },
-      );
+      const result = await retrieval.query({
+        text: "Domain-Driven Design bounded context aggregate entity",
+        topK: 1,
+        minScore: 0.0,
+      });
 
-      expect(results.length).toBeGreaterThan(0);
-      expect(results[0]).toHaveProperty("id");
-      expect(results[0]).toHaveProperty("content");
-      expect(results[0]).toHaveProperty("score");
+      expect(result.items.length).toBe(1);
 
-      console.log(`   ✅ Search returned ${results.length} results`);
-      for (const r of results.slice(0, 3)) {
-        console.log(`      [${r.score.toFixed(3)}] ${r.content.slice(0, 60)}...`);
-      }
-      console.log();
+      const match = result.items[0];
+      console.log(`   ✅ Best match: unit ${match.semanticUnitId.slice(0, 8)}... (score: ${match.score.toFixed(3)})`);
+      console.log(`      Content: ${match.content.slice(0, 60)}...\n`);
     });
 
-    it("should find most similar content for exact match", async () => {
-      console.log("🎯 Step 3.3: Finding most similar...");
+    it("should batch query multiple queries", async () => {
+      console.log("📚 Step 3.3: Batch query across knowledge base...");
 
-      const match = await retrieval.findMostSimilar(
-        "Domain-Driven Design bounded context aggregate entity",
-        0.0,
-      );
-
-      expect(match).not.toBeNull();
-
-      console.log(`   ✅ Best match: unit ${match!.id.slice(0, 8)}... (score: ${match!.score.toFixed(3)})`);
-      console.log(`      Content: ${match!.content.slice(0, 60)}...\n`);
-    });
-
-    it("should batch search multiple queries", async () => {
-      console.log("📚 Step 3.4: Batch search across knowledge base...");
-
-      const batchResults = await retrieval.batchSearch(
-        [
-          "aggregate root entity value object",
-          "dependency rule inner circle outer",
-          "event store replay state changes",
-        ],
-        { limit: 2, threshold: 0.0 },
-      );
+      const batchResults = await retrieval.batchQuery([
+        { text: "aggregate root entity value object", topK: 2, minScore: 0.0 },
+        { text: "dependency rule inner circle outer", topK: 2, minScore: 0.0 },
+        { text: "event store replay state changes", topK: 2, minScore: 0.0 },
+      ]);
 
       expect(batchResults).toHaveLength(3);
 
-      for (const batch of batchResults) {
-        console.log(`   Query: "${batch.query.slice(0, 40)}..."`);
-        console.log(`   → ${batch.results.length} results`);
-        for (const r of batch.results) {
-          console.log(`      [${r.score.toFixed(3)}] ${r.content.slice(0, 50)}...`);
+      for (const result of batchResults) {
+        console.log(`   Query: "${result.queryText.slice(0, 40)}..."`);
+        console.log(`   → ${result.items.length} results`);
+        for (const item of result.items) {
+          console.log(`      [${item.score.toFixed(3)}] ${item.content.slice(0, 50)}...`);
         }
       }
       console.log();
@@ -481,19 +460,20 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log(`      New embeddings stored in vector store\n`);
     });
 
-    it("should retrieve updated content via search (Knowledge Retrieval)", async () => {
+    it("should retrieve updated content via query (Knowledge Retrieval)", async () => {
       console.log("🔍 Step 4.3: Searching for updated content...");
 
-      const results = await retrieval.search("context map anti-corruption layer shared kernel", {
-        limit: 3,
-        threshold: 0.0,
+      const result = await retrieval.query({
+        text: "context map anti-corruption layer shared kernel",
+        topK: 3,
+        minScore: 0.0,
       });
 
-      expect(results.length).toBeGreaterThan(0);
+      expect(result.items.length).toBeGreaterThan(0);
 
-      console.log(`   ✅ Found ${results.length} results for updated concepts`);
-      for (const r of results.slice(0, 2)) {
-        console.log(`      [${r.score.toFixed(3)}] ${r.content.slice(0, 60)}...`);
+      console.log(`   ✅ Found ${result.items.length} results for updated concepts`);
+      for (const item of result.items.slice(0, 2)) {
+        console.log(`      [${item.score.toFixed(3)}] ${item.content.slice(0, 60)}...`);
       }
       console.log();
     });
@@ -520,39 +500,43 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // FLOW 5: Deduplication Detection
+  // FLOW 5: Similarity Detection
 
-  describe("Flow 5: Deduplication Detection", () => {
+  describe("Flow 5: Similarity Detection", () => {
     it("should detect similar content in the knowledge base", async () => {
-      console.log("── Flow 5: Deduplication Detection ─────────────────────────\n");
-      console.log("🔎 Step 5.1: Checking for duplicate DDD content...");
+      console.log("── Flow 5: Similarity Detection ────────────────────────────\n");
+      console.log("🔎 Step 5.1: Checking for similar DDD content...");
 
-      const check = await retrieval.hasSimilarContent(
-        "Domain-Driven Design bounded context aggregate entity value object",
-        0.0,
-      );
+      const result = await retrieval.query({
+        text: "Domain-Driven Design bounded context aggregate entity value object",
+        topK: 1,
+        minScore: 0.0,
+      });
 
-      expect(check.exists).toBe(true);
-      expect(check.matchId).toBeDefined();
+      expect(result.items.length).toBeGreaterThan(0);
 
-      console.log(`   ✅ Similar content detected: unit ${check.matchId!.slice(0, 8)}...`);
-      console.log(`      Score: ${check.score!.toFixed(3)}\n`);
+      const match = result.items[0];
+      console.log(`   ✅ Similar content detected: unit ${match.semanticUnitId.slice(0, 8)}...`);
+      console.log(`      Score: ${match.score.toFixed(3)}\n`);
     });
 
-    it("should find related content for a semantic unit", async () => {
-      console.log("🔗 Step 5.2: Finding related content for DDD unit...");
+    it("should query across multiple semantic units", async () => {
+      console.log("🔗 Step 5.2: Querying across all ingested documents...");
 
-      const related = await retrieval.findRelated(
-        ids.ddd.unitId,
-        "software architecture design patterns",
-        { limit: 3, excludeSelf: true },
-      );
+      const result = await retrieval.query({
+        text: "bounded context aggregate entity",
+        topK: 10,
+        minScore: 0.0,
+      });
 
-      expect(related).toBeDefined();
+      expect(result.items.length).toBeGreaterThan(0);
 
-      console.log(`   ✅ Found ${related.length} related items (excluding self)`);
-      for (const r of related) {
-        console.log(`      [${r.score.toFixed(3)}] unit ${r.id.slice(0, 8)}... → ${r.content.slice(0, 50)}...`);
+      // Collect unique unit IDs from results
+      const unitIds = new Set(result.items.map((item) => item.semanticUnitId));
+
+      console.log(`   ✅ Found ${result.items.length} items across ${unitIds.size} units`);
+      for (const item of result.items.slice(0, 3)) {
+        console.log(`      [${item.score.toFixed(3)}] unit ${item.semanticUnitId.slice(0, 8)}... → ${item.content.slice(0, 50)}...`);
       }
       console.log();
     });
@@ -701,9 +685,8 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log("── Flow 8: Cross-Context Integrity ─────────────────────────\n");
       console.log("🔗 Step 8.1: Verifying traceability chain...");
 
-      // 1. Source exists in ingestion context
-      const sourceAccessor = ingestion.source;
-      expect(sourceAccessor).toBeDefined();
+      // 1. Extraction module exists in ingestion context
+      expect(ingestion.extraction).toBeDefined();
 
       // 2. Semantic unit exists in knowledge context
       const lineageResult = await knowledge.getLineageForUnit(ids.ddd.unitId);
@@ -714,11 +697,12 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       expect(vectorStoreConfig).toBeDefined();
 
       // 4. Content is retrievable via retrieval context
-      const searchResult = await retrieval.search("Domain-Driven Design", {
-        limit: 1,
-        threshold: 0.0,
+      const searchResult = await retrieval.query({
+        text: "Domain-Driven Design",
+        topK: 1,
+        minScore: 0.0,
       });
-      expect(searchResult.length).toBeGreaterThan(0);
+      expect(searchResult.items.length).toBeGreaterThan(0);
 
       console.log("   ✅ Source Ingestion: source registered and extracted");
       console.log("   ✅ Semantic Processing: vectors stored in vector store");
@@ -730,20 +714,19 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log("🔧 Step 8.2: Verifying direct module access...");
 
       // Source Ingestion modules
-      expect(ingestion.source).toBeDefined();
       expect(ingestion.extraction).toBeDefined();
-      console.log("   ✅ Source Ingestion: source, extraction");
+      console.log("   ✅ Source Ingestion: extraction");
 
       // Semantic Processing modules
       expect(processing.projection).toBeDefined();
-      expect(processing.processingProfile).toBeDefined();
       expect(processing.vectorStoreConfig).toBeDefined();
-      console.log("   ✅ Semantic Processing: projection, processingProfile, vectorStoreConfig");
+      expect(processing.createProcessingProfile).toBeDefined();
+      console.log("   ✅ Semantic Processing: projection, vectorStoreConfig, createProcessingProfile");
 
-      // Semantic Knowledge modules
-      expect(knowledge.semanticUnit).toBeDefined();
-      expect(knowledge.lineage).toBeDefined();
-      console.log("   ✅ Semantic Knowledge: semanticUnit, lineage");
+      // Semantic Knowledge facade
+      expect(knowledge.createSemanticUnit).toBeDefined();
+      expect(knowledge.linkSemanticUnits).toBeDefined();
+      console.log("   ✅ Semantic Knowledge: createSemanticUnit, linkSemanticUnits");
 
       // Knowledge Retrieval modules
       expect(retrieval.semanticQuery).toBeDefined();
@@ -778,7 +761,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       const textContent = "Hello, this is test content for resource storage.";
       const buffer = new TextEncoder().encode(textContent).buffer;
 
-      const result = await ingestion.resource.storeResource.execute({
+      const result = await ingestion.storeResource({
         id: resourceId,
         buffer,
         originalName: "test-document.txt",
@@ -803,7 +786,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       const resourceId = crypto.randomUUID();
       const externalUri = "https://example.com/documents/report.pdf";
 
-      const result = await ingestion.resource.registerExternalResource.execute({
+      const result = await ingestion.registerExternalResource({
         id: resourceId,
         name: "External Report",
         mimeType: "application/pdf",
@@ -827,14 +810,14 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       const resourceId = crypto.randomUUID();
       const buffer = new TextEncoder().encode("Retrievable content").buffer;
 
-      await ingestion.resource.storeResource.execute({
+      await ingestion.storeResource({
         id: resourceId,
         buffer,
         originalName: "retrievable.txt",
         mimeType: "text/plain",
       });
 
-      const result = await ingestion.resource.getResource.execute(resourceId);
+      const result = await ingestion.getResource(resourceId);
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -853,14 +836,14 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       const resourceId = crypto.randomUUID();
       const buffer = new TextEncoder().encode("First content").buffer;
 
-      await ingestion.resource.storeResource.execute({
+      await ingestion.storeResource({
         id: resourceId,
         buffer,
         originalName: "first.txt",
         mimeType: "text/plain",
       });
 
-      const result = await ingestion.resource.storeResource.execute({
+      const result = await ingestion.storeResource({
         id: resourceId,
         buffer: new TextEncoder().encode("Second content").buffer,
         originalName: "second.txt",
@@ -877,14 +860,14 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       const resourceId = crypto.randomUUID();
       const buffer = new TextEncoder().encode("Content to delete").buffer;
 
-      await ingestion.resource.storeResource.execute({
+      await ingestion.storeResource({
         id: resourceId,
         buffer,
         originalName: "deletable.txt",
         mimeType: "text/plain",
       });
 
-      const deleteResult = await ingestion.resource.deleteResource.execute({
+      const deleteResult = await ingestion.deleteResource({
         id: resourceId,
       });
 
@@ -959,16 +942,15 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log(`      Source: ${sourceId.slice(0, 8)}...\n`);
     });
 
-    it("should provide resource module access via facade", async () => {
-      console.log("🔧 Step 9.8: Verifying resource module access...");
+    it("should provide resource operations via facade", async () => {
+      console.log("🔧 Step 9.8: Verifying resource operations available...");
 
-      expect(ingestion.resource).toBeDefined();
-      expect(ingestion.resource.storeResource).toBeDefined();
-      expect(ingestion.resource.registerExternalResource).toBeDefined();
-      expect(ingestion.resource.deleteResource).toBeDefined();
-      expect(ingestion.resource.getResource).toBeDefined();
+      expect(ingestion.storeResource).toBeDefined();
+      expect(ingestion.registerExternalResource).toBeDefined();
+      expect(ingestion.deleteResource).toBeDefined();
+      expect(ingestion.getResource).toBeDefined();
 
-      console.log("   ✅ Resource module fully accessible via facade\n");
+      console.log("   ✅ Resource operations fully accessible via facade\n");
     });
   });
 
@@ -1078,16 +1060,17 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
         .slice(0, 8)
         .join(" ");
 
-      const results = await retrieval.search(queryText, {
-        limit: 5,
-        threshold: 0.0,
+      const result = await retrieval.query({
+        text: queryText,
+        topK: 5,
+        minScore: 0.0,
       });
 
-      expect(results.length).toBeGreaterThan(0);
+      expect(result.items.length).toBeGreaterThan(0);
 
-      console.log(`   ✅ Search for "${queryText.slice(0, 40)}..." returned ${results.length} results`);
-      for (const r of results.slice(0, 3)) {
-        console.log(`      [${r.score.toFixed(3)}] ${r.content.slice(0, 60)}...`);
+      console.log(`   ✅ Search for "${queryText.slice(0, 40)}..." returned ${result.items.length} results`);
+      for (const item of result.items.slice(0, 3)) {
+        console.log(`      [${item.score.toFixed(3)}] ${item.content.slice(0, 60)}...`);
       }
       console.log();
 

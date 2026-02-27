@@ -18,7 +18,6 @@ export {
   ProjectionGenerated,
   ProjectionFailed,
   ProjectionUseCases,
-  ProjectionComposer,
   GenerateProjection,
   projectionFactory,
   // Materializer
@@ -47,7 +46,7 @@ export {
   WebLLMEmbeddingStrategy,
   AISdkEmbeddingStrategy,
   InMemoryVectorWriteStore,
-} from "./projection/index.js";
+} from "./projection";
 
 export type {
   SemanticProjectionRepository,
@@ -64,18 +63,13 @@ export type {
   GenerateProjectionResult,
   ProjectionError,
   MaterializedStrategies,
-} from "./projection/index.js";
+} from "./projection";
 
 // Processing Profile Module
 export {
   ProcessingProfile,
   ProcessingProfileId,
   ProfileStatus,
-  ProcessingProfileUseCases,
-  ProcessingProfileComposer,
-  CreateProcessingProfile,
-  UpdateProcessingProfile,
-  DeprecateProcessingProfile,
   processingProfileFactory,
   // Domain Events
   ProfileCreated,
@@ -89,7 +83,7 @@ export {
   ProfileNotFoundError,
   ProfileDeprecatedError,
   ProfileAlreadyDeprecatedError,
-} from "./processing-profile/index.js";
+} from "./processing-profile";
 
 export type {
   ProcessingProfileRepository,
@@ -97,14 +91,13 @@ export type {
   ProcessingProfileInfrastructurePolicy,
   ResolvedProcessingProfileInfra,
   ProcessingProfileFactoryResult,
-} from "./processing-profile/index.js";
+} from "./processing-profile";
 
 // Facade (Context-Level)
 export {
   SemanticProcessingFacade,
-  SemanticProcessingFacadeComposer,
   createSemanticProcessingFacade,
-} from "./facade/index.js";
+} from "./facade";
 
 export type {
   SemanticProcessingFacadePolicy,
@@ -113,4 +106,4 @@ export type {
   CreateProfileSuccess,
   UpdateProfileSuccess,
   DeprecateProfileSuccess,
-} from "./facade/index.js";
+} from "./facade";

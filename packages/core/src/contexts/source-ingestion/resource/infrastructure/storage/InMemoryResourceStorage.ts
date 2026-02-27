@@ -1,4 +1,4 @@
-import type { ResourceStorage } from "../../domain/ResourceStorage.js";
+import type { ResourceStorage } from "../../domain/ResourceStorage";
 
 /**
  * In-memory resource storage for testing purposes.

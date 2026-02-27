@@ -1,7 +1,7 @@
-import type { SemanticUnitRepository } from "../../domain/SemanticUnitRepository.js";
-import type { SemanticUnit } from "../../domain/SemanticUnit.js";
-import type { SemanticState } from "../../domain/SemanticState.js";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
+import type { SemanticUnitRepository } from "../../domain/SemanticUnitRepository";
+import type { SemanticUnit } from "../../domain/SemanticUnit";
+import type { SemanticState } from "../../domain/SemanticState";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
 export class InMemorySemanticUnitRepository
   extends BaseInMemoryRepository<SemanticUnit>

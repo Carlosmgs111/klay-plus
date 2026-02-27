@@ -1,6 +1,6 @@
-import { ProcessingProfile } from "../../../domain/ProcessingProfile.js";
-import { ProcessingProfileId } from "../../../domain/ProcessingProfileId.js";
-import type { ProfileStatus } from "../../../domain/ProfileStatus.js";
+import { ProcessingProfile } from "../../../domain/ProcessingProfile";
+import { ProcessingProfileId } from "../../../domain/ProcessingProfileId";
+import type { ProfileStatus } from "../../../domain/ProfileStatus";
 
 export interface ProfileDTO {
   id: string;

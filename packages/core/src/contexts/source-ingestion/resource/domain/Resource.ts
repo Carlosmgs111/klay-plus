@@ -1,10 +1,10 @@
-import { AggregateRoot } from "../../../../shared/domain/index.js";
-import { ResourceId } from "./ResourceId.js";
-import type { ResourceStatus as ResourceStatusType } from "./ResourceStatus.js";
-import { ResourceStatus } from "./ResourceStatus.js";
-import { StorageLocation } from "./StorageLocation.js";
-import { ResourceStored } from "./events/ResourceStored.js";
-import { ResourceDeleted } from "./events/ResourceDeleted.js";
+import { AggregateRoot } from "../../../../shared/domain";
+import { ResourceId } from "./ResourceId";
+import type { ResourceStatus as ResourceStatusType } from "./ResourceStatus";
+import { ResourceStatus } from "./ResourceStatus";
+import { StorageLocation } from "./StorageLocation";
+import { ResourceStored } from "./events/ResourceStored";
+import { ResourceDeleted } from "./events/ResourceDeleted";
 
 /**
  * Resource aggregate — represents a physical file or external reference.

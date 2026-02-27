@@ -1,9 +1,9 @@
-import type { ProcessingProfileRepository } from "../../../domain/ProcessingProfileRepository.js";
-import type { ProcessingProfile } from "../../../domain/ProcessingProfile.js";
-import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId.js";
-import type { ProfileStatus } from "../../../domain/ProfileStatus.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type ProfileDTO } from "../indexeddb/ProfileDTO.js";
+import type { ProcessingProfileRepository } from "../../../domain/ProcessingProfileRepository";
+import type { ProcessingProfile } from "../../../domain/ProcessingProfile";
+import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId";
+import type { ProfileStatus } from "../../../domain/ProfileStatus";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type ProfileDTO } from "../indexeddb/ProfileDTO";
 
 export class NeDBProcessingProfileRepository
   extends BaseNeDBRepository<ProcessingProfile, ProfileDTO>

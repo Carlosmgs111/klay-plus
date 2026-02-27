@@ -1,8 +1,8 @@
-import type { SemanticProjectionRepository } from "../../domain/SemanticProjectionRepository.js";
-import type { SemanticProjection } from "../../domain/SemanticProjection.js";
-import type { ProjectionType } from "../../domain/ProjectionType.js";
-import type { ProjectionStatus } from "../../domain/ProjectionStatus.js";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
+import type { SemanticProjectionRepository } from "../../domain/SemanticProjectionRepository";
+import type { SemanticProjection } from "../../domain/SemanticProjection";
+import type { ProjectionType } from "../../domain/ProjectionType";
+import type { ProjectionStatus } from "../../domain/ProjectionStatus";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
 export class InMemorySemanticProjectionRepository
   extends BaseInMemoryRepository<SemanticProjection>

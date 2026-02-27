@@ -1,4 +1,4 @@
-import { BaseChunker } from "./BaseChunker.js";
+import { BaseChunker } from "./BaseChunker";
 
 export class FixedSizeChunker extends BaseChunker {
   readonly strategyId = "fixed-size-chunker";

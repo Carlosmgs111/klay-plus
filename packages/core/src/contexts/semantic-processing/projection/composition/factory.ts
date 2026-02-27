@@ -1,35 +1,32 @@
-/**
- * Projection Module Factory
- *
- * Entry point for creating the Projection module.
- * Builds provider registries and delegates to Composer for wiring.
- *
- * Now requires a ProcessingProfileRepository from the processing-profile module
- * for cross-module wiring — GenerateProjection looks up profiles at runtime.
- *
- * @example
- * ```typescript
- * const { useCases, infra } = await projectionFactory(policy, profileRepository);
- * await useCases.generateProjection.execute({ ... });
- * ```
- */
+import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository";
+import type { VectorWriteStore } from "../domain/ports/VectorWriteStore";
+import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
+import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository";
+import type { ProcessingProfileMaterializer } from "./ProcessingProfileMaterializer";
+import type { ProjectionUseCases } from "../application";
 
-import type {
-  ProjectionInfrastructurePolicy,
-  ResolvedProjectionInfra,
-} from "./infra-policies.js";
-import type { ProjectionUseCases } from "../application/index.js";
-import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
-import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
-import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
+export interface ProjectionInfrastructurePolicy {
+  provider: string;
+  dbPath?: string;
+  dbName?: string;
+  embeddingDimensions?: number;
+  webLLMModelId?: string;
+  embeddingProvider?: string;
+  embeddingModel?: string;
+  configOverrides?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export interface ResolvedProjectionInfra {
+  repository: SemanticProjectionRepository;
+  profileRepository: ProcessingProfileRepository;
+  materializer: ProcessingProfileMaterializer;
+  vectorWriteStore: VectorWriteStore;
+  eventPublisher: EventPublisher;
+}
+
 export interface ProjectionFactoryResult {
-  /** Assembled use cases ready for consumption */
   useCases: ProjectionUseCases;
-  /**
-   * Resolved infrastructure.
-   * Exposed for facade/orchestrator coordination (e.g., vector store access).
-   * Should NOT be used directly by external consumers.
-   */
   infra: ResolvedProjectionInfra;
 }
 
@@ -38,14 +35,14 @@ export async function projectionFactory(
   profileRepository: ProcessingProfileRepository,
 ): Promise<ProjectionFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder.js"
+    "../../../../platform/composition/ProviderRegistryBuilder"
   );
 
   const repositoryRegistry = new ProviderRegistryBuilder<SemanticProjectionRepository>()
     .add("in-memory", {
       create: async () => {
         const { InMemorySemanticProjectionRepository } = await import(
-          "../infrastructure/persistence/InMemorySemanticProjectionRepository.js"
+          "../infrastructure/persistence/InMemorySemanticProjectionRepository"
         );
         return new InMemorySemanticProjectionRepository();
       },
@@ -53,7 +50,7 @@ export async function projectionFactory(
     .add("browser", {
       create: async (p) => {
         const { IndexedDBSemanticProjectionRepository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDBSemanticProjectionRepository.js"
+          "../infrastructure/persistence/indexeddb/IndexedDBSemanticProjectionRepository"
         );
         return new IndexedDBSemanticProjectionRepository(
           (p.dbName as string) ?? "knowledge-platform",
@@ -63,7 +60,7 @@ export async function projectionFactory(
     .add("server", {
       create: async (p) => {
         const { NeDBSemanticProjectionRepository } = await import(
-          "../infrastructure/persistence/nedb/NeDBSemanticProjectionRepository.js"
+          "../infrastructure/persistence/nedb/NeDBSemanticProjectionRepository"
         );
         const filename = p.dbPath
           ? `${p.dbPath}/semantic-projections.db`
@@ -77,7 +74,7 @@ export async function projectionFactory(
     .add("in-memory", {
       create: async () => {
         const { InMemoryVectorWriteStore } = await import(
-          "../../../../platform/vector/InMemoryVectorWriteStore.js"
+          "../../../../platform/vector/InMemoryVectorWriteStore"
         );
         return new InMemoryVectorWriteStore();
       },
@@ -85,7 +82,7 @@ export async function projectionFactory(
     .add("browser", {
       create: async (p) => {
         const { IndexedDBVectorWriteStore } = await import(
-          "../infrastructure/adapters/IndexedDBVectorWriteStore.js"
+          "../infrastructure/adapters/IndexedDBVectorWriteStore"
         );
         const dbName = (p.dbName as string) ?? "knowledge-platform";
         return new IndexedDBVectorWriteStore(dbName);
@@ -94,7 +91,7 @@ export async function projectionFactory(
     .add("server", {
       create: async (p) => {
         const { NeDBVectorWriteStore } = await import(
-          "../infrastructure/adapters/NeDBVectorWriteStore.js"
+          "../infrastructure/adapters/NeDBVectorWriteStore"
         );
         const filename = p.dbPath
           ? `${p.dbPath}/vector-entries.db`
@@ -105,19 +102,31 @@ export async function projectionFactory(
     .build();
 
   const { createEventPublisherRegistry } = await import(
-    "../../../../platform/composition/createEventPublisherRegistry.js"
+    "../../../../platform/composition/createEventPublisherRegistry"
   );
   const eventPublisherRegistry = createEventPublisherRegistry();
 
-  const { ProjectionComposer } = await import("./ProjectionComposer.js");
-  const infra = await ProjectionComposer.resolve(policy, profileRepository, {
-    repository: repositoryRegistry,
-    vectorWriteStore: vectorWriteStoreRegistry,
-    eventPublisher: eventPublisherRegistry,
-  });
+  const { ProcessingProfileMaterializer } = await import(
+    "./ProcessingProfileMaterializer"
+  );
 
-  // 2. Construct use cases with resolved dependencies
-  const { ProjectionUseCases } = await import("../application/index.js");
+  const [repository, vectorWriteStore, eventPublisher] = await Promise.all([
+    repositoryRegistry.resolve(policy.provider).create(policy),
+    vectorWriteStoreRegistry.resolve(policy.provider).create(policy),
+    eventPublisherRegistry.resolve(policy.provider).create(policy),
+  ]);
+
+  const materializer = new ProcessingProfileMaterializer(policy);
+
+  const infra: ResolvedProjectionInfra = {
+    repository,
+    profileRepository,
+    materializer,
+    vectorWriteStore,
+    eventPublisher,
+  };
+
+  const { ProjectionUseCases } = await import("../application");
   const useCases = new ProjectionUseCases(
     infra.repository,
     infra.profileRepository,

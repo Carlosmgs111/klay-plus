@@ -1,8 +1,8 @@
-import type { ResourceRepository } from "../../../domain/ResourceRepository.js";
-import type { Resource } from "../../../domain/Resource.js";
-import type { ResourceStatus } from "../../../domain/ResourceStatus.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type ResourceDTO } from "../indexeddb/ResourceDTO.js";
+import type { ResourceRepository } from "../../../domain/ResourceRepository";
+import type { Resource } from "../../../domain/Resource";
+import type { ResourceStatus } from "../../../domain/ResourceStatus";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type ResourceDTO } from "../indexeddb/ResourceDTO";
 
 export class NeDBResourceRepository
   extends BaseNeDBRepository<Resource, ResourceDTO>

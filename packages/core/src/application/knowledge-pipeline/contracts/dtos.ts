@@ -150,5 +150,5 @@ export interface GetManifestInput {
 }
 
 export interface GetManifestSuccess {
-  manifests: import("../domain/ContentManifest.js").ContentManifestEntry[];
+  manifests: import("../domain/ContentManifest").ContentManifestEntry[];
 }

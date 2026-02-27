@@ -1,7 +1,7 @@
-import { Source } from "../../../domain/Source.js";
-import { SourceId } from "../../../domain/SourceId.js";
-import { SourceVersion } from "../../../domain/SourceVersion.js";
-import type { SourceType } from "../../../domain/SourceType.js";
+import { Source } from "../../../domain/Source";
+import { SourceId } from "../../../domain/SourceId";
+import { SourceVersion } from "../../../domain/SourceVersion";
+import type { SourceType } from "../../../domain/SourceType";
 
 export interface SourceVersionDTO {
   version: number;

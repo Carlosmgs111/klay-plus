@@ -1,4 +1,4 @@
-export { Query, QueryId, RetrievalResult, RetrievalItem } from "./domain/index.js";
+export { Query, QueryId, RetrievalResult, RetrievalItem } from "./domain";
 
 export type {
   VectorReadStore,
@@ -6,10 +6,10 @@ export type {
   RankingStrategy,
   RankedHit,
   QueryEmbedder,
-} from "./domain/index.js";
+} from "./domain";
 
-export { ExecuteSemanticQuery, SemanticQueryUseCases } from "./application/index.js";
-export type { ExecuteSemanticQueryCommand } from "./application/index.js";
+export { ExecuteSemanticQuery, SemanticQueryUseCases } from "./application";
+export type { ExecuteSemanticQueryCommand } from "./application";
 
 export {
   HashQueryEmbedder,
@@ -19,15 +19,14 @@ export {
   NeDBVectorReadStore,
   IndexedDBVectorReadStore,
   PassthroughRankingStrategy,
-} from "./infrastructure/adapters/index.js";
+} from "./infrastructure/adapters";
 
 export {
-  SemanticQueryComposer,
   semanticQueryFactory,
-} from "./composition/index.js";
+} from "./composition";
 
 export type {
   SemanticQueryInfrastructurePolicy,
   ResolvedSemanticQueryInfra,
   SemanticQueryFactoryResult,
-} from "./composition/index.js";
+} from "./composition";

@@ -1,8 +1,8 @@
-import type { SourceRepository } from "../../../domain/SourceRepository.js";
-import type { Source } from "../../../domain/Source.js";
-import type { SourceType } from "../../../domain/SourceType.js";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository.js";
-import { toDTO, fromDTO, type SourceDTO } from "../indexeddb/SourceDTO.js";
+import type { SourceRepository } from "../../../domain/SourceRepository";
+import type { Source } from "../../../domain/Source";
+import type { SourceType } from "../../../domain/SourceType";
+import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { toDTO, fromDTO, type SourceDTO } from "../indexeddb/SourceDTO";
 
 export class NeDBSourceRepository
   extends BaseNeDBRepository<Source, SourceDTO>

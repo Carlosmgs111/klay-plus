@@ -1,7 +1,6 @@
-export { ProcessingProfileComposer } from "./ProcessingProfileComposer.js";
-export { processingProfileFactory } from "./processing-profile.factory.js";
+export { processingProfileFactory } from "./factory";
 export type {
   ProcessingProfileInfrastructurePolicy,
   ResolvedProcessingProfileInfra,
-} from "./infra-policies.js";
-export type { ProcessingProfileFactoryResult } from "./processing-profile.factory.js";
+  ProcessingProfileFactoryResult,
+} from "./factory";

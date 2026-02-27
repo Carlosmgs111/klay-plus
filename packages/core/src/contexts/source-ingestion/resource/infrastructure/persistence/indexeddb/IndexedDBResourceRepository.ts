@@ -1,8 +1,8 @@
-import type { ResourceRepository } from "../../../domain/ResourceRepository.js";
-import type { Resource } from "../../../domain/Resource.js";
-import type { ResourceStatus } from "../../../domain/ResourceStatus.js";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
-import { toDTO, fromDTO, type ResourceDTO } from "./ResourceDTO.js";
+import type { ResourceRepository } from "../../../domain/ResourceRepository";
+import type { Resource } from "../../../domain/Resource";
+import type { ResourceStatus } from "../../../domain/ResourceStatus";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { toDTO, fromDTO, type ResourceDTO } from "./ResourceDTO";
 
 export class IndexedDBResourceRepository
   extends BaseIndexedDBRepository<Resource, ResourceDTO>

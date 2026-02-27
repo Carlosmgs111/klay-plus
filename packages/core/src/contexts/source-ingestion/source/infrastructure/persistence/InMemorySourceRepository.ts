@@ -1,7 +1,7 @@
-import type { SourceRepository } from "../../domain/SourceRepository.js";
-import type { Source } from "../../domain/Source.js";
-import type { SourceType } from "../../domain/SourceType.js";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
+import type { SourceRepository } from "../../domain/SourceRepository";
+import type { Source } from "../../domain/Source";
+import type { SourceType } from "../../domain/SourceType";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
 export class InMemorySourceRepository
   extends BaseInMemoryRepository<Source>

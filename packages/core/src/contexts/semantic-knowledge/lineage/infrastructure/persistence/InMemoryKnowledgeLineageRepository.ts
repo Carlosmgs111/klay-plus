@@ -1,6 +1,6 @@
-import type { KnowledgeLineageRepository } from "../../domain/KnowledgeLineageRepository.js";
-import type { KnowledgeLineage } from "../../domain/KnowledgeLineage.js";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
+import type { KnowledgeLineageRepository } from "../../domain/KnowledgeLineageRepository";
+import type { KnowledgeLineage } from "../../domain/KnowledgeLineage";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
 export class InMemoryKnowledgeLineageRepository
   extends BaseInMemoryRepository<KnowledgeLineage>

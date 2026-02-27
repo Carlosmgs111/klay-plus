@@ -2,7 +2,7 @@ import {
   NotFoundError,
   AlreadyExistsError,
   ValidationError,
-} from "../../../../../shared/domain/errors/index.js";
+} from "../../../../../shared/domain/errors";
 
 export class SourceNotFoundError extends NotFoundError {
   constructor(sourceId: string) {

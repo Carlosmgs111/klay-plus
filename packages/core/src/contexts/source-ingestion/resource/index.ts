@@ -18,16 +18,13 @@ export {
   ResourceInvalidNameError,
   ResourceInvalidMimeTypeError,
   ResourceStorageFailedError,
-} from "./domain/index.js";
+} from "./domain";
 
-export type { ResourceRepository, ResourceStorage, ResourceError } from "./domain/index.js";
+export type { ResourceRepository, ResourceStorage, ResourceError } from "./domain";
 
-export { StoreResource, RegisterExternalResource, DeleteResource, GetResource, ResourceUseCases } from "./application/index.js";
-export type { StoreResourceCommand, StoreResourceResult, RegisterExternalResourceCommand, RegisterExternalResourceResult, DeleteResourceCommand } from "./application/index.js";
-
-export { ResourceComposer, resourceFactory } from "./composition/index.js";
+export { resourceFactory } from "./composition";
 export type {
   ResourceInfrastructurePolicy,
   ResolvedResourceInfra,
   ResourceFactoryResult,
-} from "./composition/index.js";
+} from "./composition";

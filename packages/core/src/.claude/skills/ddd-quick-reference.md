@@ -153,7 +153,7 @@ export async function moduleFactory(policy): Promise<ModuleFactoryResult> {
 }
 ```
 
-### composition/index.ts (Obligatorio)
+### composition.ts (Obligatorio)
 ```typescript
 export { ModuleComposer } from "./ModuleComposer";
 export type { ModuleInfraPolicy, ModuleInfrastructurePolicy, ResolvedModuleInfra } from "./infra-policies";
@@ -165,7 +165,7 @@ export { moduleFactory, type ModuleFactoryResult } from "./module.factory";
 ## Facade Pattern
 
 ```typescript
-// facade/index.ts
+// facade.ts
 export { ContextFacade } from "./ContextFacade";
 export { ContextFacadeComposer } from "./composition/ContextFacadeComposer";
 export type { ContextFacadePolicy, ResolvedContextModules } from "./composition/infra-policies";
@@ -269,7 +269,7 @@ export class PipelineFacade {
 }
 ```
 
-### pipeline/index.ts
+### pipeline.ts
 ```typescript
 export { PipelineFacade } from "./PipelineFacade.js";
 export { PipelineError } from "./PipelineError.js";
@@ -330,7 +330,7 @@ async execute(cmd): Promise<Result<Error, Entity>> {
 | Composer con un solo switch gigante | Métodos privados separados por concern |
 | Factory en index.ts del módulo | Factory en composition/{module}.factory.ts |
 | Factory retorna solo useCases | Factory retorna { useCases, infra } |
-| No hay composition/index.ts | index.ts re-exporta todo de composition/ |
+| No hay composition.ts | index.ts re-exporta todo de composition/ |
 | API keys hardcoded | ConfigProvider resuelve desde environment |
 | Pipeline contiene lógica de negocio | Pipeline solo coordina facades |
 | Pipeline accede a repositorios | Pipeline solo usa API pública de facades |
@@ -365,9 +365,9 @@ async execute(cmd): Promise<Result<Error, Entity>> {
 - [ ] ¿Use Cases reciben dependencias por constructor?
 - [ ] ¿Coordinación SOLO en Facade?
 - [ ] ¿Factory retorna `{ useCases, infra }`?
-- [ ] ¿Existe `composition/index.ts` en cada módulo?
+- [ ] ¿Existe `composition.ts` en cada módulo?
 - [ ] ¿FacadeComposer usa ConfigProvider?
-- [ ] ¿Existe `facade/index.ts` con `create{Context}Facade`?
+- [ ] ¿Existe `facade.ts` con `create{Context}Facade`?
 - [ ] ¿Existe `__tests__/e2e.test.ts`?
 
 ## Validación Rápida — Pipeline

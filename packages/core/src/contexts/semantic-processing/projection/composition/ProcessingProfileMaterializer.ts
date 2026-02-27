@@ -1,7 +1,7 @@
-import type { ProcessingProfile } from "../../processing-profile/domain/ProcessingProfile.js";
-import type { EmbeddingStrategy } from "../domain/ports/EmbeddingStrategy.js";
-import type { ChunkingStrategy } from "../domain/ports/ChunkingStrategy.js";
-import type { ProjectionInfrastructurePolicy } from "./infra-policies.js";
+import type { ProcessingProfile } from "../../processing-profile/domain/ProcessingProfile";
+import type { EmbeddingStrategy } from "../domain/ports/EmbeddingStrategy";
+import type { ChunkingStrategy } from "../domain/ports/ChunkingStrategy";
+import type { ProjectionInfrastructurePolicy } from "./factory";
 
 /**
  * Materialized strategies resolved from a ProcessingProfile.
@@ -57,7 +57,7 @@ export class ProcessingProfileMaterializer {
     // WebLLM
     if (embeddingId === "web-llm-embedding") {
       const { WebLLMEmbeddingStrategy } = await import(
-        "../infrastructure/strategies/WebLLMEmbeddingStrategy.js"
+        "../infrastructure/strategies/WebLLMEmbeddingStrategy"
       );
       const modelId = (config.webLLMModelId as string) ?? this.policy.webLLMModelId;
       const strategy = new WebLLMEmbeddingStrategy(modelId);
@@ -67,7 +67,7 @@ export class ProcessingProfileMaterializer {
 
     // Default: hash embedding
     const { HashEmbeddingStrategy } = await import(
-      "../infrastructure/strategies/HashEmbeddingStrategy.js"
+      "../infrastructure/strategies/HashEmbeddingStrategy"
     );
     const dimensions = (config.embeddingDimensions as number)
       ?? this.policy.embeddingDimensions
@@ -84,19 +84,19 @@ export class ProcessingProfileMaterializer {
     config: Readonly<Record<string, unknown>>,
   ): Promise<EmbeddingStrategy> {
     const { AISdkEmbeddingStrategy } = await import(
-      "../infrastructure/strategies/AISdkEmbeddingStrategy.js"
+      "../infrastructure/strategies/AISdkEmbeddingStrategy"
     );
 
     // Resolve config provider for API keys
     let configProvider;
     if (this.policy.configOverrides) {
       const { InMemoryConfigProvider } = await import(
-        "../../../../platform/config/InMemoryConfigProvider.js"
+        "../../../../platform/config/InMemoryConfigProvider"
       );
       configProvider = new InMemoryConfigProvider(this.policy.configOverrides);
     } else {
       const { NodeConfigProvider } = await import(
-        "../../../../platform/config/NodeConfigProvider.js"
+        "../../../../platform/config/NodeConfigProvider"
       );
       configProvider = new NodeConfigProvider();
     }
@@ -132,9 +132,9 @@ export class ProcessingProfileMaterializer {
     profile: ProcessingProfile,
   ): Promise<ChunkingStrategy> {
     // Register default chunking strategies (side-effect import)
-    await import("../infrastructure/strategies/index.js");
+    await import("../infrastructure/strategies");
     const { ChunkerFactory } = await import(
-      "../infrastructure/strategies/ChunkerFactory.js"
+      "../infrastructure/strategies/ChunkerFactory"
     );
     return ChunkerFactory.create(profile.chunkingStrategyId);
   }

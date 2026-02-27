@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { UnitVersion } from "../UnitVersion.js";
-import { VersionSourceSnapshot } from "../VersionSourceSnapshot.js";
+import { UnitVersion } from "../UnitVersion";
+import { VersionSourceSnapshot } from "../VersionSourceSnapshot";
 
 describe("UnitVersion", () => {
   const makeSnapshot = (sourceId: string, hash: string) =>

@@ -1,6 +1,6 @@
-import { ExtractionJob } from "../../../domain/ExtractionJob.js";
-import { ExtractionJobId } from "../../../domain/ExtractionJobId.js";
-import type { ExtractionStatus } from "../../../domain/ExtractionStatus.js";
+import { ExtractionJob } from "../../../domain/ExtractionJob";
+import { ExtractionJobId } from "../../../domain/ExtractionJobId";
+import type { ExtractionStatus } from "../../../domain/ExtractionStatus";
 
 export interface ExtractionJobDTO {
   id: string;

@@ -11,8 +11,8 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { createSemanticKnowledgeFacade } from "../facade/index.js";
-import type { SemanticKnowledgeFacade } from "../facade/SemanticKnowledgeFacade.js";
+import { createSemanticKnowledgeFacade } from "../facade";
+import type { SemanticKnowledgeFacade } from "../facade/SemanticKnowledgeFacade";
 
 describe("Semantic Knowledge Context E2E", () => {
   let facade: SemanticKnowledgeFacade;
@@ -212,13 +212,14 @@ describe("Semantic Knowledge Context E2E", () => {
     console.log(`   ✅ Correctly rejected not found: ${notFoundResult.error.message}\n`);
   });
 
-  it("should provide direct module access", async () => {
-    console.log("🔧 Testing direct module access...");
+  it("should provide facade operations", async () => {
+    console.log("🔧 Testing facade operations available...");
 
-    expect(facade.semanticUnit).toBeDefined();
-    expect(facade.lineage).toBeDefined();
-    console.log(`   Semantic Unit module: ${facade.semanticUnit ? "✅ Available" : "❌ Not available"}`);
-    console.log(`   Lineage module: ${facade.lineage ? "✅ Available" : "❌ Not available"}\n`);
+    expect(facade.createSemanticUnit).toBeDefined();
+    expect(facade.addSourceToSemanticUnit).toBeDefined();
+    expect(facade.linkSemanticUnits).toBeDefined();
+    expect(facade.getLinkedUnits).toBeDefined();
+    console.log("   ✅ All facade operations available\n");
 
     console.log("═══════════════════════════════════════════════════════════════");
     console.log("✅ ALL TESTS PASSED!");

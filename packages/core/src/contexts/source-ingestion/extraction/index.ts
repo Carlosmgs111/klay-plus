@@ -20,34 +20,34 @@ export {
   ExtractionFailedError,
   UnsupportedMimeTypeError,
   ContentHashingError,
-} from "./domain/index.js";
+} from "./domain";
 
 export type {
   ExtractionJobRepository,
   ContentExtractor,
   ExtractionResult,
   ExtractionError,
-} from "./domain/index.js";
+} from "./domain";
 
 export {
   ExecuteExtraction,
   ExtractionUseCases,
-} from "./application/index.js";
+} from "./application";
 export type {
   ExecuteExtractionCommand,
   ExecuteExtractionResult,
   ExtractorMap,
-} from "./application/index.js";
+} from "./application";
 
 export {
   TextContentExtractor,
   BrowserPdfContentExtractor,
   ServerPdfContentExtractor,
-} from "./infrastructure/adapters/index.js";
+} from "./infrastructure/adapters";
 
-export { ExtractionComposer, extractionFactory } from "./composition/index.js";
+export { extractionFactory } from "./composition";
 export type {
   ExtractionInfrastructurePolicy,
   ResolvedExtractionInfra,
   ExtractionFactoryResult,
-} from "./composition/index.js";
+} from "./composition";

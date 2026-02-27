@@ -1,7 +1,7 @@
-import { Resource } from "../../../domain/Resource.js";
-import { ResourceId } from "../../../domain/ResourceId.js";
-import { StorageLocation } from "../../../domain/StorageLocation.js";
-import type { ResourceStatus } from "../../../domain/ResourceStatus.js";
+import { Resource } from "../../../domain/Resource";
+import { ResourceId } from "../../../domain/ResourceId";
+import { StorageLocation } from "../../../domain/StorageLocation";
+import type { ResourceStatus } from "../../../domain/ResourceStatus";
 
 export interface ResourceDTO {
   id: string;

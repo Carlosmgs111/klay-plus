@@ -1,36 +1,35 @@
-/**
- * Semantic Query Module Factory
- *
- * Entry point for creating the Semantic Query module.
- * Builds provider registries and delegates to Composer for wiring.
- *
- * @example
- * ```typescript
- * const { useCases, infra } = await semanticQueryFactory({
- *   provider: "in-memory",
- *   vectorStoreConfig: { sharedEntries: myEntriesMap },
- * });
- * await useCases.executeSemanticQuery.execute({ text: "query" });
- * ```
- */
+import type { QueryEmbedder } from "../domain/ports/QueryEmbedder";
+import type { VectorReadStore } from "../domain/ports/VectorReadStore";
+import type { RankingStrategy } from "../domain/ports/RankingStrategy";
+import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
+import type { ConfigProvider } from "../../../../platform/config";
+import type { SemanticQueryUseCases } from "../application";
 
-import type {
-  SemanticQueryInfrastructurePolicy,
-  ResolvedSemanticQueryInfra,
-} from "./infra-policies.js";
-import type { SemanticQueryUseCases } from "../application/index.js";
-import type { QueryEmbedder } from "../domain/ports/QueryEmbedder.js";
-import type { VectorReadStore } from "../domain/ports/VectorReadStore.js";
-import type { ConfigProvider } from "../../../../platform/config/index.js";
+export interface VectorStoreConfig {
+  dbPath?: string;
+  dbName?: string;
+  sharedEntries?: Map<string, VectorEntry>;
+}
+
+export interface SemanticQueryInfrastructurePolicy {
+  provider: string;
+  vectorStoreConfig: VectorStoreConfig;
+  embeddingDimensions?: number;
+  embeddingProvider?: string;
+  embeddingModel?: string;
+  webLLMModelId?: string;
+  configOverrides?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+export interface ResolvedSemanticQueryInfra {
+  queryEmbedder: QueryEmbedder;
+  vectorSearch: VectorReadStore;
+  rankingStrategy: RankingStrategy;
+}
 
 export interface SemanticQueryFactoryResult {
-  /** Assembled use cases ready for consumption */
   useCases: SemanticQueryUseCases;
-  /**
-   * Resolved infrastructure.
-   * Exposed for facade coordination (e.g., embedder or vector search access).
-   * Should NOT be used directly by external consumers.
-   */
   infra: ResolvedSemanticQueryInfra;
 }
 
@@ -39,12 +38,12 @@ async function resolveConfigProvider(
 ): Promise<ConfigProvider> {
   if (policy.configOverrides) {
     const { InMemoryConfigProvider } = await import(
-      "../../../../platform/config/InMemoryConfigProvider.js"
+      "../../../../platform/config/InMemoryConfigProvider"
     );
     return new InMemoryConfigProvider(policy.configOverrides);
   }
   const { NodeConfigProvider } = await import(
-    "../../../../platform/config/NodeConfigProvider.js"
+    "../../../../platform/config/NodeConfigProvider"
   );
   return new NodeConfigProvider();
 }
@@ -53,7 +52,7 @@ export async function semanticQueryFactory(
   policy: SemanticQueryInfrastructurePolicy,
 ): Promise<SemanticQueryFactoryResult> {
   const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder.js"
+    "../../../../platform/composition/ProviderRegistryBuilder"
   );
 
   const embedderProvider =
@@ -69,7 +68,7 @@ export async function semanticQueryFactory(
     .add("in-memory", {
       create: async (p) => {
         const { InMemoryVectorReadStore } = await import(
-          "../infrastructure/adapters/InMemoryVectorReadStore.js"
+          "../infrastructure/adapters/InMemoryVectorReadStore"
         );
         const vectorStoreConfig = (p as SemanticQueryInfrastructurePolicy).vectorStoreConfig;
         if (!vectorStoreConfig?.sharedEntries) {
@@ -83,7 +82,7 @@ export async function semanticQueryFactory(
     .add("browser", {
       create: async (p) => {
         const { IndexedDBVectorReadStore } = await import(
-          "../infrastructure/adapters/IndexedDBVectorReadStore.js"
+          "../infrastructure/adapters/IndexedDBVectorReadStore"
         );
         const vectorStoreConfig = (p as SemanticQueryInfrastructurePolicy).vectorStoreConfig;
         const dbName = vectorStoreConfig?.dbName ?? "knowledge-platform";
@@ -93,7 +92,7 @@ export async function semanticQueryFactory(
     .add("server", {
       create: async (p) => {
         const { NeDBVectorReadStore } = await import(
-          "../infrastructure/adapters/NeDBVectorReadStore.js"
+          "../infrastructure/adapters/NeDBVectorReadStore"
         );
         const vectorStoreConfig = (p as SemanticQueryInfrastructurePolicy).vectorStoreConfig;
         return new NeDBVectorReadStore(vectorStoreConfig?.dbPath);
@@ -105,7 +104,7 @@ export async function semanticQueryFactory(
     .add("hash", {
       create: async (p) => {
         const { HashQueryEmbedder } = await import(
-          "../infrastructure/adapters/HashQueryEmbedder.js"
+          "../infrastructure/adapters/HashQueryEmbedder"
         );
         const dimensions = (p as SemanticQueryInfrastructurePolicy).embeddingDimensions ?? 128;
         return new HashQueryEmbedder(dimensions);
@@ -114,7 +113,7 @@ export async function semanticQueryFactory(
     .add("browser-webllm", {
       create: async (p) => {
         const { WebLLMQueryEmbedder } = await import(
-          "../infrastructure/adapters/WebLLMQueryEmbedder.js"
+          "../infrastructure/adapters/WebLLMQueryEmbedder"
         );
         const webLLMModelId = (p as SemanticQueryInfrastructurePolicy).webLLMModelId;
         const embedder = new WebLLMQueryEmbedder(webLLMModelId);
@@ -128,7 +127,7 @@ export async function semanticQueryFactory(
         const modelId = ((p as SemanticQueryInfrastructurePolicy).embeddingModel as string) ?? "text-embedding-3-small";
         const { createOpenAI } = await import("@ai-sdk/openai");
         const { AISdkQueryEmbedder } = await import(
-          "../infrastructure/adapters/AISdkQueryEmbedder.js"
+          "../infrastructure/adapters/AISdkQueryEmbedder"
         );
         const openai = createOpenAI({ apiKey });
         return new AISdkQueryEmbedder(openai.embedding(modelId));
@@ -140,7 +139,7 @@ export async function semanticQueryFactory(
         const modelId = ((p as SemanticQueryInfrastructurePolicy).embeddingModel as string) ?? "embed-multilingual-v3.0";
         const { createCohere } = await import("@ai-sdk/cohere");
         const { AISdkQueryEmbedder } = await import(
-          "../infrastructure/adapters/AISdkQueryEmbedder.js"
+          "../infrastructure/adapters/AISdkQueryEmbedder"
         );
         const cohere = createCohere({ apiKey });
         return new AISdkQueryEmbedder(cohere.textEmbeddingModel(modelId));
@@ -152,7 +151,7 @@ export async function semanticQueryFactory(
         const modelId = ((p as SemanticQueryInfrastructurePolicy).embeddingModel as string) ?? "sentence-transformers/all-MiniLM-L6-v2";
         const { createHuggingFace } = await import("@ai-sdk/huggingface");
         const { AISdkQueryEmbedder } = await import(
-          "../infrastructure/adapters/AISdkQueryEmbedder.js"
+          "../infrastructure/adapters/AISdkQueryEmbedder"
         );
         const hf = createHuggingFace({ apiKey });
         return new AISdkQueryEmbedder(hf.textEmbeddingModel(modelId));
@@ -160,14 +159,22 @@ export async function semanticQueryFactory(
     })
     .build();
 
-  const { SemanticQueryComposer } = await import("./SemanticQueryComposer.js");
-  const infra = await SemanticQueryComposer.resolve(policy, embedderProvider, {
-    vectorReadStore: vectorReadStoreRegistry,
-    queryEmbedder: queryEmbedderRegistry,
-  });
+  const { PassthroughRankingStrategy } = await import(
+    "../infrastructure/adapters/PassthroughRankingStrategy"
+  );
 
-  // 2. Construct use cases with resolved dependencies
-  const { SemanticQueryUseCases } = await import("../application/index.js");
+  const [queryEmbedder, vectorSearch] = await Promise.all([
+    queryEmbedderRegistry.resolve(embedderProvider).create(policy),
+    vectorReadStoreRegistry.resolve(policy.provider).create(policy),
+  ]);
+
+  const infra: ResolvedSemanticQueryInfra = {
+    queryEmbedder,
+    vectorSearch,
+    rankingStrategy: new PassthroughRankingStrategy(),
+  };
+
+  const { SemanticQueryUseCases } = await import("../application");
   const useCases = new SemanticQueryUseCases(
     infra.queryEmbedder,
     infra.vectorSearch,

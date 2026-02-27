@@ -1,3 +1,3 @@
-export type { VectorReadStore, SearchHit } from "./VectorReadStore.js";
-export type { RankingStrategy, RankedHit } from "./RankingStrategy.js";
-export type { QueryEmbedder } from "./QueryEmbedder.js";
+export type { VectorReadStore, SearchHit } from "./VectorReadStore";
+export type { RankingStrategy, RankedHit } from "./RankingStrategy";
+export type { QueryEmbedder } from "./QueryEmbedder";

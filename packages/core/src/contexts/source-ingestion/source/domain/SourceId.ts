@@ -1,4 +1,4 @@
-import { UniqueId } from "../../../../shared/domain/index.js";
+import { UniqueId } from "../../../../shared/domain";
 
 export class SourceId extends UniqueId {
   static override create(value: string): SourceId {

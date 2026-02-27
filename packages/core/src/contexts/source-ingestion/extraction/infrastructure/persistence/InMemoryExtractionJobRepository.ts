@@ -1,7 +1,7 @@
-import type { ExtractionJobRepository } from "../../domain/ExtractionJobRepository.js";
-import type { ExtractionJob } from "../../domain/ExtractionJob.js";
-import type { ExtractionStatus } from "../../domain/ExtractionStatus.js";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
+import type { ExtractionJobRepository } from "../../domain/ExtractionJobRepository";
+import type { ExtractionJob } from "../../domain/ExtractionJob";
+import type { ExtractionStatus } from "../../domain/ExtractionStatus";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
 export class InMemoryExtractionJobRepository
   extends BaseInMemoryRepository<ExtractionJob>

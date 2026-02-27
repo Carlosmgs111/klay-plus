@@ -20,16 +20,13 @@ export {
   SourceUriRequiredError,
   SourceInvalidUriError,
   SourceInvalidTypeError,
-} from "./domain/index.js";
+} from "./domain";
 
-export type { SourceRepository, SourceError } from "./domain/index.js";
+export type { SourceRepository, SourceError } from "./domain";
 
-export { RegisterSource, UpdateSource, SourceUseCases } from "./application/index.js";
-export type { RegisterSourceCommand, UpdateSourceCommand } from "./application/index.js";
-
-export { SourceComposer, sourceFactory } from "./composition/index.js";
+export { sourceFactory } from "./composition";
 export type {
   SourceInfrastructurePolicy,
   ResolvedSourceInfra,
   SourceFactoryResult,
-} from "./composition/index.js";
+} from "./composition";

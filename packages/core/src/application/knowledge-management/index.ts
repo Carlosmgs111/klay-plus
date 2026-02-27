@@ -18,17 +18,17 @@
  * - Composer
  */
 
-export type { KnowledgeManagementPort } from "./contracts/KnowledgeManagementPort.js";
+export type { KnowledgeManagementPort } from "./contracts/KnowledgeManagementPort";
 
 export type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "./contracts/dtos.js";
+} from "./contracts/dtos";
 
-export { KnowledgeManagementError } from "./domain/KnowledgeManagementError.js";
-export { ManagementStep } from "./domain/ManagementStep.js";
-export type { ManagementStep as ManagementStepType } from "./domain/ManagementStep.js";
+export { KnowledgeManagementError } from "./domain/KnowledgeManagementError";
+export { ManagementStep } from "./domain/ManagementStep";
+export type { ManagementStep as ManagementStepType } from "./domain/ManagementStep";
 
-export { createKnowledgeManagement } from "./composition/knowledge-management.factory.js";
+export { createKnowledgeManagement } from "./composition/knowledge-management.factory";
 
-export type { KnowledgeManagementPolicy } from "./composition/KnowledgeManagementComposer.js";
+export type { KnowledgeManagementPolicy } from "./composition/knowledge-management.factory";

@@ -1,14 +1,14 @@
-import type { EventPublisher } from "../../../../shared/domain/index.js";
-import { Result } from "../../../../shared/domain/Result.js";
-import { ExtractionJob } from "../domain/ExtractionJob.js";
-import { ExtractionJobId } from "../domain/ExtractionJobId.js";
-import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { ContentExtractor } from "../domain/ContentExtractor.js";
+import type { EventPublisher } from "../../../../shared/domain";
+import { Result } from "../../../../shared/domain/Result";
+import { ExtractionJob } from "../domain/ExtractionJob";
+import { ExtractionJobId } from "../domain/ExtractionJobId";
+import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository";
+import type { ContentExtractor } from "../domain/ContentExtractor";
 import {
   UnsupportedMimeTypeError,
   ExtractionFailedError,
   type ExtractionError,
-} from "../domain/errors/index.js";
+} from "../domain/errors";
 
 /**
  * Map of MIME types to their corresponding content extractors.

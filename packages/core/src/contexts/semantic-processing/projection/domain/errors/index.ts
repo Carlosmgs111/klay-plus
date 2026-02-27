@@ -13,4 +13,4 @@ export {
   VectorStoreFailedError,
   ProjectionProcessingError,
   type ProjectionError,
-} from "./ProjectionErrors.js";
+} from "./ProjectionErrors";
