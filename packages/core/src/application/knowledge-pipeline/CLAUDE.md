@@ -109,9 +109,11 @@ Contratos de datos puros en `contracts/dtos.ts`. Sin logica de dominio, sin depe
 
 ## Composicion
 
+La factory del pipeline vive en `composition/knowledge-pipeline.factory.ts`:
+
 ```
-KnowledgePipelineComposer
-├── Compone los 4 services de bounded contexts (via sus composers)
+createKnowledgePipeline(policy)
+├── Resuelve los 4 services de bounded contexts (via sus composition/factory.ts)
 ├── Crea ManifestRepository segun policy
 ├── Wiring cross-context: vector store compartido entre Processing y Retrieval
 └── Retorna KnowledgePipelinePort (no la implementacion)

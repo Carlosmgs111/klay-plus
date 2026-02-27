@@ -69,9 +69,11 @@ Error standalone con tracking de steps (misma estructura que `KnowledgePipelineE
 
 ## Composicion
 
+La factory del management vive en `composition/knowledge-management.factory.ts`:
+
 ```
-KnowledgeManagementComposer
-├── Compone 3 services (ingestion + knowledge + processing)
+createKnowledgeManagement(policy)
+├── Resuelve 3 services (ingestion + knowledge + processing) via sus composition/factory.ts
 └── Retorna KnowledgeManagementPort (no la implementacion)
 ```
 

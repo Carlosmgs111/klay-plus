@@ -25,7 +25,7 @@ Cada nivel documenta **solo su alcance** y apunta al siguiente nivel para detall
 Producto        ← Vision global, catalogo de contextos, flujo end-to-end
   |
   v
-Contexto        ← Facade, operaciones, composicion, lista de modulos
+Contexto        ← Service, operaciones, composicion, lista de modulos
   |
   v
 Modulo          ← Aggregate, value objects, eventos, use cases, ports, implementaciones
@@ -64,7 +64,7 @@ proyecto/
 | Nivel | Ubicacion | Audiencia | Contenido principal |
 |-------|-----------|-----------|-------------------|
 | **Producto** | `.claude/CLAUDE.md` | Agente que necesita vision global | Vision, arquitectura general, catalogo de contextos, flujo E2E, eventos |
-| **Contexto** | `contexts/{name}/CLAUDE.md` | Agente trabajando en un bounded context | Subdominio, facade + operaciones, composicion, lista de modulos con resumen |
+| **Contexto** | `contexts/{name}/CLAUDE.md` | Agente trabajando en un bounded context | Subdominio, service + operaciones, composicion, lista de modulos con resumen |
 | **Modulo** | `contexts/{name}/{module}/CLAUDE.md` | Agente trabajando en un modulo | Aggregate, value objects, eventos, use cases, ports, implementaciones |
 | **Aplicacion** | `application/{name}/CLAUDE.md` | Agente trabajando en orquestacion | Rol, port, orchestrator, use cases internos, manifest, flujo E2E |
 
@@ -95,7 +95,7 @@ proyecto/
 {Parrafo de 2-3 lineas sobre responsabilidad del contexto.}
 
 **Modulos**: `modulo-a`, `modulo-b`, ...
-**Facade**: `{ContextName}Facade` — {descripcion breve de que expone}
+**Service**: `{ContextName}Service` — {descripcion breve de que expone}
 **Ver**: `contexts/{name}/CLAUDE.md`
 
 ## Application Layer (`application/`)
@@ -132,7 +132,7 @@ proyecto/
 
 - Vision
 - Arquitectura General (ASCII tree)
-- Bounded Contexts (con facade y link a detalle)
+- Bounded Contexts (con service y link a detalle)
 - Application Layer (con operaciones)
 - Flujo de Datos End-to-End (ASCII)
 - Catalogo de Eventos
@@ -140,7 +140,7 @@ proyecto/
 ### 2.3 Que NO incluir en Nivel Producto
 
 - Detalles de aggregate root o value objects (eso va en modulo)
-- Operaciones individuales del facade con tabla completa (eso va en contexto)
+- Operaciones individuales del service con tabla completa (eso va en contexto)
 - Code snippets de implementacion
 - Detalles de composicion o policies de infraestructura
 
@@ -158,9 +158,9 @@ proyecto/
 {Descripcion del subdominio en 2-3 lineas. Que problema resuelve y cual es su rol
 en el sistema.}
 
-## Facade: `{ContextName}Facade`
+## Service: `{ContextName}Service`
 
-{Rol del facade en una linea.}
+{Rol del service en una linea.}
 
 ### Capacidades expuestas
 
@@ -212,7 +212,7 @@ en el sistema.}
 ### 3.2 Secciones Obligatorias
 
 - Subdominio
-- Facade con tabla de operaciones
+- Service con tabla de operaciones
 - Composicion (ASCII)
 - Modulos (con resumen + link "Ver detalle")
 
@@ -221,7 +221,7 @@ en el sistema.}
 ```
 CONTEXTO                                    MODULO
 ─────────────────────────────────────────────────────────────────
-Tabla de operaciones del Facade             Detalle de cada use case
+Tabla de operaciones del Service             Detalle de cada use case
 Resumen de aggregate (campos clave)         Todas las propiedades del aggregate
 Lista de value objects (nombres)            Tabla de value objects con descripcion
 Lista de eventos (nombre + significado)     Tabla de eventos con campos
@@ -381,7 +381,7 @@ Para modulo read-only:
 ## Rol
 
 **No es un bounded context** — es la capa de orquestacion que coordina los N bounded
-contexts via sus facades. Expone un API unificado (`{AppName}Port`) para consumidores
+contexts via sus services. Expone un API unificado (`{AppName}Port`) para consumidores
 externos (UI, REST, CLI).
 
 ## Port: `{AppName}Port`
@@ -400,21 +400,21 @@ externos (UI, REST, CLI).
 
 ## Orchestrator: `{AppName}Orchestrator`
 
-Implementa `{AppName}Port`. Recibe las N facades + repositorios auxiliares como
+Implementa `{AppName}Port`. Recibe los N services + repositorios auxiliares como
 dependencias privadas.
 
 **Reglas de diseno**:
-- Sin getters de facades — son detalles de implementacion privados
-- Sin lectura de policies — el Composer resuelve infraestructura
+- Sin getters de services — son detalles de implementacion privados
+- Sin lectura de policies — la factory resuelve infraestructura
 - Sin logica de dominio — solo delegacion a use cases
 - Sin dependencias de framework — TypeScript puro
 
 ### Use Cases internos
 
-| Use Case | Facades usadas |
-|----------|---------------|
-| `ExecuteFullPipeline` | Facade1, Facade2, ... |
-| `SpecificOperation` | FacadeN |
+| Use Case | Services usados |
+|----------|----------------|
+| `ExecuteFullPipeline` | Service1, Service2, ... |
+| `SpecificOperation` | ServiceN |
 
 ## Domain Objects
 
@@ -453,7 +453,7 @@ dependencias privadas.
 
 ## Composicion
 
-{Diagrama ASCII del composer: que facades compone, wiring cross-context.}
+{Diagrama ASCII de la factory: que services compone, wiring cross-context.}
 
 ## Flujo End-to-End (`{operacion_principal}`)
 
@@ -536,8 +536,8 @@ tabla de entornos                                modulo tiene tabla con entorno
 Producto describe pipeline interno de            Producto describe flujo E2E entre
 un use case                                      contextos
 
-Producto incluye tabla de operaciones            Producto describe facade en 1 linea,
-del facade con columnas detalladas               contexto tiene la tabla completa
+Producto incluye tabla de operaciones            Producto describe service en 1 linea,
+del service con columnas detalladas              contexto tiene la tabla completa
 
 Contexto describe ciclo de vida completo         Contexto menciona ciclo de vida
 del aggregate con maquina de estados             en 1 linea, modulo lo detalla
@@ -564,12 +564,12 @@ Metricas, benchmarks o datos de rendimiento
   Eso va en docs/ o ADRs
 ```
 
-### 7.4 Facade sin Tabla de Operaciones
+### 7.4 Service sin Tabla de Operaciones
 
 ```
 ❌ INCORRECTO                                   ✅ CORRECTO
 ──────────────────────────────────────────────────────────────────
-## Facade: `MyFacade`                           ## Facade: `MyFacade`
+## Service: `MyService`                         ## Service: `MyService`
 
 Expone operaciones del contexto.                Punto de entrada unico.
 
@@ -607,7 +607,7 @@ Expone operaciones del contexto.                Punto de entrada unico.
 
 | Tipo de contenido | Formato | Donde se usa |
 |-------------------|---------|-------------|
-| Operaciones/capacidades | Tabla con columnas | Facade (contexto), Port (aplicacion) |
+| Operaciones/capacidades | Tabla con columnas | Service (contexto), Port (aplicacion) |
 | Value Objects | Tabla: nombre + descripcion | Modulo |
 | Eventos de Dominio | Tabla: evento + significado | Modulo, catalogo en Producto |
 | Use Cases | Tabla: nombre + descripcion | Modulo, Aplicacion |
@@ -648,7 +648,7 @@ Seguir el idioma del proyecto. Si el codigo y los nombres de dominio estan en in
 - [ ] H1 con formato `{Proyecto} — Product Capabilities`
 - [ ] Vision en 2-3 lineas
 - [ ] Arquitectura General con diagrama ASCII de carpetas
-- [ ] Cada bounded context con: subdominio, responsabilidad, modulos, facade, link
+- [ ] Cada bounded context con: subdominio, responsabilidad, modulos, service, link
 - [ ] Application Layer con operaciones listadas
 - [ ] Platform con listado de infraestructura compartida
 - [ ] Shared Kernel con building blocks
@@ -660,9 +660,9 @@ Seguir el idioma del proyecto. Si el codigo y los nombres de dominio estan en in
 
 - [ ] H1 con formato `{Nombre} — Bounded Context`
 - [ ] Subdominio en 2-3 lineas
-- [ ] Facade con nombre de clase
+- [ ] Service con nombre de clase
 - [ ] Tabla de operaciones completa (operacion, descripcion, modulos)
-- [ ] Diagrama ASCII de composicion
+- [ ] Diagrama ASCII de composicion (composition/ a nivel raiz del contexto)
 - [ ] Cross-context wiring documentado (si aplica)
 - [ ] Cada modulo con: responsabilidad, aggregate, VOs, eventos, use cases, ports, implementaciones
 - [ ] Links "Ver detalle" a cada modulo CLAUDE.md
@@ -696,7 +696,7 @@ Seguir el idioma del proyecto. Si el codigo y los nombres de dominio estan en in
 - [ ] Rol aclarando que NO es bounded context
 - [ ] Port con tabla de operaciones (operacion, descripcion, contextos coordinados)
 - [ ] Orchestrator con reglas de diseno
-- [ ] Tabla de Use Cases internos (use case, facades usadas)
+- [ ] Tabla de Use Cases internos (use case, services usados)
 - [ ] Domain Objects documentados (si aplica)
 - [ ] Error type documentado con campos
 - [ ] Contracts/DTOs mencionados
@@ -710,7 +710,7 @@ Cuando actualizar los CLAUDE.md:
 
 - [ ] **Nuevo modulo creado** → Actualizar CLAUDE.md del contexto (agregar seccion) + crear CLAUDE.md del modulo
 - [ ] **Nuevo contexto creado** → Actualizar CLAUDE.md de producto (agregar seccion) + crear CLAUDE.md del contexto + crear CLAUDE.md de cada modulo
-- [ ] **Nueva operacion en facade** → Actualizar tabla de operaciones en CLAUDE.md del contexto
+- [ ] **Nueva operacion en service** → Actualizar tabla de operaciones en CLAUDE.md del contexto
 - [ ] **Nuevo evento de dominio** → Actualizar tabla en CLAUDE.md del modulo + catalogo en CLAUDE.md de producto
 - [ ] **Nuevo use case** → Actualizar tabla en CLAUDE.md del modulo
 - [ ] **Nuevo port o implementacion** → Actualizar tablas en CLAUDE.md del modulo

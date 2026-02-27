@@ -17,10 +17,10 @@ Este skill guía el diseño e implementación de **Bounded Contexts**, sus **Mó
 | **Pipeline** | Capa de coordinación cross-context. Orquesta flujos de usuario que atraviesan múltiples contextos. | `pipeline` |
 
 **Regla crítica**: Los módulos NO se comunican directamente entre sí. La coordinación entre módulos ocurre **exclusivamente a nivel de contexto**, mediante:
-- Un **Facade** a nivel de contexto
+- Un **Service** a nivel de contexto
 
 **Regla crítica**: Los contextos NO se comunican directamente entre sí. La coordinación entre contextos ocurre **exclusivamente a nivel de pipeline**, mediante:
-- Un **Pipeline Orchestrator** que invoca facades
+- Un **Pipeline Orchestrator** que invoca services
 - **Eventos de integración** (comunicación asíncrona)
 
 ### 0.2 Responsabilidades por Nivel
@@ -28,16 +28,16 @@ Este skill guía el diseño e implementación de **Bounded Contexts**, sus **Mó
 ```
 PIPELINE (Pipeline Orchestrator)
 ├── Orquestación de workflows que involucran múltiples CONTEXTOS
-├── PipelineFacade como punto de entrada único cross-context
-├── Composición de facades (PipelineComposer)
+├── PipelineOrchestrator como punto de entrada único cross-context
+├── Composición de services (PipelineComposer)
 ├── NO contiene lógica de dominio
 ├── NO accede a repositorios
-└── Solo interactúa con la API pública de cada facade
+└── Solo interactúa con la API pública de cada service
 
 CONTEXTO (Bounded Context)
 ├── Orquestación de workflows que involucran múltiples módulos
-├── Facade como punto de entrada único del contexto
-├── Composición de módulos (FacadeComposer)
+├── Service como punto de entrada único del contexto
+├── Composición de módulos (composition/factory.ts)
 └── Políticas de infraestructura a nivel de contexto
 
 MÓDULO (dentro del contexto)
@@ -45,7 +45,7 @@ MÓDULO (dentro del contexto)
 ├── Use Cases que operan SOLO sobre su propio Aggregate
 ├── Composer que resuelve SU infraestructura
 ├── NO coordina otros módulos
-└── NO tiene Facade propio
+└── NO tiene Service propio
 ```
 
 ---
@@ -59,13 +59,13 @@ MÓDULO (dentro del contexto)
 ├── __tests__/
 │   └── e2e.test.ts                   # Tests end-to-end (OBLIGATORIO)
 │
-├── facade/                           # ORQUESTACIÓN A NIVEL DE CONTEXTO
-│   ├── {ContextName}Facade.ts        # Orchestrator (coordina módulos)
-│   ├── index.ts                      # create{Context}Facade factory
-│   └── composition/
-│       ├── index.ts                  # Re-exports (OBLIGATORIO)
-│       ├── infra-policies.ts
-│       └── {ContextName}FacadeComposer.ts
+├── composition/                      # COMPOSICIÓN A NIVEL DE CONTEXTO
+│   ├── factory.ts                    # {Context}ServicePolicy + resolve{Context}Modules()
+│   └── index.ts                      # Re-exports (OBLIGATORIO)
+│
+├── service/                          # SERVICE DEL CONTEXTO
+│   ├── {ContextName}Service.ts       # Orchestrator (coordina módulos)
+│   └── index.ts                      # create{Context}Service factory
 │
 ├── {module-a}/                       # Módulo A
 │   ├── index.ts
@@ -124,12 +124,12 @@ MÓDULO (dentro del contexto)
     └── {module}.factory.ts           # Retorna { useCases, infra }
 ```
 
-### 1.2 composition.ts (OBLIGATORIO)
+### 1.2 composition/index.ts (OBLIGATORIO)
 
-Cada módulo DEBE tener un `composition.ts` que re-exporta todo:
+Cada módulo DEBE tener un `composition/index.ts` que re-exporta todo:
 
 ```typescript
-// composition.ts
+// composition/index.ts
 export { ModuleComposer } from "./ModuleComposer";
 export type {
   ModuleInfraPolicy,
@@ -164,19 +164,19 @@ Política viene de arriba (context)       Adapter lee process.env o window
 Factory retorna { useCases, infra }      Factory retorna solo useCases
 Métodos privados separados por concern   Un solo switch que resuelve todo
 Factory en {module}.factory.ts           Factory inline en index.ts del módulo
-composition.ts re-exporta todo     No hay index.ts en composition/
-FacadeComposer usa ConfigProvider        API keys/paths hardcodeados
+composition/index.ts re-exporta todo     No hay index.ts en composition/
+composition/factory.ts usa ConfigProvider API keys/paths hardcodeados
 configOverrides permite testing          Tests dependen de environment real
 ```
 
 ### 2.3 ConfigProvider Pattern
 
-El `FacadeComposer` usa `ConfigProvider` para resolver configuración de ambiente de forma testeable:
+La `composition/factory.ts` del contexto usa `ConfigProvider` para resolver configuración de ambiente de forma testeable:
 
 ```typescript
-// FacadeComposer.ts
-private static async resolveConfig(
-  policy: FacadePolicy
+// composition/factory.ts
+async function resolveConfig(
+  policy: ServicePolicy
 ): Promise<ConfigProvider> {
   // 1. Si hay overrides de test, usar InMemoryConfigProvider
   if (policy.configOverrides) {
@@ -187,7 +187,7 @@ private static async resolveConfig(
   }
 
   // 2. Para browser, config vacía (no hay process.env)
-  if (policy.type === "browser") {
+  if (policy.provider === "browser") {
     const { InMemoryConfigProvider } = await import(
       "@shared/config/InMemoryConfigProvider"
     );
@@ -201,12 +201,14 @@ private static async resolveConfig(
   return new NodeConfigProvider();
 }
 
-// Uso en resolve()
-static async resolve(policy: FacadePolicy): Promise<ResolvedModules> {
-  const config = await this.resolveConfig(policy);
+// Uso en resolveModules()
+export async function resolveContextModules(
+  policy: ServicePolicy
+): Promise<ResolvedModules> {
+  const config = await resolveConfig(policy);
 
   const modulePolicy = {
-    type: policy.type,
+    provider: policy.provider,
     dbPath: policy.dbPath ?? config.getOrDefault("KLAY_DB_PATH", "./data"),
     dbName: policy.dbName ?? config.getOrDefault("KLAY_DB_NAME", "knowledge-platform"),
   };
@@ -238,7 +240,7 @@ export class {Module}Composer {
     policy: {Module}InfrastructurePolicy,
   ): Promise<{Aggregate}Repository> {
     // La POLÍTICA determina qué implementación usar
-    switch (policy.type) {
+    switch (policy.provider) {
       case "in-memory": {
         const { InMemory{Aggregate}Repository } = await import(
           "../infrastructure/persistence/InMemory{Aggregate}Repository"
@@ -261,7 +263,7 @@ export class {Module}Composer {
       }
 
       default:
-        throw new Error(`Unknown policy type: ${(policy as any).type}`);
+        throw new Error(`Unknown policy provider: ${(policy as any).provider}`);
     }
   }
 
@@ -291,13 +293,13 @@ export class {Module}Composer {
 
 ### 2.5 Factory (Retorna { useCases, infra })
 
-El archivo `{module}.factory.ts` es necesario cuando el módulo participa en un Facade. **Siempre retorna `{ useCases, infra }`** para permitir coordinación.
+El archivo `{module}.factory.ts` es necesario cuando el módulo participa en un Service. **Siempre retorna `{ useCases, infra }`** para permitir coordinación.
 
 ```typescript
 // {module}.factory.ts - archivo SEPARADO en composition/
 export interface {Module}FactoryResult {
   useCases: {Module}UseCases;
-  infra: Resolved{Module}Infra;  // Expuesto para coordinación del Facade
+  infra: Resolved{Module}Infra;  // Expuesto para coordinación del Service
 }
 
 export async function {module}Factory(
@@ -310,55 +312,55 @@ export async function {module}Factory(
 ```
 
 **¿Por qué retornar `infra`?**
-- El Facade puede necesitar acceso al repository para queries cross-module
+- El Service puede necesitar acceso al repository para queries cross-module
 - Permite coordinación sin acoplar módulos entre sí
-- El Facade actúa como anti-corruption layer
+- El Service actúa como anti-corruption layer
 
 ---
 
-## 3. Facade (Nivel de Contexto)
+## 3. Service (Nivel de Contexto)
 
 ### 3.1 Ubicación y Responsabilidad
 
-El Facade existe **a nivel de contexto**, NO de módulo. Es el único punto de coordinación entre módulos.
+El Service existe **a nivel de contexto**, NO de módulo. Es el único punto de coordinación entre módulos.
 
 ```
 source-ingestion/
-├── facade/
-│   ├── SourceIngestionFacade.ts       ← Facade del CONTEXTO
-│   ├── index.ts                       ← create{Context}Facade factory
-│   └── composition/
-│       ├── index.ts                   ← Re-exports (OBLIGATORIO)
-│       ├── infra-policies.ts
-│       └── SourceIngestionFacadeComposer.ts
-├── source/                            ← Módulo (NO tiene facade propio)
-└── extraction/                        ← Módulo (NO tiene facade propio)
+├── composition/
+│   ├── factory.ts                    ← ServicePolicy + resolveModules()
+│   └── index.ts                      ← Re-exports
+├── service/
+│   ├── SourceIngestionService.ts     ← Service del CONTEXTO
+│   └── index.ts                      ← createSourceIngestionService factory
+├── source/                           ← Módulo (NO tiene service propio)
+└── extraction/                       ← Módulo (NO tiene service propio)
 ```
 
-### 3.2 facade.ts (Patrón Obligatorio)
+### 3.2 service/index.ts (Patrón Obligatorio)
 
 ```typescript
-// facade.ts
-export { ContextFacade } from "./ContextFacade";
-export { ContextFacadeComposer } from "./composition/ContextFacadeComposer";
+// service/index.ts
+export { ContextService } from "./ContextService";
 export type {
-  ContextFacadePolicy,
+  ContextServicePolicy,
   ResolvedContextModules,
-} from "./composition/infra-policies";
+} from "../composition/factory";
 
 // Factory function como API principal
-export async function createContextFacade(
-  policy: ContextFacadePolicy
-): Promise<ContextFacade> {
-  const modules = await ContextFacadeComposer.resolve(policy);
-  return new ContextFacade(modules);
+export async function createContextService(
+  policy: ContextServicePolicy
+): Promise<ContextService> {
+  const { resolveContextModules } = await import("../composition/factory");
+  const { ContextService } = await import("./ContextService");
+  const modules = await resolveContextModules(policy);
+  return new ContextService(modules);
 }
 ```
 
-### 3.3 Qué hace el Facade
+### 3.3 Qué hace el Service
 
 ```typescript
-// Errores específicos del Facade (coordinación)
+// Errores específicos del Service (coordinación)
 export class ModuleANotFoundError extends NotFoundError {
   constructor(id: string) { super("ModuleA", id); }
 }
@@ -369,7 +371,7 @@ export class ModuleAOperationError extends OperationError {
   }
 }
 
-export class {Context}Facade {
+export class {Context}Service {
   private readonly _moduleA: ModuleAUseCases;
   private readonly _moduleB: ModuleBUseCases;
   private readonly _moduleARepository: ModuleARepository; // Para queries
@@ -417,54 +419,71 @@ export class {Context}Facade {
 Un módulo individual **NUNCA**:
 - Importa o referencia otro módulo
 - Coordina flujos que involucran otros módulos
-- Tiene su propio Facade/Orchestrator
+- Tiene su propio Service/Orchestrator
 - Accede al repository de otro módulo
 
-### 3.5 FacadeComposer Pattern
+### 3.5 Context Composition Pattern
 
 ```typescript
-// composition/ContextFacadeComposer.ts
-export class ContextFacadeComposer {
-  // ─── Config Resolution ───────────────────────────────────
-  private static async resolveConfig(policy: FacadePolicy): Promise<ConfigProvider> {
-    if (policy.configOverrides) {
-      const { InMemoryConfigProvider } = await import("@shared/config/...");
-      return new InMemoryConfigProvider(policy.configOverrides);
-    }
-    if (policy.type === "browser") {
-      return new InMemoryConfigProvider({});
-    }
-    const { NodeConfigProvider } = await import("@shared/config/...");
-    return new NodeConfigProvider();
+// composition/factory.ts
+export interface ContextServicePolicy {
+  provider: "in-memory" | "browser" | "server";
+  dbPath?: string;
+  dbName?: string;
+  configOverrides?: Record<string, string>;
+  overrides?: {
+    moduleA?: Partial<ModuleAInfrastructurePolicy>;
+    moduleB?: Partial<ModuleBInfrastructurePolicy>;
+  };
+}
+
+export interface ResolvedContextModules {
+  moduleA: ModuleAUseCases;
+  moduleB: ModuleBUseCases;
+  moduleARepository: ModuleARepository; // Para coordinación
+}
+
+// ─── Config Resolution ───────────────────────────────────
+async function resolveConfig(policy: ContextServicePolicy): Promise<ConfigProvider> {
+  if (policy.configOverrides) {
+    const { InMemoryConfigProvider } = await import("@shared/config/...");
+    return new InMemoryConfigProvider(policy.configOverrides);
   }
-
-  // ─── Build module policies from context policy ───────────
-  private static buildModuleAPolicy(
-    contextPolicy: FacadePolicy,
-    config: ConfigProvider
-  ): ModuleAInfrastructurePolicy {
-    return {
-      type: contextPolicy.overrides?.moduleA?.type ?? contextPolicy.type,
-      dbPath: contextPolicy.dbPath ?? config.getOrDefault("KLAY_DB_PATH", "./data"),
-      dbName: contextPolicy.dbName ?? config.getOrDefault("KLAY_DB_NAME", "klay-db"),
-    };
+  if (policy.provider === "browser") {
+    return new InMemoryConfigProvider({});
   }
+  const { NodeConfigProvider } = await import("@shared/config/...");
+  return new NodeConfigProvider();
+}
 
-  // ─── Main resolution ─────────────────────────────────────
-  static async resolve(policy: FacadePolicy): Promise<ResolvedContextModules> {
-    const config = await this.resolveConfig(policy);
+// ─── Build module policies from context policy ───────────
+function buildModuleAPolicy(
+  contextPolicy: ContextServicePolicy,
+  config: ConfigProvider
+): ModuleAInfrastructurePolicy {
+  return {
+    provider: contextPolicy.overrides?.moduleA?.provider ?? contextPolicy.provider,
+    dbPath: contextPolicy.dbPath ?? config.getOrDefault("KLAY_DB_PATH", "./data"),
+    dbName: contextPolicy.dbName ?? config.getOrDefault("KLAY_DB_NAME", "klay-db"),
+  };
+}
 
-    const [moduleAResult, moduleBResult] = await Promise.all([
-      moduleAFactory(this.buildModuleAPolicy(policy, config)),
-      moduleBFactory(this.buildModuleBPolicy(policy, config)),
-    ]);
+// ─── Main resolution ─────────────────────────────────────
+export async function resolveContextModules(
+  policy: ContextServicePolicy
+): Promise<ResolvedContextModules> {
+  const config = await resolveConfig(policy);
 
-    return {
-      moduleA: moduleAResult.useCases,
-      moduleB: moduleBResult.useCases,
-      moduleARepository: moduleAResult.infra.repository, // Para coordinación
-    };
-  }
+  const [moduleAResult, moduleBResult] = await Promise.all([
+    moduleAFactory(buildModuleAPolicy(policy, config)),
+    moduleBFactory(buildModuleBPolicy(policy, config)),
+  ]);
+
+  return {
+    moduleA: moduleAResult.useCases,
+    moduleB: moduleBResult.useCases,
+    moduleARepository: moduleAResult.infra.repository, // Para coordinación
+  };
 }
 ```
 
@@ -486,15 +505,15 @@ klay+/
 │
 └── pipeline/                  ← Pipeline Orchestrator (NO es un Bounded Context)
     ├── index.ts               # API pública del pipeline
-    ├── PipelineFacade.ts      # Punto de entrada cross-context
+    ├── PipelineOrchestrator.ts # Punto de entrada cross-context
     ├── __tests__/
     │   └── e2e.test.ts        # Tests E2E (OBLIGATORIO)
-    ├── workflows/
+    ├── use-cases/
     │   ├── {Acción}{Dominio}Workflow.ts
     │   └── index.ts
     └── composition/
         ├── index.ts           # Re-exports (OBLIGATORIO)
-        ├── infra-policies.ts  # PipelinePolicy, ResolvedPipelineFacades
+        ├── infra-policies.ts  # PipelinePolicy, ResolvedPipelineServices
         ├── PipelineComposer.ts
         └── pipeline.factory.ts
 ```
@@ -504,10 +523,10 @@ klay+/
 ```
 ✅ EL PIPELINE HACE                          ❌ EL PIPELINE NO HACE
 ─────────────────────────────────────────────────────────────────────────
-Coordinar facades en secuencia               Contener lógica de dominio
+Coordinar services en secuencia              Contener lógica de dominio
 Propagar resultados entre pasos              Acceder a repositorios directamente
 Envolver errores con contexto de paso        Definir entidades o agregados
-Componer facades via PipelineComposer        Importar internos de un contexto
+Componer services via PipelineComposer       Importar internos de un contexto
 Exponer workflows como operaciones           Decidir reglas de negocio
 Usar Result<PipelineError, T>                Publicar eventos de dominio
 ```
@@ -519,8 +538,8 @@ La jerarquía de coordinación sigue un patrón fractal:
 | Nivel | Coordinador | Coordina | Mediante |
 |-------|-------------|----------|----------|
 | **Módulo** | Use Case | Aggregate + Ports | Inyección directa |
-| **Contexto** | Facade | Múltiples Módulos | Module factories |
-| **Pipeline** | PipelineFacade | Múltiples Contextos | Context facades |
+| **Contexto** | Service | Múltiples Módulos | Module factories |
+| **Pipeline** | PipelineOrchestrator | Múltiples Contextos | Context services |
 
 Cada nivel solo conoce la API pública del nivel inferior. Nunca accede a los internos.
 
@@ -531,64 +550,64 @@ Cada nivel solo conoce la API pública del nivel inferior. Nunca accede a los in
 export type PipelineInfraPolicy = "in-memory" | "browser" | "server";
 
 export interface PipelinePolicy {
-  type: PipelineInfraPolicy;
+  provider: PipelineInfraPolicy;
 
   // Configuración global propagada a todos los contextos
   configOverrides?: Record<string, string>;
 
   // Overrides granulares por contexto (opcional)
   overrides?: {
-    ingestion?: Partial<SourceIngestionFacadePolicy>;
-    knowledge?: Partial<SemanticKnowledgeFacadePolicy>;
-    processing?: Partial<SemanticProcessingFacadePolicy>;
-    retrieval?: Partial<KnowledgeRetrievalFacadePolicy>;
+    ingestion?: Partial<SourceIngestionServicePolicy>;
+    knowledge?: Partial<SemanticKnowledgeServicePolicy>;
+    processing?: Partial<SemanticProcessingServicePolicy>;
+    retrieval?: Partial<KnowledgeRetrievalServicePolicy>;
   };
 }
 
-export interface ResolvedPipelineFacades {
-  ingestion: SourceIngestionFacade;
-  knowledge: SemanticKnowledgeFacade;
-  processing: SemanticProcessingFacade;
-  retrieval: KnowledgeRetrievalFacade;
+export interface ResolvedPipelineServices {
+  ingestion: SourceIngestionService;
+  knowledge: SemanticKnowledgeService;
+  processing: SemanticProcessingService;
+  retrieval: KnowledgeRetrievalService;
 }
 ```
 
 ### 4.5 Pipeline Composer
 
-El PipelineComposer instancia facades respetando dependencias cross-context. Los contextos independientes se resuelven en paralelo; los contextos con dependencias se resuelven en secuencia.
+El PipelineComposer instancia services respetando dependencias cross-context. Los contextos independientes se resuelven en paralelo; los contextos con dependencias se resuelven en secuencia.
 
 ```typescript
 // composition/PipelineComposer.ts
 export class PipelineComposer {
-  static async resolve(policy: PipelinePolicy): Promise<ResolvedPipelineFacades> {
+  static async resolve(policy: PipelinePolicy): Promise<ResolvedPipelineServices> {
     // 1. Contextos sin dependencias cross-context (paralelo)
     const [ingestion, knowledge] = await Promise.all([
-      import("../../source-ingestion/facade.js").then(
-        (m) => m.createSourceIngestionFacade({
-          type: policy.type,
+      import("../../source-ingestion/service").then(
+        (m) => m.createSourceIngestionService({
+          provider: policy.provider,
           ...policy.overrides?.ingestion,
         }),
       ),
-      import("../../semantic-knowledge/facade.js").then(
-        (m) => m.createSemanticKnowledgeFacade({
-          type: policy.type,
+      import("../../semantic-knowledge/service").then(
+        (m) => m.createSemanticKnowledgeService({
+          provider: policy.provider,
           ...policy.overrides?.knowledge,
         }),
       ),
     ]);
 
     // 2. SemanticProcessing (independiente, pero expone vectorStore)
-    const processing = await import("../../semantic-processing/facade.js").then(
-      (m) => m.createSemanticProcessingFacade({
-        type: policy.type,
+    const processing = await import("../../semantic-processing/service").then(
+      (m) => m.createSemanticProcessingService({
+        provider: policy.provider,
         ...policy.overrides?.processing,
       }),
     );
 
     // 3. KnowledgeRetrieval (depende del vectorStore de processing)
-    const retrieval = await import("../../knowledge-retrieval/facade.js").then(
-      (m) => m.createKnowledgeRetrievalFacade({
-        type: policy.type,
+    const retrieval = await import("../../knowledge-retrieval/service").then(
+      (m) => m.createKnowledgeRetrievalService({
+        provider: policy.provider,
         vectorStoreRef: processing.vectorStore,  // Wiring cross-context
         ...policy.overrides?.retrieval,
       }),
@@ -601,10 +620,10 @@ export class PipelineComposer {
 
 ### 4.6 Workflow Pattern
 
-Un Workflow es una clase que coordina un flujo cross-context. Recibe facades por constructor y expone un método `execute()` que retorna `Result<PipelineError, T>`.
+Un Workflow es una clase que coordina un flujo cross-context. Recibe services por constructor y expone un método `execute()` que retorna `Result<PipelineError, T>`.
 
 ```typescript
-// workflows/IngestDocumentWorkflow.ts
+// use-cases/IngestDocumentWorkflow.ts
 export interface IngestDocumentCommand {
   sourceId: string;
   sourceName: string;
@@ -628,9 +647,9 @@ export interface IngestDocumentSuccess {
 
 export class IngestDocumentWorkflow {
   constructor(
-    private readonly ingestion: SourceIngestionFacade,
-    private readonly knowledge: SemanticKnowledgeFacade,
-    private readonly processing: SemanticProcessingFacade,
+    private readonly ingestion: SourceIngestionService,
+    private readonly knowledge: SemanticKnowledgeService,
+    private readonly processing: SemanticProcessingService,
   ) {}
 
   async execute(
@@ -720,28 +739,28 @@ export class PipelineError extends DomainError {
 }
 ```
 
-### 4.8 Pipeline Facade
+### 4.8 Pipeline Orchestrator
 
 ```typescript
-// PipelineFacade.ts
-export class PipelineFacade {
+// PipelineOrchestrator.ts
+export class PipelineOrchestrator {
   private readonly _ingestDocument: IngestDocumentWorkflow;
   private readonly _addSourceToUnit: AddSourceToUnitWorkflow;
   private readonly _reprocessKnowledge: ReprocessKnowledgeWorkflow;
 
-  // Expose facades for direct access when needed
-  private readonly _facades: ResolvedPipelineFacades;
+  // Expose services for direct access when needed
+  private readonly _services: ResolvedPipelineServices;
 
-  constructor(facades: ResolvedPipelineFacades) {
-    this._facades = facades;
+  constructor(services: ResolvedPipelineServices) {
+    this._services = services;
     this._ingestDocument = new IngestDocumentWorkflow(
-      facades.ingestion, facades.knowledge, facades.processing,
+      services.ingestion, services.knowledge, services.processing,
     );
     this._addSourceToUnit = new AddSourceToUnitWorkflow(
-      facades.ingestion, facades.knowledge, facades.processing,
+      services.ingestion, services.knowledge, services.processing,
     );
     this._reprocessKnowledge = new ReprocessKnowledgeWorkflow(
-      facades.knowledge, facades.processing,
+      services.knowledge, services.processing,
     );
   }
 
@@ -758,11 +777,11 @@ export class PipelineFacade {
     return this._reprocessKnowledge.execute(command);
   }
 
-  // ─── Direct Facade Access ────────────────────────────────
-  get ingestion(): SourceIngestionFacade { return this._facades.ingestion; }
-  get knowledge(): SemanticKnowledgeFacade { return this._facades.knowledge; }
-  get processing(): SemanticProcessingFacade { return this._facades.processing; }
-  get retrieval(): KnowledgeRetrievalFacade { return this._facades.retrieval; }
+  // ─── Direct Service Access ────────────────────────────────
+  get ingestion(): SourceIngestionService { return this._services.ingestion; }
+  get knowledge(): SemanticKnowledgeService { return this._services.knowledge; }
+  get processing(): SemanticProcessingService { return this._services.processing; }
+  get retrieval(): KnowledgeRetrievalService { return this._services.retrieval; }
 }
 ```
 
@@ -770,23 +789,23 @@ export class PipelineFacade {
 
 ```typescript
 // pipeline.ts
-export { PipelineFacade } from "./PipelineFacade.js";
+export { PipelineOrchestrator } from "./PipelineOrchestrator.js";
 export { PipelineComposer } from "./composition/PipelineComposer.js";
 export { PipelineError } from "./PipelineError.js";
 export type {
   PipelinePolicy,
   PipelineInfraPolicy,
-  ResolvedPipelineFacades,
+  ResolvedPipelineServices,
 } from "./composition/infra-policies.js";
 
 // Factory function como API principal
 export async function createPipeline(
   policy: PipelinePolicy,
-): Promise<PipelineFacade> {
+): Promise<PipelineOrchestrator> {
   const { PipelineComposer } = await import("./composition/PipelineComposer.js");
-  const { PipelineFacade } = await import("./PipelineFacade.js");
-  const facades = await PipelineComposer.resolve(policy);
-  return new PipelineFacade(facades);
+  const { PipelineOrchestrator } = await import("./PipelineOrchestrator.js");
+  const services = await PipelineComposer.resolve(policy);
+  return new PipelineOrchestrator(services);
 }
 ```
 
@@ -832,8 +851,8 @@ Knowledge Retrieval ◀──ProjectionGenerated── Semantic Processing
 
 | Aspecto | Orquestación (Pipeline) | Coreografía (Eventos) |
 |---|---|---|
-| Coordinador | PipelineFacade | Handlers independientes |
-| Acoplamiento | Facades conocidas por Pipeline | Solo contratos compartidos |
+| Coordinador | PipelineOrchestrator | Handlers independientes |
+| Acoplamiento | Services conocidos por Pipeline | Solo contratos compartidos |
 | Trazabilidad | Explícita via `PipelineError.completedSteps` | Requiere correlation IDs |
 | Errores | Centralizados en workflow | Distribuidos en handlers |
 | Ideal para | Confirmación inmediata | Procesamiento background |
@@ -877,7 +896,7 @@ export class ServerPdfExtractor implements ContentExtractor {
 
 // Composer decide cuál usar
 private static async resolveExtractor(policy): Promise<ContentExtractor> {
-  if (policy.type === "browser") {
+  if (policy.provider === "browser") {
     return new BrowserPdfExtractor();
   }
   return new ServerPdfExtractor();
@@ -891,12 +910,12 @@ private static async resolveExtractor(policy): Promise<ContentExtractor> {
 // extraction/application/ExecuteExtraction.ts
 import { SourceRepository } from "../../source/domain/SourceRepository"; // ❌ NO
 
-// ✅ CORRECTO - Solo el Facade coordina
-// application/facade/SourceIngestionFacade.ts
+// ✅ CORRECTO - Solo el Service coordina
+// service/SourceIngestionService.ts
 import type { SourceUseCases } from "../source/application";
 import type { ExtractionUseCases } from "../extraction/application";
 
-export class SourceIngestionFacade {
+export class SourceIngestionService {
   constructor(modules: { source: SourceUseCases; extraction: ExtractionUseCases }) {}
   // Aquí se coordina
 }
@@ -909,15 +928,15 @@ export class SourceIngestionFacade {
 // knowledge-retrieval/semantic-query/application/QueryUseCase.ts
 import { SemanticProjectionRepository } from "../../semantic-processing/projection/domain/..."; // ❌ NO
 
-// ✅ CORRECTO - Solo el Pipeline coordina facades
-// pipeline/workflows/IngestDocumentWorkflow.ts
-import type { SourceIngestionFacade } from "../../source-ingestion/facade";
-import type { SemanticKnowledgeFacade } from "../../semantic-knowledge/facade";
+// ✅ CORRECTO - Solo el Pipeline coordina services
+// pipeline/use-cases/IngestDocumentWorkflow.ts
+import type { SourceIngestionService } from "../../source-ingestion/service";
+import type { SemanticKnowledgeService } from "../../semantic-knowledge/service";
 
 export class IngestDocumentWorkflow {
   constructor(
-    private readonly ingestion: SourceIngestionFacade,  // Solo API pública
-    private readonly knowledge: SemanticKnowledgeFacade, // Solo API pública
+    private readonly ingestion: SourceIngestionService,  // Solo API pública
+    private readonly knowledge: SemanticKnowledgeService, // Solo API pública
   ) {}
 }
 ```
@@ -963,7 +982,7 @@ class IngestDocumentWorkflow {
 // ✅ CORRECTO - Pipeline solo coordina
 class IngestDocumentWorkflow {
   async execute(command) {
-    // ✅ Delega a la facade, que delega al use case, que valida en dominio
+    // ✅ Delega al service, que delega al use case, que valida en dominio
     const result = await this.ingestion.ingestAndExtract({...command});
     if (result.isFail()) return Result.fail(PipelineError.fromStep("ingestion", result.error));
     // ...
@@ -979,11 +998,11 @@ Antes de finalizar un módulo, verificar:
 - [ ] ¿Los adapters NO detectan entorno (window, process, etc.)?
 - [ ] ¿El módulo NO importa otros módulos del contexto?
 - [ ] ¿Los Use Cases reciben TODAS sus dependencias por constructor?
-- [ ] ¿La coordinación entre módulos está SOLO en el Facade?
+- [ ] ¿La coordinación entre módulos está SOLO en el Service?
 - [ ] ¿Factory retorna `{ useCases, infra }`?
-- [ ] ¿Existe `composition.ts` que re-exporta todo?
-- [ ] ¿FacadeComposer usa ConfigProvider para configuración?
-- [ ] ¿Existe `facade.ts` con `create{Context}Facade`?
+- [ ] ¿Existe `composition/index.ts` que re-exporta todo?
+- [ ] ¿`composition/factory.ts` del contexto usa ConfigProvider?
+- [ ] ¿Existe `service/index.ts` con `create{Context}Service`?
 - [ ] ¿Existe `__tests__/e2e.test.ts` para el contexto?
 
 ---
@@ -1010,7 +1029,7 @@ Antes de finalizar un módulo, verificar:
 | Error | `{Concept}{Type}Error` | `SourceNotFoundError` |
 | Event | `{Aggregate}{PastVerb}` | `SourceRegistered` |
 | Composer | `{Module}Composer` | `SourceComposer` |
-| Facade | `{Context}Facade` | `SourceIngestionFacade` |
+| Service | `{Context}Service` | `SourceIngestionService` |
 | Workflow | `{Verb}{Domain}Workflow` | `IngestDocumentWorkflow` |
 | Pipeline Error | `PipelineError` | Único, con `step` discriminante |
 | Pipeline Factory | `createPipeline` | API pública del pipeline |
@@ -1130,7 +1149,7 @@ Policy → Composer → Resolved Infra → UseCases Container
 
 ```typescript
 // 1. Política define QUÉ tipo de infra
-const policy: SourceInfrastructurePolicy = { type: "server", dbPath: "./data" };
+const policy: SourceInfrastructurePolicy = { provider: "server", dbPath: "./data" };
 
 // 2. Composer resuelve CÓMO implementar
 const infra = await SourceComposer.resolve(policy);
@@ -1142,46 +1161,46 @@ const useCases = new SourceUseCases(infra.repository, infra.eventPublisher);
 ### 9.2 Nivel Contexto
 
 ```
-Context Policy → FacadeComposer → Module Composers → Modules → Facade
+ServicePolicy → resolveModules() → ResolvedModules → Service
 ```
 
 ```typescript
 // 1. Política de contexto (hereda a módulos)
-const contextPolicy: SourceIngestionPolicy = {
-  type: "server",
+const contextPolicy: SourceIngestionServicePolicy = {
+  provider: "server",
   dbPath: "./data",
   overrides: {
-    extraction: { type: "browser" }, // Override específico
+    extraction: { provider: "browser" }, // Override específico
   },
 };
 
-// 2. FacadeComposer orquesta la composición
-const modules = await SourceIngestionFacadeComposer.resolve(contextPolicy);
+// 2. resolveModules() orquesta la composición
+const modules = await resolveSourceIngestionModules(contextPolicy);
 
-// 3. Facade recibe módulos ya resueltos
-const facade = new SourceIngestionFacade(modules);
+// 3. Service recibe módulos ya resueltos
+const service = new SourceIngestionService(modules);
 ```
 
 ### 9.3 Nivel Pipeline
 
 ```
-Pipeline Policy → PipelineComposer → Context Facades → Workflows → PipelineFacade
+PipelinePolicy → PipelineComposer → Context Services → Workflows → PipelineOrchestrator
 ```
 
 ```typescript
 // 1. Política global (hereda a todos los contextos)
 const pipelinePolicy: PipelinePolicy = {
-  type: "in-memory",
+  provider: "in-memory",
   overrides: {
     processing: { embeddingProvider: "hash" },
   },
 };
 
-// 2. PipelineComposer instancia facades (respetando dependencias)
-const facades = await PipelineComposer.resolve(pipelinePolicy);
+// 2. PipelineComposer instancia services (respetando dependencias)
+const services = await PipelineComposer.resolve(pipelinePolicy);
 
-// 3. PipelineFacade ensambla workflows con facades resueltas
-const pipeline = new PipelineFacade(facades);
+// 3. PipelineOrchestrator ensambla workflows con services resueltos
+const pipeline = new PipelineOrchestrator(services);
 
 // 4. Ejecutar flujos cross-context
 const result = await pipeline.ingestDocument({ ... });
@@ -1218,18 +1237,18 @@ const result = await pipeline.ingestDocument({ ... });
 
 ### 10.5 Reglas de Contexto
 
-1. **Facade solo a nivel de contexto**
+1. **Service solo a nivel de contexto**
 2. **Módulos NO se comunican directamente**
-3. **Coordinación vía Facade o eventos**
+3. **Coordinación vía Service o eventos**
 
 ### 10.6 Reglas del Pipeline
 
 1. **Pipeline NO es un Bounded Context** — no tiene dominio
-2. **Solo invoca facades** — nunca repositorios ni use cases directamente
+2. **Solo invoca services** — nunca repositorios ni use cases directamente
 3. **Sin lógica de negocio** — solo coordinación y propagación de resultados
-4. **Cada workflow es una clase** — constructor recibe facades, `execute()` retorna Result
+4. **Cada workflow es una clase** — constructor recibe services, `execute()` retorna Result
 5. **PipelineError envuelve errores** — preserva `step` y `completedSteps`
-6. **Sigue Composición por Políticas** — PipelineComposer resuelve facades
+6. **Sigue Composición por Políticas** — PipelineComposer resuelve services
 7. **Wiring cross-context en el Composer** — e.g., `processing.vectorStore → retrieval`
 
 ---
@@ -1247,44 +1266,43 @@ const result = await pipeline.ingestDocument({ ... });
 - [ ] Implementar repositorios (InMemory mínimo)
 - [ ] **Crear Composer** (obligatorio)
 - [ ] **Crear Factory** retornando `{ useCases, infra }`
-- [ ] **Crear `composition.ts`** (obligatorio)
+- [ ] **Crear `composition/index.ts`** (obligatorio)
 - [ ] Configurar index.ts del módulo
 
 ## 12. Checklist para Nuevo Contexto
 
 - [ ] Crear estructura de contexto
 - [ ] Implementar módulos individuales (con factories)
-- [ ] **Crear `facade/composition/infra-policies.ts`**
-- [ ] **Crear FacadeComposer** con ConfigProvider
-- [ ] **Crear `facade/composition.ts`** (obligatorio)
-- [ ] Crear Facade con errores específicos de coordinación
-- [ ] **Crear `facade.ts`** con `create{Context}Facade()`
+- [ ] **Crear `composition/factory.ts`** con ServicePolicy + resolveModules()
+- [ ] **Crear `composition/index.ts`** (obligatorio)
+- [ ] Crear Service con errores específicos de coordinación
+- [ ] **Crear `service/index.ts`** con `create{Context}Service()`
 - [ ] Definir políticas de contexto con `configOverrides`
 - [ ] **Escribir `__tests__/e2e.test.ts`** (obligatorio)
 - [ ] Configurar index.ts del contexto
 
 ## 13. Checklist para Nuevo Workflow
 
-- [ ] Crear `workflows/{Acción}{Dominio}Workflow.ts`
+- [ ] Crear `use-cases/{Acción}{Dominio}Workflow.ts`
 - [ ] Definir Command interface (entrada del workflow)
 - [ ] Definir Success interface (salida exitosa)
-- [ ] Constructor recibe facades como dependencias
+- [ ] Constructor recibe services como dependencias
 - [ ] `execute()` retorna `Result<PipelineError, Success>`
-- [ ] Cada paso invoca facade → verifica `isFail()` → propaga con `PipelineError.fromStep()`
+- [ ] Cada paso invoca service → verifica `isFail()` → propaga con `PipelineError.fromStep()`
 - [ ] `completedSteps` acumula pasos exitosos
-- [ ] Exportar workflow desde `workflows.ts`
-- [ ] Registrar workflow en `PipelineFacade`
+- [ ] Exportar workflow desde `use-cases/index.ts`
+- [ ] Registrar workflow en `PipelineOrchestrator`
 - [ ] Agregar tests en `__tests__/e2e.test.ts`
 
 ## 14. Checklist para Pipeline Orchestrator
 
 - [ ] Crear estructura `pipeline/` al nivel de los contextos
 - [ ] **Crear `composition/infra-policies.ts`** con PipelinePolicy
-- [ ] **Crear PipelineComposer** (instancia facades en orden correcto)
+- [ ] **Crear PipelineComposer** (instancia services en orden correcto)
 - [ ] **Crear `composition/pipeline.factory.ts`**
-- [ ] **Crear `composition.ts`** (obligatorio)
+- [ ] **Crear `composition/index.ts`** (obligatorio)
 - [ ] Crear `PipelineError` con step + completedSteps
-- [ ] Crear `PipelineFacade` con workflows y facade accessors
+- [ ] Crear `PipelineOrchestrator` con workflows y service accessors
 - [ ] Crear `pipeline.ts` con `createPipeline()`
 - [ ] Implementar workflows identificados
 - [ ] **Escribir `__tests__/e2e.test.ts`** (obligatorio)
@@ -1295,17 +1313,18 @@ const result = await pipeline.ingestDocument({ ... });
 
 | Nivel | Archivo | Contenido |
 |-------|---------|-----------|
-| Módulo | `composition.ts` | Re-exports de Composer, policies, factory |
+| Módulo | `composition/index.ts` | Re-exports de Composer, policies, factory |
 | Módulo | `composition/{module}.factory.ts` | Retorna `{ useCases, infra }` |
-| Contexto | `facade/composition.ts` | Re-exports de FacadeComposer, policies |
-| Contexto | `facade.ts` | `create{Context}Facade()` factory |
+| Contexto | `composition/factory.ts` | ServicePolicy + resolveModules() |
+| Contexto | `composition/index.ts` | Re-exports |
+| Contexto | `service/index.ts` | `create{Context}Service()` factory |
 | Contexto | `__tests__/e2e.test.ts` | Test E2E completo del contexto |
-| Pipeline | `composition.ts` | Re-exports de PipelineComposer, policies |
+| Pipeline | `composition/index.ts` | Re-exports de PipelineComposer, policies |
 | Pipeline | `index.ts` | `createPipeline()` factory |
-| Pipeline | `PipelineFacade.ts` | Workflows + facade accessors |
+| Pipeline | `PipelineOrchestrator.ts` | Workflows + service accessors |
 | Pipeline | `PipelineError.ts` | Error con step + completedSteps |
 | Pipeline | `__tests__/e2e.test.ts` | Test E2E completo del pipeline |
 
 ---
 
-*Skill arquitectónico para klay+ - Última actualización: Febrero 2025*
+*Skill arquitectónico para klay+ - Última actualización: Febrero 2026*

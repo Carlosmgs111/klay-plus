@@ -23,11 +23,22 @@ Punto de entrada unico del contexto. Coordina los 3 modulos internos.
 
 ### Composicion
 
+La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
+
 ```
-SourceIngestionServiceComposer
+composition/
+├── factory.ts    → SourceIngestionServicePolicy + resolveSourceIngestionModules()
+└── index.ts      → re-exports
+
+resolveSourceIngestionModules(policy)
 ├── sourceFactory(policy)      → { useCases: SourceUseCases, infra }
 ├── resourceFactory(policy)    → { useCases: ResourceUseCases, infra }
 └── extractionFactory(policy)  → { useCases: ExtractionUseCases, infra }
+```
+
+El Service recibe las dependencias resueltas via constructor injection:
+```
+createSourceIngestionService(policy) → resolveModules(policy) → new SourceIngestionService(modules)
 ```
 
 ---

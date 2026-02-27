@@ -27,10 +27,21 @@ Punto de entrada unico del contexto. Coordina semantic-unit y lineage de forma a
 
 ### Composicion
 
+La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
+
 ```
-SemanticKnowledgeServiceComposer
+composition/
+├── factory.ts    → SemanticKnowledgeServicePolicy + resolveSemanticKnowledgeModules()
+└── index.ts      → re-exports
+
+resolveSemanticKnowledgeModules(policy)
 ├── semanticUnitFactory(policy) → { useCases: SemanticUnitUseCases, infra }
 └── lineageFactory(policy)      → { useCases: LineageUseCases, infra }
+```
+
+El Service recibe las dependencias resueltas via constructor injection:
+```
+createSemanticKnowledgeService(policy) → resolveModules(policy) → new SemanticKnowledgeService(modules)
 ```
 
 ---

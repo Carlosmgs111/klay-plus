@@ -30,7 +30,7 @@ Patrones arquitectónicos para construir monolitos modulares con boundaries clar
 ```
 {module}/
 ├── public/                    # Contrato público del módulo
-│   ├── {Module}Facade.ts      # API pública (único punto de entrada)
+│   ├── {Module}Service.ts     # API pública (único punto de entrada)
 │   ├── {Module}Events.ts      # Eventos que el módulo emite
 │   └── types.ts               # DTOs públicos (nunca entidades internas)
 │
@@ -54,7 +54,7 @@ Patrones arquitectónicos para construir monolitos modulares con boundaries clar
 ```
 ✅ CORRECTO                              ❌ INCORRECTO
 ───────────────────────────────────────────────────────────────
-Módulo expone Facade como API pública     Módulo expone Repository
+Módulo expone Service como API pública    Módulo expone Repository
 Módulo expone DTOs inmutables             Módulo expone Entidades de dominio
 Módulo expone Eventos tipados             Módulo expone Use Cases directamente
 Consumers usan solo el contrato público   Consumers importan internos del módulo
@@ -70,7 +70,7 @@ Cada módulo exporta **solo** su contrato público. Los internos son inaccesible
 
 ```typescript
 // module.ts — SOLO exports públicos
-export { OrderFacade } from "./public/OrderFacade";
+export { OrderService } from "./public/OrderService";
 export type { OrderDTO, CreateOrderRequest } from "./public/types";
 export { OrderCreatedEvent, OrderPaidEvent } from "./public/OrderEvents";
 
@@ -90,7 +90,7 @@ Cada módulo es **dueño exclusivo** de sus datos. Ningún otro módulo lee ni e
 
 ```
 ✅ Un writer por dataset
-✅ Módulo A pide datos a Módulo B via Facade
+✅ Módulo A pide datos a Módulo B via Service
 ✅ Módulo A subscribe a eventos de Módulo B
 
 ❌ Módulo A hace query directo a la tabla de Módulo B
@@ -114,15 +114,15 @@ Cada módulo puede ser desarrollado independientemente por un equipo diferente. 
 
 ## 3. Comunicación entre Módulos
 
-### 3.1 Síncrona: Method Calls via Facade
+### 3.1 Síncrona: Method Calls via Service
 
-La forma más simple. Módulo A llama un método del Facade de Módulo B y espera resultado.
+La forma más simple. Módulo A llama un método del Service de Módulo B y espera resultado.
 
 ```typescript
 // OrderModule llama a InventoryModule
-class OrderFacade {
+class OrderService {
   constructor(
-    private readonly inventory: InventoryFacade, // Inyectado
+    private readonly inventory: InventoryService, // Inyectado
   ) {}
 
   async createOrder(cmd: CreateOrderCommand): Promise<Result<OrderError, OrderDTO>> {
@@ -160,7 +160,7 @@ Comunicación desacoplada via eventos. El emisor no sabe quién consume.
 
 ```typescript
 // ── Módulo Emisor ─────────────────────────────
-class OrderFacade {
+class OrderService {
   async completeOrder(orderId: string): Promise<Result<OrderError, void>> {
     const order = await this.repository.findById(orderId);
     order.complete();
@@ -181,11 +181,11 @@ class OrderFacade {
 // ── Módulo Consumidor ─────────────────────────
 // En el módulo de Shipping
 class ShippingEventHandler {
-  constructor(private readonly shippingFacade: ShippingFacade) {}
+  constructor(private readonly shippingService: ShippingService) {}
 
   @OnEvent("order.completed")
   async handleOrderCompleted(event: OrderCompletedEvent): Promise<void> {
-    await this.shippingFacade.scheduleShipment({
+    await this.shippingService.scheduleShipment({
       orderId: event.orderId,
       items: event.items,
     });
@@ -217,7 +217,7 @@ class ShippingEventHandler {
 
 El ACL protege el modelo de dominio de un módulo contra conceptos de otro módulo o sistema externo. Traduce entre lenguajes ubícuos distintos.
 
-### 4.2 Patrón: Gateway + Facade
+### 4.2 Patrón: Gateway + Service
 
 ```typescript
 // ── Módulo Payments ───────────────────────────
@@ -225,11 +225,11 @@ El ACL protege el modelo de dominio de un módulo contra conceptos de otro módu
 
 // Gateway en el lado del caller (OrderModule)
 class PaymentGateway {
-  constructor(private readonly paymentFacade: PaymentFacade) {}
+  constructor(private readonly paymentService: PaymentService) {}
 
   // Traduce de Order language → Payment language
   async chargeForOrder(order: Order): Promise<Result<PaymentError, ChargeReference>> {
-    return this.paymentFacade.createCharge({
+    return this.paymentService.createCharge({
       referenceId: order.id,          // Order → referenceId
       amount: order.total.value,       // Money → number
       currency: order.total.currency,
@@ -242,8 +242,8 @@ class PaymentGateway {
   }
 }
 
-// Facade en el lado del callee (PaymentModule)
-class PaymentFacade {
+// Service en el lado del callee (PaymentModule)
+class PaymentService {
   // Habla en SU lenguaje (Charge, no Order)
   async createCharge(request: CreateChargeRequest): Promise<Result<PaymentError, ChargeReference>> {
     // ...
@@ -281,18 +281,18 @@ export class CompositionRoot {
     ]);
 
     // 2. Wiring entre módulos via contratos públicos
-    const orderFacade = new OrderFacade({
-      inventory: inventoryModule.facade,    // Solo contrato público
-      payment: paymentModule.facade,        // Solo contrato público
+    const orderService = new OrderService({
+      inventory: inventoryModule.service,    // Solo contrato público
+      payment: paymentModule.service,        // Solo contrato público
       ...orderModule,
     });
 
     // 3. Registrar event handlers cross-module
     const eventBus = new InMemoryEventBus();
-    eventBus.subscribe("order.completed", new ShippingEventHandler(shippingModule.facade));
-    eventBus.subscribe("order.completed", new NotificationHandler(notificationModule.facade));
+    eventBus.subscribe("order.completed", new ShippingEventHandler(shippingModule.service));
+    eventBus.subscribe("order.completed", new NotificationHandler(notificationModule.service));
 
-    return new Application({ orderFacade, inventoryModule, paymentModule, eventBus });
+    return new Application({ orderService, inventoryModule, paymentModule, eventBus });
   }
 }
 ```
@@ -352,7 +352,7 @@ class OutboxProcessor {
 ### 6.3 Valor para Extracción
 
 Cuando extraes un módulo a un servicio independiente:
-- La comunicación síncrona (Facade) se reemplaza por HTTP/gRPC
+- La comunicación síncrona (Service) se reemplaza por HTTP/gRPC
 - La comunicación asíncrona (eventos) se reemplaza por message broker (RabbitMQ/Kafka)
 - El Outbox garantiza que no se pierden eventos en la transición
 
@@ -375,14 +375,14 @@ export interface UserClient {
 ```typescript
 // user-module/infrastructure/InProcessUserClient.ts
 export class InProcessUserClient implements UserClient {
-  constructor(private readonly userFacade: UserFacade) {}
+  constructor(private readonly userService: UserService) {}
 
   async getById(id: string): Promise<UserDTO | null> {
-    return this.userFacade.findById(id);
+    return this.userService.findById(id);
   }
 
   async exists(id: string): Promise<boolean> {
-    return this.userFacade.exists(id);
+    return this.userService.exists(id);
   }
 }
 ```
@@ -454,7 +454,7 @@ describe("Module Boundaries", () => {
       "zones": [{
         "target": "./src/modules/order",
         "from": "./src/modules/inventory/domain",
-        "message": "Use InventoryFacade instead of importing domain internals"
+        "message": "Use InventoryService instead of importing domain internals"
       }]
     }]
   }
@@ -465,10 +465,10 @@ describe("Module Boundaries", () => {
 
 ## 9. Checklist: Nuevo Módulo en Monolito Modular
 
-- [ ] ¿El módulo tiene un `public/` con Facade, Events y DTOs?
+- [ ] ¿El módulo tiene un `public/` con Service, Events y DTOs?
 - [ ] ¿El `index.ts` solo exporta desde `public/`?
 - [ ] ¿El módulo NO importa internos de otros módulos?
-- [ ] ¿La comunicación síncrona usa Facades?
+- [ ] ¿La comunicación síncrona usa Services?
 - [ ] ¿La comunicación asíncrona usa Eventos tipados?
 - [ ] ¿Existe ACL donde se traduce entre lenguajes ubícuos?
 - [ ] ¿El Composition Root es el único que wires módulos?

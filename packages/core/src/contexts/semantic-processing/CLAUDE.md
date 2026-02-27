@@ -21,11 +21,22 @@ Punto de entrada unico del contexto. Coordina projection y processing-profile, m
 
 ### Composicion
 
+La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
+
 ```
-SemanticProcessingServiceComposer
+composition/
+├── factory.ts    → SemanticProcessingServicePolicy + resolveSemanticProcessingModules()
+└── index.ts      → re-exports
+
+resolveSemanticProcessingModules(policy)
 ├── projectionFactory(policy)        → { useCases: ProjectionUseCases, infra }
 ├── processingProfileFactory(policy) → { useCases: ProfileUseCases, infra }
 └── ProcessingProfileMaterializer    → resuelve strategyIds declarativos en instancias concretas
+```
+
+El Service recibe las dependencias resueltas via constructor injection:
+```
+createSemanticProcessingService(policy) → resolveModules(policy) → new SemanticProcessingService(modules)
 ```
 
 ### Cross-Context Wiring

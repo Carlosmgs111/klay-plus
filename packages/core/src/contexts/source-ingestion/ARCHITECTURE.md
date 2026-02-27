@@ -2,46 +2,48 @@
 
 ## 1. Visión General
 
-El módulo **source-ingestion** es un Bounded Context que implementa el patrón de ingesta de contenido para la plataforma de conocimiento. Su responsabilidad principal es gestionar referencias a fuentes externas y extraer su contenido de forma controlada.
+El módulo **source-ingestion** es un Bounded Context que implementa el patrón de ingesta de contenido para la plataforma de conocimiento. Su responsabilidad principal es gestionar referencias a fuentes externas, almacenar recursos físicos y extraer su contenido de forma controlada.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    SOURCE INGESTION CONTEXT                     │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────────┐              ┌──────────────────────┐    │
-│  │  Source Module   │              │  Extraction Module   │    │
-│  │  ──────────────  │              │  ──────────────────  │    │
-│  │  • Referencias   │              │  • Jobs de extracción│    │
-│  │  • Metadata      │◄────────────►│  • Contenido extraído│    │
-│  │  • Versiones     │              │  • Extractores       │    │
-│  └──────────────────┘              └──────────────────────┘    │
-│                          │                                      │
-│                          ▼                                      │
-│              ┌─────────────────────┐                           │
-│              │ SourceIngestionService│                          │
-│              │ (Punto de entrada)   │                          │
-│              └─────────────────────┘                           │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                     SOURCE INGESTION CONTEXT                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────────┐  ┌──────────────────────┐  │
+│  │ Source Module │  │ Resource Module  │  │  Extraction Module   │  │
+│  │ ──────────── │  │ ────────────────  │  │ ──────────────────── │  │
+│  │ • Referencias│  │ • Archivos       │  │ • Jobs de extracción │  │
+│  │ • Metadata   │  │ • Storage        │  │ • Contenido extraído │  │
+│  │ • Versiones  │  │ • Ref. externas  │  │ • Extractores        │  │
+│  └──────────────┘  └──────────────────┘  └──────────────────────┘  │
+│                           │                                         │
+│                           ▼                                         │
+│               ┌──────────────────────┐                              │
+│               │SourceIngestionService│                              │
+│               │  (Punto de entrada)  │                              │
+│               └──────────────────────┘                              │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Estructura del Módulo
+## 2. Estructura del Contexto
 
 ```
 source-ingestion/
 ├── index.ts                         # API pública del contexto
+├── CLAUDE.md                        # Documentación para agentes
 ├── ARCHITECTURE.md                  # Este documento
 ├── __tests__/
-│   └── e2e.test.ts                 # Pruebas end-to-end
+│   ├── e2e.test.ts                 # Pruebas end-to-end
+│   └── resource-buffer-upload.test.ts
 │
-├── application/
-│   └── service/
-│       ├── SourceIngestionService.ts # Façade principal
-│       ├── index.ts
-│       └── composition/
-│           ├── SourceIngestionServiceComposer.ts
-│           └── infra-policies.ts
+├── composition/                     # Wiring del contexto
+│   ├── factory.ts                  # ServicePolicy + resolveSourceIngestionModules()
+│   └── index.ts
+│
+├── service/                         # Application Service (entry point)
+│   ├── SourceIngestionService.ts   # Service principal
+│   └── index.ts                    # createSourceIngestionService() factory
 │
 ├── source/                          # Módulo de Source
 │   ├── index.ts
@@ -51,17 +53,12 @@ source-ingestion/
 │   │   ├── SourceType.ts           # Enum
 │   │   ├── SourceVersion.ts        # Value Object
 │   │   ├── SourceRepository.ts     # Port (interfaz)
-│   │   ├── errors/                 # Errores de dominio
-│   │   │   ├── SourceErrors.ts
-│   │   │   └── index.ts
+│   │   ├── errors/
+│   │   │   └── SourceErrors.ts
 │   │   └── events/
 │   │       ├── SourceRegistered.ts
 │   │       ├── SourceUpdated.ts
 │   │       └── SourceExtracted.ts
-│   ├── application/
-│   │   ├── RegisterSource.ts       # Use Case
-│   │   ├── UpdateSource.ts         # Use Case
-│   │   └── index.ts
 │   ├── infrastructure/
 │   │   └── persistence/
 │   │       ├── InMemorySourceRepository.ts
@@ -70,9 +67,36 @@ source-ingestion/
 │   │       └── nedb/
 │   │           └── NeDBSourceRepository.ts
 │   └── composition/
-│       ├── SourceComposer.ts
-│       ├── source.factory.ts
-│       └── infra-policies.ts
+│       ├── factory.ts              # sourceFactory(policy)
+│       └── index.ts
+│
+├── resource/                        # Módulo de Resource
+│   ├── index.ts
+│   ├── domain/
+│   │   ├── Resource.ts             # Aggregate Root
+│   │   ├── ResourceId.ts           # Value Object
+│   │   ├── ResourceStatus.ts       # Value Object (Stored/Failed/Deleted)
+│   │   ├── StorageLocation.ts      # Value Object (uri + provider)
+│   │   ├── ResourceRepository.ts   # Port
+│   │   ├── ResourceStorage.ts      # Port (upload, delete, exists)
+│   │   ├── errors/
+│   │   │   └── ResourceErrors.ts
+│   │   └── events/
+│   │       ├── ResourceStored.ts
+│   │       └── ResourceDeleted.ts
+│   ├── infrastructure/
+│   │   ├── persistence/
+│   │   │   ├── InMemoryResourceRepository.ts
+│   │   │   ├── indexeddb/
+│   │   │   │   └── IndexedDBResourceRepository.ts
+│   │   │   └── nedb/
+│   │   │       └── NeDBResourceRepository.ts
+│   │   └── storage/
+│   │       ├── InMemoryResourceStorage.ts
+│   │       └── LocalFileResourceStorage.ts
+│   └── composition/
+│       ├── factory.ts              # resourceFactory(policy)
+│       └── index.ts
 │
 └── extraction/                      # Módulo de Extraction
     ├── index.ts
@@ -82,9 +106,8 @@ source-ingestion/
     │   ├── ExtractionStatus.ts     # Enum
     │   ├── ContentExtractor.ts     # Port (interfaz)
     │   ├── ExtractionJobRepository.ts
-    │   ├── errors/                 # Errores de dominio
-    │   │   ├── ExtractionErrors.ts
-    │   │   └── index.ts
+    │   ├── errors/
+    │   │   └── ExtractionErrors.ts
     │   └── events/
     │       ├── ExtractionCompleted.ts
     │       └── ExtractionFailed.ts
@@ -99,11 +122,12 @@ source-ingestion/
     │   └── persistence/
     │       ├── InMemoryExtractionJobRepository.ts
     │       ├── indexeddb/
+    │       │   └── IndexedDBExtractionJobRepository.ts
     │       └── nedb/
+    │           └── NeDBExtractionJobRepository.ts
     └── composition/
-        ├── ExtractionComposer.ts
-        ├── extraction.factory.ts
-        └── infra-policies.ts
+        ├── factory.ts              # extractionFactory(policy)
+        └── index.ts
 ```
 
 ---
@@ -116,11 +140,11 @@ El módulo implementa los building blocks tácticos de DDD:
 
 | Patrón | Implementación |
 |--------|----------------|
-| **Aggregate Root** | `Source`, `ExtractionJob` |
-| **Value Object** | `SourceId`, `SourceVersion`, `ExtractionJobId`, `ExtractionStatus` |
-| **Domain Events** | `SourceRegistered`, `SourceUpdated`, `ExtractionCompleted`, `ExtractionFailed` |
-| **Repository** | `SourceRepository`, `ExtractionJobRepository` (interfaces) |
-| **Domain Errors** | `SourceError`, `ExtractionError` (jerarquía de errores) |
+| **Aggregate Root** | `Source`, `Resource`, `ExtractionJob` |
+| **Value Object** | `SourceId`, `SourceVersion`, `ResourceId`, `ResourceStatus`, `StorageLocation`, `ExtractionJobId`, `ExtractionStatus` |
+| **Domain Events** | `SourceRegistered`, `SourceUpdated`, `ResourceStored`, `ResourceDeleted`, `ExtractionCompleted`, `ExtractionFailed` |
+| **Repository** | `SourceRepository`, `ResourceRepository`, `ExtractionJobRepository` (interfaces) |
+| **Domain Errors** | `SourceError`, `ResourceError`, `ExtractionError` (jerarquía de errores) |
 
 ### 3.2 Arquitectura Hexagonal (Ports & Adapters)
 
@@ -130,21 +154,25 @@ El módulo implementa los building blocks tácticos de DDD:
                     │  ┌───────────────────────────────┐  │
    Primary          │  │         USE CASES             │  │
    Adapters         │  │  RegisterSource, UpdateSource │  │
-   (Driving)        │  │     ExecuteExtraction         │  │
+   (Driving)        │  │  StoreResource, GetResource   │  │
+       │            │  │  ExecuteExtraction            │  │
        │            │  └───────────────────────────────┘  │
-       │            │               │                     │
-       ▼            │  ┌────────────┴────────────┐       │
-   ┌────────┐       │  │         DOMAIN          │       │
-   │ Service │──────►│  │  Source, ExtractionJob  │       │
-   └────────┘       │  │    Value Objects        │       │
-                    │  │    Domain Events        │       │
+       ▼            │               │                     │
+   ┌────────┐       │  ┌────────────┴────────────┐       │
+   │ Service │──────►│  │         DOMAIN          │       │
+   └────────┘       │  │  Source, Resource,       │       │
+                    │  │  ExtractionJob           │       │
+                    │  │  Value Objects            │       │
+                    │  │  Domain Events            │       │
                     │  └─────────────────────────┘       │
                     │               │                     │
                     │               ▼                     │
                     │  ┌─────────────────────────────┐   │
                     │  │          PORTS              │   │  Secondary
                     │  │  SourceRepository          │   │  Adapters
-                    │  │  ExtractionJobRepository   │───┼──►(Driven)
+                    │  │  ResourceRepository        │───┼──►(Driven)
+                    │  │  ResourceStorage           │   │
+                    │  │  ExtractionJobRepository   │   │
                     │  │  ContentExtractor          │   │
                     │  │  EventPublisher            │   │
                     │  └─────────────────────────────┘   │
@@ -153,12 +181,16 @@ El módulo implementa los building blocks tácticos de DDD:
 
 **Ports (Interfaces):**
 - `SourceRepository` - Persistencia de fuentes
+- `ResourceRepository` - Persistencia de recursos
+- `ResourceStorage` - Upload/delete de archivos
 - `ExtractionJobRepository` - Persistencia de jobs
 - `ContentExtractor` - Extracción de contenido
 - `EventPublisher` - Publicación de eventos
 
 **Adapters:**
 - `InMemorySourceRepository` / `IndexedDBSourceRepository` / `NeDBSourceRepository`
+- `InMemoryResourceRepository` / `IndexedDBResourceRepository` / `NeDBResourceRepository`
+- `InMemoryResourceStorage` / `LocalFileResourceStorage`
 - `TextContentExtractor` / `BrowserPdfContentExtractor` / `ServerPdfContentExtractor`
 - `InMemoryEventPublisher`
 
@@ -176,25 +208,26 @@ async execute(command): Promise<Result<SourceError, Source>> {
 
 // Consumidor maneja el resultado de forma funcional
 const result = await useCase.execute(command);
-result.match({
-  ok: (source) => console.log(`Created: ${source.id}`),
-  fail: (error) => console.error(`Error: ${error.message}`),
-});
+if (result.isFail()) {
+  return Result.fail(result.error);
+}
 ```
 
 ### 3.4 Factory Pattern
 
+Dos niveles de factories:
+
 ```typescript
-// Factory compone el módulo completo
+// Nivel 1: Factory de módulo — compone un módulo individual
 const { useCases, infra } = await sourceFactory({
-  type: "server",
+  provider: "server",
   dbPath: "./data",
 });
 
-// Factory de service compone todos los módulos
-const facade = await createSourceIngestionService({
-  type: "browser",
-  dbName: "my-app",
+// Nivel 2: Factory de contexto — compone todos los módulos y crea el Service
+const service = await createSourceIngestionService({
+  provider: "server",
+  dbPath: "./data",
 });
 ```
 
@@ -212,27 +245,46 @@ if (!extractor) {
 const result = await extractor.extract(source);
 ```
 
-### 3.6 Composer Pattern
+### 3.6 Composition Pattern
 
+La composición resuelve infraestructura dinámicamente según policies declarativas. Existe a dos niveles:
+
+**Nivel módulo** (`[module]/composition/factory.ts`):
 ```typescript
-// Composer resuelve infraestructura dinámicamente
-class SourceComposer {
-  static async resolve(policy: SourceInfrastructurePolicy): Promise<ResolvedSourceInfra> {
-    const repository = await this.resolveRepository(policy);
-    const eventPublisher = this.resolveEventPublisher(policy);
-    return { repository, eventPublisher };
-  }
+// Resuelve infraestructura de un módulo individual
+export async function sourceFactory(policy: SourceInfrastructurePolicy) {
+  const repository = resolveRepository(policy);
+  const eventPublisher = resolveEventPublisher(policy);
+  return { useCases: { ... }, infra: { repository, eventPublisher } };
+}
+```
+
+**Nivel contexto** (`composition/factory.ts`):
+```typescript
+// Orquesta las factories de todos los módulos
+export async function resolveSourceIngestionModules(
+  policy: SourceIngestionServicePolicy,
+): Promise<ResolvedSourceIngestionModules> {
+  const [sourceResult, extractionResult, resourceResult] = await Promise.all([
+    sourceFactory(sourcePolicy),
+    extractionFactory(extractionPolicy),
+    resourceFactory(resourcePolicy),
+  ]);
+  return { extraction, sourceRepository, resourceStorage, ... };
 }
 ```
 
 ### 3.7 Application Service Pattern
 
 ```typescript
-// Service simplifica la interacción con el contexto
+// Service coordina los módulos del contexto
 class SourceIngestionService {
+  constructor(modules: ResolvedSourceIngestionModules) { ... }
+
   async registerSource(params): Promise<Result<DomainError, RegisterSourceSuccess>>
   async extractSource(params): Promise<Result<DomainError, ExtractSourceSuccess>>
   async ingestAndExtract(params): Promise<Result<DomainError, IngestAndExtractSuccess>>
+  async ingestFile(params): Promise<Result<DomainError, IngestFileSuccess>>
   async batchRegister(sources): Promise<BatchResult[]>
   async batchIngestAndExtract(sources): Promise<BatchResult[]>
 }
@@ -242,26 +294,23 @@ class SourceIngestionService {
 
 ## 4. Decisiones de Diseño Clave
 
-### 4.1 Separación Source / Extraction
+### 4.1 Tres Módulos Independientes
 
-**Decisión:** Separar el módulo en dos sub-módulos con responsabilidades distintas.
+**Decisión:** Separar el contexto en tres módulos con responsabilidades distintas.
 
 **Razón:**
 - `Source` solo almacena referencias y metadata (no contenido)
-- `ExtractionJob` almacena el contenido extraído
+- `Resource` gestiona archivos físicos y storage providers
+- `ExtractionJob` gestiona la extracción real de texto
 - Permite múltiples extracciones de la misma fuente
-- Reduce duplicación de datos
-- Facilita el versionado independiente
+- Cada módulo tiene su propio ciclo de vida
 
 ```
-Source (referencia)                ExtractionJob (contenido)
-├── name: "Manual.pdf"             ├── extractedText: "..."
-├── uri: "/docs/manual.pdf"        ├── contentHash: "abc123"
-├── type: Pdf                      ├── metadata: {...}
-└── versions: [                    └── status: Completed
-      {version: 1, hash: "abc123"},
-      {version: 2, hash: "def456"}
-    ]
+Source (referencia lógica)        Resource (archivo físico)         ExtractionJob (contenido)
+├── name: "Manual.pdf"            ├── originalName: "Manual.pdf"   ├── extractedText: "..."
+├── uri: "/docs/manual.pdf"       ├── mimeType: "application/pdf"  ├── contentHash: "abc123"
+├── type: Pdf                     ├── sizeBytes: 1024000           ├── metadata: {...}
+└── versions: [v1, v2]           └── status: Stored               └── status: Completed
 ```
 
 ### 4.2 Versionado por Hash
@@ -272,7 +321,6 @@ Source (referencia)                ExtractionJob (contenido)
 - No almacenar contenido duplicado en Source
 - Detección eficiente de cambios
 - Auditoría del historial de versiones
-- Bajo costo de almacenamiento
 
 ```typescript
 recordExtraction(contentHash: string): boolean {
@@ -296,25 +344,6 @@ recordExtraction(contentHash: string): boolean {
 - Composición funcional de operaciones
 - Mejor documentación de posibles errores
 - Evita try/catch anidados
-- Facilita el testing
-
-```typescript
-// Antes (excepciones)
-try {
-  const source = await registerSource.execute(cmd);
-  const extraction = await executeExtraction.execute(cmd2);
-} catch (e) {
-  // ¿Qué tipo de error?
-}
-
-// Después (Result)
-const sourceResult = await registerSource.execute(cmd);
-if (sourceResult.isFail()) {
-  return Result.fail(sourceResult.error);
-}
-const extractionResult = await executeExtraction.execute(cmd2);
-// Cada error tiene su tipo específico
-```
 
 ### 4.4 Políticas de Infraestructura
 
@@ -322,19 +351,19 @@ const extractionResult = await executeExtraction.execute(cmd2);
 
 **Razón:**
 - Configuración centralizada
-- Fácil cambiar entre entornos (browser/server)
+- Fácil cambiar entre entornos (browser/server/in-memory)
 - No modificar código de negocio
-- Permite overrides granulares
+- Permite overrides granulares por módulo
 
 ```typescript
 // Configuración simple
-createSourceIngestionService({ type: "server", dbPath: "./data" })
+createSourceIngestionService({ provider: "server", dbPath: "./data" })
 
-// Configuración mixta
+// Configuración con overrides por módulo
 createSourceIngestionService({
-  type: "browser",
+  provider: "browser",
   overrides: {
-    extraction: { type: "server", dbPath: "./extractions" }
+    extraction: { provider: "server", dbPath: "./extractions" }
   }
 })
 ```
@@ -346,48 +375,17 @@ createSourceIngestionService({
 **Razón:**
 - Transparencia: el use case ve exactamente qué extractores hay
 - Control: selección explícita por MIME type
-- Debugging: fácil identificar qué extractor se usa
 - Extensibilidad: agregar extractores sin modificar código existente
 
-```typescript
-// Registro explícito de extractores
-const extractors: ExtractorMap = new Map();
-extractors.set("text/plain", textExtractor);
-extractors.set("application/pdf", pdfExtractor);
-extractors.set("text/markdown", textExtractor);
+### 4.6 Composición a dos niveles
 
-// Selección directa en use case
-const extractor = extractors.get(command.mimeType);
-if (!extractor) {
-  return Result.fail(new UnsupportedMimeTypeError(...));
-}
-```
-
-### 4.6 Composer dedicado por aspecto
-
-**Decisión:** Métodos dedicados en Composer para resolver cada aspecto de infraestructura.
+**Decisión:** Separar la composición en nivel módulo y nivel contexto.
 
 **Razón:**
-- Single Responsibility: cada método resuelve un aspecto
-- Testeable: se pueden testear resoluciones individuales
-- Extensible: fácil agregar nuevos aspectos
-- Claro: intención explícita
-
-```typescript
-class ExtractionComposer {
-  private static async resolveRepository(policy): Promise<ExtractionJobRepository>
-  private static resolveExtractors(policy): Promise<ExtractorMap>
-  private static resolveEventPublisher(policy): EventPublisher
-
-  static async resolve(policy): Promise<ResolvedExtractionInfra> {
-    return {
-      repository: await this.resolveRepository(policy),
-      extractors: await this.resolveExtractors(policy),
-      eventPublisher: this.resolveEventPublisher(policy),
-    };
-  }
-}
-```
+- Nivel módulo: cada `[module]/composition/factory.ts` resuelve la infraestructura del módulo
+- Nivel contexto: `composition/factory.ts` orquesta las factories de módulos y define la `ServicePolicy`
+- El Service solo recibe dependencias resueltas (constructor injection puro)
+- Single Responsibility: composición separada de lógica de negocio
 
 ---
 
@@ -397,14 +395,17 @@ class ExtractionComposer {
 DomainError (abstract)
 ├── NotFoundError (abstract)
 │   ├── SourceNotFoundError
+│   ├── ResourceNotFoundError
 │   └── ExtractionJobNotFoundError
 ├── AlreadyExistsError (abstract)
-│   └── SourceAlreadyExistsError
+│   ├── SourceAlreadyExistsError
+│   └── ResourceAlreadyExistsError
 ├── ValidationError (abstract)
 │   ├── SourceNameRequiredError
 │   ├── SourceUriRequiredError
-│   ├── SourceInvalidUriError
 │   ├── SourceInvalidTypeError
+│   ├── ResourceInvalidNameError
+│   ├── ResourceInvalidMimeTypeError
 │   └── ExtractionSourceIdRequiredError
 ├── InvalidStateError (abstract)
 │   ├── ExtractionCannotStartError
@@ -413,15 +414,9 @@ DomainError (abstract)
 └── OperationError (abstract)
     ├── ExtractionFailedError
     ├── UnsupportedMimeTypeError
+    ├── ResourceStorageFailedError
     └── ContentHashingError
 ```
-
-Cada error incluye:
-- `code`: Código único para identificación programática
-- `message`: Mensaje descriptivo
-- `context`: Metadata adicional
-- `timestamp`: Momento del error
-- `toJSON()`: Serialización para logging/API
 
 ---
 
@@ -430,25 +425,25 @@ Cada error incluye:
 ### 6.1 Registro de Source
 
 ```
-┌─────────┐     ┌─────────────────┐     ┌────────────────┐     ┌────────────┐
-│ Cliente │────►│ Service         │────►│ RegisterSource │────►│ Repository │
-└─────────┘     │ registerSource()│     │ execute()      │     │ save()     │
-                └─────────────────┘     └────────────────┘     └────────────┘
-                                               │
-                                               ▼
-                                        ┌────────────────┐
-                                        │ EventPublisher │
-                                        │ publishAll()   │
-                                        └────────────────┘
+┌─────────┐     ┌──────────────────┐     ┌────────────────┐     ┌────────────┐
+│ Cliente │────►│ Service          │────►│ RegisterSource │────►│ Repository │
+└─────────┘     │ registerSource() │     │ execute()      │     │ save()     │
+                └──────────────────┘     └────────────────┘     └────────────┘
+                                                │
+                                                ▼
+                                         ┌────────────────┐
+                                         │ EventPublisher │
+                                         │ publishAll()   │
+                                         └────────────────┘
 ```
 
 ### 6.2 Extracción de Contenido
 
 ```
-┌─────────┐     ┌─────────────────┐     ┌───────────────────┐
-│ Cliente │────►│ Service         │────►│ SourceRepository  │
-└─────────┘     │ extractSource() │     │ findById()        │
-                └────────┬────────┘     └───────────────────┘
+┌─────────┐     ┌──────────────────┐     ┌───────────────────┐
+│ Cliente │────►│ Service          │────►│ SourceRepository  │
+└─────────┘     │ extractSource()  │     │ findById()        │
+                └────────┬─────────┘     └───────────────────┘
                          │
                          ▼
                 ┌──────────────────┐     ┌─────────────────┐
@@ -475,6 +470,22 @@ Cada error incluye:
                 └──────────────────┘
 ```
 
+### 6.3 Ingesta de Archivo
+
+```
+┌─────────┐     ┌──────────────────┐
+│ Cliente │────►│ Service          │
+└─────────┘     │ ingestFile()     │
+                └────────┬─────────┘
+                         │
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+   ┌────────────┐ ┌────────────┐ ┌────────────┐
+   │ 1. Store   │ │ 2. Register│ │ 3. Extract │
+   │ Resource   │→│ Source     │→│ Content    │
+   └────────────┘ └────────────┘ └────────────┘
+```
+
 ---
 
 ## 7. Eventos de Dominio
@@ -483,6 +494,9 @@ Cada error incluye:
 |--------|---------|---------|
 | `SourceRegistered` | `Source.register()` | `{name, type, uri}` |
 | `SourceUpdated` | `Source.recordExtraction()` | `{version, contentHash}` |
+| `SourceExtracted` | `Source.recordExtraction()` | `{sourceId, contentHash}` |
+| `ResourceStored` | `Resource.store()` | `{originalName, mimeType, storageLocation}` |
+| `ResourceDeleted` | `Resource.delete()` | `{resourceId}` |
 | `ExtractionCompleted` | `ExtractionJob.complete()` | `{sourceId, contentHash}` |
 | `ExtractionFailed` | `ExtractionJob.fail()` | `{sourceId, error}` |
 
@@ -505,35 +519,35 @@ Cada error incluye:
 
 ### 9.1 Opciones de Persistencia
 
-| Política | Repositorio | Uso |
+| Provider | Repositorio | Uso |
 |----------|-------------|-----|
-| `in-memory` | `InMemorySourceRepository` | Testing, desarrollo |
-| `browser` | `IndexedDBSourceRepository` | Aplicación web |
-| `server` | `NeDBSourceRepository` | Aplicación Node.js |
+| `in-memory` | `InMemory*Repository` | Testing, desarrollo |
+| `browser` | `IndexedDB*Repository` | Aplicación web |
+| `server` | `NeDB*Repository` | Aplicación Node.js |
 
 ### 9.2 Ejemplos de Configuración
 
 ```typescript
 // Testing
-const facade = await createSourceIngestionService({ type: "in-memory" });
+const service = await createSourceIngestionService({ provider: "in-memory" });
 
 // Browser app
-const facade = await createSourceIngestionService({
-  type: "browser",
+const service = await createSourceIngestionService({
+  provider: "browser",
   dbName: "knowledge-platform",
 });
 
 // Server app
-const facade = await createSourceIngestionService({
-  type: "server",
-  dbPath: "./data/source-ingestion",
+const service = await createSourceIngestionService({
+  provider: "server",
+  dbPath: "./data",
 });
 
-// Híbrido (overrides)
-const facade = await createSourceIngestionService({
-  type: "browser",
+// Híbrido (overrides por módulo)
+const service = await createSourceIngestionService({
+  provider: "browser",
   overrides: {
-    extraction: { type: "server", dbPath: "./extractions" },
+    extraction: { provider: "server", dbPath: "./extractions" },
   },
 });
 ```
@@ -556,17 +570,7 @@ class DocxContentExtractor implements ContentExtractor {
   }
 }
 
-// 2. Registrar en política de extracción
-const facade = await createSourceIngestionService({
-  type: "server",
-  overrides: {
-    extraction: {
-      customExtractors: new Map([
-        ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", new DocxContentExtractor()],
-      ]),
-    },
-  },
-});
+// 2. Registrar en la factory de extracción
 ```
 
 ### 10.2 Agregar Nuevo Repositorio
@@ -577,14 +581,7 @@ class PostgresSourceRepository implements SourceRepository {
   // Implementación...
 }
 
-// 2. Agregar caso en SourceComposer
-private static async resolveRepository(policy): Promise<SourceRepository> {
-  switch (policy.type) {
-    case "postgres":
-      return new PostgresSourceRepository(policy.connectionString);
-    // ... otros casos
-  }
-}
+// 2. Agregar caso en la factory de composición del módulo source
 ```
 
 ---
@@ -595,21 +592,21 @@ private static async resolveRepository(policy): Promise<SourceRepository> {
 
 El archivo `__tests__/e2e.test.ts` valida:
 
-1. ✅ Creación de Service
-2. ✅ Registro de Source
-3. ✅ Extracción de contenido
-4. ✅ Flujo completo (ingest + extract)
-5. ✅ Detección de cambios
-6. ✅ Operaciones batch
-7. ✅ Extracción de PDF real
+1. Creación de Service
+2. Registro de Source
+3. Extracción de contenido
+4. Flujo completo (ingest + extract)
+5. Detección de cambios
+6. Operaciones batch
+7. Extracción de PDF real
 
 ### 11.2 Ejecutar Tests
 
 ```bash
-npm run test:source-ingestion
+pnpm --filter @klay/core test:source-ingestion
 
 # Con PDF personalizado
-npm run test:source-ingestion -- /ruta/al/documento.pdf
+pnpm --filter @klay/core test:source-ingestion -- /ruta/al/documento.pdf
 ```
 
 ---
@@ -622,7 +619,7 @@ npm run test:source-ingestion -- /ruta/al/documento.pdf
 |-------------|-----|
 | `pdfjs-dist` | Extracción PDF en browser |
 | `pdf-extraction` | Extracción PDF en server |
-| `nedb` | Persistencia en server |
+| `nedb-promises` | Persistencia en server |
 
 ### 12.2 Compartidas (shared/)
 
@@ -636,16 +633,5 @@ npm run test:source-ingestion -- /ruta/al/documento.pdf
 
 ---
 
-## 13. Próximos Pasos Sugeridos
-
-1. **Integración con otros contextos**: Conectar con Semantic Processing
-2. **Event Bus distribuido**: Reemplazar InMemoryEventPublisher con Redis/Kafka
-3. **Más extractores**: Audio, video, imágenes (OCR)
-4. **Caching**: Caché de contenido extraído
-5. **Retry policies**: Reintentos en extracción fallida
-6. **Métricas**: Observabilidad del pipeline
-
----
-
 *Documento generado para el proyecto klay+ - Knowledge Platform*
-*Última actualización: Febrero 2025*
+*Última actualización: Febrero 2026*

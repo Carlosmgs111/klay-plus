@@ -21,9 +21,20 @@ Punto de entrada unico del contexto. Expone multiples niveles de abstraccion par
 
 ### Composicion
 
+La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
+
 ```
-KnowledgeRetrievalServiceComposer
+composition/
+├── factory.ts    → KnowledgeRetrievalServicePolicy + resolveKnowledgeRetrievalModules()
+└── index.ts      → re-exports
+
+resolveKnowledgeRetrievalModules(policy)
 └── semanticQueryFactory(policy) → { useCases: SemanticQueryUseCases, infra }
+```
+
+El Service recibe las dependencias resueltas via constructor injection:
+```
+createKnowledgeRetrievalService(policy) → resolveModules(policy) → new KnowledgeRetrievalService(modules)
 ```
 
 ### Cross-Context Wiring
