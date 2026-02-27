@@ -8,8 +8,6 @@ import { TransformationType } from "../lineage/domain/Transformation.js";
 import { Result, tryCatchAsync } from "../../../shared/domain/Result.js";
 import { DomainError, NotFoundError, OperationError } from "../../../shared/domain/errors/DomainError.js";
 
-// ─── Facade Errors ────────────────────────────────────────────────────────────
-
 export class SemanticUnitNotFoundError extends NotFoundError {
   constructor(id: string) {
     super("SemanticUnit", id);
@@ -42,8 +40,6 @@ export class LineageOperationError extends OperationError {
   }
 }
 
-// ─── Facade Result Types ─────────────────────────────────────────────────────
-
 export interface CreateSemanticUnitSuccess {
   unitId: string;
 }
@@ -75,8 +71,6 @@ export interface DeprecateSemanticUnitWithLineageSuccess {
 // Backward-compat aliases
 export type CreateSemanticUnitWithLineageSuccess = CreateSemanticUnitSuccess;
 
-// ─── Facade ──────────────────────────────────────────────────────────────────
-
 export class SemanticKnowledgeFacade {
   private readonly _semanticUnit: SemanticUnitUseCases;
   private readonly _lineage: LineageUseCases;
@@ -90,8 +84,6 @@ export class SemanticKnowledgeFacade {
     this._lineageRepository = modules.lineageRepository;
   }
 
-  // ─── Module Accessors ──────────────────────────────────────────────────────
-
   get semanticUnit(): SemanticUnitUseCases {
     return this._semanticUnit;
   }
@@ -99,8 +91,6 @@ export class SemanticKnowledgeFacade {
   get lineage(): LineageUseCases {
     return this._lineage;
   }
-
-  // ─── Workflow Operations ───────────────────────────────────────────────────
 
   /**
    * Creates a semantic unit (empty, no sources yet) and registers lineage.

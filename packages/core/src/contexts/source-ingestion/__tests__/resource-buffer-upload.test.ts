@@ -39,9 +39,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 1. Basic Buffer Upload
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Basic Buffer Upload", () => {
     it("should upload a text buffer and return correct URI and size", async () => {
@@ -160,9 +158,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 2. Aggregate State Verification
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Aggregate State After Upload", () => {
     it("should create a Resource aggregate with correct metadata after buffer upload", async () => {
@@ -241,9 +237,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 3. Resource Lifecycle: Store → Retrieve → Delete → Verify
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Resource Lifecycle", () => {
     it("should complete the full lifecycle: store → retrieve → delete → verify gone", async () => {
@@ -288,9 +282,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 4. Validation: Invalid Inputs
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Validation", () => {
     it("should reject upload with empty originalName", async () => {
@@ -368,9 +360,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 5. Full Workflow: ingestFile (buffer → storage → source → extraction)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("ingestFile Workflow — Buffer to Extraction", () => {
     it("should complete the full ingestFile pipeline with a text buffer", async () => {
@@ -507,9 +497,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 6. ingestExternalResource Workflow (No Upload)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("ingestExternalResource Workflow", () => {
     it("should register an external resource and extract content without upload", async () => {
@@ -564,9 +552,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 7. Buffer Encoding Fidelity
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Buffer Encoding Fidelity", () => {
     it("should correctly calculate size for multi-byte UTF-8 content", async () => {
@@ -619,9 +605,7 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 8. Real PDF Buffer Upload — Full ingestFile Pipeline
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Real PDF Buffer Upload", () => {
     const PDF_PATH = "D:\\Documentos\\Documents\\pdfs\\archivo-de-educacion.pdf";

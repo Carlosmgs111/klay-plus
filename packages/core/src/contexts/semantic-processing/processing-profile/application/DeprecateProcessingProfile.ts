@@ -23,7 +23,6 @@ export class DeprecateProcessingProfile {
   async execute(
     command: DeprecateProcessingProfileCommand,
   ): Promise<Result<ProfileError, ProcessingProfile>> {
-    // ─── Find Profile ─────────────────────────────────────────────────────
     const profileId = ProcessingProfileId.create(command.id);
     const profile = await this.repository.findById(profileId);
 
@@ -35,10 +34,8 @@ export class DeprecateProcessingProfile {
       return Result.fail(new ProfileAlreadyDeprecatedError(command.id));
     }
 
-    // ─── Deprecate Profile ────────────────────────────────────────────────
     profile.deprecate(command.reason);
 
-    // ─── Persist and Publish ──────────────────────────────────────────────
     await this.repository.save(profile);
     await this.eventPublisher.publishAll(profile.clearEvents());
 

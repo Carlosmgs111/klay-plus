@@ -1,7 +1,6 @@
 import type { SemanticUnitRepository } from "../domain/SemanticUnitRepository.js";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
-// ─── Use Cases ─────────────────────────────────────────────────────
 export { CreateSemanticUnit } from "./CreateSemanticUnit.js";
 export type { CreateSemanticUnitCommand } from "./CreateSemanticUnit.js";
 
@@ -20,7 +19,6 @@ export type { ReprocessSemanticUnitCommand } from "./ReprocessSemanticUnit.js";
 export { RollbackSemanticUnit } from "./RollbackSemanticUnit.js";
 export type { RollbackSemanticUnitCommand } from "./RollbackSemanticUnit.js";
 
-// ─── Use Cases Facade ──────────────────────────────────────────────
 import { CreateSemanticUnit } from "./CreateSemanticUnit.js";
 import { AddSourceToSemanticUnit } from "./AddSourceToSemanticUnit.js";
 import { RemoveSourceFromSemanticUnit } from "./RemoveSourceFromSemanticUnit.js";

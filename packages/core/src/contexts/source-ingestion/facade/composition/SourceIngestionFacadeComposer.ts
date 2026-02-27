@@ -22,7 +22,6 @@ import { resolveConfigProvider } from "../../../../platform/config/resolveConfig
  * - Application flows
  */
 export class SourceIngestionFacadeComposer {
-  // ─── Main Resolution ────────────────────────────────────────────────────────
 
   /**
    * Resolves all modules for the Source Ingestion context.

@@ -4,14 +4,10 @@ import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
 import type { ProcessingProfileMaterializer } from "./ProcessingProfileMaterializer.js";
 
-// ─── Infrastructure Policy ───────────────────────────────────────────────────
-
 export interface ProjectionInfrastructurePolicy {
   provider: string;
   dbPath?: string;
   dbName?: string;
-
-  // ─── Embedding Configuration (used by Materializer) ────────────────────────
 
   /** Dimensions for hash embeddings (in-memory only). Defaults to 128. */
   embeddingDimensions?: number;
@@ -34,8 +30,6 @@ export interface ProjectionInfrastructurePolicy {
    * @example "sentence-transformers/all-MiniLM-L6-v2" (HuggingFace)
    */
   embeddingModel?: string;
-
-  // ─── Environment Configuration ────────────────────────────────────────────
 
   /**
    * Configuration overrides for testing or explicit configuration.

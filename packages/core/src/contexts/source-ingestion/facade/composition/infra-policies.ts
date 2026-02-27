@@ -4,8 +4,6 @@ import type { ResourceUseCases } from "../../resource/application/index.js";
 import type { SourceRepository } from "../../source/domain/SourceRepository.js";
 import type { ResourceRepository } from "../../resource/domain/ResourceRepository.js";
 
-// ─── Override Types ─────────────────────────────────────────────────────────
-
 interface SourceOverrides {
   provider?: string;
   dbPath?: string;
@@ -24,8 +22,6 @@ interface ResourceOverrides {
   dbName?: string;
   uploadPath?: string;
 }
-
-// ─── Facade Policy ───────────────────────────────────────────────────────────
 
 export interface SourceIngestionFacadePolicy {
   provider: string;
@@ -67,8 +63,6 @@ export interface SourceIngestionFacadePolicy {
    */
   configOverrides?: Record<string, string>;
 }
-
-// ─── Resolved Modules ────────────────────────────────────────────────────────
 
 export interface ResolvedSourceIngestionModules {
   source: SourceUseCases;

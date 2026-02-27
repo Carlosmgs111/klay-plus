@@ -8,9 +8,7 @@
  * - Managing processing profiles (versionable, selectable configurations)
  */
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Projection Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   SemanticProjection,
   ProjectionId,
@@ -68,9 +66,7 @@ export type {
   MaterializedStrategies,
 } from "./projection/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Processing Profile Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   ProcessingProfile,
   ProcessingProfileId,
@@ -103,9 +99,7 @@ export type {
   ProcessingProfileFactoryResult,
 } from "./processing-profile/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Facade (Context-Level)
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   SemanticProcessingFacade,
   SemanticProcessingFacadeComposer,

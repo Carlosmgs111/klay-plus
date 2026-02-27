@@ -14,19 +14,15 @@
  * - Application flows
  */
 
-// ─── Composer (infrastructure wiring only) ──────────────────────────────────
 export { ProjectionComposer } from "./ProjectionComposer.js";
 
-// ─── Materializer (profile → strategies) ────────────────────────────────────
 export { ProcessingProfileMaterializer } from "./ProcessingProfileMaterializer.js";
 export type { MaterializedStrategies } from "./ProcessingProfileMaterializer.js";
 
-// ─── Policies ───────────────────────────────────────────────────────────────
 export type {
   ProjectionInfrastructurePolicy,
   ResolvedProjectionInfra,
 } from "./infra-policies.js";
 
-// ─── Factory (module entry point) ───────────────────────────────────────────
 export { projectionFactory } from "./projection.factory.js";
 export type { ProjectionFactoryResult } from "./projection.factory.js";

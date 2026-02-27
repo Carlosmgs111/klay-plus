@@ -16,8 +16,6 @@ import type {
   GetManifestSuccess,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
 
-// ─── UI Result Type ─────────────────────────────────────────────────────────
-
 /**
  * Generic result type for UI consumption.
  * Unwraps the Result<E, T> pattern into a simpler success/error shape.
@@ -34,8 +32,6 @@ export type UIResult<T> =
       };
     };
 
-// ─── UI Adapter ─────────────────────────────────────────────────────────────
-
 /**
  * KnowledgePipelineUIAdapter — Primary Adapter for UI consumers.
  *
@@ -44,7 +40,6 @@ export type UIResult<T> =
  *
  * This adapter:
  * - Receives KnowledgePipelinePort (never the implementation)
- * - Contains zero business logic
  * - Only transforms Result → UIResult
  */
 export class KnowledgePipelineUIAdapter {
@@ -84,8 +79,6 @@ export class KnowledgePipelineUIAdapter {
     const result = await this._pipeline.getManifest(input);
     return this._unwrap(result);
   }
-
-  // ─── Private ────────────────────────────────────────────────────────────────
 
   private _unwrap<T>(result: { isOk(): boolean; value: T; error: any }): UIResult<T> {
     if (result.isOk()) {

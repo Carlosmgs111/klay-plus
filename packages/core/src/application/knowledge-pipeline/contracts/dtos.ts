@@ -8,8 +8,6 @@
  * Adapters (UI, REST) construct these DTOs from their own input formats.
  */
 
-// ─── Full Pipeline ──────────────────────────────────────────────────────────
-
 export interface ExecutePipelineInput {
   /** Unique ID for the source being ingested */
   sourceId: string;
@@ -60,8 +58,6 @@ export interface ExecutePipelineSuccess {
   manifestId?: string;
 }
 
-// ─── Granular: Ingest Document ───────────────────────────────────────────────
-
 export interface IngestDocumentInput {
   sourceId: string;
   sourceName: string;
@@ -77,8 +73,6 @@ export interface IngestDocumentSuccess {
   extractedText: string;
   metadata: Record<string, unknown>;
 }
-
-// ─── Granular: Process Document ──────────────────────────────────────────────
 
 export interface ProcessDocumentInput {
   projectionId: string;
@@ -97,8 +91,6 @@ export interface ProcessDocumentSuccess {
   model: string;
 }
 
-// ─── Granular: Catalog Document ──────────────────────────────────────────────
-
 export interface CatalogDocumentInput {
   semanticUnitId: string;
   name: string;
@@ -114,8 +106,6 @@ export interface CatalogDocumentSuccess {
   unitId: string;
 }
 
-// ─── Processing Profile Management ──────────────────────────────────────────
-
 export interface CreateProcessingProfileInput {
   id: string;
   name: string;
@@ -128,8 +118,6 @@ export interface CreateProcessingProfileSuccess {
   profileId: string;
   version: number;
 }
-
-// ─── Granular: Search Knowledge ──────────────────────────────────────────────
 
 export interface SearchKnowledgeInput {
   queryText: string;
@@ -149,8 +137,6 @@ export interface SearchKnowledgeSuccess {
   }>;
   totalFound: number;
 }
-
-// ─── Manifest: Get Resource Manifest ─────────────────────────────────────────
 
 export interface GetManifestInput {
   /** Query by resource ID */

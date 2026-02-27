@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════
 // Source Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   Source,
   SourceId,
@@ -25,9 +23,7 @@ export type {
   SourceFactoryResult,
 } from "./source/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Resource Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   Resource,
   ResourceId,
@@ -64,9 +60,7 @@ export type {
   ResourceFactoryResult,
 } from "./resource/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Extraction Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   ExtractionJob,
   ExtractionJobId,
@@ -96,9 +90,7 @@ export type {
   ExtractorMap,
 } from "./extraction/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Context Facade (Application Layer Entry Point)
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   SourceIngestionFacade,
   SourceIngestionFacadeComposer,

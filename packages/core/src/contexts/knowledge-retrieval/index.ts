@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════
 // Semantic Query Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   Query,
   QueryId,
@@ -31,9 +29,7 @@ export type {
   SemanticQueryFactoryResult,
 } from "./semantic-query/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Facade Module (Recommended Entry Point)
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   KnowledgeRetrievalFacade,
   KnowledgeRetrievalFacadeComposer,

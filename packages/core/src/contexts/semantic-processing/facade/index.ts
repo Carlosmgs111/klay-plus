@@ -1,4 +1,3 @@
-// ─── Facade ─────────────────────────────────────────────────────────────────
 export { SemanticProcessingFacade } from "./SemanticProcessingFacade.js";
 export type {
   ProcessContentSuccess,
@@ -7,14 +6,12 @@ export type {
   DeprecateProfileSuccess,
 } from "./SemanticProcessingFacade.js";
 
-// ─── Composition ────────────────────────────────────────────────────────────
 export { SemanticProcessingFacadeComposer } from "./composition/SemanticProcessingFacadeComposer.js";
 export type {
   SemanticProcessingFacadePolicy,
   ResolvedSemanticProcessingModules,
 } from "./composition/infra-policies.js";
 
-// ─── Facade Factory ─────────────────────────────────────────────────────────
 import type { SemanticProcessingFacadePolicy } from "./composition/infra-policies.js";
 import type { SemanticProcessingFacade as _Facade } from "./SemanticProcessingFacade.js";
 

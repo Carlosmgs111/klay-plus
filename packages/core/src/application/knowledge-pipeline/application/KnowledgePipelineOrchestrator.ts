@@ -84,8 +84,6 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     this._getManifest = new GetManifest(deps.manifestRepository);
   }
 
-  // ─── KnowledgePipelinePort Implementation ──────────────────────────────────
-
   async execute(
     input: ExecutePipelineInput,
   ): Promise<Result<KnowledgePipelineError, ExecutePipelineSuccess>> {

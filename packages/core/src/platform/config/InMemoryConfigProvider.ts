@@ -53,8 +53,6 @@ export class InMemoryConfigProvider implements ConfigProvider {
     return this.values.has(key);
   }
 
-  // ─── Mutable Methods (for test setup) ────────────────────────────────────────
-
   /**
    * Sets a configuration value.
    * Useful for test setup.

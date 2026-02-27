@@ -1,7 +1,5 @@
 import type { ResolvedManagementDependencies } from "../application/KnowledgeManagementOrchestrator.js";
 
-// --- Management Policy ---
-
 /**
  * Policy for the Knowledge Management orchestrator.
  *
@@ -27,8 +25,6 @@ export interface KnowledgeManagementPolicy {
    */
   configOverrides?: Record<string, string>;
 }
-
-// --- Composer ---
 
 /**
  * KnowledgeManagementComposer — creates and wires the 3 bounded context facades

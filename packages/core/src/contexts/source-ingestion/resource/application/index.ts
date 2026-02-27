@@ -2,7 +2,6 @@ import type { ResourceRepository } from "../domain/ResourceRepository.js";
 import type { ResourceStorage } from "../domain/ResourceStorage.js";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
-// ─── Use Cases ─────────────────────────────────────────────────────
 export { StoreResource } from "./StoreResource.js";
 export type { StoreResourceCommand, StoreResourceResult } from "./StoreResource.js";
 
@@ -14,7 +13,6 @@ export type { DeleteResourceCommand } from "./DeleteResource.js";
 
 export { GetResource } from "./GetResource.js";
 
-// ─── Use Cases Facade ──────────────────────────────────────────────
 import { StoreResource } from "./StoreResource.js";
 import { RegisterExternalResource } from "./RegisterExternalResource.js";
 import { DeleteResource } from "./DeleteResource.js";

@@ -8,8 +8,6 @@
  * Adapters (UI, REST) construct these DTOs from their own input formats.
  */
 
-// --- Ingest and Add Source ---
-
 export interface IngestAndAddSourceInput {
   /** Existing semantic unit to add the source to */
   unitId: string;

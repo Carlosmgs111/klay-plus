@@ -2,8 +2,6 @@ import type { VectorStoreConfig } from "../../semantic-query/composition/infra-p
 import type { SemanticQueryUseCases } from "../../semantic-query/application/index.js";
 import type { ResolvedSemanticQueryInfra } from "../../semantic-query/composition/infra-policies.js";
 
-// ─── Override Types ─────────────────────────────────────────────────────────
-
 /**
  * Override type for SemanticQuery module within the facade.
  * Does NOT include vectorStoreConfig (always inherited from facade).
@@ -18,8 +16,6 @@ interface SemanticQueryOverrides {
   configOverrides?: Record<string, string>;
 }
 
-// ─── Facade Policy ───────────────────────────────────────────────────────────
-
 export interface KnowledgeRetrievalFacadePolicy {
   provider: string;
   /**
@@ -32,8 +28,6 @@ export interface KnowledgeRetrievalFacadePolicy {
    * @default 128
    */
   embeddingDimensions?: number;
-
-  // ─── Embedding Configuration ──────────────────────────────────────────────
 
   /**
    * Embedding provider to use.
@@ -67,8 +61,6 @@ export interface KnowledgeRetrievalFacadePolicy {
    */
   configOverrides?: Record<string, string>;
 }
-
-// ─── Resolved Modules ────────────────────────────────────────────────────────
 
 export interface ResolvedKnowledgeRetrievalModules {
   semanticQuery: SemanticQueryUseCases;

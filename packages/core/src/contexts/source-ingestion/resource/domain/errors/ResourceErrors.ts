@@ -5,23 +5,17 @@ import {
   OperationError,
 } from "../../../../../shared/domain/errors/index.js";
 
-// ─── Not Found Errors ────────────────────────────────────────────────────────
-
 export class ResourceNotFoundError extends NotFoundError {
   constructor(resourceId: string) {
     super("Resource", resourceId);
   }
 }
 
-// ─── Already Exists Errors ───────────────────────────────────────────────────
-
 export class ResourceAlreadyExistsError extends AlreadyExistsError {
   constructor(resourceId: string) {
     super("Resource", resourceId);
   }
 }
-
-// ─── Validation Errors ───────────────────────────────────────────────────────
 
 export class ResourceInvalidNameError extends ValidationError {
   constructor() {
@@ -35,15 +29,11 @@ export class ResourceInvalidMimeTypeError extends ValidationError {
   }
 }
 
-// ─── Operation Errors ────────────────────────────────────────────────────────
-
 export class ResourceStorageFailedError extends OperationError {
   constructor(reason: string) {
     super("Resource", "upload", reason);
   }
 }
-
-// ─── Type Alias for Union ────────────────────────────────────────────────────
 
 export type ResourceError =
   | ResourceNotFoundError

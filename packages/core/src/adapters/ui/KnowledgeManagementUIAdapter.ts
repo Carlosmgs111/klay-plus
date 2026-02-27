@@ -13,7 +13,6 @@ import type { UIResult } from "./KnowledgePipelineUIAdapter.js";
  *
  * This adapter:
  * - Receives KnowledgeManagementPort (never the implementation)
- * - Contains zero business logic
  * - Only transforms Result → UIResult
  */
 export class KnowledgeManagementUIAdapter {
@@ -23,8 +22,6 @@ export class KnowledgeManagementUIAdapter {
     const result = await this._management.ingestAndAddSource(input);
     return this._unwrap(result);
   }
-
-  // --- Private ---
 
   private _unwrap<T>(result: { isOk(): boolean; value: T; error: any }): UIResult<T> {
     if (result.isOk()) {

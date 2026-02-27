@@ -23,8 +23,6 @@ describe("Knowledge Retrieval Context E2E", () => {
 
   const DIMENSIONS = 128;
 
-  // ─── Test Data ────────────────────────────────────────────────────────────
-
   const testEntries: VectorEntry[] = [
     {
       id: "entry-1",
@@ -63,8 +61,6 @@ describe("Knowledge Retrieval Context E2E", () => {
     },
   ];
 
-  // ─── Setup ────────────────────────────────────────────────────────────────
-
   beforeAll(async () => {
     console.log("🧪 Starting End-to-End Test for Knowledge Retrieval Context\n");
 
@@ -83,8 +79,6 @@ describe("Knowledge Retrieval Context E2E", () => {
     });
     console.log("   ✅ Facade created successfully\n");
   });
-
-  // ─── Tests ────────────────────────────────────────────────────────────────
 
   it("should perform a semantic query", async () => {
     console.log("🔍 Performing semantic query...");

@@ -12,10 +12,8 @@
  * - Application flows
  */
 
-// ─── Composer (facade wiring) ───────────────────────────────────────────────
 export { SourceIngestionFacadeComposer } from "./SourceIngestionFacadeComposer.js";
 
-// ─── Policies ───────────────────────────────────────────────────────────────
 export type {
   SourceIngestionFacadePolicy,
   ResolvedSourceIngestionModules,

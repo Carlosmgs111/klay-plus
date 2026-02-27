@@ -23,8 +23,6 @@ import type { QueryEmbedder } from "../domain/ports/QueryEmbedder.js";
 import type { VectorReadStore } from "../domain/ports/VectorReadStore.js";
 import type { ConfigProvider } from "../../../../platform/config/index.js";
 
-// ─── Factory Result Contract ─────────────────────────────────────────────────
-
 export interface SemanticQueryFactoryResult {
   /** Assembled use cases ready for consumption */
   useCases: SemanticQueryUseCases;
@@ -35,8 +33,6 @@ export interface SemanticQueryFactoryResult {
    */
   infra: ResolvedSemanticQueryInfra;
 }
-
-// ─── Config Resolution ──────────────────────────────────────────────────────
 
 async function resolveConfigProvider(
   policy: SemanticQueryInfrastructurePolicy,
@@ -53,8 +49,6 @@ async function resolveConfigProvider(
   return new NodeConfigProvider();
 }
 
-// ─── Factory Function ────────────────────────────────────────────────────────
-
 export async function semanticQueryFactory(
   policy: SemanticQueryInfrastructurePolicy,
 ): Promise<SemanticQueryFactoryResult> {
@@ -62,7 +56,6 @@ export async function semanticQueryFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Determine embedder provider name ────────────────────────────────────
   const embedderProvider =
     policy.embeddingProvider && policy.embeddingProvider !== "hash"
       ? policy.embeddingProvider
@@ -70,10 +63,8 @@ export async function semanticQueryFactory(
         ? "browser-webllm"
         : "hash";
 
-  // ─── Resolve ConfigProvider for AI embedder factories ────────────────────
   const config = await resolveConfigProvider(policy);
 
-  // ─── VectorReadStore Registry ────────────────────────────────────────────
   const vectorReadStoreRegistry = new ProviderRegistryBuilder<VectorReadStore>()
     .add("in-memory", {
       create: async (p) => {
@@ -110,7 +101,6 @@ export async function semanticQueryFactory(
     })
     .build();
 
-  // ─── QueryEmbedder Registry ──────────────────────────────────────────────
   const queryEmbedderRegistry = new ProviderRegistryBuilder<QueryEmbedder>()
     .add("hash", {
       create: async (p) => {
@@ -170,7 +160,6 @@ export async function semanticQueryFactory(
     })
     .build();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { SemanticQueryComposer } = await import("./SemanticQueryComposer.js");
   const infra = await SemanticQueryComposer.resolve(policy, embedderProvider, {
     vectorReadStore: vectorReadStoreRegistry,

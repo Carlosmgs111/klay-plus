@@ -10,8 +10,6 @@
  * No shared repositories, no cross-context entity references, no coupled infrastructure.
  */
 
-// ─── Source Ingestion → Semantic Knowledge ─────────────────────────
-
 export interface SourceExtractedEvent {
   readonly eventType: "source-ingestion.source.extracted";
   readonly sourceId: string;
@@ -21,8 +19,6 @@ export interface SourceExtractedEvent {
   readonly version: number;
   readonly extractedAt: Date;
 }
-
-// ─── Semantic Knowledge → Semantic Processing ──────────────────────
 
 export interface SemanticUnitCreatedEvent {
   readonly eventType: "semantic-knowledge.semantic-unit.created";
@@ -49,8 +45,6 @@ export interface SemanticUnitReprocessRequestedEvent {
   readonly reason: string;
 }
 
-// ─── Semantic Processing → Knowledge Retrieval ─────────────────────
-
 export interface ProjectionGeneratedEvent {
   readonly eventType: "semantic-processing.projection.generated";
   readonly projectionId: string;
@@ -60,8 +54,6 @@ export interface ProjectionGeneratedEvent {
   readonly processingProfileId: string;
   readonly processingProfileVersion: number;
 }
-
-// ─── Union type for all integration events ─────────────────────────
 
 export type IntegrationEvent =
   | SourceExtractedEvent

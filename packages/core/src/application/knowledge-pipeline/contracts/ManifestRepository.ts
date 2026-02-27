@@ -7,19 +7,14 @@ import type { ContentManifestEntry } from "../domain/ContentManifest.js";
  * that track cross-context associations.
  */
 export interface ManifestRepository {
-  /** Persist a manifest entry */
   save(manifest: ContentManifestEntry): Promise<void>;
 
-  /** Find a manifest by its ID */
   findById(id: string): Promise<ContentManifestEntry | null>;
 
-  /** Find all manifests for a given resource */
   findByResourceId(resourceId: string): Promise<ContentManifestEntry[]>;
 
-  /** Find all manifests for a given source */
   findBySourceId(sourceId: string): Promise<ContentManifestEntry[]>;
 
-  /** Find all manifests for a given semantic unit */
   findBySemanticUnitId(semanticUnitId: string): Promise<ContentManifestEntry[]>;
 
   /** Retrieve all manifests */

@@ -15,9 +15,6 @@ import type { ResourceInfrastructurePolicy, ResolvedResourceInfra } from "./infr
 import type { ResourceUseCases } from "../application/index.js";
 import type { ResourceRepository } from "../domain/ResourceRepository.js";
 import type { ResourceStorage } from "../domain/ResourceStorage.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-
-// ─── Factory Result Contract ─────────────────────────────────────────────────
 
 export interface ResourceFactoryResult {
   /** Assembled use cases ready for consumption */
@@ -30,8 +27,6 @@ export interface ResourceFactoryResult {
   infra: ResolvedResourceInfra;
 }
 
-// ─── Factory Function ────────────────────────────────────────────────────────
-
 export async function resourceFactory(
   policy: ResourceInfrastructurePolicy,
 ): Promise<ResourceFactoryResult> {
@@ -39,7 +34,6 @@ export async function resourceFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<ResourceRepository>()
     .add("in-memory", {
       create: async () => {
@@ -70,7 +64,6 @@ export async function resourceFactory(
     })
     .build();
 
-  // ─── Storage Registry ──────────────────────────────────────────────────────
   const storageRegistry = new ProviderRegistryBuilder<ResourceStorage>()
     .add("in-memory", {
       create: async () => {
@@ -101,35 +94,11 @@ export async function resourceFactory(
     })
     .build();
 
-  // ─── EventPublisher Registry ───────────────────────────────────────────────
-  const eventPublisherRegistry = new ProviderRegistryBuilder<EventPublisher>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("server", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .build();
+  const { createEventPublisherRegistry } = await import(
+    "../../../../platform/composition/createEventPublisherRegistry.js"
+  );
+  const eventPublisherRegistry = createEventPublisherRegistry();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { ResourceComposer } = await import("./ResourceComposer.js");
   const infra = await ResourceComposer.resolve(policy, {
     repository: repositoryRegistry,

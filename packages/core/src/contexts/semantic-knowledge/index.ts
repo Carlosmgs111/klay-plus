@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════
 // Semantic Unit Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   SemanticUnit,
   SemanticUnitId,
@@ -40,9 +38,7 @@ export type {
   ReprocessSemanticUnitCommand,
 } from "./semantic-unit/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Lineage Module
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   KnowledgeLineage,
   LineageId,
@@ -63,9 +59,7 @@ export type {
   RegisterTransformationCommand,
 } from "./lineage/index.js";
 
-// ═══════════════════════════════════════════════════════════════════════════
 // Facade Module (Recommended Entry Point)
-// ═══════════════════════════════════════════════════════════════════════════
 export {
   SemanticKnowledgeFacade,
   SemanticKnowledgeFacadeComposer,

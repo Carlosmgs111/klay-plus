@@ -26,7 +26,6 @@ export class UpdateProcessingProfile {
   async execute(
     command: UpdateProcessingProfileCommand,
   ): Promise<Result<ProfileError, ProcessingProfile>> {
-    // ─── Find Profile ─────────────────────────────────────────────────────
     const profileId = ProcessingProfileId.create(command.id);
     const profile = await this.repository.findById(profileId);
 
@@ -38,7 +37,6 @@ export class UpdateProcessingProfile {
       return Result.fail(new ProfileDeprecatedError(command.id));
     }
 
-    // ─── Update Profile ───────────────────────────────────────────────────
     profile.update({
       name: command.name,
       chunkingStrategyId: command.chunkingStrategyId,
@@ -46,7 +44,6 @@ export class UpdateProcessingProfile {
       configuration: command.configuration,
     });
 
-    // ─── Persist and Publish ──────────────────────────────────────────────
     await this.repository.save(profile);
     await this.eventPublisher.publishAll(profile.clearEvents());
 

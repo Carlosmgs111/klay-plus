@@ -52,8 +52,6 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
     this._createdAt = createdAt;
   }
 
-  // ─── Accessors ──────────────────────────────────────────────────────────────
-
   get name(): string {
     return this._name;
   }
@@ -89,8 +87,6 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
   get createdAt(): Date {
     return this._createdAt;
   }
-
-  // ─── Factory Methods ────────────────────────────────────────────────────────
 
   /**
    * Creates a new active processing profile.
@@ -164,8 +160,6 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
       createdAt,
     );
   }
-
-  // ─── Domain Behaviors ───────────────────────────────────────────────────────
 
   /**
    * Updates the profile's strategy configuration.

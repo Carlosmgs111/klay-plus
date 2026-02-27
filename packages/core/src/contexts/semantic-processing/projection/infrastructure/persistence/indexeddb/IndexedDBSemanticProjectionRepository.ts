@@ -1,62 +1,46 @@
 import type { SemanticProjectionRepository } from "../../../domain/SemanticProjectionRepository.js";
 import type { SemanticProjection } from "../../../domain/SemanticProjection.js";
-import type { ProjectionId } from "../../../domain/ProjectionId.js";
 import type { ProjectionType } from "../../../domain/ProjectionType.js";
 import type { ProjectionStatus } from "../../../domain/ProjectionStatus.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
 import { toDTO, fromDTO, type ProjectionDTO } from "./ProjectionDTO.js";
 
-export class IndexedDBSemanticProjectionRepository implements SemanticProjectionRepository {
-  private store: IndexedDBStore<ProjectionDTO>;
-
+export class IndexedDBSemanticProjectionRepository
+  extends BaseIndexedDBRepository<SemanticProjection, ProjectionDTO>
+  implements SemanticProjectionRepository
+{
   constructor(dbName: string = "knowledge-platform") {
-    this.store = new IndexedDBStore<ProjectionDTO>(dbName, "semantic-projections");
+    super(dbName, "semantic-projections");
   }
 
-  async save(entity: SemanticProjection): Promise<void> {
-    await this.store.put(entity.id.value, toDTO(entity));
-  }
-
-  async findById(id: ProjectionId): Promise<SemanticProjection | null> {
-    const dto = await this.store.get(id.value);
-    return dto ? fromDTO(dto) : null;
-  }
-
-  async delete(id: ProjectionId): Promise<void> {
-    await this.store.remove(id.value);
-  }
+  protected toDTO = toDTO;
+  protected fromDTO = fromDTO;
 
   async findBySemanticUnitId(semanticUnitId: string): Promise<SemanticProjection[]> {
-    const all = await this.store.getAll();
-    return all.filter((d) => d.semanticUnitId === semanticUnitId).map(fromDTO);
+    return this.findWhere((d) => d.semanticUnitId === semanticUnitId);
   }
 
   async findBySemanticUnitIdAndType(
     semanticUnitId: string,
     type: ProjectionType,
   ): Promise<SemanticProjection | null> {
-    const all = await this.store.getAll();
-    const found = all.find(
+    return this.findOneWhere(
       (d) => d.semanticUnitId === semanticUnitId && d.type === type,
     );
-    return found ? fromDTO(found) : null;
   }
 
   async findByStatus(status: ProjectionStatus): Promise<SemanticProjection[]> {
-    const all = await this.store.getAll();
-    return all.filter((d) => d.status === status).map(fromDTO);
+    return this.findWhere((d) => d.status === status);
   }
 
   async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
-    const all = await this.store.getAll();
-    return all.filter((d) => d.sourceId === sourceId).map(fromDTO);
+    return this.findWhere((d) => d.sourceId === sourceId);
   }
 
   async deleteBySourceId(sourceId: string): Promise<void> {
-    const all = await this.store.getAll();
-    const matching = all.filter((d) => d.sourceId === sourceId);
-    for (const dto of matching) {
-      await this.store.remove(dto.id);
-    }
+    return this.deleteWhere(
+      (d) => d.sourceId === sourceId,
+      (d) => d.id,
+    );
   }
 }

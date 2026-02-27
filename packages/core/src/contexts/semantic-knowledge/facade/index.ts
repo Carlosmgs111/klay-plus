@@ -1,4 +1,3 @@
-// ─── Facade ──────────────────────────────────────────────────────────────────
 export {
   SemanticKnowledgeFacade,
   SemanticUnitNotFoundError,
@@ -18,14 +17,12 @@ export type {
   DeprecateSemanticUnitWithLineageSuccess,
 } from "./SemanticKnowledgeFacade.js";
 
-// ─── Composition ─────────────────────────────────────────────────────────────
 export { SemanticKnowledgeFacadeComposer } from "./composition/SemanticKnowledgeFacadeComposer.js";
 export type {
   SemanticKnowledgeFacadePolicy,
   ResolvedSemanticKnowledgeModules,
 } from "./composition/infra-policies.js";
 
-// ─── Facade Factory ──────────────────────────────────────────────────────────
 import type { SemanticKnowledgeFacadePolicy } from "./composition/infra-policies.js";
 import type { SemanticKnowledgeFacade as _Facade } from "./SemanticKnowledgeFacade.js";
 

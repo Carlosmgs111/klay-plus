@@ -33,25 +33,19 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-// ─── Context Facades ─────────────────────────────────────────────────────────
 import { createSourceIngestionFacade } from "../../contexts/source-ingestion/facade/index.js";
 import { createSemanticProcessingFacade } from "../../contexts/semantic-processing/facade/index.js";
 import { createSemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/index.js";
 import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/index.js";
 
-// ─── Domain Types ────────────────────────────────────────────────────────────
 import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType.js";
 import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType.js";
-// ─── Facade Types ────────────────────────────────────────────────────────────
 import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade.js";
 import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade.js";
 import type { SemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade.js";
 import type { KnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade.js";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 const DIMENSIONS = 128;
-
-// ─── Load Test Documents from Fixtures ───────────────────────────────────────
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,7 +61,6 @@ const DOCUMENT_CLEAN_ARCH = loadFixture("clean-architecture.txt");
 const DOCUMENT_EVENT_SOURCING = loadFixture("event-sourcing.txt");
 const DOCUMENT_DDD_UPDATED = loadFixture("ddd-overview-updated.txt");
 
-// ─── Optional PDF Path ──────────────────────────────────────────────────────
 // Pass via:
 //   Environment variable: PDF_PATH=/path/to/doc.pdf npm run test:integration
 //   CLI argument:         npm run test:integration -- /path/to/doc.pdf
@@ -90,18 +83,12 @@ function resolvePdfPath(): string | undefined {
 const PDF_PATH = resolvePdfPath();
 const PDF_AVAILABLE = PDF_PATH != null && fs.existsSync(PDF_PATH);
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// INTEGRATION TEST SUITE
-// ═══════════════════════════════════════════════════════════════════════════════
-
 describe("Full-Pipeline Integration: All Bounded Contexts", () => {
-  // ─── Facades ─────────────────────────────────────────────────────────────
   let ingestion: SourceIngestionFacade;
   let processing: SemanticProcessingFacade;
   let knowledge: SemanticKnowledgeFacade;
   let retrieval: KnowledgeRetrievalFacade;
 
-  // ─── Tracking IDs across contexts ────────────────────────────────────────
   const ids = {
     ddd: { sourceId: "", unitId: "" },
     cleanArch: { sourceId: "", unitId: "" },
@@ -109,15 +96,11 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     pdf: { sourceId: "", unitId: "" },
   };
 
-  // ─── Processing Profile ID (created in beforeAll) ────────────────────────
   let processingProfileId = "";
 
-  // ─── Shared state for PDF flow ───────────────────────────────────────────
   let pdfExtractedText = "";
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // SETUP: Initialize all 4 bounded contexts (server with temp DB for isolation)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   beforeAll(async () => {
     console.log("═══════════════════════════════════════════════════════════════");
@@ -185,10 +168,8 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     console.log();
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 1: Single Document Ingestion Pipeline
   //   Source Ingestion → Semantic Processing → Semantic Knowledge
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 1: Single Document Ingestion Pipeline", () => {
     it("should ingest and extract a document (Source Ingestion)", async () => {
@@ -259,9 +240,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 2: Batch Ingestion of Multiple Documents
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 2: Batch Document Ingestion", () => {
     it("should batch ingest multiple documents (Source Ingestion)", async () => {
@@ -374,9 +353,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 3: Knowledge Retrieval (Query the knowledge base)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 3: Knowledge Retrieval", () => {
     it("should perform semantic query across all documents", async () => {
@@ -459,9 +436,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 4: Content Update & Re-Processing (Version + Lineage)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 4: Content Update & Re-Processing", () => {
     it("should add enrichment source to semantic unit (Semantic Knowledge)", async () => {
@@ -545,9 +520,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 5: Deduplication Detection
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 5: Deduplication Detection", () => {
     it("should detect similar content in the knowledge base", async () => {
@@ -585,9 +558,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 6: Processing Profile Management (Semantic Processing)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 6: Processing Profile Management", () => {
     it("should create a new processing profile", async () => {
@@ -655,9 +626,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 7: Error Handling & Edge Cases
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 7: Error Handling & Edge Cases", () => {
     it("should reject duplicate source ingestion", async () => {
@@ -725,9 +694,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 8: Cross-Context Integrity Verification
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 8: Cross-Context Integrity", () => {
     it("should maintain traceability: sourceId → unitId → vectors → retrieval", async () => {
@@ -800,9 +767,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 9: Resource Management (Source Ingestion)
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Flow 9: Resource Management", () => {
     it("should store a resource via buffer upload", async () => {
@@ -1007,13 +972,11 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // FLOW 10: Real PDF Pipeline (Optional)
   //   Runs only when PDF_PATH env var points to an existing PDF file.
   //   Tests the complete pipeline: PDF extraction → processing → cataloging → retrieval
   //
   //   Usage: PDF_PATH=./my-doc.pdf npx vitest run ...
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe.skipIf(!PDF_AVAILABLE)("Flow 10: Real PDF Pipeline", () => {
     it("should ingest and extract a real PDF (Source Ingestion)", async () => {

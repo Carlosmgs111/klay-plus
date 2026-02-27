@@ -13,7 +13,6 @@ async function runTests() {
   console.log(" ConfigProvider Module Tests");
   console.log("========================================================\n");
 
-  // ─── Test InMemoryConfigProvider ─────────────────────────────────────────────
   console.log("1. InMemoryConfigProvider:");
 
   const inMemoryConfig = new InMemoryConfigProvider({
@@ -66,7 +65,6 @@ async function runTests() {
 
   console.log();
 
-  // ─── Test NodeConfigProvider ─────────────────────────────────────────────────
   console.log("2. NodeConfigProvider:");
 
   const mockEnv = {
@@ -90,7 +88,6 @@ async function runTests() {
 
   console.log();
 
-  // ─── Test ConfigurationError ─────────────────────────────────────────────────
   console.log("3. ConfigurationError:");
 
   const error = new ConfigurationError("MISSING_KEY");

@@ -12,10 +12,8 @@
  * - Application flows
  */
 
-// ─── Composer (facade wiring) ───────────────────────────────────────────────
 export { SemanticKnowledgeFacadeComposer } from "./SemanticKnowledgeFacadeComposer.js";
 
-// ─── Policies ───────────────────────────────────────────────────────────────
 export type {
   SemanticKnowledgeFacadePolicy,
   ResolvedSemanticKnowledgeModules,

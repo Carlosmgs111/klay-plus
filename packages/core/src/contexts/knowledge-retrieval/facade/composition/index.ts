@@ -12,10 +12,8 @@
  * - Application flows
  */
 
-// ─── Composer (facade wiring) ───────────────────────────────────────────────
 export { KnowledgeRetrievalFacadeComposer } from "./KnowledgeRetrievalFacadeComposer.js";
 
-// ─── Policies ───────────────────────────────────────────────────────────────
 export type {
   KnowledgeRetrievalFacadePolicy,
   ResolvedKnowledgeRetrievalModules,

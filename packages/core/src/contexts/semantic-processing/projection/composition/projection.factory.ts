@@ -22,10 +22,6 @@ import type { ProjectionUseCases } from "../application/index.js";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
 import type { SemanticProjectionRepository } from "../domain/SemanticProjectionRepository.js";
 import type { VectorWriteStore } from "../domain/ports/VectorWriteStore.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-
-// ─── Factory Result Contract ────────────────────────────────────────────────
-
 export interface ProjectionFactoryResult {
   /** Assembled use cases ready for consumption */
   useCases: ProjectionUseCases;
@@ -37,8 +33,6 @@ export interface ProjectionFactoryResult {
   infra: ResolvedProjectionInfra;
 }
 
-// ─── Factory Function ───────────────────────────────────────────────────────
-
 export async function projectionFactory(
   policy: ProjectionInfrastructurePolicy,
   profileRepository: ProcessingProfileRepository,
@@ -47,7 +41,6 @@ export async function projectionFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<SemanticProjectionRepository>()
     .add("in-memory", {
       create: async () => {
@@ -80,7 +73,6 @@ export async function projectionFactory(
     })
     .build();
 
-  // ─── VectorWriteStore Registry ───────────────────────────────────────────
   const vectorWriteStoreRegistry = new ProviderRegistryBuilder<VectorWriteStore>()
     .add("in-memory", {
       create: async () => {
@@ -112,35 +104,11 @@ export async function projectionFactory(
     })
     .build();
 
-  // ─── EventPublisher Registry ─────────────────────────────────────────────
-  const eventPublisherRegistry = new ProviderRegistryBuilder<EventPublisher>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("server", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .build();
+  const { createEventPublisherRegistry } = await import(
+    "../../../../platform/composition/createEventPublisherRegistry.js"
+  );
+  const eventPublisherRegistry = createEventPublisherRegistry();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { ProjectionComposer } = await import("./ProjectionComposer.js");
   const infra = await ProjectionComposer.resolve(policy, profileRepository, {
     repository: repositoryRegistry,

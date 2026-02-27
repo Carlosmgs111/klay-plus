@@ -27,7 +27,6 @@ const TEXT_MIME_TYPES = [
  * Extractors are resolved separately (environment-based, not a registry concern).
  */
 export class ExtractionComposer {
-  // ─── Extractors Resolution ──────────────────────────────────────────────────
 
   private static async resolveExtractors(
     policy: ExtractionInfrastructurePolicy,
@@ -65,8 +64,6 @@ export class ExtractionComposer {
 
     return extractors;
   }
-
-  // ─── Main Resolution ────────────────────────────────────────────────────────
 
   static async resolve(
     policy: ExtractionInfrastructurePolicy,

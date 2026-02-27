@@ -1,4 +1,3 @@
-// ─── Facade ──────────────────────────────────────────────────────────────────
 export { SourceIngestionFacade } from "./SourceIngestionFacade.js";
 export type {
   RegisterSourceSuccess,
@@ -8,14 +7,12 @@ export type {
   IngestFileSuccess,
 } from "./SourceIngestionFacade.js";
 
-// ─── Composition ─────────────────────────────────────────────────────────────
 export { SourceIngestionFacadeComposer } from "./composition/SourceIngestionFacadeComposer.js";
 export type {
   SourceIngestionFacadePolicy,
   ResolvedSourceIngestionModules,
 } from "./composition/infra-policies.js";
 
-// ─── Facade Factory ──────────────────────────────────────────────────────────
 import type { SourceIngestionFacadePolicy } from "./composition/infra-policies.js";
 import type { SourceIngestionFacade as _Facade } from "./SourceIngestionFacade.js";
 

@@ -3,8 +3,6 @@ import type { VectorReadStore } from "../domain/ports/VectorReadStore.js";
 import type { RankingStrategy } from "../domain/ports/RankingStrategy.js";
 import type { VectorEntry } from "../../../../platform/vector/VectorEntry.js";
 
-// ─── Policy Types ─────────────────────────────────────────────────────────────
-
 /**
  * Configuration for connecting to the shared vector storage resource.
  * Each environment provides the appropriate config:
@@ -31,8 +29,6 @@ export interface SemanticQueryInfrastructurePolicy {
    */
   embeddingDimensions?: number;
 
-  // ─── Embedding Configuration ──────────────────────────────────────────────
-
   /**
    * Embedding provider to use. Defaults based on policy type:
    * - "in-memory" → "hash"
@@ -56,8 +52,6 @@ export interface SemanticQueryInfrastructurePolicy {
    */
   webLLMModelId?: string;
 
-  // ─── Environment Configuration ────────────────────────────────────────────
-
   /**
    * Configuration overrides for testing or explicit configuration.
    * When provided, these values are used instead of process.env.
@@ -70,8 +64,6 @@ export interface SemanticQueryInfrastructurePolicy {
   configOverrides?: Record<string, string>;
   [key: string]: unknown;
 }
-
-// ─── Resolved Infrastructure ──────────────────────────────────────────────────
 
 export interface ResolvedSemanticQueryInfra {
   queryEmbedder: QueryEmbedder;

@@ -43,8 +43,6 @@ export class ProcessingProfileMaterializer {
     return { embeddingStrategy, chunkingStrategy };
   }
 
-  // ─── Embedding Resolution ───────────────────────────────────────────────────
-
   private async resolveEmbeddingStrategy(
     profile: ProcessingProfile,
   ): Promise<EmbeddingStrategy> {
@@ -129,8 +127,6 @@ export class ProcessingProfileMaterializer {
 
     throw new Error(`Unknown AI embedding provider in strategyId: ${embeddingId}`);
   }
-
-  // ─── Chunking Resolution ────────────────────────────────────────────────────
 
   private async resolveChunkingStrategy(
     profile: ProcessingProfile,

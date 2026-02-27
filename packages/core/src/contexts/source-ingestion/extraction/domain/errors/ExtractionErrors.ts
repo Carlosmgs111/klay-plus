@@ -6,23 +6,17 @@ import {
 } from "../../../../../shared/domain/errors/index.js";
 import type { ExtractionStatus } from "../ExtractionStatus.js";
 
-// ─── Not Found Errors ────────────────────────────────────────────────────────
-
 export class ExtractionJobNotFoundError extends NotFoundError {
   constructor(jobId: string) {
     super("ExtractionJob", jobId);
   }
 }
 
-// ─── Validation Errors ───────────────────────────────────────────────────────
-
 export class ExtractionSourceIdRequiredError extends ValidationError {
   constructor() {
     super("ExtractionJob", "sourceId", "Source ID is required");
   }
 }
-
-// ─── Invalid State Errors ────────────────────────────────────────────────────
 
 export class ExtractionInvalidStateError extends InvalidStateError {
   constructor(currentStatus: ExtractionStatus, attemptedAction: string) {
@@ -47,8 +41,6 @@ export class ExtractionCannotFailError extends ExtractionInvalidStateError {
     super(currentStatus, "fail");
   }
 }
-
-// ─── Operation Errors ────────────────────────────────────────────────────────
 
 export class ExtractionFailedError extends OperationError {
   constructor(
@@ -78,8 +70,6 @@ export class ContentHashingError extends OperationError {
     super("Content hashing", reason);
   }
 }
-
-// ─── Type Alias for Union ────────────────────────────────────────────────────
 
 export type ExtractionError =
   | ExtractionJobNotFoundError

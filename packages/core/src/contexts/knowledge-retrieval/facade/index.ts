@@ -1,14 +1,11 @@
-// ─── Facade ──────────────────────────────────────────────────────────────────
 export { KnowledgeRetrievalFacade } from "./KnowledgeRetrievalFacade.js";
 
-// ─── Composition ─────────────────────────────────────────────────────────────
 export { KnowledgeRetrievalFacadeComposer } from "./composition/KnowledgeRetrievalFacadeComposer.js";
 export type {
   KnowledgeRetrievalFacadePolicy,
   ResolvedKnowledgeRetrievalModules,
 } from "./composition/infra-policies.js";
 
-// ─── Facade Factory ──────────────────────────────────────────────────────────
 import type { KnowledgeRetrievalFacadePolicy } from "./composition/infra-policies.js";
 import type { KnowledgeRetrievalFacade as _Facade } from "./KnowledgeRetrievalFacade.js";
 

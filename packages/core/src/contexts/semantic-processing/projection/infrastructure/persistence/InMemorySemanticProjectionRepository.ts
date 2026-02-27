@@ -1,59 +1,35 @@
 import type { SemanticProjectionRepository } from "../../domain/SemanticProjectionRepository.js";
 import type { SemanticProjection } from "../../domain/SemanticProjection.js";
-import type { ProjectionId } from "../../domain/ProjectionId.js";
 import type { ProjectionType } from "../../domain/ProjectionType.js";
 import type { ProjectionStatus } from "../../domain/ProjectionStatus.js";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
 
-export class InMemorySemanticProjectionRepository implements SemanticProjectionRepository {
-  private store = new Map<string, SemanticProjection>();
-
-  async save(entity: SemanticProjection): Promise<void> {
-    console.log("Saving semantic projection:", entity);
-    this.store.set(entity.id.value, entity);
-  }
-
-  async findById(id: ProjectionId): Promise<SemanticProjection | null> {
-    return this.store.get(id.value) ?? null;
-  }
-
-  async delete(id: ProjectionId): Promise<void> {
-    this.store.delete(id.value);
-  }
-
+export class InMemorySemanticProjectionRepository
+  extends BaseInMemoryRepository<SemanticProjection>
+  implements SemanticProjectionRepository
+{
   async findBySemanticUnitId(semanticUnitId: string): Promise<SemanticProjection[]> {
-    return [...this.store.values()].filter(
-      (p) => p.semanticUnitId === semanticUnitId,
-    );
+    return this.findWhere((p) => p.semanticUnitId === semanticUnitId);
   }
 
   async findBySemanticUnitIdAndType(
     semanticUnitId: string,
     type: ProjectionType,
   ): Promise<SemanticProjection | null> {
-    for (const projection of this.store.values()) {
-      if (
-        projection.semanticUnitId === semanticUnitId &&
-        projection.type === type
-      ) {
-        return projection;
-      }
-    }
-    return null;
+    return this.findOneWhere(
+      (p) => p.semanticUnitId === semanticUnitId && p.type === type,
+    );
   }
 
   async findByStatus(status: ProjectionStatus): Promise<SemanticProjection[]> {
-    return [...this.store.values()].filter((p) => p.status === status);
+    return this.findWhere((p) => p.status === status);
   }
 
   async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
-    return [...this.store.values()].filter((p) => p.sourceId === sourceId);
+    return this.findWhere((p) => p.sourceId === sourceId);
   }
 
   async deleteBySourceId(sourceId: string): Promise<void> {
-    for (const [id, projection] of this.store) {
-      if (projection.sourceId === sourceId) {
-        this.store.delete(id);
-      }
-    }
+    this.deleteWhere((p) => p.sourceId === sourceId);
   }
 }

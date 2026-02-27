@@ -39,7 +39,6 @@ export class ExecuteFullPipeline {
     const completedSteps: PipelineStep[] = [];
     const manifestId = input.resourceId ? crypto.randomUUID() : undefined;
 
-    // ─── Step 1: Ingest ─────────────────────────────────────────────────────────
     const ingestionResult = await this._ingestion.ingestExtractAndReturn({
       sourceId: input.sourceId,
       sourceName: input.sourceName,
@@ -61,7 +60,6 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Ingestion);
 
-    // ─── Step 2: Create Semantic Unit ──────────────────────────────────────────
     const catalogResult = await this._knowledge.createSemanticUnit({
       id: input.semanticUnitId,
       name: input.sourceName ?? "Untitled",
@@ -85,7 +83,6 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Cataloging);
 
-    // ─── Step 3: Add Source ─────────────────────────────────────────────────────
     const addSourceResult = await this._knowledge.addSourceToSemanticUnit({
       unitId: input.semanticUnitId,
       sourceId: input.sourceId,
@@ -108,7 +105,6 @@ export class ExecuteFullPipeline {
       );
     }
 
-    // ─── Step 4: Process ────────────────────────────────────────────────────────
     const processingResult = await this._processing.processContent({
       projectionId: input.projectionId,
       semanticUnitId: input.semanticUnitId,
@@ -131,7 +127,6 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Processing);
 
-    // ─── Record Manifest (if tracking enabled) ───────────────────────────────
     await this._recordManifest(input, manifestId, "complete", completedSteps, undefined, {
       contentHash: ingestionResult.value.contentHash,
       extractedTextLength: ingestionResult.value.extractedText.length,
@@ -140,7 +135,6 @@ export class ExecuteFullPipeline {
       model: processingResult.value.model,
     });
 
-    // ─── Success ────────────────────────────────────────────────────────────────
     return Result.ok({
       sourceId: input.sourceId,
       unitId: catalogResult.value.unitId,

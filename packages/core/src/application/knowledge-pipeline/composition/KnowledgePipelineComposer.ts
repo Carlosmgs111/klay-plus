@@ -1,8 +1,6 @@
 import type { ResolvedPipelineDependencies } from "../application/KnowledgePipelineOrchestrator.js";
 import type { ManifestRepository } from "../contracts/ManifestRepository.js";
 
-// ─── Pipeline Policy ────────────────────────────────────────────────────────
-
 /**
  * Policy for the Knowledge Pipeline.
  *
@@ -31,8 +29,6 @@ export interface KnowledgePipelinePolicy {
   configOverrides?: Record<string, string>;
 }
 
-// ─── Composer ───────────────────────────────────────────────────────────────
-
 /**
  * KnowledgePipelineComposer — creates and wires the 4 bounded context facades.
  *
@@ -57,7 +53,6 @@ export class KnowledgePipelineComposer {
   static async resolve(
     policy: KnowledgePipelinePolicy,
   ): Promise<ResolvedPipelineDependencies> {
-    // ─── Step 1: Create independent contexts in parallel ────────────────────
     const [
       { createSourceIngestionFacade },
       { createSemanticKnowledgeFacade },
@@ -93,7 +88,6 @@ export class KnowledgePipelineComposer {
       }),
     ]);
 
-    // ─── Step 2: Create retrieval with cross-context wiring ─────────────────
     const { createKnowledgeRetrievalFacade } = await import(
       "../../../contexts/knowledge-retrieval/facade/index.js"
     );
@@ -107,7 +101,6 @@ export class KnowledgePipelineComposer {
       configOverrides: policy.configOverrides,
     });
 
-    // ─── Step 3: Create ManifestRepository ──────────────────────────────────
     const manifestRepository = await KnowledgePipelineComposer._createManifestRepository(policy);
 
     return { ingestion, processing, knowledge, retrieval, manifestRepository };

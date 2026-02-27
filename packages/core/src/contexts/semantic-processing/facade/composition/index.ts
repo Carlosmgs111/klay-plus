@@ -12,10 +12,8 @@
  * - Application flows
  */
 
-// ─── Composer (facade wiring) ───────────────────────────────────────────────
 export { SemanticProcessingFacadeComposer } from "./SemanticProcessingFacadeComposer.js";
 
-// ─── Policies ───────────────────────────────────────────────────────────────
 export type {
   SemanticProcessingFacadePolicy,
   ResolvedSemanticProcessingModules,

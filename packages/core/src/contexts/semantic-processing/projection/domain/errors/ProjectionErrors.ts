@@ -7,23 +7,17 @@ import {
 } from "../../../../../shared/domain/errors/index.js";
 import type { ProjectionStatus } from "../ProjectionStatus.js";
 
-// ─── Not Found Errors ────────────────────────────────────────────────────────
-
 export class ProjectionNotFoundError extends NotFoundError {
   constructor(projectionId: string) {
     super("SemanticProjection", projectionId);
   }
 }
 
-// ─── Already Exists Errors ───────────────────────────────────────────────────
-
 export class ProjectionAlreadyExistsError extends AlreadyExistsError {
   constructor(projectionId: string) {
     super("SemanticProjection", projectionId);
   }
 }
-
-// ─── Validation Errors ───────────────────────────────────────────────────────
 
 export class ProjectionSemanticUnitIdRequiredError extends ValidationError {
   constructor() {
@@ -46,8 +40,6 @@ export class ProjectionInvalidTypeError extends ValidationError {
     );
   }
 }
-
-// ─── Invalid State Errors ────────────────────────────────────────────────────
 
 export class ProjectionInvalidStateError extends InvalidStateError {
   constructor(currentStatus: ProjectionStatus, attemptedAction: string) {
@@ -72,8 +64,6 @@ export class ProjectionCannotFailError extends ProjectionInvalidStateError {
     super(currentStatus, "fail");
   }
 }
-
-// ─── Operation Errors ────────────────────────────────────────────────────────
 
 export class ChunkingFailedError extends OperationError {
   constructor(reason: string, public readonly originalError?: Error) {
@@ -107,8 +97,6 @@ export class ProjectionProcessingError extends OperationError {
     super("Projection processing", reason, { semanticUnitId, phase });
   }
 }
-
-// ─── Type Alias for Union ────────────────────────────────────────────────────
 
 export type ProjectionError =
   | ProjectionNotFoundError

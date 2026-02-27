@@ -3,8 +3,6 @@ import type { LineageUseCases } from "../../lineage/application/index.js";
 import type { SemanticUnitRepository } from "../../semantic-unit/domain/SemanticUnitRepository.js";
 import type { KnowledgeLineageRepository } from "../../lineage/domain/KnowledgeLineageRepository.js";
 
-// ─── Override Types ─────────────────────────────────────────────────────────
-
 interface SemanticUnitOverrides {
   provider?: string;
   dbPath?: string;
@@ -16,8 +14,6 @@ interface LineageOverrides {
   dbPath?: string;
   dbName?: string;
 }
-
-// ─── Facade Policy ───────────────────────────────────────────────────────────
 
 export interface SemanticKnowledgeFacadePolicy {
   provider: string;
@@ -52,8 +48,6 @@ export interface SemanticKnowledgeFacadePolicy {
    */
   configOverrides?: Record<string, string>;
 }
-
-// ─── Resolved Modules ────────────────────────────────────────────────────────
 
 export interface ResolvedSemanticKnowledgeModules {
   semanticUnit: SemanticUnitUseCases;

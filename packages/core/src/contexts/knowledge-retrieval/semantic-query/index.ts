@@ -1,4 +1,3 @@
-// ─── Domain ────────────────────────────────────────────────────────
 export { Query, QueryId, RetrievalResult, RetrievalItem } from "./domain/index.js";
 
 export type {
@@ -9,11 +8,9 @@ export type {
   QueryEmbedder,
 } from "./domain/index.js";
 
-// ─── Application ───────────────────────────────────────────────────
 export { ExecuteSemanticQuery, SemanticQueryUseCases } from "./application/index.js";
 export type { ExecuteSemanticQueryCommand } from "./application/index.js";
 
-// ─── Infrastructure ────────────────────────────────────────────────
 export {
   HashQueryEmbedder,
   WebLLMQueryEmbedder,
@@ -24,7 +21,6 @@ export {
   PassthroughRankingStrategy,
 } from "./infrastructure/adapters/index.js";
 
-// ─── Composition ───────────────────────────────────────────────────
 export {
   SemanticQueryComposer,
   semanticQueryFactory,

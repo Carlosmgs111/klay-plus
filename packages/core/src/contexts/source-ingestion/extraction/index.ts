@@ -4,7 +4,6 @@
  * This module handles content extraction from sources (PDF, text, etc.).
  */
 
-// ─── Domain ─────────────────────────────────────────────────────────────────
 export {
   ExtractionJob,
   ExtractionJobId,
@@ -30,7 +29,6 @@ export type {
   ExtractionError,
 } from "./domain/index.js";
 
-// ─── Application ────────────────────────────────────────────────────────────
 export {
   ExecuteExtraction,
   ExtractionUseCases,
@@ -41,14 +39,12 @@ export type {
   ExtractorMap,
 } from "./application/index.js";
 
-// ─── Infrastructure Adapters (for custom composition) ──────────────────────
 export {
   TextContentExtractor,
   BrowserPdfContentExtractor,
   ServerPdfContentExtractor,
 } from "./infrastructure/adapters/index.js";
 
-// ─── Composition & Factory ──────────────────────────────────────────────────
 export { ExtractionComposer, extractionFactory } from "./composition/index.js";
 export type {
   ExtractionInfrastructurePolicy,

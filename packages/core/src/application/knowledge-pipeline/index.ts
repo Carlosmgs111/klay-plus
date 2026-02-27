@@ -18,10 +18,8 @@
  * - Facades
  */
 
-// ─── Port ────────────────────────────────────────────────────────────────────
 export type { KnowledgePipelinePort } from "./contracts/KnowledgePipelinePort.js";
 
-// ─── DTOs ────────────────────────────────────────────────────────────────────
 export type {
   ExecutePipelineInput,
   ExecutePipelineSuccess,
@@ -39,14 +37,11 @@ export type {
   GetManifestSuccess,
 } from "./contracts/dtos.js";
 
-// ─── Domain ──────────────────────────────────────────────────────────────────
 export { KnowledgePipelineError } from "./domain/KnowledgePipelineError.js";
 export { PipelineStep } from "./domain/PipelineStep.js";
 export type { PipelineStep as PipelineStepType } from "./domain/PipelineStep.js";
 export type { ContentManifestEntry } from "./domain/ContentManifest.js";
 
-// ─── Factory ─────────────────────────────────────────────────────────────────
 export { createKnowledgePipeline } from "./composition/knowledge-pipeline.factory.js";
 
-// ─── Policy Type ─────────────────────────────────────────────────────────────
 export type { KnowledgePipelinePolicy } from "./composition/KnowledgePipelineComposer.js";

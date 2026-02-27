@@ -17,9 +17,6 @@ import type {
 } from "./infra-policies.js";
 import type { SemanticUnitUseCases } from "../application/index.js";
 import type { SemanticUnitRepository } from "../domain/SemanticUnitRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-
-// ─── Factory Result Contract ─────────────────────────────────────────────────
 
 export interface SemanticUnitFactoryResult {
   /** Assembled use cases ready for consumption */
@@ -32,8 +29,6 @@ export interface SemanticUnitFactoryResult {
   infra: ResolvedSemanticUnitInfra;
 }
 
-// ─── Factory Function ────────────────────────────────────────────────────────
-
 export async function semanticUnitFactory(
   policy: SemanticUnitInfrastructurePolicy,
 ): Promise<SemanticUnitFactoryResult> {
@@ -41,7 +36,6 @@ export async function semanticUnitFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<SemanticUnitRepository>()
     .add("in-memory", {
       create: async () => {
@@ -72,35 +66,11 @@ export async function semanticUnitFactory(
     })
     .build();
 
-  // ─── EventPublisher Registry ─────────────────────────────────────────────
-  const eventPublisherRegistry = new ProviderRegistryBuilder<EventPublisher>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("server", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .build();
+  const { createEventPublisherRegistry } = await import(
+    "../../../../platform/composition/createEventPublisherRegistry.js"
+  );
+  const eventPublisherRegistry = createEventPublisherRegistry();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { SemanticUnitComposer } = await import("./SemanticUnitComposer.js");
   const infra = await SemanticUnitComposer.resolve(policy, {
     repository: repositoryRegistry,

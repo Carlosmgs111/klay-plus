@@ -14,9 +14,6 @@
 import type { SourceInfrastructurePolicy, ResolvedSourceInfra } from "./infra-policies.js";
 import type { SourceUseCases } from "../application/index.js";
 import type { SourceRepository } from "../domain/SourceRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-
-// ─── Factory Result Contract ─────────────────────────────────────────────────
 
 export interface SourceFactoryResult {
   /** Assembled use cases ready for consumption */
@@ -29,8 +26,6 @@ export interface SourceFactoryResult {
   infra: ResolvedSourceInfra;
 }
 
-// ─── Factory Function ────────────────────────────────────────────────────────
-
 export async function sourceFactory(
   policy: SourceInfrastructurePolicy,
 ): Promise<SourceFactoryResult> {
@@ -38,7 +33,6 @@ export async function sourceFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<SourceRepository>()
     .add("in-memory", {
       create: async () => {
@@ -69,35 +63,11 @@ export async function sourceFactory(
     })
     .build();
 
-  // ─── EventPublisher Registry ─────────────────────────────────────────────
-  const eventPublisherRegistry = new ProviderRegistryBuilder<EventPublisher>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("server", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .build();
+  const { createEventPublisherRegistry } = await import(
+    "../../../../platform/composition/createEventPublisherRegistry.js"
+  );
+  const eventPublisherRegistry = createEventPublisherRegistry();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { SourceComposer } = await import("./SourceComposer.js");
   const infra = await SourceComposer.resolve(policy, {
     repository: repositoryRegistry,

@@ -1,33 +1,17 @@
 import type { KnowledgeLineageRepository } from "../../domain/KnowledgeLineageRepository.js";
 import type { KnowledgeLineage } from "../../domain/KnowledgeLineage.js";
-import type { LineageId } from "../../domain/LineageId.js";
+import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository.js";
 
-export class InMemoryKnowledgeLineageRepository implements KnowledgeLineageRepository {
-  private store = new Map<string, KnowledgeLineage>();
-
-  async save(entity: KnowledgeLineage): Promise<void> {
-    this.store.set(entity.id.value, entity);
-  }
-
-  async findById(id: LineageId): Promise<KnowledgeLineage | null> {
-    return this.store.get(id.value) ?? null;
-  }
-
-  async delete(id: LineageId): Promise<void> {
-    this.store.delete(id.value);
-  }
-
+export class InMemoryKnowledgeLineageRepository
+  extends BaseInMemoryRepository<KnowledgeLineage>
+  implements KnowledgeLineageRepository
+{
   async findBySemanticUnitId(semanticUnitId: string): Promise<KnowledgeLineage | null> {
-    for (const lineage of this.store.values()) {
-      if (lineage.semanticUnitId === semanticUnitId) {
-        return lineage;
-      }
-    }
-    return null;
+    return this.findOneWhere((l) => l.semanticUnitId === semanticUnitId);
   }
 
   async findByTraceTargetUnitId(targetUnitId: string): Promise<KnowledgeLineage[]> {
-    return [...this.store.values()].filter((l) =>
+    return this.findWhere((l) =>
       l.traces.some((t) => t.toUnitId === targetUnitId),
     );
   }

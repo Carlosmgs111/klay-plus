@@ -21,7 +21,6 @@ import { resolveConfigProvider } from "../../../../platform/config/resolveConfig
  * - Application flows
  */
 export class SemanticKnowledgeFacadeComposer {
-  // ─── Main Resolution ────────────────────────────────────────────────────────
 
   /**
    * Resolves all modules for the Semantic Knowledge context.

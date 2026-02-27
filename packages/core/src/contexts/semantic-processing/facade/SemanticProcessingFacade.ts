@@ -5,8 +5,6 @@ import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "./com
 import { Result } from "../../../shared/domain/Result.js";
 import type { DomainError } from "../../../shared/domain/errors/index.js";
 
-// ─── Facade Result Types ────────────────────────────────────────────────────
-
 export interface ProcessContentSuccess {
   projectionId: string;
   chunksCount: number;
@@ -27,8 +25,6 @@ export interface UpdateProfileSuccess {
 export interface DeprecateProfileSuccess {
   profileId: string;
 }
-
-// ─── Facade ─────────────────────────────────────────────────────────────────
 
 /**
  * Application Facade for the Semantic Processing bounded context.
@@ -52,8 +48,6 @@ export class SemanticProcessingFacade {
     this._vectorStoreConfig = modules.vectorStoreConfig;
   }
 
-  // ─── Module Accessors ─────────────────────────────────────────────────────
-
   get projection(): ProjectionUseCases {
     return this._projection;
   }
@@ -70,8 +64,6 @@ export class SemanticProcessingFacade {
   get vectorStoreConfig(): VectorStoreConfig {
     return this._vectorStoreConfig;
   }
-
-  // ─── Profile Management Operations ────────────────────────────────────────
 
   /**
    * Creates a new processing profile.
@@ -147,8 +139,6 @@ export class SemanticProcessingFacade {
 
     return Result.ok({ profileId: result.value.id.value });
   }
-
-  // ─── Workflow Operations ──────────────────────────────────────────────────
 
   /**
    * Processes content into semantic projections.

@@ -22,7 +22,6 @@ import { resolveConfigProvider } from "../../../../platform/config/resolveConfig
  * - Application flows
  */
 export class SemanticProcessingFacadeComposer {
-  // ─── Main Resolution ──────────────────────────────────────────────────────
 
   /**
    * Resolves all modules for the Semantic Processing context.
@@ -44,7 +43,6 @@ export class SemanticProcessingFacadeComposer {
     const resolvedDbName =
       policy.dbName ?? config.getOrDefault("KLAY_DB_NAME", "semantic-processing");
 
-    // ─── Build ProcessingProfile policy ─────────────────────────────────────
     const profilePolicy: ProcessingProfileInfrastructurePolicy = {
       provider: policy.overrides?.processingProfile?.provider ?? policy.provider,
       dbPath:
@@ -53,12 +51,10 @@ export class SemanticProcessingFacadeComposer {
         policy.overrides?.processingProfile?.dbName ?? resolvedDbName,
     };
 
-    // ─── Resolve ProcessingProfile first (needed by Projection) ─────────────
     const processingProfileResult = await import(
       "../../processing-profile/composition/processing-profile.factory.js"
     ).then((m) => m.processingProfileFactory(profilePolicy));
 
-    // ─── Build Projection policy ────────────────────────────────────────────
     const projectionPolicy: ProjectionInfrastructurePolicy = {
       provider: policy.overrides?.projection?.provider ?? policy.provider,
       dbPath:
@@ -69,7 +65,6 @@ export class SemanticProcessingFacadeComposer {
         policy.overrides?.projection?.embeddingDimensions ??
         policy.embeddingDimensions,
 
-      // ─── Embedding Provider Configuration ─────────────────────────────────────
       embeddingProvider:
         policy.overrides?.projection?.embeddingProvider ??
         policy.embeddingProvider,
@@ -77,18 +72,15 @@ export class SemanticProcessingFacadeComposer {
         policy.overrides?.projection?.embeddingModel ??
         policy.embeddingModel,
 
-      // ─── Environment Configuration ─────────────────────────────────────────────
       configOverrides: policy.configOverrides,
     };
 
-    // ─── Resolve Projection (with profileRepository wiring) ─────────────────
     const projectionResult = await import(
       "../../projection/composition/projection.factory.js"
     ).then((m) =>
       m.projectionFactory(projectionPolicy, processingProfileResult.repository)
     );
 
-    // ─── Build vectorStoreConfig for cross-context wiring ───────────────────
     const vectorStoreConfig: VectorStoreConfig = {
       dbPath: projectionPolicy.dbPath
         ? `${projectionPolicy.dbPath}/vector-entries.db`

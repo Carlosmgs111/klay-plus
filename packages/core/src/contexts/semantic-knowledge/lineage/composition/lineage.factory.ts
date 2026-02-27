@@ -17,10 +17,6 @@ import type {
 } from "./infra-policies.js";
 import type { LineageUseCases } from "../application/index.js";
 import type { KnowledgeLineageRepository } from "../domain/KnowledgeLineageRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-
-// ─── Factory Result Contract ─────────────────────────────────────────────────
-
 export interface LineageFactoryResult {
   /** Assembled use cases ready for consumption */
   useCases: LineageUseCases;
@@ -32,8 +28,6 @@ export interface LineageFactoryResult {
   infra: ResolvedLineageInfra;
 }
 
-// ─── Factory Function ────────────────────────────────────────────────────────
-
 export async function lineageFactory(
   policy: LineageInfrastructurePolicy,
 ): Promise<LineageFactoryResult> {
@@ -41,7 +35,6 @@ export async function lineageFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<KnowledgeLineageRepository>()
     .add("in-memory", {
       create: async () => {
@@ -74,35 +67,11 @@ export async function lineageFactory(
     })
     .build();
 
-  // ─── EventPublisher Registry ─────────────────────────────────────────────
-  const eventPublisherRegistry = new ProviderRegistryBuilder<EventPublisher>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("server", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .build();
+  const { createEventPublisherRegistry } = await import(
+    "../../../../platform/composition/createEventPublisherRegistry.js"
+  );
+  const eventPublisherRegistry = createEventPublisherRegistry();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { LineageComposer } = await import("./LineageComposer.js");
   const infra = await LineageComposer.resolve(policy, {
     repository: repositoryRegistry,

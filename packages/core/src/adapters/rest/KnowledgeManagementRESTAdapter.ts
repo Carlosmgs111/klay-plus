@@ -10,7 +10,6 @@ import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter.j
  *
  * This adapter:
  * - Receives KnowledgeManagementPort (never the implementation)
- * - Contains zero business logic
  * - Only transforms Request → DTO and Result → Response
  * - Is framework-agnostic (Express, Hono, Astro, etc.)
  */
@@ -22,8 +21,6 @@ export class KnowledgeManagementRESTAdapter {
     const result = await this._management.ingestAndAddSource(input);
     return this._toResponse(result);
   }
-
-  // --- Private ---
 
   private _toResponse<T>(result: { isOk(): boolean; value: T; error: any }): RESTResponse {
     if (result.isOk()) {

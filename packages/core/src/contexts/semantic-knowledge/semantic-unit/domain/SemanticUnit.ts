@@ -45,8 +45,6 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     this._metadata = metadata;
   }
 
-  // ─── Getters ──────────────────────────────────────────────────────
-
   get name(): string {
     return this._name;
   }
@@ -88,8 +86,6 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
   get allSources(): ReadonlyArray<UnitSource> {
     return [...this._sources];
   }
-
-  // ─── Factory ──────────────────────────────────────────────────────
 
   static create(
     id: SemanticUnitId,
@@ -149,8 +145,6 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
       metadata,
     );
   }
-
-  // ─── Commands ─────────────────────────────────────────────────────
 
   addSource(
     source: UnitSource,
@@ -377,8 +371,6 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     this._versions[versionIndex] = updatedVersion;
   }
 
-  // ─── State Machine ────────────────────────────────────────────────
-
   activate(): void {
     this.transitionTo(SemanticState.Active);
   }
@@ -408,8 +400,6 @@ export class SemanticUnit extends AggregateRoot<SemanticUnitId> {
     this._state = newState;
     this._metadata = this._metadata.withUpdatedTimestamp();
   }
-
-  // ─── Private Helpers ──────────────────────────────────────────────
 
   private buildSnapshotsForCurrentSources(): VersionSourceSnapshot[] {
     const cv = this.currentVersion;

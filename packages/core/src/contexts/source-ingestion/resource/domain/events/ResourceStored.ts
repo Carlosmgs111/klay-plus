@@ -1,9 +1,3 @@
-import type { DomainEvent } from "../../../../../shared/domain/index.js";
+import { defineDomainEvent } from "../../../../../shared/domain/index.js";
 
-export class ResourceStored {
-  static readonly EVENT_TYPE = "source-ingestion.resource.stored";
-
-  static is(event: DomainEvent): boolean {
-    return event.eventType === ResourceStored.EVENT_TYPE;
-  }
-}
+export const ResourceStored = defineDomainEvent("source-ingestion.resource.stored");

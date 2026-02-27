@@ -1,4 +1,3 @@
-// ─── Domain ────────────────────────────────────────────────────────
 export {
   SemanticUnit,
   SemanticUnitId,
@@ -18,7 +17,6 @@ export {
 
 export type { SemanticUnitRepository } from "./domain/index.js";
 
-// ─── Application ───────────────────────────────────────────────────
 export {
   CreateSemanticUnit,
   AddSourceToSemanticUnit,
@@ -38,13 +36,11 @@ export type {
   ReprocessSemanticUnitCommand,
 } from "./application/index.js";
 
-// ─── Composition ───────────────────────────────────────────────────
 export { SemanticUnitComposer } from "./composition/SemanticUnitComposer.js";
 export type {
   SemanticUnitInfrastructurePolicy,
   ResolvedSemanticUnitInfra,
 } from "./composition/infra-policies.js";
 
-// ─── Module Factory ────────────────────────────────────────────────
 export { semanticUnitFactory } from "./composition/semantic-unit.factory.js";
 export type { SemanticUnitFactoryResult } from "./composition/semantic-unit.factory.js";

@@ -13,7 +13,6 @@
  * - It enables reproducibility via profileId + version
  */
 
-// ─── Domain ──────────────────────────────────────────────────────────────────
 export {
   ProcessingProfile,
   ProcessingProfileId,
@@ -35,7 +34,6 @@ export type {
   ProfileError,
 } from "./domain/index.js";
 
-// ─── Application ─────────────────────────────────────────────────────────────
 export {
   ProcessingProfileUseCases,
   CreateProcessingProfile,
@@ -49,7 +47,6 @@ export type {
   DeprecateProcessingProfileCommand,
 } from "./application/index.js";
 
-// ─── Composition ─────────────────────────────────────────────────────────────
 export {
   ProcessingProfileComposer,
   processingProfileFactory,

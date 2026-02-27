@@ -24,7 +24,6 @@ export class HashEmbeddingStrategy implements EmbeddingStrategy {
   }
 
   async embedBatch(contents: string[]): Promise<EmbeddingResult[]> {
-    // console.log({ contents });
     return contents.map((content) => ({
       vector: hashToVector(content, this.dimensions),
       model: "hash-local",

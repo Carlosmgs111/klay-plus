@@ -2,8 +2,6 @@ import type { SemanticQueryUseCases } from "../semantic-query/application/index.
 import type { RetrievalResult } from "../semantic-query/domain/RetrievalResult.js";
 import type { ResolvedKnowledgeRetrievalModules } from "./composition/infra-policies.js";
 
-// ─── Facade ──────────────────────────────────────────────────────────────────
-
 /**
  * Application Facade for the Knowledge Retrieval bounded context.
  *
@@ -20,13 +18,9 @@ export class KnowledgeRetrievalFacade {
     this._semanticQuery = modules.semanticQuery;
   }
 
-  // ─── Module Accessors ──────────────────────────────────────────────────────
-
   get semanticQuery(): SemanticQueryUseCases {
     return this._semanticQuery;
   }
-
-  // ─── Orchestrated Operations ───────────────────────────────────────────────
 
   /**
    * Performs a semantic search query.

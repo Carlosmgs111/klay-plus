@@ -35,7 +35,6 @@ export class IngestAndAddSource {
   ): Promise<Result<KnowledgeManagementError, IngestAndAddSourceSuccess>> {
     const completedSteps: ManagementStep[] = [];
 
-    // ─── Step 1: Ingest ─────────────────────────────────────────────────────────
     const ingestionResult = await this._ingestion.ingestExtractAndReturn({
       sourceId: input.sourceId,
       sourceName: input.sourceName,
@@ -56,7 +55,6 @@ export class IngestAndAddSource {
 
     completedSteps.push(ManagementStep.Ingestion);
 
-    // ─── Step 2: Add Source to Existing Unit ─────────────────────────────────────
     const addSourceResult = await this._knowledge.addSourceToSemanticUnit({
       unitId: input.unitId,
       sourceId: input.sourceId,
@@ -80,7 +78,6 @@ export class IngestAndAddSource {
 
     completedSteps.push(ManagementStep.AddSource);
 
-    // ─── Step 3: Process ────────────────────────────────────────────────────────
     const processingResult = await this._processing.processContent({
       projectionId: input.projectionId,
       semanticUnitId: input.unitId,
@@ -102,7 +99,6 @@ export class IngestAndAddSource {
 
     completedSteps.push(ManagementStep.Processing);
 
-    // ─── Success ────────────────────────────────────────────────────────────────
     return Result.ok({
       sourceId: input.sourceId,
       unitId: input.unitId,

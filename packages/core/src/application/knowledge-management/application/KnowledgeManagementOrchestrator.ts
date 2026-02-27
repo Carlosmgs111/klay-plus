@@ -49,8 +49,6 @@ export class KnowledgeManagementOrchestrator implements KnowledgeManagementPort 
     );
   }
 
-  // --- KnowledgeManagementPort Implementation ---
-
   async ingestAndAddSource(
     input: IngestAndAddSourceInput,
   ): Promise<Result<KnowledgeManagementError, IngestAndAddSourceSuccess>> {

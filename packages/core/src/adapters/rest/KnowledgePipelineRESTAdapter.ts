@@ -9,8 +9,6 @@ import type {
   GetManifestInput,
 } from "../../application/knowledge-pipeline/contracts/dtos.js";
 
-// ─── REST Types ─────────────────────────────────────────────────────────────
-
 /**
  * Framework-agnostic request representation.
  * Adapters for specific frameworks (Express, Hono, Astro, etc.)
@@ -30,8 +28,6 @@ export interface RESTResponse {
   body: unknown;
   headers?: Record<string, string>;
 }
-
-// ─── REST Adapter ───────────────────────────────────────────────────────────
 
 /**
  * KnowledgePipelineRESTAdapter — Primary Adapter for REST consumers.
@@ -93,8 +89,6 @@ export class KnowledgePipelineRESTAdapter {
     const result = await this._pipeline.getManifest(input);
     return this._toResponse(result);
   }
-
-  // ─── Private ────────────────────────────────────────────────────────────────
 
   private _toResponse<T>(result: { isOk(): boolean; value: T; error: any }): RESTResponse {
     if (result.isOk()) {

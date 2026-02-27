@@ -28,7 +28,6 @@ async function runE2ETest() {
   console.log("🧪 Starting End-to-End Test for Source Ingestion Context\n");
 
   try {
-    // ─── Step 1: Create Facade ─────────────────────────────────────────────
     console.log("📦 Step 1: Creating facade with in-memory infrastructure...");
     const facade = await createSourceIngestionFacade({
       provider: "server",
@@ -37,7 +36,6 @@ async function runE2ETest() {
     console.log("   ✅ Facade created successfully");
     console.log(`   📋 Supported MIME types: ${facade.extraction.getSupportedMimeTypes().join(", ")}\n`);
 
-    // ─── Step 2: Register a Source ─────────────────────────────────────────
     console.log("📝 Step 2: Registering a plain text source...");
     const sourceId = crypto.randomUUID();
     const sourceName = "Test Document";
@@ -55,7 +53,6 @@ async function runE2ETest() {
     }
     console.log(`   ✅ Source registered: ${registerResult.value.sourceId}\n`);
 
-    // ─── Step 3: Execute Extraction ────────────────────────────────────────
     console.log("🔍 Step 3: Executing extraction...");
     const extractionJobId = crypto.randomUUID();
 
@@ -73,7 +70,6 @@ async function runE2ETest() {
     console.log(`      Content Hash: ${extractionResult.value.contentHash}`);
     console.log(`      Changed: ${extractionResult.value.changed}\n`);
 
-    // ─── Step 4: Full Ingest and Extract Flow ──────────────────────────────
     console.log("🚀 Step 4: Testing full ingestAndExtract flow...");
     const jsonContent = JSON.stringify({
       title: "Test JSON",
@@ -98,7 +94,6 @@ async function runE2ETest() {
     console.log(`      Job ID: ${fullFlowResult.value.jobId}`);
     console.log(`      Content Hash: ${fullFlowResult.value.contentHash}\n`);
 
-    // ─── Step 5: Re-extract (should detect no change) ──────────────────────
     console.log("🔄 Step 5: Re-extracting same source (should detect no change)...");
     const reExtractResult = await facade.extractSource({
       jobId: crypto.randomUUID(),
@@ -112,7 +107,6 @@ async function runE2ETest() {
     console.log(`   ✅ Re-extraction completed`);
     console.log(`      Changed: ${reExtractResult.value.changed} (expected: false)\n`);
 
-    // ─── Step 6: Batch Registration ────────────────────────────────────────
     console.log("📚 Step 6: Testing batch registration...");
     const batchSources = [
       { id: crypto.randomUUID(), name: "Doc 1", uri: "Content 1", type: SourceType.PlainText },
@@ -125,7 +119,6 @@ async function runE2ETest() {
 
     console.log(`   ✅ Batch registration completed: ${successCount}/${batchSources.length} successful\n`);
 
-    // ─── Step 7: Batch Ingest and Extract ──────────────────────────────────
     console.log("⚡ Step 7: Testing batch ingestAndExtract...");
     const batchIngestSources = [
       {
@@ -155,7 +148,6 @@ async function runE2ETest() {
     }
     console.log();
 
-    // ─── Step 8: Real PDF Extraction ───────────────────────────────────────
     console.log("📄 Step 8: Testing REAL PDF extraction...");
 
     // Find the PDF test file (relative to project root)
@@ -201,7 +193,6 @@ async function runE2ETest() {
       console.log(`      Total characters: ${extractionJobResult.value.extractedText.length}\n`);
     }
 
-    // ─── Step 9: Test with custom PDF path (if provided) ───────────────────
     const args = process.argv.slice(2).filter(arg => arg !== "--");
     const customPdfPath = args[0];
     if (customPdfPath) {
@@ -249,7 +240,6 @@ async function runE2ETest() {
       }
     }
 
-    // ─── Summary ───────────────────────────────────────────────────────────
     console.log("═══════════════════════════════════════════════════════════════");
     console.log("✅ ALL TESTS PASSED!");
     console.log("═══════════════════════════════════════════════════════════════");

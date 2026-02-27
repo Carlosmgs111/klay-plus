@@ -1,7 +1,6 @@
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
-// ─── Use Cases ─────────────────────────────────────────────────────
 export { ExecuteExtraction } from "./ExecuteExtraction.js";
 export type {
   ExecuteExtractionCommand,
@@ -11,7 +10,6 @@ export type {
 
 // Note: UnsupportedMimeTypeError is now exported from domain/errors
 
-// ─── Use Cases Container ──────────────────────────────────────────────
 import { ExecuteExtraction, type ExtractorMap } from "./ExecuteExtraction.js";
 
 export class ExtractionUseCases {

@@ -5,7 +5,6 @@
  * It does NOT store content - that's handled by the extraction module.
  */
 
-// ─── Domain ──────────────────────────────────────────────────────────────────
 export {
   Source,
   SourceId,
@@ -25,11 +24,9 @@ export {
 
 export type { SourceRepository, SourceError } from "./domain/index.js";
 
-// ─── Application ─────────────────────────────────────────────────────────────
 export { RegisterSource, UpdateSource, SourceUseCases } from "./application/index.js";
 export type { RegisterSourceCommand, UpdateSourceCommand } from "./application/index.js";
 
-// ─── Composition & Factory ───────────────────────────────────────────────────
 export { SourceComposer, sourceFactory } from "./composition/index.js";
 export type {
   SourceInfrastructurePolicy,

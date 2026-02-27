@@ -34,7 +34,6 @@ export async function processingProfileFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<ProcessingProfileRepository>()
     .add("in-memory", {
       create: async () => {
@@ -67,7 +66,6 @@ export async function processingProfileFactory(
     })
     .build();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { ProcessingProfileComposer } = await import(
     "./ProcessingProfileComposer.js"
   );

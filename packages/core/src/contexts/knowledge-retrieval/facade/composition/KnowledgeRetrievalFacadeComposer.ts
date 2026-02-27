@@ -19,7 +19,6 @@ import type { SemanticQueryInfrastructurePolicy } from "../../semantic-query/com
  * - Application flows
  */
 export class KnowledgeRetrievalFacadeComposer {
-  // ─── Main Resolution ────────────────────────────────────────────────────────
 
   /**
    * Resolves all modules for the Knowledge Retrieval context.

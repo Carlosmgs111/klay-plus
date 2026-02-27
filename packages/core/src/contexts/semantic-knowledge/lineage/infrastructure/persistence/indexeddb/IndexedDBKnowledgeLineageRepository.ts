@@ -1,39 +1,26 @@
 import type { KnowledgeLineageRepository } from "../../../domain/KnowledgeLineageRepository.js";
 import type { KnowledgeLineage } from "../../../domain/KnowledgeLineage.js";
-import type { LineageId } from "../../../domain/LineageId.js";
-import { IndexedDBStore } from "../../../../../../platform/persistence/indexeddb/IndexedDBStore.js";
+import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository.js";
 import { toDTO, fromDTO, type LineageDTO } from "./LineageDTO.js";
 
-export class IndexedDBKnowledgeLineageRepository implements KnowledgeLineageRepository {
-  private store: IndexedDBStore<LineageDTO>;
-
+export class IndexedDBKnowledgeLineageRepository
+  extends BaseIndexedDBRepository<KnowledgeLineage, LineageDTO>
+  implements KnowledgeLineageRepository
+{
   constructor(dbName: string = "knowledge-platform") {
-    this.store = new IndexedDBStore<LineageDTO>(dbName, "knowledge-lineage");
+    super(dbName, "knowledge-lineage");
   }
 
-  async save(entity: KnowledgeLineage): Promise<void> {
-    await this.store.put(entity.id.value, toDTO(entity));
-  }
-
-  async findById(id: LineageId): Promise<KnowledgeLineage | null> {
-    const dto = await this.store.get(id.value);
-    return dto ? fromDTO(dto) : null;
-  }
-
-  async delete(id: LineageId): Promise<void> {
-    await this.store.remove(id.value);
-  }
+  protected toDTO = toDTO;
+  protected fromDTO = fromDTO;
 
   async findBySemanticUnitId(semanticUnitId: string): Promise<KnowledgeLineage | null> {
-    const all = await this.store.getAll();
-    const found = all.find((d) => d.semanticUnitId === semanticUnitId);
-    return found ? fromDTO(found) : null;
+    return this.findOneWhere((d) => d.semanticUnitId === semanticUnitId);
   }
 
   async findByTraceTargetUnitId(targetUnitId: string): Promise<KnowledgeLineage[]> {
-    const all = await this.store.getAll();
-    return all
-      .filter((d) => d.traces.some((t) => t.toUnitId === targetUnitId))
-      .map(fromDTO);
+    return this.findWhere((d) =>
+      d.traces.some((t) => t.toUnitId === targetUnitId),
+    );
   }
 }

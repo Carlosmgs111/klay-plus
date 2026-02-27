@@ -13,15 +13,12 @@
  * - Application flows
  */
 
-// ─── Composer (infrastructure wiring only) ──────────────────────────────────
 export { SourceComposer } from "./SourceComposer.js";
 
-// ─── Policies ───────────────────────────────────────────────────────────────
 export type {
   SourceInfrastructurePolicy,
   ResolvedSourceInfra,
 } from "./infra-policies.js";
 
-// ─── Factory (module entry point) ───────────────────────────────────────────
 export { sourceFactory } from "./source.factory.js";
 export type { SourceFactoryResult } from "./source.factory.js";

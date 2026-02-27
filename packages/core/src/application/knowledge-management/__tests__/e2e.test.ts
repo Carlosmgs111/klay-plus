@@ -20,22 +20,16 @@ import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPo
 import { KnowledgeManagementError } from "../domain/KnowledgeManagementError.js";
 import { ManagementStep } from "../domain/ManagementStep.js";
 
-// --- Load Test Fixtures ---
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, "../../../tests/integration/fixtures");
 
-// =============================================================================
 // TEST SUITE
-// =============================================================================
 
 describe("Knowledge Management Orchestrator — E2E", () => {
   let pipeline: KnowledgePipelinePort;
   let management: KnowledgeManagementPort;
   let profileId: string;
-
-  // --- Setup ---
 
   beforeAll(async () => {
     const platform = await createKnowledgePlatform({
@@ -59,9 +53,7 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     expect(profileResult.isOk()).toBe(true);
   });
 
-  // ==========================================================================
   // 1. ingestAndAddSource — Full Flow
-  // ==========================================================================
 
   describe("ingestAndAddSource", () => {
     it("should ingest, add source, and process for an existing unit", async () => {
@@ -146,9 +138,7 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     });
   });
 
-  // ==========================================================================
   // 2. Error at Ingestion Step
-  // ==========================================================================
 
   describe("error at ingestion step", () => {
     it("should return error with step=ingestion and empty completedSteps", async () => {
@@ -176,9 +166,7 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     });
   });
 
-  // ==========================================================================
   // 3. Error at AddSource Step
-  // ==========================================================================
 
   describe("error at add-source step", () => {
     it("should return error with step=add-source and completedSteps=[ingestion]", async () => {
@@ -212,9 +200,7 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     });
   });
 
-  // ==========================================================================
   // 4. KnowledgeManagementError Type Verification
-  // ==========================================================================
 
   describe("KnowledgeManagementError", () => {
     it("fromStep should extract code and message from original error", () => {

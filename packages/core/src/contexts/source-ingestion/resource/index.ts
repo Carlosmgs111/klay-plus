@@ -5,7 +5,6 @@
  * It handles both user-uploaded files and externally referenced resources.
  */
 
-// ─── Domain ──────────────────────────────────────────────────────────────────
 export {
   Resource,
   ResourceId,
@@ -23,11 +22,9 @@ export {
 
 export type { ResourceRepository, ResourceStorage, ResourceError } from "./domain/index.js";
 
-// ─── Application ─────────────────────────────────────────────────────────────
 export { StoreResource, RegisterExternalResource, DeleteResource, GetResource, ResourceUseCases } from "./application/index.js";
 export type { StoreResourceCommand, StoreResourceResult, RegisterExternalResourceCommand, RegisterExternalResourceResult, DeleteResourceCommand } from "./application/index.js";
 
-// ─── Composition & Factory ───────────────────────────────────────────────────
 export { ResourceComposer, resourceFactory } from "./composition/index.js";
 export type {
   ResourceInfrastructurePolicy,

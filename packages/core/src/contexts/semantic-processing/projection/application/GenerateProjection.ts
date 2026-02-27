@@ -46,7 +46,6 @@ export class GenerateProjection {
   async execute(
     command: GenerateProjectionCommand,
   ): Promise<Result<ProjectionError, GenerateProjectionResult>> {
-    // ─── Validations ────────────────────────────────────────────────────
     if (!command.semanticUnitId || command.semanticUnitId.trim() === "") {
       return Result.fail(new ProjectionSemanticUnitIdRequiredError());
     }
@@ -55,7 +54,6 @@ export class GenerateProjection {
       return Result.fail(new ProjectionContentRequiredError());
     }
 
-    // ─── Resolve Processing Profile ──────────────────────────────────────
     const profileId = ProcessingProfileId.create(command.processingProfileId);
     const profile = await this.profileRepository.findActiveById(profileId);
 
@@ -69,11 +67,9 @@ export class GenerateProjection {
       );
     }
 
-    // ─── Materialize Strategies ─────────────────────────────────────────
     const { embeddingStrategy, chunkingStrategy } =
       await this.materializer.materialize(profile);
 
-    // ─── Create Projection ──────────────────────────────────────────────
     const projectionId = ProjectionId.create(command.projectionId);
 
     const projection = SemanticProjection.create(
@@ -87,14 +83,11 @@ export class GenerateProjection {
     projection.markProcessing();
 
     try {
-      // ─── Chunking ───────────────────────────────────────────────────────
       const chunks = chunkingStrategy.chunk(command.content);
       const chunkContents = chunks.map((c) => c.content);
 
-      // ─── Embedding ──────────────────────────────────────────────────────
       const embeddings = await embeddingStrategy.embedBatch(chunkContents);
 
-      // ─── Vector Store ───────────────────────────────────────────────────
       const vectorEntries: VectorEntry[] = chunks.map((chunk, i) => ({
         id: `${command.semanticUnitId}-${command.projectionId}-${chunk.index}`,
         semanticUnitId: command.semanticUnitId,
@@ -114,7 +107,6 @@ export class GenerateProjection {
       await this.vectorStore.deleteByProjectionId(command.projectionId);
       await this.vectorStore.upsert(vectorEntries);
 
-      // ─── Complete Projection ────────────────────────────────────────────
       const result = ProjectionResult.create(
         command.type,
         {
@@ -128,7 +120,6 @@ export class GenerateProjection {
 
       projection.complete(result);
 
-      // ─── Persist and Publish ────────────────────────────────────────────
       await this.repository.save(projection);
       await this.eventPublisher.publishAll(projection.clearEvents());
 

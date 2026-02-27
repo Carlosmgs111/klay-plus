@@ -20,8 +20,6 @@ import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort.j
 import { PipelineStep } from "../domain/PipelineStep.js";
 import { KnowledgePipelineError } from "../domain/KnowledgePipelineError.js";
 
-// ─── Load Test Fixtures ────────────────────────────────────────────────────
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, "../../../tests/integration/fixtures");
@@ -31,15 +29,9 @@ function loadFixture(filename: string): string {
   return fs.readFileSync(filePath, "utf-8").trim();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TEST SUITE
-// ═══════════════════════════════════════════════════════════════════════════════
-
 describe("Knowledge Pipeline Orchestrator — E2E", () => {
   let pipeline: KnowledgePipelinePort;
   let profileId: string;
-
-  // ─── Setup ──────────────────────────────────────────────────────────────────
 
   beforeAll(async () => {
     pipeline = await createKnowledgePipeline({
@@ -60,9 +52,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     expect(profileResult.isOk()).toBe(true);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 1. Full Pipeline: execute()
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Full Pipeline — execute()", () => {
     it("should execute the complete pipeline: ingest → process → catalog", async () => {
@@ -120,9 +110,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 2. Granular Operations
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Granular Operations", () => {
     it("should ingest a document independently", async () => {
@@ -181,9 +169,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 3. Search — Independent from Construction Pipeline
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Search Knowledge", () => {
     it("should search the knowledge base after pipeline execution", async () => {
@@ -221,9 +207,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 4. Error Tracking: Step + CompletedSteps
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Error Tracking", () => {
     it("should track completed steps when cataloging fails (duplicate unit)", async () => {
@@ -319,9 +303,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 5. Full Pipeline with Second Document
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Multiple Documents", () => {
     it("should process a second document through the full pipeline", async () => {
@@ -351,9 +333,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 6. Content Manifest Tracking
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Content Manifest Tracking", () => {
     // Use inline text as URI to avoid URI uniqueness conflicts with other tests
@@ -529,9 +509,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 7. Processing Profile Management
-  // ═══════════════════════════════════════════════════════════════════════════
 
   describe("Processing Profile Management", () => {
     it("should create a processing profile via the pipeline", async () => {

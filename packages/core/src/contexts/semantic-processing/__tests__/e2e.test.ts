@@ -18,7 +18,6 @@ import { ProjectionType } from "../projection/domain/ProjectionType.js";
 
 describe("Semantic Processing Context E2E", () => {
   it("should process content end-to-end with a processing profile", async () => {
-    // ─── Step 1: Create Facade ─────────────────────────────────────────────
     const facade = await createSemanticProcessingFacade({
       provider: "in-memory",
       embeddingDimensions: 128,
@@ -30,7 +29,6 @@ describe("Semantic Processing Context E2E", () => {
     expect(facade.processingProfile).toBeDefined();
     expect(facade.vectorStoreConfig).toBeDefined();
 
-    // ─── Step 2: Create Processing Profile ──────────────────────────────────
     const profileId = crypto.randomUUID();
     const createProfileResult = await facade.createProcessingProfile({
       id: profileId,
@@ -46,7 +44,6 @@ describe("Semantic Processing Context E2E", () => {
       expect(createProfileResult.value.version).toBe(1);
     }
 
-    // ─── Step 3: Process Content ────────────────────────────────────────────
     const semanticUnitId = crypto.randomUUID();
     const testContent = `
 # Introduction to Machine Learning
@@ -87,7 +84,6 @@ There are three main types of machine learning:
       expect(processResult.value.model).toBe("hash-local");
     }
 
-    // ─── Step 4: Batch Processing ───────────────────────────────────────────
     const batchItems = [
       {
         projectionId: crypto.randomUUID(),
@@ -110,8 +106,6 @@ There are three main types of machine learning:
     const batchResults = await facade.batchProcess(batchItems);
     expect(batchResults).toHaveLength(2);
     expect(batchResults.every((r) => r.success)).toBe(true);
-
-    // ─── Step 5: Error Handling ──────────────────────────────────────────────
 
     // Empty content should fail
     const emptyContentResult = await facade.processContent({

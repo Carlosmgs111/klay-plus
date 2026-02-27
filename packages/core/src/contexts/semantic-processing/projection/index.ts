@@ -5,7 +5,6 @@
  * It transforms content into searchable vector representations.
  */
 
-// ─── Domain ─────────────────────────────────────────────────────────────────
 export {
   SemanticProjection,
   ProjectionId,
@@ -41,14 +40,12 @@ export type {
   ProjectionError,
 } from "./domain/index.js";
 
-// ─── Application ────────────────────────────────────────────────────────────
 export { GenerateProjection, ProjectionUseCases } from "./application/index.js";
 export type {
   GenerateProjectionCommand,
   GenerateProjectionResult,
 } from "./application/index.js";
 
-// ─── Infrastructure (strategies & adapters) ─────────────────────────────────
 export {
   BaseChunker,
   FixedSizeChunker,
@@ -62,7 +59,6 @@ export {
 
 export { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore.js";
 
-// ─── Composition & Factory ──────────────────────────────────────────────────
 export {
   ProjectionComposer,
   projectionFactory,

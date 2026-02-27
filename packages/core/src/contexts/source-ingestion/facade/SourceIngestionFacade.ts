@@ -11,8 +11,6 @@ import type { ResolvedSourceIngestionModules } from "./composition/infra-policie
 import { Result } from "../../../shared/domain/Result.js";
 import type { DomainError } from "../../../shared/domain/errors/index.js";
 
-// ─── SourceType to MIME Type Mapping ─────────────────────────────────────────
-
 const SOURCE_TYPE_TO_MIME: Record<SourceType, string> = {
   [SourceTypeEnum.Pdf]: "application/pdf",
   [SourceTypeEnum.Web]: "text/html",
@@ -22,8 +20,6 @@ const SOURCE_TYPE_TO_MIME: Record<SourceType, string> = {
   [SourceTypeEnum.Csv]: "text/csv",
   [SourceTypeEnum.Json]: "application/json",
 };
-
-// ─── Facade Result Types ─────────────────────────────────────────────────────
 
 export interface RegisterSourceSuccess {
   sourceId: string;
@@ -59,8 +55,6 @@ export interface IngestFileSuccess {
   metadata: Record<string, unknown>;
 }
 
-// ─── Facade ──────────────────────────────────────────────────────────────────
-
 /**
  * Application Facade for the Source Ingestion bounded context.
  *
@@ -92,8 +86,6 @@ export class SourceIngestionFacade {
     this._resourceRepository = modules.resourceRepository;
   }
 
-  // ─── Module Accessors ──────────────────────────────────────────────────────
-
   get source(): SourceUseCases {
     return this._source;
   }
@@ -105,8 +97,6 @@ export class SourceIngestionFacade {
   get resource(): ResourceUseCases {
     return this._resource;
   }
-
-  // ─── Workflow Operations ───────────────────────────────────────────────────
 
   /**
    * Registers a source (stores reference only, no extraction).

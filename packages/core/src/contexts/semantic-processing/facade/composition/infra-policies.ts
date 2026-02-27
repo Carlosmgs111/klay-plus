@@ -3,8 +3,6 @@ import type { ProcessingProfileUseCases } from "../../processing-profile/applica
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository.js";
 import type { VectorEntry } from "../../../../platform/vector/VectorEntry.js";
 
-// ─── Vector Store Config ────────────────────────────────────────────────────
-
 /**
  * Configuration exposed for cross-context wiring.
  * Instead of sharing a VectorStore instance, we share the config
@@ -15,8 +13,6 @@ export interface VectorStoreConfig {
   dbName?: string;
   sharedEntries?: Map<string, VectorEntry>;
 }
-
-// ─── Override Types ─────────────────────────────────────────────────────────
 
 interface ProjectionOverrides {
   provider?: string;
@@ -35,12 +31,8 @@ interface ProcessingProfileOverrides {
   dbName?: string;
 }
 
-// ─── Facade Policy ──────────────────────────────────────────────────────────
-
 export interface SemanticProcessingFacadePolicy {
   provider: string;
-
-  // ─── Database Configuration ────────────────────────────────────────────────
 
   /**
    * Database path for server-side persistence (NeDB).
@@ -52,8 +44,6 @@ export interface SemanticProcessingFacadePolicy {
    * @default "semantic-processing"
    */
   dbName?: string;
-
-  // ─── Embedding Configuration ───────────────────────────────────────────────
 
   /**
    * Embedding dimensions for vector generation (hash embeddings only).
@@ -80,15 +70,11 @@ export interface SemanticProcessingFacadePolicy {
    */
   embeddingModel?: string;
 
-  // ─── Chunking Configuration ────────────────────────────────────────────────
-
   /**
    * Default chunking strategy type.
    * @default "recursive"
    */
   defaultChunkingStrategy?: string;
-
-  // ─── Module Overrides ──────────────────────────────────────────────────────
 
   /**
    * Override policies for individual modules.
@@ -98,8 +84,6 @@ export interface SemanticProcessingFacadePolicy {
     projection?: ProjectionOverrides;
     processingProfile?: ProcessingProfileOverrides;
   };
-
-  // ─── Environment Configuration ─────────────────────────────────────────────
 
   /**
    * Configuration overrides for testing or explicit configuration.
@@ -115,8 +99,6 @@ export interface SemanticProcessingFacadePolicy {
    */
   configOverrides?: Record<string, string>;
 }
-
-// ─── Resolved Modules ───────────────────────────────────────────────────────
 
 export interface ResolvedSemanticProcessingModules {
   projection: ProjectionUseCases;

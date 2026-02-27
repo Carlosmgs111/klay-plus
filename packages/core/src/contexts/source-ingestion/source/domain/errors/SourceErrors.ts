@@ -4,23 +4,17 @@ import {
   ValidationError,
 } from "../../../../../shared/domain/errors/index.js";
 
-// ─── Not Found Errors ────────────────────────────────────────────────────────
-
 export class SourceNotFoundError extends NotFoundError {
   constructor(sourceId: string) {
     super("Source", sourceId);
   }
 }
 
-// ─── Already Exists Errors ───────────────────────────────────────────────────
-
 export class SourceAlreadyExistsError extends AlreadyExistsError {
   constructor(uri: string) {
     super("Source", uri, { field: "uri" });
   }
 }
-
-// ─── Validation Errors ───────────────────────────────────────────────────────
 
 export class SourceNameRequiredError extends ValidationError {
   constructor() {
@@ -49,8 +43,6 @@ export class SourceInvalidTypeError extends ValidationError {
     );
   }
 }
-
-// ─── Type Alias for Union ────────────────────────────────────────────────────
 
 export type SourceError =
   | SourceNotFoundError

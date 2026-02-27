@@ -1,7 +1,6 @@
 import type { KnowledgeLineageRepository } from "../domain/KnowledgeLineageRepository.js";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
 
-// ─── Use Cases ─────────────────────────────────────────────────────
 export { RegisterTransformation } from "./RegisterTransformation.js";
 export type { RegisterTransformationCommand } from "./RegisterTransformation.js";
 
@@ -11,7 +10,6 @@ export type { LinkSemanticUnitsCommand } from "./LinkSemanticUnits.js";
 export { GetLinkedUnits } from "./GetLinkedUnits.js";
 export type { GetLinkedUnitsQuery, LinkedUnitResult } from "./GetLinkedUnits.js";
 
-// ─── Use Cases Facade ──────────────────────────────────────────────
 import { RegisterTransformation } from "./RegisterTransformation.js";
 import { LinkSemanticUnits } from "./LinkSemanticUnits.js";
 import { GetLinkedUnits } from "./GetLinkedUnits.js";

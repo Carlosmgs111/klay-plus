@@ -1,3 +1,3 @@
-export class ProfileUpdated {
-  static readonly EVENT_TYPE = "semantic-processing.profile.updated" as const;
-}
+import { defineDomainEvent } from "../../../../../shared/domain/index.js";
+
+export const ProfileUpdated = defineDomainEvent("semantic-processing.profile.updated");

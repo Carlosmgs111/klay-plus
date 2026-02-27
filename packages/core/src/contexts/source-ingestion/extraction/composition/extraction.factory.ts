@@ -14,10 +14,6 @@
 import type { ExtractionInfrastructurePolicy, ResolvedExtractionInfra } from "./infra-policies.js";
 import type { ExtractionUseCases } from "../application/index.js";
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository.js";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher.js";
-
-// ─── Factory Result Contract ─────────────────────────────────────────────────
-
 export interface ExtractionFactoryResult {
   /** Assembled use cases ready for consumption */
   useCases: ExtractionUseCases;
@@ -29,8 +25,6 @@ export interface ExtractionFactoryResult {
   infra: ResolvedExtractionInfra;
 }
 
-// ─── Factory Function ────────────────────────────────────────────────────────
-
 export async function extractionFactory(
   policy: ExtractionInfrastructurePolicy,
 ): Promise<ExtractionFactoryResult> {
@@ -38,7 +32,6 @@ export async function extractionFactory(
     "../../../../platform/composition/ProviderRegistryBuilder.js"
   );
 
-  // ─── Repository Registry ─────────────────────────────────────────────────
   const repositoryRegistry = new ProviderRegistryBuilder<ExtractionJobRepository>()
     .add("in-memory", {
       create: async () => {
@@ -69,35 +62,11 @@ export async function extractionFactory(
     })
     .build();
 
-  // ─── EventPublisher Registry ─────────────────────────────────────────────
-  const eventPublisherRegistry = new ProviderRegistryBuilder<EventPublisher>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .add("server", {
-      create: async () => {
-        const { InMemoryEventPublisher } = await import(
-          "../../../../platform/eventing/InMemoryEventPublisher.js"
-        );
-        return new InMemoryEventPublisher();
-      },
-    })
-    .build();
+  const { createEventPublisherRegistry } = await import(
+    "../../../../platform/composition/createEventPublisherRegistry.js"
+  );
+  const eventPublisherRegistry = createEventPublisherRegistry();
 
-  // ─── Compose ─────────────────────────────────────────────────────────────
   const { ExtractionComposer } = await import("./ExtractionComposer.js");
   const infra = await ExtractionComposer.resolve(policy, {
     repository: repositoryRegistry,

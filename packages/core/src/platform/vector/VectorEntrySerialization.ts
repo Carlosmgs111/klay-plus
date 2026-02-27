@@ -1,8 +1,8 @@
-// ─── VectorEntry Serialization ───────────────────────────────────────────────
-//
-// DTO and conversion functions for persisting VectorEntry to storage backends
-// (IndexedDB, NeDB). Separated from the VectorEntry interface to keep
-// serialization concerns in infrastructure.
+/**
+ * DTO and conversion functions for persisting VectorEntry to storage backends
+ * (IndexedDB, NeDB). Separated from the VectorEntry interface to keep
+ * serialization concerns in infrastructure.
+ */
 
 import type { VectorEntry } from "./VectorEntry.js";
 
