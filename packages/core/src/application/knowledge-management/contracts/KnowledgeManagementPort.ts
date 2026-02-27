@@ -16,7 +16,7 @@ import type {
  *
  * Only exposes flows that coordinate multiple bounded contexts.
  * Atomic operations (removeSource, rollbackUnit, linkUnits, etc.) are
- * called directly on the facade by the client.
+ * called directly on the service by the client.
  */
 export interface KnowledgeManagementPort {
   /**

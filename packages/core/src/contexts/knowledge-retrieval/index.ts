@@ -28,13 +28,13 @@ export type {
   SemanticQueryFactoryResult,
 } from "./semantic-query";
 
-// Facade Module (Recommended Entry Point)
+// Service Module (Recommended Entry Point)
 export {
-  KnowledgeRetrievalFacade,
-  createKnowledgeRetrievalFacade,
-} from "./facade";
+  KnowledgeRetrievalService,
+  createKnowledgeRetrievalService,
+} from "./service";
 
 export type {
-  KnowledgeRetrievalFacadePolicy,
+  KnowledgeRetrievalServicePolicy,
   ResolvedKnowledgeRetrievalModules,
-} from "./facade";
+} from "./service";

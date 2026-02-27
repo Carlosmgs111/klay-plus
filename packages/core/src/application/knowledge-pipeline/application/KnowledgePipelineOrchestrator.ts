@@ -1,7 +1,7 @@
-import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
-import type { KnowledgeRetrievalFacade } from "../../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
+import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
+import type { SemanticKnowledgeService } from "../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { KnowledgeRetrievalService } from "../../../contexts/knowledge-retrieval/service/KnowledgeRetrievalService";
 import type { ManifestRepository } from "../contracts/ManifestRepository";
 import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort";
 import type {
@@ -31,18 +31,18 @@ import { ExecuteFullPipeline } from "./use-cases/ExecuteFullPipeline";
 const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
 
 export interface ResolvedPipelineDependencies {
-  ingestion: SourceIngestionFacade;
-  processing: SemanticProcessingFacade;
-  knowledge: SemanticKnowledgeFacade;
-  retrieval: KnowledgeRetrievalFacade;
+  ingestion: SourceIngestionService;
+  processing: SemanticProcessingService;
+  knowledge: SemanticKnowledgeService;
+  retrieval: KnowledgeRetrievalService;
   manifestRepository: ManifestRepository;
 }
 
 export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
-  private readonly _ingestion: SourceIngestionFacade;
-  private readonly _processing: SemanticProcessingFacade;
-  private readonly _knowledge: SemanticKnowledgeFacade;
-  private readonly _retrieval: KnowledgeRetrievalFacade;
+  private readonly _ingestion: SourceIngestionService;
+  private readonly _processing: SemanticProcessingService;
+  private readonly _knowledge: SemanticKnowledgeService;
+  private readonly _retrieval: KnowledgeRetrievalService;
   private readonly _manifestRepository: ManifestRepository;
   private readonly _executeFullPipeline: ExecuteFullPipeline;
 

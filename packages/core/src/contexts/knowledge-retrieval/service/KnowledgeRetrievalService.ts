@@ -2,7 +2,7 @@ import type { SemanticQueryUseCases } from "../semantic-query/application";
 import type { RetrievalResult } from "../semantic-query/domain/RetrievalResult";
 import type { ResolvedKnowledgeRetrievalModules } from "./composition/factory";
 
-export class KnowledgeRetrievalFacade {
+export class KnowledgeRetrievalService {
   private readonly _semanticQuery: SemanticQueryUseCases;
 
   constructor(modules: ResolvedKnowledgeRetrievalModules) {

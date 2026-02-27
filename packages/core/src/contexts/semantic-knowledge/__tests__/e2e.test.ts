@@ -2,7 +2,7 @@
  * End-to-End Test for Semantic Knowledge Context
  *
  * Tests the complete flow:
- * 1. Create facade with in-memory infrastructure
+ * 1. Create service with in-memory infrastructure
  * 2. Create semantic unit with lineage tracking
  * 3. Add sources to semantic unit (implicit versioning)
  * 4. Verify lineage history
@@ -11,28 +11,28 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { createSemanticKnowledgeFacade } from "../facade";
-import type { SemanticKnowledgeFacade } from "../facade/SemanticKnowledgeFacade";
+import { createSemanticKnowledgeService } from "../service";
+import type { SemanticKnowledgeService } from "../service/SemanticKnowledgeService";
 
 describe("Semantic Knowledge Context E2E", () => {
-  let facade: SemanticKnowledgeFacade;
+  let service: SemanticKnowledgeService;
   let unitId: string;
   let unitId2: string;
 
   beforeAll(async () => {
     console.log("🧪 Starting End-to-End Test for Semantic Knowledge Context\n");
-    console.log("📦 Creating facade with in-memory infrastructure...");
-    facade = await createSemanticKnowledgeFacade({
+    console.log("📦 Creating service with in-memory infrastructure...");
+    service = await createSemanticKnowledgeService({
       provider: "in-memory",
     });
-    console.log("   ✅ Facade created successfully\n");
+    console.log("   ✅ Service created successfully\n");
   });
 
   it("should create semantic unit with lineage tracking", async () => {
     console.log("📝 Creating a semantic unit with lineage tracking...");
     unitId = crypto.randomUUID();
 
-    const createResult = await facade.createSemanticUnitWithLineage({
+    const createResult = await service.createSemanticUnitWithLineage({
       id: unitId,
       sourceId: "source-123",
       sourceType: "document",
@@ -53,7 +53,7 @@ describe("Semantic Knowledge Context E2E", () => {
   it("should add source to semantic unit", async () => {
     console.log("🔄 Adding source to semantic unit...");
 
-    const addSourceResult = await facade.addSourceToSemanticUnit({
+    const addSourceResult = await service.addSourceToSemanticUnit({
       unitId: unitId,
       sourceId: "enrichment-source",
       sourceType: "enrichment",
@@ -72,7 +72,7 @@ describe("Semantic Knowledge Context E2E", () => {
   it("should add a second source", async () => {
     console.log("🔄 Adding a second source to semantic unit...");
 
-    const addSourceResult = await facade.addSourceToSemanticUnit({
+    const addSourceResult = await service.addSourceToSemanticUnit({
       unitId: unitId,
       sourceId: "chunk-source",
       sourceType: "web",
@@ -91,7 +91,7 @@ describe("Semantic Knowledge Context E2E", () => {
   it("should retrieve lineage history for a unit", async () => {
     console.log("📊 Verifying lineage history...");
 
-    const lineageResult = await facade.getLineageForUnit(unitId);
+    const lineageResult = await service.getLineageForUnit(unitId);
 
     expect(lineageResult.isOk()).toBe(true);
 
@@ -110,7 +110,7 @@ describe("Semantic Knowledge Context E2E", () => {
     console.log("📝 Creating another semantic unit...");
     unitId2 = crypto.randomUUID();
 
-    const createResult2 = await facade.createSemanticUnitWithLineage({
+    const createResult2 = await service.createSemanticUnitWithLineage({
       id: unitId2,
       sourceId: "source-456",
       sourceType: "api",
@@ -127,7 +127,7 @@ describe("Semantic Knowledge Context E2E", () => {
     console.log("🔄 Testing deprecation state machine...");
     console.log(`   ℹ️  State transitions: DRAFT → ACTIVE → DEPRECATED`);
 
-    const deprecateResult = await facade.deprecateSemanticUnitWithLineage({
+    const deprecateResult = await service.deprecateSemanticUnitWithLineage({
       unitId: unitId,
       reason: "Content is outdated",
     });
@@ -167,7 +167,7 @@ describe("Semantic Knowledge Context E2E", () => {
       },
     ];
 
-    const batchResult = await facade.batchCreateSemanticUnitsWithLineage(batchUnits);
+    const batchResult = await service.batchCreateSemanticUnitsWithLineage(batchUnits);
     const successCount = batchResult.filter((r) => r.success).length;
 
     expect(successCount).toBe(3);
@@ -182,7 +182,7 @@ describe("Semantic Knowledge Context E2E", () => {
   it("should reject duplicate creation", async () => {
     console.log("🚫 Testing duplicate creation error handling...");
 
-    const duplicateResult = await facade.createSemanticUnitWithLineage({
+    const duplicateResult = await service.createSemanticUnitWithLineage({
       id: unitId2, // Same ID as previous
       sourceId: "different-source",
       sourceType: "document",
@@ -198,7 +198,7 @@ describe("Semantic Knowledge Context E2E", () => {
   it("should reject adding source to non-existent unit", async () => {
     console.log("🔍 Testing not found error handling...");
 
-    const notFoundResult = await facade.addSourceToSemanticUnit({
+    const notFoundResult = await service.addSourceToSemanticUnit({
       unitId: "non-existent-id",
       sourceId: "src",
       sourceType: "doc",
@@ -212,14 +212,14 @@ describe("Semantic Knowledge Context E2E", () => {
     console.log(`   ✅ Correctly rejected not found: ${notFoundResult.error.message}\n`);
   });
 
-  it("should provide facade operations", async () => {
-    console.log("🔧 Testing facade operations available...");
+  it("should provide service operations", async () => {
+    console.log("🔧 Testing service operations available...");
 
-    expect(facade.createSemanticUnit).toBeDefined();
-    expect(facade.addSourceToSemanticUnit).toBeDefined();
-    expect(facade.linkSemanticUnits).toBeDefined();
-    expect(facade.getLinkedUnits).toBeDefined();
-    console.log("   ✅ All facade operations available\n");
+    expect(service.createSemanticUnit).toBeDefined();
+    expect(service.addSourceToSemanticUnit).toBeDefined();
+    expect(service.linkSemanticUnits).toBeDefined();
+    expect(service.getLinkedUnits).toBeDefined();
+    console.log("   ✅ All service operations available\n");
 
     console.log("═══════════════════════════════════════════════════════════════");
     console.log("✅ ALL TESTS PASSED!");

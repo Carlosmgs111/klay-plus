@@ -38,7 +38,7 @@ export interface DeprecateProfileSuccess {
   profileId: string;
 }
 
-export class SemanticProcessingFacade {
+export class SemanticProcessingService {
   private readonly _projection: ProjectionUseCases;
   private readonly _profileRepository: ProcessingProfileRepository;
   private readonly _profileEventPublisher: EventPublisher;

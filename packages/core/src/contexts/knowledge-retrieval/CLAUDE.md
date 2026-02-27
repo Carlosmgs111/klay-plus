@@ -4,7 +4,7 @@
 
 Busqueda semantica y descubrimiento de conocimiento. Este es el lado de lectura del sistema: recibe consultas en lenguaje natural, las convierte a vectores y encuentra las unidades de conocimiento mas relevantes por similitud semantica.
 
-## Facade: `KnowledgeRetrievalFacade`
+## Service: `KnowledgeRetrievalService`
 
 Punto de entrada unico del contexto. Expone multiples niveles de abstraccion para busqueda, desde queries crudos hasta helpers de alto nivel.
 
@@ -22,7 +22,7 @@ Punto de entrada unico del contexto. Expone multiples niveles de abstraccion par
 ### Composicion
 
 ```
-KnowledgeRetrievalFacadeComposer
+KnowledgeRetrievalServiceComposer
 └── semanticQueryFactory(policy) → { useCases: SemanticQueryUseCases, infra }
 ```
 

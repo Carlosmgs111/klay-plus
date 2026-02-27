@@ -18,7 +18,7 @@ El módulo **source-ingestion** es un Bounded Context que implementa el patrón 
 │                          │                                      │
 │                          ▼                                      │
 │              ┌─────────────────────┐                           │
-│              │ SourceIngestionFacade│                          │
+│              │ SourceIngestionService│                          │
 │              │ (Punto de entrada)   │                          │
 │              └─────────────────────┘                           │
 └─────────────────────────────────────────────────────────────────┘
@@ -36,11 +36,11 @@ source-ingestion/
 │   └── e2e.test.ts                 # Pruebas end-to-end
 │
 ├── application/
-│   └── facade/
-│       ├── SourceIngestionFacade.ts # Façade principal
+│   └── service/
+│       ├── SourceIngestionService.ts # Façade principal
 │       ├── index.ts
 │       └── composition/
-│           ├── SourceIngestionFacadeComposer.ts
+│           ├── SourceIngestionServiceComposer.ts
 │           └── infra-policies.ts
 │
 ├── source/                          # Módulo de Source
@@ -135,7 +135,7 @@ El módulo implementa los building blocks tácticos de DDD:
        │            │               │                     │
        ▼            │  ┌────────────┴────────────┐       │
    ┌────────┐       │  │         DOMAIN          │       │
-   │ Facade │──────►│  │  Source, ExtractionJob  │       │
+   │ Service │──────►│  │  Source, ExtractionJob  │       │
    └────────┘       │  │    Value Objects        │       │
                     │  │    Domain Events        │       │
                     │  └─────────────────────────┘       │
@@ -191,8 +191,8 @@ const { useCases, infra } = await sourceFactory({
   dbPath: "./data",
 });
 
-// Factory de facade compone todos los módulos
-const facade = await createSourceIngestionFacade({
+// Factory de service compone todos los módulos
+const facade = await createSourceIngestionService({
   type: "browser",
   dbName: "my-app",
 });
@@ -225,11 +225,11 @@ class SourceComposer {
 }
 ```
 
-### 3.7 Façade Pattern
+### 3.7 Application Service Pattern
 
 ```typescript
-// Facade simplifica la interacción con el contexto
-class SourceIngestionFacade {
+// Service simplifica la interacción con el contexto
+class SourceIngestionService {
   async registerSource(params): Promise<Result<DomainError, RegisterSourceSuccess>>
   async extractSource(params): Promise<Result<DomainError, ExtractSourceSuccess>>
   async ingestAndExtract(params): Promise<Result<DomainError, IngestAndExtractSuccess>>
@@ -328,10 +328,10 @@ const extractionResult = await executeExtraction.execute(cmd2);
 
 ```typescript
 // Configuración simple
-createSourceIngestionFacade({ type: "server", dbPath: "./data" })
+createSourceIngestionService({ type: "server", dbPath: "./data" })
 
 // Configuración mixta
-createSourceIngestionFacade({
+createSourceIngestionService({
   type: "browser",
   overrides: {
     extraction: { type: "server", dbPath: "./extractions" }
@@ -431,7 +431,7 @@ Cada error incluye:
 
 ```
 ┌─────────┐     ┌─────────────────┐     ┌────────────────┐     ┌────────────┐
-│ Cliente │────►│ Facade          │────►│ RegisterSource │────►│ Repository │
+│ Cliente │────►│ Service         │────►│ RegisterSource │────►│ Repository │
 └─────────┘     │ registerSource()│     │ execute()      │     │ save()     │
                 └─────────────────┘     └────────────────┘     └────────────┘
                                                │
@@ -446,7 +446,7 @@ Cada error incluye:
 
 ```
 ┌─────────┐     ┌─────────────────┐     ┌───────────────────┐
-│ Cliente │────►│ Facade          │────►│ SourceRepository  │
+│ Cliente │────►│ Service         │────►│ SourceRepository  │
 └─────────┘     │ extractSource() │     │ findById()        │
                 └────────┬────────┘     └───────────────────┘
                          │
@@ -515,22 +515,22 @@ Cada error incluye:
 
 ```typescript
 // Testing
-const facade = await createSourceIngestionFacade({ type: "in-memory" });
+const facade = await createSourceIngestionService({ type: "in-memory" });
 
 // Browser app
-const facade = await createSourceIngestionFacade({
+const facade = await createSourceIngestionService({
   type: "browser",
   dbName: "knowledge-platform",
 });
 
 // Server app
-const facade = await createSourceIngestionFacade({
+const facade = await createSourceIngestionService({
   type: "server",
   dbPath: "./data/source-ingestion",
 });
 
 // Híbrido (overrides)
-const facade = await createSourceIngestionFacade({
+const facade = await createSourceIngestionService({
   type: "browser",
   overrides: {
     extraction: { type: "server", dbPath: "./extractions" },
@@ -557,7 +557,7 @@ class DocxContentExtractor implements ContentExtractor {
 }
 
 // 2. Registrar en política de extracción
-const facade = await createSourceIngestionFacade({
+const facade = await createSourceIngestionService({
   type: "server",
   overrides: {
     extraction: {
@@ -595,7 +595,7 @@ private static async resolveRepository(policy): Promise<SourceRepository> {
 
 El archivo `__tests__/e2e.test.ts` valida:
 
-1. ✅ Creación de Facade
+1. ✅ Creación de Service
 2. ✅ Registro de Source
 3. ✅ Extracción de contenido
 4. ✅ Flujo completo (ingest + extract)

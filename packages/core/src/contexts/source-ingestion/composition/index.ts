@@ -1,5 +1,5 @@
 export { resolveSourceIngestionModules } from "./factory";
 export type {
-  SourceIngestionFacadePolicy,
+  SourceIngestionServicePolicy,
   ResolvedSourceIngestionModules,
 } from "./factory";

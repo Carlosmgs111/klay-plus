@@ -93,17 +93,17 @@ export type {
   ProcessingProfileFactoryResult,
 } from "./processing-profile";
 
-// Facade (Context-Level)
+// Service (Context-Level)
 export {
-  SemanticProcessingFacade,
-  createSemanticProcessingFacade,
-} from "./facade";
+  SemanticProcessingService,
+  createSemanticProcessingService,
+} from "./service";
 
 export type {
-  SemanticProcessingFacadePolicy,
+  SemanticProcessingServicePolicy,
   ResolvedSemanticProcessingModules,
   ProcessContentSuccess,
   CreateProfileSuccess,
   UpdateProfileSuccess,
   DeprecateProfileSuccess,
-} from "./facade";
+} from "./service";

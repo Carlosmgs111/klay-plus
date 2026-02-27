@@ -2,7 +2,7 @@
 
 ## Rol
 
-**No es un bounded context** — es la capa de orquestacion que coordina los 4 bounded contexts via sus facades. Expone un API unificado (`KnowledgePipelinePort`) para consumidores externos (UI, REST, CLI).
+**No es un bounded context** — es la capa de orquestacion que coordina los 4 bounded contexts via sus services. Expone un API unificado (`KnowledgePipelinePort`) para consumidores externos (UI, REST, CLI).
 
 ## Port: `KnowledgePipelinePort`
 
@@ -26,17 +26,17 @@ Todos los metodos retornan `Result<KnowledgePipelineError, Success>` para error 
 
 ## Orchestrator: `KnowledgePipelineOrchestrator`
 
-Implementa `KnowledgePipelinePort`. Recibe las 4 facades + `ManifestRepository` como dependencias privadas. Crea use cases internamente.
+Implementa `KnowledgePipelinePort`. Recibe los 4 services + `ManifestRepository` como dependencias privadas. Crea use cases internamente.
 
 **Reglas de diseno**:
-- Sin getters de facades — son detalles de implementacion privados
+- Sin getters de services — son detalles de implementacion privados
 - Sin lectura de policies — el Composer resuelve infraestructura
 - Sin logica de dominio — solo delegacion a use cases
 - Sin dependencias de framework — TypeScript puro
 
 ### Use Cases internos
 
-| Use Case | Facades usadas |
+| Use Case | Services usados |
 |----------|---------------|
 | `ExecuteFullPipeline` | Ingestion, Processing, Knowledge, ManifestRepository |
 | `IngestDocument` | Ingestion |
@@ -111,7 +111,7 @@ Contratos de datos puros en `contracts/dtos.ts`. Sin logica de dominio, sin depe
 
 ```
 KnowledgePipelineComposer
-├── Compone las 4 facades de bounded contexts (via sus composers)
+├── Compone los 4 services de bounded contexts (via sus composers)
 ├── Crea ManifestRepository segun policy
 ├── Wiring cross-context: vector store compartido entre Processing y Retrieval
 └── Retorna KnowledgePipelinePort (no la implementacion)

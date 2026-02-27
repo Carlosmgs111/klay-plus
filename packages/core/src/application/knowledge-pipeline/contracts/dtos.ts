@@ -4,7 +4,7 @@
  * These are pure data contracts — no domain logic, no framework dependencies.
  * All types use primitive/JSON-safe values only (no domain objects).
  *
- * The orchestrator receives these DTOs and maps them to facade calls.
+ * The orchestrator receives these DTOs and maps them to service calls.
  * Adapters (UI, REST) construct these DTOs from their own input formats.
  */
 

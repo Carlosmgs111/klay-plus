@@ -76,7 +76,7 @@ export interface DeprecateSemanticUnitWithLineageSuccess {
 // Backward-compat aliases
 export type CreateSemanticUnitWithLineageSuccess = CreateSemanticUnitSuccess;
 
-export class SemanticKnowledgeFacade {
+export class SemanticKnowledgeService {
   private readonly _semanticUnitRepository: SemanticUnitRepository;
   private readonly _semanticUnitEventPublisher: EventPublisher;
   private readonly _lineageRepository: KnowledgeLineageRepository;

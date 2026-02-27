@@ -4,7 +4,7 @@
  * Tests the management orchestrator using in-memory infrastructure.
  * Validates the ingestAndAddSource multi-step flow and error tracking.
  *
- * Uses the combined platform factory to share facades between
+ * Uses the combined platform factory to share services between
  * pipeline (for setup) and management (for testing).
  */
 

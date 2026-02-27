@@ -37,7 +37,7 @@ export interface ExecuteExtractionResult {
  * selects the appropriate extractor, performs extraction, and stores
  * the result in an ExtractionJob.
  *
- * It does NOT interact with Source - that coordination is done by the facade.
+ * It does NOT interact with Source - that coordination is done by the service.
  */
 export class ExecuteExtraction {
   constructor(

@@ -1,5 +1,5 @@
 export { resolveSemanticProcessingModules } from "./factory";
 export type {
-  SemanticProcessingFacadePolicy,
+  SemanticProcessingServicePolicy,
   ResolvedSemanticProcessingModules,
 } from "./factory";

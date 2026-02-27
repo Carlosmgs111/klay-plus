@@ -41,19 +41,19 @@ export type {
   LineageFactoryResult,
 } from "./lineage";
 
-// Facade Module (Recommended Entry Point)
+// Service Module (Recommended Entry Point)
 export {
-  SemanticKnowledgeFacade,
-  createSemanticKnowledgeFacade,
+  SemanticKnowledgeService,
+  createSemanticKnowledgeService,
   SemanticUnitNotFoundError,
   SemanticUnitAlreadyExistsError,
   SemanticUnitOperationError,
   LineageNotFoundError,
   LineageOperationError,
-} from "./facade";
+} from "./service";
 
 export type {
-  SemanticKnowledgeFacadePolicy,
+  SemanticKnowledgeServicePolicy,
   ResolvedSemanticKnowledgeModules,
   CreateSemanticUnitSuccess,
   CreateSemanticUnitWithLineageSuccess,
@@ -62,4 +62,4 @@ export type {
   ReprocessSuccess,
   RollbackSuccess,
   DeprecateSemanticUnitWithLineageSuccess,
-} from "./facade";
+} from "./service";

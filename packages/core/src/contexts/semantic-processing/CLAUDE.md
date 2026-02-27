@@ -4,7 +4,7 @@
 
 Transformacion de contenido textual en representaciones vectoriales buscables. Este contexto toma texto, lo segmenta en chunks, genera embeddings vectoriales y los almacena en un vector store. Las estrategias son configurables y reproducibles via Processing Profiles.
 
-## Facade: `SemanticProcessingFacade`
+## Service: `SemanticProcessingService`
 
 Punto de entrada unico del contexto. Coordina projection y processing-profile, materializando las estrategias declarativas de un profile en instancias concretas al momento de procesar.
 
@@ -22,7 +22,7 @@ Punto de entrada unico del contexto. Coordina projection y processing-profile, m
 ### Composicion
 
 ```
-SemanticProcessingFacadeComposer
+SemanticProcessingServiceComposer
 ├── projectionFactory(policy)        → { useCases: ProjectionUseCases, infra }
 ├── processingProfileFactory(policy) → { useCases: ProfileUseCases, infra }
 └── ProcessingProfileMaterializer    → resuelve strategyIds declarativos en instancias concretas

@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { createKnowledgeRetrievalFacade } from "../facade";
+import { createKnowledgeRetrievalService } from "../service";
 import { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
 import { hashToVector } from "../../../platform/vector/hashVector";
-import type { KnowledgeRetrievalFacade } from "../facade/KnowledgeRetrievalFacade";
+import type { KnowledgeRetrievalService } from "../service/KnowledgeRetrievalService";
 import type { VectorEntry } from "../../../platform/vector/VectorEntry";
 
 describe("Knowledge Retrieval Context E2E", () => {
-  let facade: KnowledgeRetrievalFacade;
+  let service: KnowledgeRetrievalService;
   let vectorWriteStore: InMemoryVectorWriteStore;
 
   const DIMENSIONS = 128;
@@ -53,7 +53,7 @@ describe("Knowledge Retrieval Context E2E", () => {
     vectorWriteStore = new InMemoryVectorWriteStore();
     await vectorWriteStore.upsert(testEntries);
 
-    facade = await createKnowledgeRetrievalFacade({
+    service = await createKnowledgeRetrievalService({
       provider: "in-memory",
       vectorStoreConfig: { sharedEntries: vectorWriteStore.sharedEntries },
       embeddingDimensions: DIMENSIONS,
@@ -61,7 +61,7 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should perform a semantic query", async () => {
-    const result = await facade.query({
+    const result = await service.query({
       text: "neural network learning",
       topK: 3,
       minScore: 0.0,
@@ -74,7 +74,7 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should find best match with topK=1", async () => {
-    const result = await facade.query({
+    const result = await service.query({
       text: "machine learning algorithms and neural networks",
       topK: 1,
       minScore: 0.0,
@@ -85,7 +85,7 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should return empty results for high threshold", async () => {
-    const result = await facade.query({
+    const result = await service.query({
       text: "xyz completely irrelevant gibberish query",
       topK: 5,
       minScore: 0.99,
@@ -96,7 +96,7 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should perform batch queries", async () => {
-    const results = await facade.batchQuery([
+    const results = await service.batchQuery([
       { text: "neural networks", topK: 2, minScore: 0.0 },
       { text: "database optimization", topK: 2, minScore: 0.0 },
       { text: "react components", topK: 2, minScore: 0.0 },
@@ -109,6 +109,6 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should provide direct module access", async () => {
-    expect(facade.semanticQuery).toBeDefined();
+    expect(service.semanticQuery).toBeDefined();
   });
 });

@@ -15,7 +15,7 @@
  * NOT exported (internal):
  * - KnowledgePipelineOrchestrator (implementation)
  * - Use cases
- * - Facades
+ * - Services
  */
 
 export type { KnowledgePipelinePort } from "./contracts/KnowledgePipelinePort";

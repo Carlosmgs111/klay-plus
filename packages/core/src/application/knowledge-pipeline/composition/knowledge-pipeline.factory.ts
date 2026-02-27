@@ -17,29 +17,29 @@ export async function resolvePipelineDependencies(
   policy: KnowledgePipelinePolicy,
 ): Promise<ResolvedPipelineDependencies> {
   const [
-    { createSourceIngestionFacade },
-    { createSemanticKnowledgeFacade },
-    { createSemanticProcessingFacade },
+    { createSourceIngestionService },
+    { createSemanticKnowledgeService },
+    { createSemanticProcessingService },
   ] = await Promise.all([
-    import("../../../contexts/source-ingestion/facade"),
-    import("../../../contexts/semantic-knowledge/facade"),
-    import("../../../contexts/semantic-processing/facade"),
+    import("../../../contexts/source-ingestion/service"),
+    import("../../../contexts/semantic-knowledge/service"),
+    import("../../../contexts/semantic-processing/service"),
   ]);
 
   const [ingestion, knowledge, processing] = await Promise.all([
-    createSourceIngestionFacade({
+    createSourceIngestionService({
       provider: policy.provider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
       configOverrides: policy.configOverrides,
     }),
-    createSemanticKnowledgeFacade({
+    createSemanticKnowledgeService({
       provider: policy.provider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
       configOverrides: policy.configOverrides,
     }),
-    createSemanticProcessingFacade({
+    createSemanticProcessingService({
       provider: policy.provider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
@@ -51,11 +51,11 @@ export async function resolvePipelineDependencies(
     }),
   ]);
 
-  const { createKnowledgeRetrievalFacade } = await import(
-    "../../../contexts/knowledge-retrieval/facade"
+  const { createKnowledgeRetrievalService } = await import(
+    "../../../contexts/knowledge-retrieval/service"
   );
 
-  const retrieval = await createKnowledgeRetrievalFacade({
+  const retrieval = await createKnowledgeRetrievalService({
     provider: policy.provider,
     vectorStoreConfig: processing.vectorStoreConfig,
     embeddingDimensions: policy.embeddingDimensions,

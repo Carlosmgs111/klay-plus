@@ -1,10 +1,10 @@
-import type { ProjectionUseCases } from "../../projection/application";
-import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
-import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
-import type { ProjectionInfrastructurePolicy } from "../../projection/composition/factory";
-import type { ProcessingProfileInfrastructurePolicy } from "../../processing-profile/composition/factory";
-import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider";
+import type { ProjectionUseCases } from "../projection/application";
+import type { ProcessingProfileRepository } from "../processing-profile/domain/ProcessingProfileRepository";
+import type { EventPublisher } from "../../../shared/domain/EventPublisher";
+import type { VectorEntry } from "../../../platform/vector/VectorEntry";
+import type { ProjectionInfrastructurePolicy } from "../projection/composition/factory";
+import type { ProcessingProfileInfrastructurePolicy } from "../processing-profile/composition/factory";
+import { resolveConfigProvider } from "../../../platform/config/resolveConfigProvider";
 
 export interface VectorStoreConfig {
   dbPath?: string;
@@ -29,7 +29,7 @@ interface ProcessingProfileOverrides {
   dbName?: string;
 }
 
-export interface SemanticProcessingFacadePolicy {
+export interface SemanticProcessingServicePolicy {
   provider: string;
   dbPath?: string;
   dbName?: string;
@@ -52,7 +52,7 @@ export interface ResolvedSemanticProcessingModules {
 }
 
 export async function resolveSemanticProcessingModules(
-  policy: SemanticProcessingFacadePolicy,
+  policy: SemanticProcessingServicePolicy,
 ): Promise<ResolvedSemanticProcessingModules> {
   const config = await resolveConfigProvider(policy);
 
@@ -70,7 +70,7 @@ export async function resolveSemanticProcessingModules(
   };
 
   const processingProfileResult = await import(
-    "../../processing-profile/composition/factory"
+    "../processing-profile/composition/factory"
   ).then((m) => m.processingProfileFactory(profilePolicy));
 
   const projectionPolicy: ProjectionInfrastructurePolicy = {
@@ -94,7 +94,7 @@ export async function resolveSemanticProcessingModules(
   };
 
   const projectionResult = await import(
-    "../../projection/composition/factory"
+    "../projection/composition/factory"
   ).then((m) =>
     m.projectionFactory(projectionPolicy, processingProfileResult.repository)
   );

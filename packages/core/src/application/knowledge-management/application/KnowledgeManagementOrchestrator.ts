@@ -1,6 +1,6 @@
-import type { SourceIngestionFacade } from "../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
+import type { SemanticKnowledgeService } from "../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
 import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
 import type {
   IngestAndAddSourceInput,
@@ -15,9 +15,9 @@ import { IngestAndAddSource } from "./use-cases/IngestAndAddSource";
  * Created by the Composer — not read from policy.
  */
 export interface ResolvedManagementDependencies {
-  ingestion: SourceIngestionFacade;
-  knowledge: SemanticKnowledgeFacade;
-  processing: SemanticProcessingFacade;
+  ingestion: SourceIngestionService;
+  knowledge: SemanticKnowledgeService;
+  processing: SemanticProcessingService;
 }
 
 /**
@@ -26,14 +26,14 @@ export interface ResolvedManagementDependencies {
  * Implements KnowledgeManagementPort as the single public API for multi-step
  * lifecycle operations on existing semantic units.
  *
- * Receives 3 facades privately (ingestion + knowledge + processing).
+ * Receives 3 services privately (ingestion + knowledge + processing).
  * Creates use cases internally (like the pipeline orchestrator).
  *
  * This is NOT a bounded context — it's an application layer that
- * coordinates existing bounded contexts via their facades.
+ * coordinates existing bounded contexts via their services.
  *
  * Rules:
- * - No facade getters — facades are private implementation details
+ * - No service getters — services are private implementation details
  * - No policy reading — the Composer handles infrastructure selection
  * - No domain logic — only delegation to use cases
  * - No framework dependencies — pure TypeScript

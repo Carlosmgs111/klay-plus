@@ -15,29 +15,29 @@ async function resolveManagementDependencies(
   policy: KnowledgeManagementPolicy,
 ): Promise<ResolvedManagementDependencies> {
   const [
-    { createSourceIngestionFacade },
-    { createSemanticKnowledgeFacade },
-    { createSemanticProcessingFacade },
+    { createSourceIngestionService },
+    { createSemanticKnowledgeService },
+    { createSemanticProcessingService },
   ] = await Promise.all([
-    import("../../../contexts/source-ingestion/facade"),
-    import("../../../contexts/semantic-knowledge/facade"),
-    import("../../../contexts/semantic-processing/facade"),
+    import("../../../contexts/source-ingestion/service"),
+    import("../../../contexts/semantic-knowledge/service"),
+    import("../../../contexts/semantic-processing/service"),
   ]);
 
   const [ingestion, knowledge, processing] = await Promise.all([
-    createSourceIngestionFacade({
+    createSourceIngestionService({
       provider: policy.provider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
       configOverrides: policy.configOverrides,
     }),
-    createSemanticKnowledgeFacade({
+    createSemanticKnowledgeService({
       provider: policy.provider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
       configOverrides: policy.configOverrides,
     }),
-    createSemanticProcessingFacade({
+    createSemanticProcessingService({
       provider: policy.provider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,

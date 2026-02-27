@@ -4,7 +4,7 @@
 
 Adquisicion de contenido y extraccion de texto. Este contexto es la puerta de entrada del sistema: recibe contenido desde diversas fuentes externas y produce texto extraido listo para procesamiento semantico.
 
-## Facade: `SourceIngestionFacade`
+## Service: `SourceIngestionService`
 
 Punto de entrada unico del contexto. Coordina los 3 modulos internos.
 
@@ -24,7 +24,7 @@ Punto de entrada unico del contexto. Coordina los 3 modulos internos.
 ### Composicion
 
 ```
-SourceIngestionFacadeComposer
+SourceIngestionServiceComposer
 ├── sourceFactory(policy)      → { useCases: SourceUseCases, infra }
 ├── resourceFactory(policy)    → { useCases: ResourceUseCases, infra }
 └── extractionFactory(policy)  → { useCases: ExtractionUseCases, infra }

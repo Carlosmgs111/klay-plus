@@ -1,5 +1,5 @@
 export { resolveSemanticKnowledgeModules } from "./factory";
 export type {
-  SemanticKnowledgeFacadePolicy,
+  SemanticKnowledgeServicePolicy,
   ResolvedSemanticKnowledgeModules,
 } from "./factory";

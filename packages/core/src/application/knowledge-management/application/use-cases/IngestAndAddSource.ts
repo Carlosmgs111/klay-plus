@@ -1,6 +1,6 @@
-import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
-import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
+import type { SourceIngestionService } from "../../../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SemanticKnowledgeService } from "../../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { SemanticProcessingService } from "../../../../contexts/semantic-processing/service/SemanticProcessingService";
 import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType";
 import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType";
 import type { IngestAndAddSourceInput, IngestAndAddSourceSuccess } from "../../contracts/dtos";
@@ -25,9 +25,9 @@ const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
  */
 export class IngestAndAddSource {
   constructor(
-    private readonly _ingestion: SourceIngestionFacade,
-    private readonly _knowledge: SemanticKnowledgeFacade,
-    private readonly _processing: SemanticProcessingFacade,
+    private readonly _ingestion: SourceIngestionService,
+    private readonly _knowledge: SemanticKnowledgeService,
+    private readonly _processing: SemanticProcessingService,
   ) {}
 
   async execute(

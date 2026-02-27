@@ -33,17 +33,17 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { createSourceIngestionFacade } from "../../contexts/source-ingestion/facade";
-import { createSemanticProcessingFacade } from "../../contexts/semantic-processing/facade";
-import { createSemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade";
-import { createKnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade";
+import { createSourceIngestionService } from "../../contexts/source-ingestion/service";
+import { createSemanticProcessingService } from "../../contexts/semantic-processing/service";
+import { createSemanticKnowledgeService } from "../../contexts/semantic-knowledge/service";
+import { createKnowledgeRetrievalService } from "../../contexts/knowledge-retrieval/service";
 
 import { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";
 import { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType";
-import type { SourceIngestionFacade } from "../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
-import type { KnowledgeRetrievalFacade } from "../../contexts/knowledge-retrieval/facade/KnowledgeRetrievalFacade";
+import type { SourceIngestionService } from "../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SemanticProcessingService } from "../../contexts/semantic-processing/service/SemanticProcessingService";
+import type { SemanticKnowledgeService } from "../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { KnowledgeRetrievalService } from "../../contexts/knowledge-retrieval/service/KnowledgeRetrievalService";
 
 const DIMENSIONS = 128;
 
@@ -84,10 +84,10 @@ const PDF_PATH = resolvePdfPath();
 const PDF_AVAILABLE = PDF_PATH != null && fs.existsSync(PDF_PATH);
 
 describe("Full-Pipeline Integration: All Bounded Contexts", () => {
-  let ingestion: SourceIngestionFacade;
-  let processing: SemanticProcessingFacade;
-  let knowledge: SemanticKnowledgeFacade;
-  let retrieval: KnowledgeRetrievalFacade;
+  let ingestion: SourceIngestionService;
+  let processing: SemanticProcessingService;
+  let knowledge: SemanticKnowledgeService;
+  let retrieval: KnowledgeRetrievalService;
 
   const ids = {
     ddd: { sourceId: "", unitId: "" },
@@ -112,34 +112,34 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
     console.log(`🏗️  Initializing all bounded contexts (server, db: ${dbPath})...\n`);
     console.log(`   📂 NeDB data directory: ${dbPath}`);
 
-    ingestion = await createSourceIngestionFacade({
+    ingestion = await createSourceIngestionService({
       provider: "server",
       dbPath,
     });
-    console.log("   ✅ Source Ingestion Facade created");
+    console.log("   ✅ Source Ingestion Service created");
 
-    processing = await createSemanticProcessingFacade({
+    processing = await createSemanticProcessingService({
       provider: "server",
       dbPath,
       embeddingDimensions: DIMENSIONS,
       defaultChunkingStrategy: "recursive",
     });
-    console.log("   ✅ Semantic Processing Facade created");
+    console.log("   ✅ Semantic Processing Service created");
 
-    knowledge = await createSemanticKnowledgeFacade({
+    knowledge = await createSemanticKnowledgeService({
       provider: "server",
       dbPath,
     });
-    console.log("   ✅ Semantic Knowledge Facade created");
+    console.log("   ✅ Semantic Knowledge Service created");
 
     // Cross-context wiring: retrieval reads from processing's vector store config
     // Note: knowledge-retrieval gets dbPath via vectorStoreConfig (not top-level dbPath)
-    retrieval = await createKnowledgeRetrievalFacade({
+    retrieval = await createKnowledgeRetrievalService({
       provider: "server",
       vectorStoreConfig: processing.vectorStoreConfig,
       embeddingDimensions: DIMENSIONS,
     });
-    console.log("   ✅ Knowledge Retrieval Facade created");
+    console.log("   ✅ Knowledge Retrieval Service created");
     console.log("   🔗 Cross-context wiring: Retrieval → Processing vector store config");
     console.log(`\n   📂 NeDB data directory: ${dbPath}`);
     console.log(`      Vector store: ${processing.vectorStoreConfig.dbPath ?? "N/A"}`);
@@ -710,7 +710,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log("   ✅ Knowledge Retrieval: content queryable via semantic search\n");
     });
 
-    it("should provide direct module access across all facades", async () => {
+    it("should provide direct module access across all services", async () => {
       console.log("🔧 Step 8.2: Verifying direct module access...");
 
       // Source Ingestion modules
@@ -723,7 +723,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       expect(processing.createProcessingProfile).toBeDefined();
       console.log("   ✅ Semantic Processing: projection, vectorStoreConfig, createProcessingProfile");
 
-      // Semantic Knowledge facade
+      // Semantic Knowledge service
       expect(knowledge.createSemanticUnit).toBeDefined();
       expect(knowledge.linkSemanticUnits).toBeDefined();
       console.log("   ✅ Semantic Knowledge: createSemanticUnit, linkSemanticUnits");
@@ -942,7 +942,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       console.log(`      Source: ${sourceId.slice(0, 8)}...\n`);
     });
 
-    it("should provide resource operations via facade", async () => {
+    it("should provide resource operations via service", async () => {
       console.log("🔧 Step 9.8: Verifying resource operations available...");
 
       expect(ingestion.storeResource).toBeDefined();
@@ -950,7 +950,7 @@ describe("Full-Pipeline Integration: All Bounded Contexts", () => {
       expect(ingestion.deleteResource).toBeDefined();
       expect(ingestion.getResource).toBeDefined();
 
-      console.log("   ✅ Resource operations fully accessible via facade\n");
+      console.log("   ✅ Resource operations fully accessible via service\n");
     });
   });
 

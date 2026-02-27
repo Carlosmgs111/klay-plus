@@ -2,7 +2,7 @@ import type { ConfigProvider } from "./ConfigProvider";
 
 /**
  * Policy shape expected by the config resolver.
- * Matches the common fields across all facade policies.
+ * Matches the common fields across all service policies.
  */
 export interface ConfigResolutionPolicy {
   provider: string;

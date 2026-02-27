@@ -15,7 +15,7 @@ klay+ es una **plataforma de gestion de conocimiento semantico** que transforma 
 
 ```
 adapters/          Adaptadores externos (REST, UI) — punto de entrada para consumidores
-application/       Capa de orquestacion — coordina los bounded contexts via sus facades
+application/       Capa de orquestacion — coordina los bounded contexts via sus services
 contexts/          Bounded Contexts — subdominios del negocio (el core del sistema)
 platform/          Infraestructura compartida — config, persistence, eventing, vector stores
 shared/            Shared Kernel — building blocks DDD (AggregateRoot, Result, ValueObject, etc.)
@@ -31,7 +31,7 @@ El sistema esta dividido en **4 bounded contexts** que encapsulan subdominios in
 Responsable de recibir contenido desde diversas fuentes externas (archivos PDF, paginas web, APIs, texto plano) y producir texto extraido listo para procesamiento semantico. Gestiona el ciclo de vida de sources, resources (archivos fisicos) y extraction jobs.
 
 **Modulos**: `source`, `resource`, `extraction`
-**Facade**: `SourceIngestionFacade` — expone operaciones de registro, extraccion, ingesta de archivos y batch processing
+**Service**: `SourceIngestionService` — expone operaciones de registro, extraccion, ingesta de archivos y batch processing
 **Ver**: `contexts/source-ingestion/CLAUDE.md`
 
 ### 2. Semantic Knowledge (`contexts/semantic-knowledge/`)
@@ -40,7 +40,7 @@ Responsable de recibir contenido desde diversas fuentes externas (archivos PDF, 
 Gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen contenido, con versiones inmutables tipo snapshot que capturan el estado completo (fuentes + estrategia + proyecciones) en cada punto. Ciclo de vida completo (Draft → Active → Deprecated → Archived). Mantiene trazabilidad total de cada transformacion y enlaces entre unidades.
 
 **Modulos**: `semantic-unit`, `lineage`
-**Facade**: `SemanticKnowledgeFacade` — expone creacion de unidades, gestion de fuentes (add/remove), reprocesamiento, rollback, deprecacion, enlaces entre unidades, todo con lineage automatico
+**Service**: `SemanticKnowledgeService` — expone creacion de unidades, gestion de fuentes (add/remove), reprocesamiento, rollback, deprecacion, enlaces entre unidades, todo con lineage automatico
 **Ver**: `contexts/semantic-knowledge/CLAUDE.md`
 
 ### 3. Semantic Processing (`contexts/semantic-processing/`)
@@ -49,7 +49,7 @@ Gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen c
 Toma contenido textual, lo segmenta en chunks, genera embeddings vectoriales y los almacena en un vector store. Las estrategias de chunking y embedding son configurables via Processing Profiles declarativos y versionados.
 
 **Modulos**: `projection`, `processing-profile`
-**Facade**: `SemanticProcessingFacade` — expone procesamiento de contenido, gestion de profiles y acceso al vector store
+**Service**: `SemanticProcessingService` — expone procesamiento de contenido, gestion de profiles y acceso al vector store
 **Ver**: `contexts/semantic-processing/CLAUDE.md`
 
 ### 4. Knowledge Retrieval (`contexts/knowledge-retrieval/`)
@@ -58,7 +58,7 @@ Toma contenido textual, lo segmenta en chunks, genera embeddings vectoriales y l
 El lado de lectura del sistema. Recibe consultas en lenguaje natural, las convierte a vectores y encuentra las unidades de conocimiento mas relevantes por similitud semantica.
 
 **Modulos**: `semantic-query`
-**Facade**: `KnowledgeRetrievalFacade` — expone busqueda semantica, deteccion de duplicados y descubrimiento de contenido relacionado
+**Service**: `KnowledgeRetrievalService` — expone busqueda semantica, deteccion de duplicados y descubrimiento de contenido relacionado
 **Ver**: `contexts/knowledge-retrieval/CLAUDE.md`
 
 ## Application Layer (`application/`)
@@ -85,12 +85,12 @@ Gestiona **ContentManifest**: un tracker cross-context que asocia todos los arte
 ### Knowledge Management Orchestrator (`application/knowledge-management/`) — [Ver detalle](../application/knowledge-management/CLAUDE.md)
 > **No es un bounded context** — es la capa de orquestacion para **flujos multi-step de ciclo de vida** sobre unidades semanticas existentes
 
-Complementa al Pipeline (construccion inicial) con flujos multi-step que coordinan multiples contextos. Usa `KnowledgeManagementError` con `step: ManagementStep` + `completedSteps` (misma estructura que el pipeline error). Las operaciones atomicas (removeSource, rollbackUnit, etc.) se llaman directamente en la facade.
+Complementa al Pipeline (construccion inicial) con flujos multi-step que coordinan multiples contextos. Usa `KnowledgeManagementError` con `step: ManagementStep` + `completedSteps` (misma estructura que el pipeline error). Las operaciones atomicas (removeSource, rollbackUnit, etc.) se llaman directamente en el service.
 
 **Operaciones**:
 - `ingestAndAddSource` — Ingesta contenido + agrega como source a unidad existente + procesa embeddings (3 steps: Ingestion → AddSource → Processing)
 
-**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` resuelve ambos orchestrators compartiendo facades.
+**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` resuelve ambos orchestrators compartiendo services.
 
 ## Platform (`platform/`)
 

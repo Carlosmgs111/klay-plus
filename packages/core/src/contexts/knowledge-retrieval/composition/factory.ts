@@ -1,7 +1,7 @@
-import type { VectorStoreConfig } from "../../semantic-query/composition/factory";
-import type { SemanticQueryUseCases } from "../../semantic-query/application";
-import type { ResolvedSemanticQueryInfra } from "../../semantic-query/composition/factory";
-import type { SemanticQueryInfrastructurePolicy } from "../../semantic-query/composition/factory";
+import type { VectorStoreConfig } from "../semantic-query/composition/factory";
+import type { SemanticQueryUseCases } from "../semantic-query/application";
+import type { ResolvedSemanticQueryInfra } from "../semantic-query/composition/factory";
+import type { SemanticQueryInfrastructurePolicy } from "../semantic-query/composition/factory";
 
 interface SemanticQueryOverrides {
   provider?: string;
@@ -12,7 +12,7 @@ interface SemanticQueryOverrides {
   configOverrides?: Record<string, string>;
 }
 
-export interface KnowledgeRetrievalFacadePolicy {
+export interface KnowledgeRetrievalServicePolicy {
   provider: string;
   vectorStoreConfig: VectorStoreConfig;
   embeddingDimensions?: number;
@@ -30,7 +30,7 @@ export interface ResolvedKnowledgeRetrievalModules {
 }
 
 export async function resolveKnowledgeRetrievalModules(
-  policy: KnowledgeRetrievalFacadePolicy,
+  policy: KnowledgeRetrievalServicePolicy,
 ): Promise<ResolvedKnowledgeRetrievalModules> {
   const semanticQueryPolicy: SemanticQueryInfrastructurePolicy = {
     provider: policy.overrides?.semanticQuery?.provider ?? policy.provider,
@@ -52,7 +52,7 @@ export async function resolveKnowledgeRetrievalModules(
   };
 
   const semanticQueryResult = await import(
-    "../../semantic-query/composition/factory"
+    "../semantic-query/composition/factory"
   ).then((m) => m.semanticQueryFactory(semanticQueryPolicy));
 
   return {

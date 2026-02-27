@@ -1,9 +1,9 @@
-import type { SemanticUnitRepository } from "../../semantic-unit/domain/SemanticUnitRepository";
-import type { KnowledgeLineageRepository } from "../../lineage/domain/KnowledgeLineageRepository";
-import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
-import type { SemanticUnitInfrastructurePolicy } from "../../semantic-unit/composition/factory";
-import type { LineageInfrastructurePolicy } from "../../lineage/composition/factory";
-import { resolveConfigProvider } from "../../../../platform/config/resolveConfigProvider";
+import type { SemanticUnitRepository } from "../semantic-unit/domain/SemanticUnitRepository";
+import type { KnowledgeLineageRepository } from "../lineage/domain/KnowledgeLineageRepository";
+import type { EventPublisher } from "../../../shared/domain/EventPublisher";
+import type { SemanticUnitInfrastructurePolicy } from "../semantic-unit/composition/factory";
+import type { LineageInfrastructurePolicy } from "../lineage/composition/factory";
+import { resolveConfigProvider } from "../../../platform/config/resolveConfigProvider";
 
 interface SemanticUnitOverrides {
   provider?: string;
@@ -17,7 +17,7 @@ interface LineageOverrides {
   dbName?: string;
 }
 
-export interface SemanticKnowledgeFacadePolicy {
+export interface SemanticKnowledgeServicePolicy {
   provider: string;
   dbPath?: string;
   dbName?: string;
@@ -36,7 +36,7 @@ export interface ResolvedSemanticKnowledgeModules {
 }
 
 export async function resolveSemanticKnowledgeModules(
-  policy: SemanticKnowledgeFacadePolicy,
+  policy: SemanticKnowledgeServicePolicy,
 ): Promise<ResolvedSemanticKnowledgeModules> {
   const config = await resolveConfigProvider(policy);
 
@@ -65,10 +65,10 @@ export async function resolveSemanticKnowledgeModules(
   };
 
   const [semanticUnitResult, lineageResult] = await Promise.all([
-    import("../../semantic-unit/composition/factory").then(
+    import("../semantic-unit/composition/factory").then(
       (m) => m.semanticUnitFactory(semanticUnitPolicy),
     ),
-    import("../../lineage/composition/factory").then((m) =>
+    import("../lineage/composition/factory").then((m) =>
       m.lineageFactory(lineagePolicy),
     ),
   ]);

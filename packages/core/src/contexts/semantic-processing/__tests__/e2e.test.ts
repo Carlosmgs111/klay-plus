@@ -2,7 +2,7 @@
  * End-to-End Test for Semantic Processing Context
  *
  * Tests the complete flow:
- * 1. Create facade with in-memory infrastructure
+ * 1. Create service with in-memory infrastructure
  * 2. Create a processing profile
  * 3. Process content into projections (chunk + embed + store)
  * 4. Batch processing
@@ -13,24 +13,24 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createSemanticProcessingFacade } from "../facade";
+import { createSemanticProcessingService } from "../service";
 import { ProjectionType } from "../projection/domain/ProjectionType";
 
 describe("Semantic Processing Context E2E", () => {
   it("should process content end-to-end with a processing profile", async () => {
-    const facade = await createSemanticProcessingFacade({
+    const service = await createSemanticProcessingService({
       provider: "in-memory",
       embeddingDimensions: 128,
       defaultChunkingStrategy: "recursive",
     });
 
-    expect(facade).toBeDefined();
-    expect(facade.projection).toBeDefined();
-    expect(facade.vectorStoreConfig).toBeDefined();
-    expect(facade.createProcessingProfile).toBeDefined();
+    expect(service).toBeDefined();
+    expect(service.projection).toBeDefined();
+    expect(service.vectorStoreConfig).toBeDefined();
+    expect(service.createProcessingProfile).toBeDefined();
 
     const profileId = crypto.randomUUID();
-    const createProfileResult = await facade.createProcessingProfile({
+    const createProfileResult = await service.createProcessingProfile({
       id: profileId,
       name: "Default Test Profile",
       chunkingStrategyId: "recursive",
@@ -68,7 +68,7 @@ There are three main types of machine learning:
 - **Inference**: Using the trained model to make predictions on new data
     `.trim();
 
-    const processResult = await facade.processContent({
+    const processResult = await service.processContent({
       projectionId: crypto.randomUUID(),
       semanticUnitId,
       semanticUnitVersion: 1,
@@ -103,12 +103,12 @@ There are three main types of machine learning:
       },
     ];
 
-    const batchResults = await facade.batchProcess(batchItems);
+    const batchResults = await service.batchProcess(batchItems);
     expect(batchResults).toHaveLength(2);
     expect(batchResults.every((r) => r.success)).toBe(true);
 
     // Empty content should fail
-    const emptyContentResult = await facade.processContent({
+    const emptyContentResult = await service.processContent({
       projectionId: crypto.randomUUID(),
       semanticUnitId: crypto.randomUUID(),
       semanticUnitVersion: 1,
@@ -119,7 +119,7 @@ There are three main types of machine learning:
     expect(emptyContentResult.isFail()).toBe(true);
 
     // Empty semantic unit ID should fail
-    const emptyIdResult = await facade.processContent({
+    const emptyIdResult = await service.processContent({
       projectionId: crypto.randomUUID(),
       semanticUnitId: "",
       semanticUnitVersion: 1,
@@ -130,7 +130,7 @@ There are three main types of machine learning:
     expect(emptyIdResult.isFail()).toBe(true);
 
     // Non-existent profile should fail
-    const badProfileResult = await facade.processContent({
+    const badProfileResult = await service.processContent({
       projectionId: crypto.randomUUID(),
       semanticUnitId: crypto.randomUUID(),
       semanticUnitVersion: 1,
@@ -142,14 +142,14 @@ There are three main types of machine learning:
   });
 
   it("should manage processing profile lifecycle", async () => {
-    const facade = await createSemanticProcessingFacade({
+    const service = await createSemanticProcessingService({
       provider: "in-memory",
       embeddingDimensions: 128,
     });
 
     // Create profile
     const profileId = crypto.randomUUID();
-    const createResult = await facade.createProcessingProfile({
+    const createResult = await service.createProcessingProfile({
       id: profileId,
       name: "Lifecycle Test Profile",
       chunkingStrategyId: "sentence",
@@ -158,7 +158,7 @@ There are three main types of machine learning:
     expect(createResult.isOk()).toBe(true);
 
     // Update profile
-    const updateResult = await facade.updateProcessingProfile({
+    const updateResult = await service.updateProcessingProfile({
       id: profileId,
       name: "Updated Lifecycle Profile",
       chunkingStrategyId: "fixed-size",
@@ -169,14 +169,14 @@ There are three main types of machine learning:
     }
 
     // Deprecate profile
-    const deprecateResult = await facade.deprecateProcessingProfile({
+    const deprecateResult = await service.deprecateProcessingProfile({
       id: profileId,
       reason: "No longer needed",
     });
     expect(deprecateResult.isOk()).toBe(true);
 
     // Processing with deprecated profile should fail
-    const processResult = await facade.processContent({
+    const processResult = await service.processContent({
       projectionId: crypto.randomUUID(),
       semanticUnitId: crypto.randomUUID(),
       semanticUnitVersion: 1,
@@ -187,7 +187,7 @@ There are three main types of machine learning:
     expect(processResult.isFail()).toBe(true);
 
     // Duplicate profile ID should fail
-    const duplicateResult = await facade.createProcessingProfile({
+    const duplicateResult = await service.createProcessingProfile({
       id: profileId,
       name: "Duplicate Profile",
       chunkingStrategyId: "recursive",

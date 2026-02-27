@@ -1,5 +1,5 @@
 export { resolveKnowledgeRetrievalModules } from "./factory";
 export type {
-  KnowledgeRetrievalFacadePolicy,
+  KnowledgeRetrievalServicePolicy,
   ResolvedKnowledgeRetrievalModules,
 } from "./factory";

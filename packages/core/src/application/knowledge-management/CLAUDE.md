@@ -4,7 +4,7 @@
 
 **No es un bounded context** — es la capa de orquestacion para flujos multi-step de ciclo de vida sobre unidades semanticas existentes. Complementa al Knowledge Pipeline (que maneja construccion inicial).
 
-Solo expone flujos complejos que coordinan multiples bounded contexts. Las operaciones atomicas (removeSource, rollbackUnit, linkUnits, addProjection, reprocessUnit) se llaman directamente en la facade por el cliente.
+Solo expone flujos complejos que coordinan multiples bounded contexts. Las operaciones atomicas (removeSource, rollbackUnit, linkUnits, addProjection, reprocessUnit) se llaman directamente en el service por el cliente.
 
 ## Port: `KnowledgeManagementPort`
 
@@ -20,10 +20,10 @@ Retorna `Result<KnowledgeManagementError, IngestAndAddSourceSuccess>` para error
 
 ## Orchestrator: `KnowledgeManagementOrchestrator`
 
-Implementa `KnowledgeManagementPort`. Recibe 3 facades (ingestion + knowledge + processing) como dependencias privadas. Crea use cases internamente.
+Implementa `KnowledgeManagementPort`. Recibe 3 services (ingestion + knowledge + processing) como dependencias privadas. Crea use cases internamente.
 
 **Reglas de diseno** (mismas que pipeline):
-- Sin getters de facades
+- Sin getters de services
 - Sin lectura de policies
 - Sin logica de dominio — solo delegacion a use cases
 - Sin dependencias de framework
@@ -71,10 +71,10 @@ Error standalone con tracking de steps (misma estructura que `KnowledgePipelineE
 
 ```
 KnowledgeManagementComposer
-├── Compone 3 facades (ingestion + knowledge + processing)
+├── Compone 3 services (ingestion + knowledge + processing)
 └── Retorna KnowledgeManagementPort (no la implementacion)
 ```
 
 ## Factory combinada
 
-`createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` resuelve ambos orchestrators (pipeline + management) compartiendo facades.
+`createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` resuelve ambos orchestrators (pipeline + management) compartiendo services.

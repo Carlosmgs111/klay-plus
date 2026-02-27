@@ -72,14 +72,14 @@ export type {
   ExtractorMap,
 } from "./extraction";
 
-// Context Facade (Application Layer Entry Point)
+// Context Service (Application Layer Entry Point)
 export {
-  SourceIngestionFacade,
-  createSourceIngestionFacade,
-} from "./facade";
+  SourceIngestionService,
+  createSourceIngestionService,
+} from "./service";
 
 export type {
-  SourceIngestionFacadePolicy,
+  SourceIngestionServicePolicy,
   ResolvedSourceIngestionModules,
   IngestFileSuccess,
-} from "./facade";
+} from "./service";

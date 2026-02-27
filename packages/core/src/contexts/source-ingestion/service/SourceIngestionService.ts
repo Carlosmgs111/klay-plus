@@ -76,7 +76,7 @@ export interface RegisterExternalResourceSuccess {
   storageUri: string;
 }
 
-export class SourceIngestionFacade {
+export class SourceIngestionService {
   private readonly _extraction: ExtractionUseCases;
   private readonly _sourceRepository: SourceRepository;
   private readonly _sourceEventPublisher: EventPublisher;

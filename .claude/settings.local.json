@@ -53,7 +53,10 @@
       "Bash(cd:*)",
       "Bash(HOME=\"/c/Users/RYZEN 7\" git config:*)",
       "Bash(export:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git mv:*)",
+      "Bash(cd \"D:/Documentos/Desktop/klay+\" && pnpm --filter @klay/web build 2>&1)",
+      "Bash(cd \"D:/Documentos/Desktop/klay+\" && git stash pop 2>&1)"
     ]
   },
   "mcpServers": {

@@ -4,7 +4,7 @@
 
 Representacion del conocimiento y trazabilidad de transformaciones. Este contexto gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen contenido con versionado inmutable tipo snapshot, y mantiene un registro de auditoria de cada transformacion aplicada.
 
-## Facade: `SemanticKnowledgeFacade`
+## Service: `SemanticKnowledgeService`
 
 Punto de entrada unico del contexto. Coordina semantic-unit y lineage de forma atomica: cada operacion sobre una unidad semantica registra automaticamente la transformacion correspondiente en el lineage.
 
@@ -28,7 +28,7 @@ Punto de entrada unico del contexto. Coordina semantic-unit y lineage de forma a
 ### Composicion
 
 ```
-SemanticKnowledgeFacadeComposer
+SemanticKnowledgeServiceComposer
 ├── semanticUnitFactory(policy) → { useCases: SemanticUnitUseCases, infra }
 └── lineageFactory(policy)      → { useCases: LineageUseCases, infra }
 ```

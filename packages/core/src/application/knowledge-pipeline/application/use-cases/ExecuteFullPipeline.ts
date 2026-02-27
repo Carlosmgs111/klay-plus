@@ -1,6 +1,6 @@
-import type { SourceIngestionFacade } from "../../../../contexts/source-ingestion/facade/SourceIngestionFacade";
-import type { SemanticProcessingFacade } from "../../../../contexts/semantic-processing/facade/SemanticProcessingFacade";
-import type { SemanticKnowledgeFacade } from "../../../../contexts/semantic-knowledge/facade/SemanticKnowledgeFacade";
+import type { SourceIngestionService } from "../../../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SemanticProcessingService } from "../../../../contexts/semantic-processing/service/SemanticProcessingService";
+import type { SemanticKnowledgeService } from "../../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
 import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType";
 import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType";
 import type { ExecutePipelineInput, ExecutePipelineSuccess } from "../../contracts/dtos";
@@ -17,7 +17,7 @@ const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
  * Use Case: Execute Full Pipeline
  *
  * Coordinates the complete knowledge pipeline: Ingest → Process → Catalog.
- * Uses only the 3 construction facades (no Retrieval).
+ * Uses only the 3 construction services (no Retrieval).
  *
  * Each step tracks completed steps for error reporting.
  * If a step fails, the error includes which steps completed successfully.
@@ -27,9 +27,9 @@ const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
  */
 export class ExecuteFullPipeline {
   constructor(
-    private readonly _ingestion: SourceIngestionFacade,
-    private readonly _processing: SemanticProcessingFacade,
-    private readonly _knowledge: SemanticKnowledgeFacade,
+    private readonly _ingestion: SourceIngestionService,
+    private readonly _processing: SemanticProcessingService,
+    private readonly _knowledge: SemanticKnowledgeService,
     private readonly _manifestRepository: ManifestRepository | null = null,
   ) {}
 
