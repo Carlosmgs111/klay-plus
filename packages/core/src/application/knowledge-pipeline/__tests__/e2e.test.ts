@@ -255,45 +255,36 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
       }
     });
 
-    it("KnowledgePipelineError.fromStep should extract code and message from original error", () => {
-      const originalError = {
-        message: "Source not found",
-        code: "SOURCE_NOT_FOUND",
-      };
-
-      const pipelineError = KnowledgePipelineError.fromStep(
+    it("KnowledgePipelineError should extract info, handle unknown errors, and serialize to JSON", () => {
+      // fromStep with structured error
+      const fromKnown = KnowledgePipelineError.fromStep(
         PipelineStep.Ingestion,
-        originalError,
+        { message: "Source not found", code: "SOURCE_NOT_FOUND" },
         [],
       );
+      expect(fromKnown.step).toBe("ingestion");
+      expect(fromKnown.code).toBe("PIPELINE_INGESTION_FAILED");
+      expect(fromKnown.originalCode).toBe("SOURCE_NOT_FOUND");
+      expect(fromKnown.originalMessage).toBe("Source not found");
+      expect(fromKnown.completedSteps).toEqual([]);
 
-      expect(pipelineError.step).toBe("ingestion");
-      expect(pipelineError.code).toBe("PIPELINE_INGESTION_FAILED");
-      expect(pipelineError.originalCode).toBe("SOURCE_NOT_FOUND");
-      expect(pipelineError.originalMessage).toBe("Source not found");
-      expect(pipelineError.completedSteps).toEqual([]);
-    });
-
-    it("KnowledgePipelineError.fromStep should handle unknown error types gracefully", () => {
-      const pipelineError = KnowledgePipelineError.fromStep(
+      // fromStep with unknown error type
+      const fromUnknown = KnowledgePipelineError.fromStep(
         PipelineStep.Processing,
         42,
         [PipelineStep.Ingestion],
       );
+      expect(fromUnknown.step).toBe("processing");
+      expect(fromUnknown.originalCode).toBeUndefined();
+      expect(fromUnknown.originalMessage).toBeUndefined();
+      expect(fromUnknown.completedSteps).toEqual(["ingestion"]);
 
-      expect(pipelineError.step).toBe("processing");
-      expect(pipelineError.originalCode).toBeUndefined();
-      expect(pipelineError.originalMessage).toBeUndefined();
-      expect(pipelineError.completedSteps).toEqual(["ingestion"]);
-    });
-
-    it("KnowledgePipelineError.toJSON should produce serializable output", () => {
+      // toJSON serialization
       const error = KnowledgePipelineError.fromStep(
         PipelineStep.Cataloging,
         new Error("Something went wrong"),
         [PipelineStep.Ingestion, PipelineStep.Processing],
       );
-
       const json = error.toJSON();
       expect(json.name).toBe("KnowledgePipelineError");
       expect(json.step).toBe("cataloging");
@@ -338,11 +329,11 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
   describe("Content Manifest Tracking", () => {
     // Use inline text as URI to avoid URI uniqueness conflicts with other tests
     const MANIFEST_CONTENT_1 = "Manifest tracking test content: Domain modeling captures essential business concepts and rules within bounded contexts, enabling teams to build software aligned with domain expertise.";
-    const MANIFEST_CONTENT_2 = "Manifest by ID test content: Clean Architecture promotes separation of concerns through concentric layers, where inner layers define business rules and outer layers handle infrastructure.";
     const MANIFEST_CONTENT_3 = "Manifest by source test content: Event Sourcing stores state changes as an immutable sequence of events, providing a complete audit trail and enabling temporal queries.";
     const MANIFEST_CONTENT_4 = "No manifest test content: Hexagonal Architecture uses ports and adapters to decouple business logic from external systems, enabling testability and flexibility.";
 
-    it("should track manifest when resourceId is provided in execute()", async () => {
+    it("should track manifest and retrieve by resourceId or manifestId", async () => {
+      // Execute with resourceId
       const resourceId = "res-manifest-001";
       const sourceId = "src-manifest-001";
 
@@ -365,12 +356,12 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
         expect(result.value.resourceId).toBe(resourceId);
         expect(result.value.manifestId).toBeTruthy();
 
-        // Retrieve manifest by resourceId
-        const manifestResult = await pipeline.getManifest({ resourceId });
-        expect(manifestResult.isOk()).toBe(true);
-        if (manifestResult.isOk()) {
-          expect(manifestResult.value.manifests.length).toBeGreaterThan(0);
-          const manifest = manifestResult.value.manifests[0];
+        // Retrieve by resourceId
+        const byResource = await pipeline.getManifest({ resourceId });
+        expect(byResource.isOk()).toBe(true);
+        if (byResource.isOk()) {
+          expect(byResource.value.manifests.length).toBeGreaterThan(0);
+          const manifest = byResource.value.manifests[0];
           expect(manifest.resourceId).toBe(resourceId);
           expect(manifest.sourceId).toBe(sourceId);
           expect(manifest.status).toBe("complete");
@@ -381,41 +372,19 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
           expect(manifest.extractedTextLength).toBeGreaterThan(0);
           expect(manifest.chunksCount).toBeGreaterThan(0);
         }
-      }
-    });
 
-    it("should retrieve manifest by manifestId", async () => {
-      const resourceId = "res-manifest-002";
-
-      const result = await pipeline.execute({
-        sourceId: "src-manifest-002",
-        sourceName: "Manifest By ID Test",
-        uri: MANIFEST_CONTENT_2,
-        sourceType: "PLAIN_TEXT",
-        extractionJobId: "job-manifest-002",
-        projectionId: "proj-manifest-002",
-        semanticUnitId: "unit-manifest-002",
-        language: "en",
-        createdBy: "test",
-        processingProfileId: profileId,
-        resourceId,
-      });
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
+        // Retrieve by manifestId
         const manifestId = result.value.manifestId!;
-        expect(manifestId).toBeTruthy();
-
-        const manifestResult = await pipeline.getManifest({ manifestId });
-        expect(manifestResult.isOk()).toBe(true);
-        if (manifestResult.isOk()) {
-          expect(manifestResult.value.manifests).toHaveLength(1);
-          expect(manifestResult.value.manifests[0].id).toBe(manifestId);
+        const byManifest = await pipeline.getManifest({ manifestId });
+        expect(byManifest.isOk()).toBe(true);
+        if (byManifest.isOk()) {
+          expect(byManifest.value.manifests).toHaveLength(1);
+          expect(byManifest.value.manifests[0].id).toBe(manifestId);
         }
       }
     });
 
-    it("should retrieve manifest by sourceId", async () => {
+    it("should retrieve manifest by sourceId and return empty for unknown", async () => {
       const sourceId = "src-manifest-003";
 
       const result = await pipeline.execute({
@@ -440,6 +409,13 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
           expect(manifestResult.value.manifests.length).toBeGreaterThan(0);
           expect(manifestResult.value.manifests[0].sourceId).toBe(sourceId);
         }
+      }
+
+      // Non-existent resourceId returns empty
+      const emptyResult = await pipeline.getManifest({ resourceId: "non-existent-resource" });
+      expect(emptyResult.isOk()).toBe(true);
+      if (emptyResult.isOk()) {
+        expect(emptyResult.value.manifests).toEqual([]);
       }
     });
 
@@ -494,17 +470,6 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
         expect(manifest.status).toBe("failed");
         expect(manifest.failedStep).toBe("ingestion");
         expect(manifest.completedSteps).toEqual([]);
-      }
-    });
-
-    it("should return empty array for non-existent resourceId", async () => {
-      const manifestResult = await pipeline.getManifest({
-        resourceId: "non-existent-resource",
-      });
-
-      expect(manifestResult.isOk()).toBe(true);
-      if (manifestResult.isOk()) {
-        expect(manifestResult.value.manifests).toEqual([]);
       }
     });
   });

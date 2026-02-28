@@ -1,7 +1,7 @@
 import type { SemanticUnitRepository } from "../semantic-unit/domain/SemanticUnitRepository";
 import type { KnowledgeLineageRepository } from "../lineage/domain/KnowledgeLineageRepository";
 import type { EventPublisher } from "../../../shared/domain/EventPublisher";
-import type { ResolvedSemanticKnowledgeModules } from "./composition/factory";
+import type { ResolvedSemanticKnowledgeModules } from "../composition/factory";
 import { SemanticUnit } from "../semantic-unit/domain/SemanticUnit";
 import { SemanticUnitId } from "../semantic-unit/domain/SemanticUnitId";
 import { UnitMetadata } from "../semantic-unit/domain/UnitMetadata";

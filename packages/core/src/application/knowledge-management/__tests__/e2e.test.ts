@@ -203,65 +203,53 @@ describe("Knowledge Management Orchestrator — E2E", () => {
   // 4. KnowledgeManagementError Type Verification
 
   describe("KnowledgeManagementError", () => {
-    it("fromStep should extract code and message from original error", () => {
-      const originalError = {
-        message: "Unit not found",
-        code: "UNIT_NOT_FOUND",
-      };
-
-      const mgmtError = KnowledgeManagementError.fromStep(
+    it("should extract info, handle unknown errors, serialize to JSON, and copy completedSteps", () => {
+      // fromStep with structured error
+      const fromKnown = KnowledgeManagementError.fromStep(
         ManagementStep.AddSource,
-        originalError,
+        { message: "Unit not found", code: "UNIT_NOT_FOUND" },
         [ManagementStep.Ingestion],
       );
+      expect(fromKnown.step).toBe("add-source");
+      expect(fromKnown.code).toBe("MANAGEMENT_ADD_SOURCE_FAILED");
+      expect(fromKnown.completedSteps).toEqual(["ingestion"]);
+      expect(fromKnown.originalCode).toBe("UNIT_NOT_FOUND");
+      expect(fromKnown.originalMessage).toBe("Unit not found");
 
-      expect(mgmtError.step).toBe("add-source");
-      expect(mgmtError.code).toBe("MANAGEMENT_ADD_SOURCE_FAILED");
-      expect(mgmtError.completedSteps).toEqual(["ingestion"]);
-      expect(mgmtError.originalCode).toBe("UNIT_NOT_FOUND");
-      expect(mgmtError.originalMessage).toBe("Unit not found");
-    });
-
-    it("fromStep should handle unknown error types gracefully", () => {
-      const mgmtError = KnowledgeManagementError.fromStep(
+      // fromStep with unknown error type
+      const fromUnknown = KnowledgeManagementError.fromStep(
         ManagementStep.Processing,
         42,
         [ManagementStep.Ingestion, ManagementStep.AddSource],
       );
+      expect(fromUnknown.step).toBe("processing");
+      expect(fromUnknown.code).toBe("MANAGEMENT_PROCESSING_FAILED");
+      expect(fromUnknown.completedSteps).toEqual(["ingestion", "add-source"]);
+      expect(fromUnknown.originalCode).toBeUndefined();
+      expect(fromUnknown.originalMessage).toBeUndefined();
 
-      expect(mgmtError.step).toBe("processing");
-      expect(mgmtError.code).toBe("MANAGEMENT_PROCESSING_FAILED");
-      expect(mgmtError.completedSteps).toEqual(["ingestion", "add-source"]);
-      expect(mgmtError.originalCode).toBeUndefined();
-      expect(mgmtError.originalMessage).toBeUndefined();
-    });
-
-    it("toJSON should produce serializable output with step and completedSteps", () => {
+      // toJSON serialization
       const error = KnowledgeManagementError.fromStep(
         ManagementStep.Ingestion,
         new Error("Something went wrong"),
         [],
       );
-
       const json = error.toJSON();
       expect(json.name).toBe("KnowledgeManagementError");
       expect(json.step).toBe("ingestion");
       expect(json.code).toBe("MANAGEMENT_INGESTION_FAILED");
       expect(json.completedSteps).toEqual([]);
       expect(json.originalMessage).toBe("Something went wrong");
-    });
 
-    it("completedSteps should be a copy (not a reference)", () => {
+      // completedSteps is a copy (not a reference)
       const steps: ManagementStep[] = [ManagementStep.Ingestion];
-      const error = KnowledgeManagementError.fromStep(
+      const copyError = KnowledgeManagementError.fromStep(
         ManagementStep.AddSource,
         new Error("fail"),
         steps,
       );
-
-      // Mutating the original array should not affect the error
       steps.push(ManagementStep.Processing);
-      expect(error.completedSteps).toEqual(["ingestion"]);
+      expect(copyError.completedSteps).toEqual(["ingestion"]);
     });
   });
 });

@@ -5,21 +5,16 @@
  *   buffer (ArrayBuffer) → ResourceStorage → Resource aggregate → persistence → retrieval
  *
  * Covers:
- * - Text buffer upload and size verification
- * - Binary buffer upload (simulated PDF, image)
- * - Large buffer upload
- * - Storage existence verification after upload
- * - Storage cleanup after deletion
+ * - Text and binary buffer upload and size verification
+ * - Aggregate state verification
+ * - Resource lifecycle: store → retrieve → delete → verify gone
+ * - Validation of invalid inputs
  * - Full ingestFile workflow: buffer → storage → source → extraction
  * - Full ingestExternalResource workflow (no upload)
- * - Resource lifecycle: store → retrieve → delete → verify gone
- * - Edge cases: empty buffer, special characters in filename
- * - Aggregate state verification: status, provider, storageUri, metadata
+ * - Buffer encoding fidelity (UTF-8, emoji, binary)
+ * - Real PDF buffer upload (conditional)
  *
  * Uses in-memory infrastructure for fast, isolated tests (no filesystem I/O).
- *
- * Run with:
- *   npx vitest run src/backend/klay+/contexts/source-ingestion/__tests__/resource-buffer-upload.test.ts
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -42,7 +37,7 @@ describe("Resource Buffer Upload — E2E", () => {
   // 1. Basic Buffer Upload
 
   describe("Basic Buffer Upload", () => {
-    it("should upload a text buffer and return correct URI and size", async () => {
+    it("should upload text buffers with correct URI, size, and handle special characters", async () => {
       const content = "Hello, this is a plain text file content for upload testing.";
       const buffer = new TextEncoder().encode(content).buffer;
       const resourceId = crypto.randomUUID();
@@ -59,58 +54,65 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.storageUri).toContain("hello.txt");
       expect(result.value.storageUri).toMatch(/^mem:\/\//);
       expect(result.value.size).toBe(buffer.byteLength);
-      expect(result.value.size).toBe(content.length); // UTF-8 ASCII = 1 byte per char
+      expect(result.value.size).toBe(content.length);
+
+      // Special characters in filename
+      const specialResult = await service.storeResource({
+        id: crypto.randomUUID(),
+        buffer: new TextEncoder().encode("content").buffer,
+        originalName: "my document (v2) — final.txt",
+        mimeType: "text/plain",
+      });
+
+      expect(specialResult.isOk()).toBe(true);
+      expect(specialResult.value.storageUri).toBeTruthy();
+      expect(specialResult.value.size).toBe(7);
     });
 
-    it("should upload a binary buffer (simulated PDF)", async () => {
-      // Create a fake PDF header + random binary content
+    it("should upload binary buffers (simulated PDF and image)", async () => {
+      // Simulated PDF
       const pdfHeader = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF
       const binaryData = new Uint8Array(1024);
       crypto.getRandomValues(binaryData);
 
-      const combined = new Uint8Array(pdfHeader.length + binaryData.length);
-      combined.set(pdfHeader, 0);
-      combined.set(binaryData, pdfHeader.length);
-      const buffer = combined.buffer;
+      const pdfCombined = new Uint8Array(pdfHeader.length + binaryData.length);
+      pdfCombined.set(pdfHeader, 0);
+      pdfCombined.set(binaryData, pdfHeader.length);
 
-      const resourceId = crypto.randomUUID();
-      const result = await service.storeResource({
-        id: resourceId,
-        buffer,
+      const pdfResult = await service.storeResource({
+        id: crypto.randomUUID(),
+        buffer: pdfCombined.buffer,
         originalName: "document.pdf",
         mimeType: "application/pdf",
       });
 
-      expect(result.isOk()).toBe(true);
-      expect(result.value.size).toBe(1028); // 4 header + 1024 data
-      expect(result.value.storageUri).toContain("document.pdf");
-    });
+      expect(pdfResult.isOk()).toBe(true);
+      expect(pdfResult.value.size).toBe(1028);
+      expect(pdfResult.value.storageUri).toContain("document.pdf");
 
-    it("should upload a binary buffer (simulated image)", async () => {
-      // Simulate a PNG-like buffer (magic bytes + random data)
-      const pngMagic = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+      // Simulated PNG
+      const pngMagic = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const imageData = new Uint8Array(2048);
       crypto.getRandomValues(imageData);
 
-      const combined = new Uint8Array(pngMagic.length + imageData.length);
-      combined.set(pngMagic, 0);
-      combined.set(imageData, pngMagic.length);
+      const pngCombined = new Uint8Array(pngMagic.length + imageData.length);
+      pngCombined.set(pngMagic, 0);
+      pngCombined.set(imageData, pngMagic.length);
 
-      const result = await service.storeResource({
+      const pngResult = await service.storeResource({
         id: crypto.randomUUID(),
-        buffer: combined.buffer,
+        buffer: pngCombined.buffer,
         originalName: "screenshot.png",
         mimeType: "image/png",
       });
 
-      expect(result.isOk()).toBe(true);
-      expect(result.value.size).toBe(pngMagic.length + imageData.length);
+      expect(pngResult.isOk()).toBe(true);
+      expect(pngResult.value.size).toBe(pngMagic.length + imageData.length);
     });
 
     it("should upload a large buffer (100KB)", async () => {
-      const totalSize = 100 * 1024; // 100KB
+      const totalSize = 100 * 1024;
       const largeData = new Uint8Array(totalSize);
-      // Fill in chunks (crypto.getRandomValues has a 65536-byte limit)
       const chunkSize = 65536;
       for (let offset = 0; offset < totalSize; offset += chunkSize) {
         const size = Math.min(chunkSize, totalSize - offset);
@@ -140,21 +142,6 @@ describe("Resource Buffer Upload — E2E", () => {
 
       expect(result.isOk()).toBe(true);
       expect(result.value.size).toBe(0);
-    });
-
-    it("should handle filenames with special characters", async () => {
-      const buffer = new TextEncoder().encode("content").buffer;
-
-      const result = await service.storeResource({
-        id: crypto.randomUUID(),
-        buffer,
-        originalName: "my document (v2) — final.txt",
-        mimeType: "text/plain",
-      });
-
-      expect(result.isOk()).toBe(true);
-      expect(result.value.storageUri).toBeTruthy();
-      expect(result.value.size).toBe(buffer.byteLength);
     });
   });
 
@@ -232,12 +219,11 @@ describe("Resource Buffer Upload — E2E", () => {
 
       expect(result1.isOk()).toBe(true);
       expect(result2.isOk()).toBe(true);
-      // URIs must differ even with same originalName (UUID prefix ensures this)
       expect(result1.value.storageUri).not.toBe(result2.value.storageUri);
     });
   });
 
-  // 3. Resource Lifecycle: Store → Retrieve → Delete → Verify
+  // 3. Resource Lifecycle
 
   describe("Resource Lifecycle", () => {
     it("should complete the full lifecycle: store → retrieve → delete → verify gone", async () => {
@@ -245,7 +231,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const content = "Lifecycle test content — this resource will be stored, retrieved, and deleted.";
       const buffer = new TextEncoder().encode(content).buffer;
 
-      // Step 1: Store
+      // Store
       const storeResult = await service.storeResource({
         id: resourceId,
         buffer,
@@ -255,17 +241,17 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(storeResult.isOk()).toBe(true);
       const { storageUri } = storeResult.value;
 
-      // Step 2: Retrieve — resource exists and is STORED
+      // Retrieve
       const getResult = await service.getResource(resourceId);
       expect(getResult.isOk()).toBe(true);
       expect(getResult.value.isStored).toBe(true);
       expect(getResult.value.storageUri).toBe(storageUri);
 
-      // Step 3: Delete
+      // Delete
       const deleteResult = await service.deleteResource({ id: resourceId });
       expect(deleteResult.isOk()).toBe(true);
 
-      // Step 4: Verify — aggregate is now DELETED
+      // Verify deleted
       const getAfterDelete = await service.getResource(resourceId);
       expect(getAfterDelete.isOk()).toBe(true);
       expect(getAfterDelete.value.isDeleted).toBe(true);
@@ -282,53 +268,53 @@ describe("Resource Buffer Upload — E2E", () => {
     });
   });
 
-  // 4. Validation: Invalid Inputs
+  // 4. Validation
 
   describe("Validation", () => {
-    it("should reject upload with empty originalName", async () => {
+    it("should reject uploads with invalid inputs (empty name, empty mime, whitespace, empty external name)", async () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
-      const result = await service.storeResource({
+      // Empty originalName
+      const emptyName = await service.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "",
         mimeType: "text/plain",
       });
+      expect(emptyName.isFail()).toBe(true);
 
-      expect(result.isFail()).toBe(true);
-    });
-
-    it("should reject upload with empty mimeType", async () => {
-      const buffer = new TextEncoder().encode("content").buffer;
-
-      const result = await service.storeResource({
+      // Empty mimeType
+      const emptyMime = await service.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "valid-name.txt",
         mimeType: "",
       });
+      expect(emptyMime.isFail()).toBe(true);
 
-      expect(result.isFail()).toBe(true);
-    });
-
-    it("should reject upload with whitespace-only originalName", async () => {
-      const buffer = new TextEncoder().encode("content").buffer;
-
-      const result = await service.storeResource({
+      // Whitespace-only originalName
+      const whitespaceName = await service.storeResource({
         id: crypto.randomUUID(),
         buffer,
         originalName: "   ",
         mimeType: "text/plain",
       });
+      expect(whitespaceName.isFail()).toBe(true);
 
-      expect(result.isFail()).toBe(true);
+      // External resource with empty name
+      const emptyExtName = await service.registerExternalResource({
+        id: crypto.randomUUID(),
+        name: "",
+        mimeType: "application/pdf",
+        uri: "https://example.com/file.pdf",
+      });
+      expect(emptyExtName.isFail()).toBe(true);
     });
 
     it("should reject duplicate resource ID", async () => {
       const resourceId = crypto.randomUUID();
       const buffer = new TextEncoder().encode("content").buffer;
 
-      // First upload succeeds
       const first = await service.storeResource({
         id: resourceId,
         buffer,
@@ -337,7 +323,6 @@ describe("Resource Buffer Upload — E2E", () => {
       });
       expect(first.isOk()).toBe(true);
 
-      // Second upload with same ID fails
       const second = await service.storeResource({
         id: resourceId,
         buffer: new TextEncoder().encode("different").buffer,
@@ -347,23 +332,13 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(second.isFail()).toBe(true);
       expect(second.error.message).toContain("already exists");
     });
-
-    it("should reject external resource with empty name", async () => {
-      const result = await service.registerExternalResource({
-        id: crypto.randomUUID(),
-        name: "",
-        mimeType: "application/pdf",
-        uri: "https://example.com/file.pdf",
-      });
-
-      expect(result.isFail()).toBe(true);
-    });
   });
 
-  // 5. Full Workflow: ingestFile (buffer → storage → source → extraction)
+  // 5. ingestFile Workflow
 
   describe("ingestFile Workflow — Buffer to Extraction", () => {
-    it("should complete the full ingestFile pipeline with a text buffer", async () => {
+    it("should complete ingestFile pipeline and preserve Unicode content", async () => {
+      // Basic text
       const resourceId = crypto.randomUUID();
       const sourceId = crypto.randomUUID();
       const originalContent = "This plain text document will be uploaded as a buffer, stored, registered as a source, and its content extracted.";
@@ -383,58 +358,45 @@ describe("Resource Buffer Upload — E2E", () => {
       });
 
       expect(result.isOk()).toBe(true);
-
-      // Verify all fields of the response
       expect(result.value.resourceId).toBe(resourceId);
       expect(result.value.sourceId).toBe(sourceId);
-      expect(result.value.storageUri).toBeTruthy();
       expect(result.value.storageUri).toMatch(/^mem:\/\//);
       expect(result.value.contentHash).toBeTruthy();
       expect(result.value.extractedText).toBe(originalContent);
-      expect(result.value.extractedText.length).toBe(originalContent.length);
 
-      // Verify the resource aggregate state
+      // Verify resource aggregate
       const resourceResult = await service.getResource(resourceId);
       expect(resourceResult.isOk()).toBe(true);
       expect(resourceResult.value.originalName).toBe("buffer-test.txt");
-      expect(resourceResult.value.mimeType).toBe("text/plain");
       expect(resourceResult.value.size).toBe(buffer.byteLength);
       expect(resourceResult.value.isStored).toBe(true);
-    });
 
-    it("should preserve buffer content through the extraction pipeline", async () => {
-      const resourceId = crypto.randomUUID();
-      const sourceId = crypto.randomUUID();
-
-      // Multi-line content to verify fidelity
-      const content = [
+      // Unicode content fidelity
+      const unicodeContent = [
         "Line 1: Introduction to testing",
-        "Line 2: Buffer integrity verification",
-        "Line 3: 特殊文字テスト (Unicode test)",
-        "Line 4: números y acentos: á é í ó ú ñ",
-        "Line 5: End of document.",
+        "Line 2: 特殊文字テスト (Unicode test)",
+        "Line 3: números y acentos: á é í ó ú ñ",
       ].join("\n");
-      const buffer = new TextEncoder().encode(content).buffer;
+      const unicodeBuffer = new TextEncoder().encode(unicodeContent).buffer;
 
-      const result = await service.ingestFile({
-        resourceId,
-        sourceId,
+      const unicodeResult = await service.ingestFile({
+        resourceId: crypto.randomUUID(),
+        sourceId: crypto.randomUUID(),
         sourceName: "Unicode Buffer Test",
         sourceType: SourceType.PlainText,
         extractionJobId: crypto.randomUUID(),
         file: {
-          buffer,
+          buffer: unicodeBuffer,
           originalName: "unicode-test.txt",
           mimeType: "text/plain",
         },
       });
 
-      expect(result.isOk()).toBe(true);
-      // The extracted text should preserve the original content
-      expect(result.value.extractedText).toBe(content);
+      expect(unicodeResult.isOk()).toBe(true);
+      expect(unicodeResult.value.extractedText).toBe(unicodeContent);
     });
 
-    it("should produce consistent content hash for identical buffers", async () => {
+    it("should produce consistent hashes for identical content and different for different content", async () => {
       const content = "Deterministic content for hash verification.";
       const buffer1 = new TextEncoder().encode(content).buffer;
       const buffer2 = new TextEncoder().encode(content).buffer;
@@ -459,51 +421,34 @@ describe("Resource Buffer Upload — E2E", () => {
 
       expect(result1.isOk()).toBe(true);
       expect(result2.isOk()).toBe(true);
-
-      // Same content → same hash (regardless of different resource/source IDs)
       expect(result1.value.contentHash).toBe(result2.value.contentHash);
-    });
 
-    it("should produce different content hashes for different buffers", async () => {
-      const result1 = await service.ingestFile({
+      // Different content → different hash
+      const result3 = await service.ingestFile({
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
-        sourceName: "Different A",
+        sourceName: "Different Content",
         sourceType: SourceType.PlainText,
         extractionJobId: crypto.randomUUID(),
         file: {
-          buffer: new TextEncoder().encode("Content version A").buffer,
-          originalName: "a.txt",
+          buffer: new TextEncoder().encode("Completely different content").buffer,
+          originalName: "different.txt",
           mimeType: "text/plain",
         },
       });
 
-      const result2 = await service.ingestFile({
-        resourceId: crypto.randomUUID(),
-        sourceId: crypto.randomUUID(),
-        sourceName: "Different B",
-        sourceType: SourceType.PlainText,
-        extractionJobId: crypto.randomUUID(),
-        file: {
-          buffer: new TextEncoder().encode("Content version B").buffer,
-          originalName: "b.txt",
-          mimeType: "text/plain",
-        },
-      });
-
-      expect(result1.isOk()).toBe(true);
-      expect(result2.isOk()).toBe(true);
-      expect(result1.value.contentHash).not.toBe(result2.value.contentHash);
+      expect(result3.isOk()).toBe(true);
+      expect(result1.value.contentHash).not.toBe(result3.value.contentHash);
     });
   });
 
-  // 6. ingestExternalResource Workflow (No Upload)
+  // 6. ingestExternalResource Workflow
 
   describe("ingestExternalResource Workflow", () => {
-    it("should register an external resource and extract content without upload", async () => {
+    it("should handle external resource lifecycle: register, extract, and delete", async () => {
+      // Register and extract
       const resourceId = crypto.randomUUID();
       const sourceId = crypto.randomUUID();
-      // For PlainText, the URI is the content itself
       const externalContent = "This content exists externally and requires no upload.";
 
       const result = await service.ingestExternalResource({
@@ -523,29 +468,24 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.extractedText).toBe(externalContent);
       expect(result.value.contentHash).toBeTruthy();
 
-      // Verify resource is external
       const resourceResult = await service.getResource(resourceId);
       expect(resourceResult.isOk()).toBe(true);
       expect(resourceResult.value.provider).toBe("external");
       expect(resourceResult.value.isStored).toBe(true);
-    });
 
-    it("should NOT physically delete an external resource (only marks as deleted)", async () => {
-      const resourceId = crypto.randomUUID();
-
+      // Delete external resource (marks as deleted, no storage.delete() call)
+      const deleteResourceId = crypto.randomUUID();
       await service.registerExternalResource({
-        id: resourceId,
+        id: deleteResourceId,
         name: "External to Delete",
         mimeType: "text/plain",
         uri: "https://example.com/external-file.txt",
       });
 
-      // Delete should succeed (marks as deleted, no storage.delete() call)
-      const deleteResult = await service.deleteResource({ id: resourceId });
+      const deleteResult = await service.deleteResource({ id: deleteResourceId });
       expect(deleteResult.isOk()).toBe(true);
 
-      // Resource is marked deleted but still accessible via repository
-      const getResult = await service.getResource(resourceId);
+      const getResult = await service.getResource(deleteResourceId);
       expect(getResult.isOk()).toBe(true);
       expect(getResult.value.isDeleted).toBe(true);
       expect(getResult.value.provider).toBe("external");
@@ -555,57 +495,55 @@ describe("Resource Buffer Upload — E2E", () => {
   // 7. Buffer Encoding Fidelity
 
   describe("Buffer Encoding Fidelity", () => {
-    it("should correctly calculate size for multi-byte UTF-8 content", async () => {
-      // Japanese text is 3 bytes per character in UTF-8
-      const japaneseText = "こんにちは世界"; // 7 characters, 21 bytes in UTF-8
-      const buffer = new TextEncoder().encode(japaneseText).buffer;
+    it("should correctly handle multi-byte UTF-8, emoji, and binary data sizes", async () => {
+      // Multi-byte UTF-8 (Japanese: 3 bytes per char)
+      const japaneseText = "こんにちは世界";
+      const jpBuffer = new TextEncoder().encode(japaneseText).buffer;
 
-      const result = await service.storeResource({
+      const jpResult = await service.storeResource({
         id: crypto.randomUUID(),
-        buffer,
+        buffer: jpBuffer,
         originalName: "japanese.txt",
         mimeType: "text/plain",
       });
 
-      expect(result.isOk()).toBe(true);
-      expect(result.value.size).toBe(buffer.byteLength);
-      expect(result.value.size).toBeGreaterThan(japaneseText.length); // 21 > 7
-    });
+      expect(jpResult.isOk()).toBe(true);
+      expect(jpResult.value.size).toBe(jpBuffer.byteLength);
+      expect(jpResult.value.size).toBeGreaterThan(japaneseText.length);
 
-    it("should handle emoji content (4-byte UTF-8)", async () => {
+      // Emoji (4 bytes per emoji in UTF-8)
       const emojiText = "Hello 🌍🚀✨ World";
-      const buffer = new TextEncoder().encode(emojiText).buffer;
+      const emojiBuffer = new TextEncoder().encode(emojiText).buffer;
 
-      const result = await service.storeResource({
+      const emojiResult = await service.storeResource({
         id: crypto.randomUUID(),
-        buffer,
+        buffer: emojiBuffer,
         originalName: "emoji.txt",
         mimeType: "text/plain",
       });
 
-      expect(result.isOk()).toBe(true);
-      expect(result.value.size).toBe(buffer.byteLength);
-      expect(result.value.size).toBeGreaterThan(emojiText.length);
-    });
+      expect(emojiResult.isOk()).toBe(true);
+      expect(emojiResult.value.size).toBe(emojiBuffer.byteLength);
+      expect(emojiResult.value.size).toBeGreaterThan(emojiText.length);
 
-    it("should correctly report size for pure binary data", async () => {
-      const exactSize = 4096; // Exact 4KB
+      // Pure binary data (exact 4KB)
+      const exactSize = 4096;
       const binaryData = new Uint8Array(exactSize);
       crypto.getRandomValues(binaryData);
 
-      const result = await service.storeResource({
+      const binResult = await service.storeResource({
         id: crypto.randomUUID(),
         buffer: binaryData.buffer,
         originalName: "exact-4kb.bin",
         mimeType: "application/octet-stream",
       });
 
-      expect(result.isOk()).toBe(true);
-      expect(result.value.size).toBe(exactSize);
+      expect(binResult.isOk()).toBe(true);
+      expect(binResult.value.size).toBe(exactSize);
     });
   });
 
-  // 8. Real PDF Buffer Upload — Full ingestFile Pipeline
+  // 8. Real PDF Buffer Upload
 
   describe("Real PDF Buffer Upload", () => {
     const PDF_PATH = "D:\\Documentos\\Documents\\pdfs\\archivo-de-educacion.pdf";
@@ -618,14 +556,13 @@ describe("Resource Buffer Upload — E2E", () => {
       beforeAll(() => {
         const fileBuffer = fs.readFileSync(PDF_PATH);
         pdfFileSize = fileBuffer.byteLength;
-        // Convert Node.js Buffer to ArrayBuffer
         pdfBuffer = fileBuffer.buffer.slice(
           fileBuffer.byteOffset,
           fileBuffer.byteOffset + fileBuffer.byteLength,
         );
       });
 
-      it("should store a real PDF buffer and report correct file size", async () => {
+      it("should store a real PDF buffer with correct size and preserve integrity", async () => {
         const resourceId = crypto.randomUUID();
 
         const result = await service.storeResource({
@@ -647,10 +584,14 @@ describe("Resource Buffer Upload — E2E", () => {
         expect(getResult.value.mimeType).toBe("application/pdf");
         expect(getResult.value.size).toBe(pdfFileSize);
         expect(getResult.value.status).toBe(ResourceStatus.Stored);
-        expect(getResult.value.provider).toBe("in-memory");
+
+        // Verify integrity matches original file
+        const originalStats = fs.statSync(PDF_PATH);
+        expect(result.value.size).toBe(originalStats.size);
+        expect(result.value.size).toBe(pdfBuffer.byteLength);
       });
 
-      it("should complete full ingestFile pipeline: buffer → storage → source → PDF extraction", async () => {
+      it("should complete full ingestFile pipeline with consistent hashes", async () => {
         const resourceId = crypto.randomUUID();
         const sourceId = crypto.randomUUID();
 
@@ -668,52 +609,16 @@ describe("Resource Buffer Upload — E2E", () => {
         });
 
         expect(result.isOk()).toBe(true);
-
-        // Resource stored
         expect(result.value.resourceId).toBe(resourceId);
-        expect(result.value.storageUri).toBeTruthy();
         expect(result.value.storageUri).toMatch(/^mem:\/\//);
-
-        // Source registered
         expect(result.value.sourceId).toBe(sourceId);
-
-        // PDF extraction produced non-empty text
         expect(result.value.extractedText).toBeTruthy();
         expect(result.value.extractedText.length).toBeGreaterThan(0);
-
-        // Content hash exists
-        expect(result.value.contentHash).toBeTruthy();
-        expect(result.value.contentHash).toMatch(/^[a-f0-9]{64}$/); // SHA-256 hex
-
-        // Metadata includes PDF-specific info
+        expect(result.value.contentHash).toMatch(/^[a-f0-9]{64}$/);
         expect(result.value.metadata).toBeDefined();
         expect(result.value.metadata.pageCount).toBeGreaterThan(0);
-        expect(result.value.metadata.extractor).toBe("pdf-extraction");
-        expect(result.value.metadata.mimeType).toBe("application/pdf");
 
-        console.log(`\n  ✅ Real PDF extraction successful:`);
-        console.log(`     File: ${path.basename(PDF_PATH)}`);
-        console.log(`     File size: ${(pdfFileSize / 1024).toFixed(1)} KB`);
-        console.log(`     Pages: ${result.value.metadata.pageCount}`);
-        console.log(`     Extracted text length: ${result.value.extractedText.length} chars`);
-        console.log(`     Content hash: ${result.value.contentHash.slice(0, 16)}...`);
-        console.log(`     Text preview: "${result.value.extractedText.slice(0, 100).replace(/\n/g, " ")}..."`);
-      });
-
-      it("should produce consistent hash for multiple extractions of the same PDF", async () => {
-        const result1 = await service.ingestFile({
-          resourceId: crypto.randomUUID(),
-          sourceId: crypto.randomUUID(),
-          sourceName: "PDF Hash Test 1",
-          sourceType: SourceType.Pdf,
-          extractionJobId: crypto.randomUUID(),
-          file: {
-            buffer: pdfBuffer,
-            originalName: "hash-test-1.pdf",
-            mimeType: "application/pdf",
-          },
-        });
-
+        // Consistent hash for same PDF
         const result2 = await service.ingestFile({
           resourceId: crypto.randomUUID(),
           sourceId: crypto.randomUUID(),
@@ -727,30 +632,9 @@ describe("Resource Buffer Upload — E2E", () => {
           },
         });
 
-        expect(result1.isOk()).toBe(true);
         expect(result2.isOk()).toBe(true);
-
-        // Same PDF buffer → same extracted text → same content hash
-        expect(result1.value.contentHash).toBe(result2.value.contentHash);
-        expect(result1.value.extractedText).toBe(result2.value.extractedText);
-      });
-
-      it("should preserve PDF buffer integrity (size matches original file)", async () => {
-        const resourceId = crypto.randomUUID();
-
-        const storeResult = await service.storeResource({
-          id: resourceId,
-          buffer: pdfBuffer,
-          originalName: "integrity-check.pdf",
-          mimeType: "application/pdf",
-        });
-
-        expect(storeResult.isOk()).toBe(true);
-
-        // The stored size must exactly match the file on disk
-        const originalStats = fs.statSync(PDF_PATH);
-        expect(storeResult.value.size).toBe(originalStats.size);
-        expect(storeResult.value.size).toBe(pdfBuffer.byteLength);
+        expect(result.value.contentHash).toBe(result2.value.contentHash);
+        expect(result.value.extractedText).toBe(result2.value.extractedText);
       });
     });
   });

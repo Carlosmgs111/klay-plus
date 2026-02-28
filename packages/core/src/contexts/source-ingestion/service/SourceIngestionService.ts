@@ -23,7 +23,7 @@ import {
   ResourceInvalidMimeTypeError,
   ResourceStorageFailedError,
 } from "../resource/domain/errors";
-import type { ResolvedSourceIngestionModules } from "./composition/factory";
+import type { ResolvedSourceIngestionModules } from "../composition/factory";
 import { Result } from "../../../shared/domain/Result";
 import type { DomainError } from "../../../shared/domain/errors";
 

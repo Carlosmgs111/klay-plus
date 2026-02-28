@@ -56,7 +56,9 @@
       "Bash(echo:*)",
       "Bash(git mv:*)",
       "Bash(cd \"D:/Documentos/Desktop/klay+\" && pnpm --filter @klay/web build 2>&1)",
-      "Bash(cd \"D:/Documentos/Desktop/klay+\" && git stash pop 2>&1)"
+      "Bash(cd \"D:/Documentos/Desktop/klay+\" && git stash pop 2>&1)",
+      "Bash(cd 'D:/Documentos/Desktop/klay+' && pnpm --filter @klay/core test 2>&1)",
+      "Bash(powershell.exe:*)"
     ]
   },
   "mcpServers": {

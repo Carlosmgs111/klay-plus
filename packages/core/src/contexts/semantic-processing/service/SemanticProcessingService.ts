@@ -2,7 +2,7 @@ import type { ProjectionUseCases } from "../projection/application";
 import type { ProcessingProfileRepository } from "../processing-profile/domain/ProcessingProfileRepository";
 import type { EventPublisher } from "../../../shared/domain/EventPublisher";
 import type { ProjectionType } from "../projection/domain/ProjectionType";
-import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "./composition/factory";
+import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "../composition/factory";
 import { ProcessingProfile } from "../processing-profile/domain/ProcessingProfile";
 import { ProcessingProfileId } from "../processing-profile/domain/ProcessingProfileId";
 import {
