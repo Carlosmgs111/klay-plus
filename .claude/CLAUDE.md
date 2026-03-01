@@ -22,7 +22,7 @@ pnpm --filter @klay/web build         # Production build (currently broken — s
 - Aggregates: private constructor + `create()` / `reconstitute()`
 - Triple repo: InMemory (test), NeDB (server), IndexedDB (browser)
 - Service = public API de cada bounded context; Factory en `composition/`
-- `@klay/core` exports use `klay-dev` condition; `vite.resolve.conditions: ["klay-dev"]` in astro.config
+- `@klay/core` bundled via `ssr.noExternal: ["@klay/core"]` in astro.config (Vite transpiles .ts source directly)
 
 ## Known Issues
 

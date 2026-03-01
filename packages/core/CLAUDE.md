@@ -21,9 +21,9 @@ src/
 
 ## Key Files
 
-- `package.json` — exports use `klay-dev` condition for live types in dev
+- `package.json` — exports point to .ts source files (bundled by consumer via `ssr.noExternal`)
 - `tsconfig.json` — extends `../../tsconfig.base.json` (`module: ESNext`, `moduleResolution: bundler`)
-- `vitest.config.ts` — test configuration
+- `package.json scripts` — test commands (`vitest run src`), no separate vitest.config.ts
 
 ## Detailed Documentation
 

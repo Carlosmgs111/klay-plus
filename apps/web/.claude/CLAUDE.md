@@ -13,7 +13,7 @@ pnpm --filter @klay/web build   # Production build (broken — exports ref remov
 
 ```
 src/
-  pages/          # 6 pages: dashboard, documents, knowledge, search, profiles, settings
+  pages/          # 7 pages: index (redirect), dashboard, documents, knowledge, search, profiles, settings
   pages/api/      # 7 API routes under pipeline/
   components/     # React components (use client:load for interactivity)
   services/       # PipelineService interface → ServerPipelineService | BrowserPipelineService
@@ -25,7 +25,7 @@ src/
 - `RuntimeModeContext` — React context for server/browser mode toggle
 - `PipelineService` interface with dual implementations (Server: fetch API routes, Browser: direct `@klay/core` import)
 - `usePipelineAction<T>` hook — manages loading/success/error states for pipeline operations
-- `vite.resolve.conditions: ["klay-dev"]` in `astro.config.ts` — enables live types from `@klay/core`
+- `ssr.noExternal: ["@klay/core"]` in `astro.config.ts` — Vite bundles and transpiles @klay/core .ts source directly
 
 ## Gotchas
 
