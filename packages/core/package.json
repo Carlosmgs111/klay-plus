@@ -18,6 +18,16 @@
       "types": "./src/adapters/rest/index.ts",
       "import": "./src/adapters/rest/index.ts",
       "default": "./src/adapters/rest/index.ts"
+    },
+    "./lifecycle": {
+      "types": "./src/application/knowledge-lifecycle/index.ts",
+      "import": "./src/application/knowledge-lifecycle/index.ts",
+      "default": "./src/application/knowledge-lifecycle/index.ts"
+    },
+    "./management": {
+      "types": "./src/application/knowledge-management/index.ts",
+      "import": "./src/application/knowledge-management/index.ts",
+      "default": "./src/application/knowledge-management/index.ts"
     }
   },
   "scripts": {

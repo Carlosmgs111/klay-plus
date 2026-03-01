@@ -3,7 +3,7 @@
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 169 tests (vitest)
+pnpm --filter @klay/core test    # 155 tests (vitest), 153 pass + 2 skipped
 ```
 
 ## Conventions
@@ -54,7 +54,12 @@ Flujos multi-step sobre unidades existentes. Operaciones atomicas se llaman dire
 
 Operaciones: `ingestAndAddSource` (Ingestion → AddSource → Processing)
 
-**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts`
+### Knowledge Lifecycle Orchestrator (`application/knowledge-lifecycle/`)
+Operaciones atomicas de ciclo de vida sobre unidades semanticas existentes. Coordina knowledge + processing contexts.
+
+Operaciones: `removeSource`, `reprocessUnit`, `rollbackUnit`, `linkUnits`, `unlinkUnits`
+
+**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` — retorna `{ pipeline, management, lifecycle }`
 
 ## Data Flow
 

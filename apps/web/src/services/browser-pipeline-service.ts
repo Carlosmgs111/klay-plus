@@ -14,6 +14,11 @@ import type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
 } from "@klay/core";
@@ -100,6 +105,25 @@ export class BrowserPipelineService implements PipelineService {
     return adapter.createProcessingProfile(input) as Promise<
       ServiceResult<CreateProcessingProfileSuccess>
     >;
+  }
+
+  async listProfiles(): Promise<ServiceResult<ListProfilesResult>> {
+    const adapter = await this._getAdapter();
+    return adapter.listProfiles() as Promise<ServiceResult<ListProfilesResult>>;
+  }
+
+  async updateProfile(
+    input: UpdateProfileInput,
+  ): Promise<ServiceResult<UpdateProfileResult>> {
+    const adapter = await this._getAdapter();
+    return adapter.updateProfile(input) as Promise<ServiceResult<UpdateProfileResult>>;
+  }
+
+  async deprecateProfile(
+    input: DeprecateProfileInput,
+  ): Promise<ServiceResult<DeprecateProfileResult>> {
+    const adapter = await this._getAdapter();
+    return adapter.deprecateProfile(input) as Promise<ServiceResult<DeprecateProfileResult>>;
   }
 
   async getManifest(

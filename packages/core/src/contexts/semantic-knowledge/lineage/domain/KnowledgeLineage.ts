@@ -53,4 +53,13 @@ export class KnowledgeLineage extends AggregateRoot<LineageId> {
   addTrace(trace: Trace): void {
     this._traces.push(trace);
   }
+
+  removeTrace(fromUnitId: string, toUnitId: string): boolean {
+    const index = this._traces.findIndex(
+      (t) => t.fromUnitId === fromUnitId && t.toUnitId === toUnitId,
+    );
+    if (index === -1) return false;
+    this._traces.splice(index, 1);
+    return true;
+  }
 }

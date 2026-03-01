@@ -13,6 +13,11 @@ import type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
 } from "./dtos";
@@ -75,6 +80,16 @@ export interface KnowledgePipelinePort {
   createProcessingProfile(
     input: CreateProcessingProfileInput,
   ): Promise<Result<KnowledgePipelineError, CreateProcessingProfileSuccess>>;
+
+  listProfiles(): Promise<Result<KnowledgePipelineError, ListProfilesResult>>;
+
+  updateProfile(
+    input: UpdateProfileInput,
+  ): Promise<Result<KnowledgePipelineError, UpdateProfileResult>>;
+
+  deprecateProfile(
+    input: DeprecateProfileInput,
+  ): Promise<Result<KnowledgePipelineError, DeprecateProfileResult>>;
 
   /**
    * Retrieves content manifests for a resource, source, or by manifest ID.

@@ -6,6 +6,8 @@ import type {
   CatalogDocumentInput,
   SearchKnowledgeInput,
   CreateProcessingProfileInput,
+  UpdateProfileInput,
+  DeprecateProfileInput,
   GetManifestInput,
 } from "../../application/knowledge-pipeline/contracts/dtos";
 
@@ -77,6 +79,23 @@ export class KnowledgePipelineRESTAdapter {
   async createProcessingProfile(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as CreateProcessingProfileInput;
     const result = await this._pipeline.createProcessingProfile(input);
+    return this._toResponse(result);
+  }
+
+  async listProfiles(_req: RESTRequest): Promise<RESTResponse> {
+    const result = await this._pipeline.listProfiles();
+    return this._toResponse(result);
+  }
+
+  async updateProfile(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as UpdateProfileInput;
+    const result = await this._pipeline.updateProfile(input);
+    return this._toResponse(result);
+  }
+
+  async deprecateProfile(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as DeprecateProfileInput;
+    const result = await this._pipeline.deprecateProfile(input);
     return this._toResponse(result);
   }
 

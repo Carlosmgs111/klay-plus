@@ -13,6 +13,11 @@ import type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
 } from "@klay/core";
@@ -57,6 +62,22 @@ export class ServerPipelineService implements PipelineService {
     return this._post("/api/pipeline/profiles", input);
   }
 
+  async listProfiles(): Promise<ServiceResult<ListProfilesResult>> {
+    return this._get("/api/pipeline/profiles");
+  }
+
+  async updateProfile(
+    input: UpdateProfileInput,
+  ): Promise<ServiceResult<UpdateProfileResult>> {
+    return this._put("/api/pipeline/profiles", input);
+  }
+
+  async deprecateProfile(
+    input: DeprecateProfileInput,
+  ): Promise<ServiceResult<DeprecateProfileResult>> {
+    return this._post("/api/pipeline/profiles/deprecate", input);
+  }
+
   async getManifest(
     input: GetManifestInput,
   ): Promise<ServiceResult<GetManifestSuccess>> {
@@ -74,6 +95,26 @@ export class ServerPipelineService implements PipelineService {
     try {
       const res = await fetch(path, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      return json as ServiceResult<T>;
+    } catch (err) {
+      return {
+        success: false,
+        error: {
+          message: err instanceof Error ? err.message : "Network error",
+          code: "NETWORK_ERROR",
+        },
+      };
+    }
+  }
+
+  private async _put<T>(path: string, body: unknown): Promise<ServiceResult<T>> {
+    try {
+      const res = await fetch(path, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });

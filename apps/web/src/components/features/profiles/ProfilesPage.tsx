@@ -3,12 +3,30 @@ import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
 import { CreateProfileForm } from "./CreateProfileForm";
+import { ProfileList } from "./ProfileList";
+import { ProfileEditForm } from "./ProfileEditForm";
+import type { ListProfilesResult } from "@klay/core";
+
+type ProfileEntry = ListProfilesResult["profiles"][number];
 
 export function ProfilesPage() {
   const [showForm, setShowForm] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<ProfileEntry | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleCreateSuccess = () => {
+    setShowForm(false);
+    setRefreshKey((k) => k + 1);
+  };
+
+  const handleEditSuccess = () => {
+    setEditingProfile(null);
+    setRefreshKey((k) => k + 1);
+  };
 
   return (
     <div className="space-y-6">
+      {/* Create Profile */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -19,7 +37,7 @@ export function ProfilesPage() {
               </h2>
             </div>
             <Button
-            className="text-lg flex items-center gap-2"
+              className="text-lg flex items-center gap-2"
               variant={showForm ? "ghost" : "secondary"}
               onClick={() => setShowForm(!showForm)}
             >
@@ -31,12 +49,46 @@ export function ProfilesPage() {
         {showForm && (
           <CardBody>
             <div className="animate-fade-in">
-              <CreateProfileForm onSuccess={() => setShowForm(false)} />
+              <CreateProfileForm onSuccess={handleCreateSuccess} />
             </div>
           </CardBody>
         )}
       </Card>
 
+      {/* Edit Profile (shown when editing) */}
+      {editingProfile && (
+        <Card>
+          <CardBody>
+            <div className="animate-fade-in">
+              <ProfileEditForm
+                profile={editingProfile}
+                onSuccess={handleEditSuccess}
+                onCancel={() => setEditingProfile(null)}
+              />
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Profile List */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Icon name="layers" style={{ color: "var(--text-tertiary)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              All Profiles
+            </h2>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <ProfileList
+            onEditProfile={setEditingProfile}
+            refreshKey={refreshKey}
+          />
+        </CardBody>
+      </Card>
+
+      {/* About section */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">

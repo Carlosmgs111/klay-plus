@@ -8,11 +8,13 @@ import {
 } from "react";
 import type { RuntimeMode } from "../services/types";
 import type { PipelineService } from "../services/pipeline-service";
+import type { LifecycleService } from "../services/lifecycle-service";
 
 interface RuntimeModeContextValue {
   mode: RuntimeMode;
   setMode: (mode: RuntimeMode) => void;
   service: PipelineService | null;
+  lifecycleService: LifecycleService | null;
   isInitializing: boolean;
 }
 
@@ -26,6 +28,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem(STORAGE_KEY) as RuntimeMode) ?? "server";
   });
   const [service, setService] = useState<PipelineService | null>(null);
+  const [lifecycleService, setLifecycleService] = useState<LifecycleService | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const initRef = useRef(false);
 
@@ -47,18 +50,28 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         if (mode === "server") {
-          const { ServerPipelineService } = await import(
-            "../services/server-pipeline-service"
-          );
-          if (!cancelled) setService(new ServerPipelineService());
+          const [{ ServerPipelineService }, { ServerLifecycleService }] =
+            await Promise.all([
+              import("../services/server-pipeline-service"),
+              import("../services/server-lifecycle-service"),
+            ]);
+          if (!cancelled) {
+            setService(new ServerPipelineService());
+            setLifecycleService(new ServerLifecycleService());
+          }
         } else {
-          const { BrowserPipelineService } = await import(
-            "../services/browser-pipeline-service"
-          );
-          if (!cancelled) setService(new BrowserPipelineService());
+          const [{ BrowserPipelineService }, { BrowserLifecycleService }] =
+            await Promise.all([
+              import("../services/browser-pipeline-service"),
+              import("../services/browser-lifecycle-service"),
+            ]);
+          if (!cancelled) {
+            setService(new BrowserPipelineService());
+            setLifecycleService(new BrowserLifecycleService());
+          }
         }
       } catch (err) {
-        console.error("Failed to initialize pipeline service:", err);
+        console.error("Failed to initialize services:", err);
       } finally {
         if (!cancelled) setIsInitializing(false);
       }
@@ -70,7 +83,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   return (
-    <RuntimeModeContext.Provider value={{ mode, setMode, service, isInitializing }}>
+    <RuntimeModeContext.Provider value={{ mode, setMode, service, lifecycleService, isInitializing }}>
       {children}
     </RuntimeModeContext.Provider>
   );
@@ -94,4 +107,16 @@ export function usePipelineService(): PipelineService {
     );
   }
   return service;
+}
+
+export function useLifecycleService(): LifecycleService {
+  const { lifecycleService, isInitializing } = useRuntimeMode();
+  if (!lifecycleService) {
+    throw new Error(
+      isInitializing
+        ? "Lifecycle service is still initializing"
+        : "Lifecycle service is not available",
+    );
+  }
+  return lifecycleService;
 }

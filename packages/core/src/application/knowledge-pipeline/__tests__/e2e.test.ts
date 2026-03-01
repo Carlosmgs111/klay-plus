@@ -503,5 +503,75 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
 
       expect(result.isFail()).toBe(true);
     });
+
+    it("should list all profiles via the pipeline", async () => {
+      const result = await pipeline.listProfiles();
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.profiles.length).toBeGreaterThanOrEqual(2);
+        const profile = result.value.profiles.find((p) => p.id === "profile-custom-001");
+        expect(profile).toBeDefined();
+        expect(profile!.name).toBe("Custom Profile");
+        expect(profile!.chunkingStrategyId).toBe("sentence");
+        expect(profile!.status).toBe("ACTIVE");
+        expect(profile!.createdAt).toBeTruthy();
+      }
+    });
+
+    it("should update a profile via the pipeline", async () => {
+      const result = await pipeline.updateProfile({
+        id: "profile-custom-001",
+        name: "Updated Custom Profile",
+        chunkingStrategyId: "recursive",
+      });
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.profileId).toBe("profile-custom-001");
+        expect(result.value.version).toBe(2);
+      }
+    });
+
+    it("should deprecate a profile via the pipeline", async () => {
+      const result = await pipeline.deprecateProfile({
+        id: "profile-custom-001",
+        reason: "No longer needed",
+      });
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.profileId).toBe("profile-custom-001");
+      }
+
+      // Verify it shows as deprecated in the list
+      const listResult = await pipeline.listProfiles();
+      expect(listResult.isOk()).toBe(true);
+      if (listResult.isOk()) {
+        const deprecatedProfile = listResult.value.profiles.find(
+          (p) => p.id === "profile-custom-001",
+        );
+        expect(deprecatedProfile).toBeDefined();
+        expect(deprecatedProfile!.status).toBe("DEPRECATED");
+      }
+    });
+
+    it("should fail to update a deprecated profile", async () => {
+      const result = await pipeline.updateProfile({
+        id: "profile-custom-001",
+        name: "Should Fail",
+      });
+
+      expect(result.isFail()).toBe(true);
+    });
+
+    it("should fail to deprecate an already deprecated profile", async () => {
+      const result = await pipeline.deprecateProfile({
+        id: "profile-custom-001",
+        reason: "Again",
+      });
+
+      expect(result.isFail()).toBe(true);
+    });
   });
 });

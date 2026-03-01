@@ -195,4 +195,54 @@ There are three main types of machine learning:
     });
     expect(duplicateResult.isFail()).toBe(true);
   });
+
+  it("should list all processing profiles sorted by status and date", async () => {
+    const service = await createSemanticProcessingService({
+      provider: "in-memory",
+      embeddingDimensions: 128,
+    });
+
+    // Create profiles with slight delay to ensure different createdAt
+    const id1 = crypto.randomUUID();
+    await service.createProcessingProfile({
+      id: id1,
+      name: "Profile A",
+      chunkingStrategyId: "recursive",
+      embeddingStrategyId: "hash-embedding",
+    });
+
+    const id2 = crypto.randomUUID();
+    await service.createProcessingProfile({
+      id: id2,
+      name: "Profile B",
+      chunkingStrategyId: "sentence",
+      embeddingStrategyId: "hash-embedding",
+    });
+
+    const id3 = crypto.randomUUID();
+    await service.createProcessingProfile({
+      id: id3,
+      name: "Profile C",
+      chunkingStrategyId: "recursive",
+      embeddingStrategyId: "hash-embedding",
+    });
+
+    // Deprecate profile A
+    await service.deprecateProcessingProfile({ id: id1, reason: "testing" });
+
+    const profiles = await service.listProcessingProfiles();
+
+    expect(profiles).toHaveLength(3);
+
+    // Active profiles should come first
+    const activeProfiles = profiles.filter((p) => p.status === "ACTIVE");
+    const deprecatedProfiles = profiles.filter((p) => p.status === "DEPRECATED");
+    expect(activeProfiles).toHaveLength(2);
+    expect(deprecatedProfiles).toHaveLength(1);
+
+    // Active profiles should appear before deprecated
+    const firstDeprecatedIndex = profiles.findIndex((p) => p.status === "DEPRECATED");
+    const lastActiveIndex = profiles.length - 1 - [...profiles].reverse().findIndex((p) => p.status === "ACTIVE");
+    expect(lastActiveIndex).toBeLessThan(firstDeprecatedIndex);
+  });
 });

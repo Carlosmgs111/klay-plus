@@ -17,6 +17,11 @@ import type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
 } from "../contracts/dtos";
@@ -208,6 +213,70 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     return Result.ok({
       profileId: result.value.profileId,
       version: result.value.version,
+    });
+  }
+
+  async listProfiles(): Promise<Result<KnowledgePipelineError, ListProfilesResult>> {
+    try {
+      const profiles = await this._processing.listProcessingProfiles();
+      return Result.ok({
+        profiles: profiles.map((p) => ({
+          id: p.id.value,
+          name: p.name,
+          version: p.version,
+          chunkingStrategyId: p.chunkingStrategyId,
+          embeddingStrategyId: p.embeddingStrategyId,
+          configuration: { ...p.configuration },
+          status: p.status,
+          createdAt: p.createdAt.toISOString(),
+        })),
+      });
+    } catch (error) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Processing, error, []),
+      );
+    }
+  }
+
+  async updateProfile(
+    input: UpdateProfileInput,
+  ): Promise<Result<KnowledgePipelineError, UpdateProfileResult>> {
+    const result = await this._processing.updateProcessingProfile({
+      id: input.id,
+      name: input.name,
+      chunkingStrategyId: input.chunkingStrategyId,
+      embeddingStrategyId: input.embeddingStrategyId,
+      configuration: input.configuration,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Processing, result.error, []),
+      );
+    }
+
+    return Result.ok({
+      profileId: result.value.profileId,
+      version: result.value.version,
+    });
+  }
+
+  async deprecateProfile(
+    input: DeprecateProfileInput,
+  ): Promise<Result<KnowledgePipelineError, DeprecateProfileResult>> {
+    const result = await this._processing.deprecateProcessingProfile({
+      id: input.id,
+      reason: input.reason,
+    });
+
+    if (result.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Processing, result.error, []),
+      );
+    }
+
+    return Result.ok({
+      profileId: result.value.profileId,
     });
   }
 

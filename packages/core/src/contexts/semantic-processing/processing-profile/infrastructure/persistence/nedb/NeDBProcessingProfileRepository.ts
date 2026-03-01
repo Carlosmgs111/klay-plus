@@ -12,6 +12,11 @@ export class NeDBProcessingProfileRepository
   protected toDTO = toDTO;
   protected fromDTO = fromDTO;
 
+  async findAll(): Promise<ProcessingProfile[]> {
+    const all = await this.store.getAll();
+    return all.map((dto) => this.fromDTO(dto));
+  }
+
   async findByStatus(status: ProfileStatus): Promise<ProcessingProfile[]> {
     return this.findWhere((d) => d.status === status);
   }

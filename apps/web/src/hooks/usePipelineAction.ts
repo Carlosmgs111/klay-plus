@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { ServiceResult } from "../services/types";
 
-interface PipelineActionState<T> {
+interface ServiceActionState<T> {
   data: T | null;
   error: { message: string; code: string; step?: string; completedSteps?: string[] } | null;
   isLoading: boolean;
@@ -9,25 +9,30 @@ interface PipelineActionState<T> {
 }
 
 /**
- * Generic hook for pipeline actions.
+ * Generic hook for service actions (pipeline, lifecycle, or any ServiceResult-based call).
  * Manages loading/success/error states automatically.
  * Returns the data from execute() for inline usage (e.g. toast notifications).
  *
  * @example
  * ```tsx
+ * // Pipeline usage:
  * const service = usePipelineService();
  * const { data, error, isLoading, execute } = usePipelineAction(
  *   (input: SearchKnowledgeInput) => service.searchKnowledge(input)
  * );
- * const result = await execute(input);
- * if (result) addToast("Success!", "success");
+ *
+ * // Lifecycle usage:
+ * const lifecycle = useLifecycleService();
+ * const { execute: removeSource } = useServiceAction(
+ *   (input: RemoveSourceInput) => lifecycle.removeSource(input)
+ * );
  * ```
  */
-export function usePipelineAction<T, TInput = void>(
+export function useServiceAction<T, TInput = void>(
   action: (input: TInput) => Promise<ServiceResult<T>>,
-): PipelineActionState<T> {
+): ServiceActionState<T> {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<PipelineActionState<T>["error"]>(null);
+  const [error, setError] = useState<ServiceActionState<T>["error"]>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const execute = useCallback(
@@ -64,3 +69,9 @@ export function usePipelineAction<T, TInput = void>(
 
   return { data, error, isLoading, execute };
 }
+
+/**
+ * Alias for useServiceAction — kept for backward compatibility.
+ * New code should prefer useServiceAction.
+ */
+export const usePipelineAction = useServiceAction;

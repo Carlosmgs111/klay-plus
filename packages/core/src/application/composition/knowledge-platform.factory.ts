@@ -1,10 +1,12 @@
 import type { KnowledgePipelinePort } from "../knowledge-pipeline/contracts/KnowledgePipelinePort";
 import type { KnowledgeManagementPort } from "../knowledge-management/contracts/KnowledgeManagementPort";
+import type { KnowledgeLifecyclePort } from "../knowledge-lifecycle/contracts/KnowledgeLifecyclePort";
 import type { KnowledgePipelinePolicy } from "../knowledge-pipeline/composition/knowledge-pipeline.factory";
 
 export interface KnowledgePlatform {
   pipeline: KnowledgePipelinePort;
   management: KnowledgeManagementPort;
+  lifecycle: KnowledgeLifecyclePort;
 }
 
 export async function createKnowledgePlatform(
@@ -19,6 +21,9 @@ export async function createKnowledgePlatform(
   const { KnowledgeManagementOrchestrator } = await import(
     "../knowledge-management/application/KnowledgeManagementOrchestrator"
   );
+  const { KnowledgeLifecycleOrchestrator } = await import(
+    "../knowledge-lifecycle/application/KnowledgeLifecycleOrchestrator"
+  );
 
   const deps = await resolvePipelineDependencies(policy);
 
@@ -28,6 +33,10 @@ export async function createKnowledgePlatform(
     knowledge: deps.knowledge,
     processing: deps.processing,
   });
+  const lifecycle = new KnowledgeLifecycleOrchestrator({
+    knowledge: deps.knowledge,
+    processing: deps.processing,
+  });
 
-  return { pipeline, management };
+  return { pipeline, management, lifecycle };
 }

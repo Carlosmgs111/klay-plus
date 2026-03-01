@@ -1,15 +1,19 @@
 import { DataTable } from "../../shared/DataTable";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { Button } from "../../shared/Button";
+import { Icon } from "../../shared/Icon";
 import type { ContentManifestEntry } from "@klay/core";
 
 interface SemanticUnitsListProps {
   manifests: ContentManifestEntry[];
   onSelectManifest: (manifest: ContentManifestEntry) => void;
+  onSelectUnit?: (manifest: ContentManifestEntry) => void;
 }
 
 export function SemanticUnitsList({
   manifests,
   onSelectManifest,
+  onSelectUnit,
 }: SemanticUnitsListProps) {
   const columns = [
     {
@@ -38,12 +42,12 @@ export function SemanticUnitsList({
     {
       key: "chunksCount",
       header: "Chunks",
-      render: (row: ContentManifestEntry) => String(row.chunksCount ?? "—"),
+      render: (row: ContentManifestEntry) => String(row.chunksCount ?? "--"),
     },
     {
       key: "model",
       header: "Model",
-      render: (row: ContentManifestEntry) => row.model ?? "—",
+      render: (row: ContentManifestEntry) => row.model ?? "--",
     },
     {
       key: "completedSteps",
@@ -51,6 +55,24 @@ export function SemanticUnitsList({
       render: (row: ContentManifestEntry) =>
         `${row.completedSteps.length} completed`,
     },
+    ...(onSelectUnit
+      ? [
+          {
+            key: "actions",
+            header: "Actions",
+            render: (row: ContentManifestEntry) => (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSelectUnit(row)}
+                title="View unit lifecycle"
+              >
+                <Icon name="eye" />
+              </Button>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (

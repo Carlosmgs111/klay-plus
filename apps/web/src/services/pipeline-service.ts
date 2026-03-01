@@ -12,9 +12,13 @@ import type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
-  
 } from "@klay/core";
 
 /**
@@ -48,6 +52,16 @@ export interface PipelineService {
   createProcessingProfile(
     input: CreateProcessingProfileInput,
   ): Promise<ServiceResult<CreateProcessingProfileSuccess>>;
+
+  listProfiles(): Promise<ServiceResult<ListProfilesResult>>;
+
+  updateProfile(
+    input: UpdateProfileInput,
+  ): Promise<ServiceResult<UpdateProfileResult>>;
+
+  deprecateProfile(
+    input: DeprecateProfileInput,
+  ): Promise<ServiceResult<DeprecateProfileResult>>;
 
   getManifest(
     input: GetManifestInput,

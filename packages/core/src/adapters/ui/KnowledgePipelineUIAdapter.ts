@@ -12,6 +12,11 @@ import type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
 } from "../../application/knowledge-pipeline/contracts/dtos";
@@ -72,6 +77,21 @@ export class KnowledgePipelineUIAdapter {
 
   async createProcessingProfile(input: CreateProcessingProfileInput): Promise<UIResult<CreateProcessingProfileSuccess>> {
     const result = await this._pipeline.createProcessingProfile(input);
+    return this._unwrap(result);
+  }
+
+  async listProfiles(): Promise<UIResult<ListProfilesResult>> {
+    const result = await this._pipeline.listProfiles();
+    return this._unwrap(result);
+  }
+
+  async updateProfile(input: UpdateProfileInput): Promise<UIResult<UpdateProfileResult>> {
+    const result = await this._pipeline.updateProfile(input);
+    return this._unwrap(result);
+  }
+
+  async deprecateProfile(input: DeprecateProfileInput): Promise<UIResult<DeprecateProfileResult>> {
+    const result = await this._pipeline.deprecateProfile(input);
     return this._unwrap(result);
   }
 

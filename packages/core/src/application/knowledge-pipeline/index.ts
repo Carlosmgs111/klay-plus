@@ -33,6 +33,11 @@ export type {
   SearchKnowledgeSuccess,
   CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
 } from "./contracts/dtos";
@@ -45,3 +50,6 @@ export type { ContentManifestEntry } from "./domain/ContentManifest";
 export { createKnowledgePipeline } from "./composition/knowledge-pipeline.factory";
 
 export type { KnowledgePipelinePolicy } from "./composition/knowledge-pipeline.factory";
+
+export { createKnowledgePlatform } from "../composition/knowledge-platform.factory";
+export type { KnowledgePlatform } from "../composition/knowledge-platform.factory";

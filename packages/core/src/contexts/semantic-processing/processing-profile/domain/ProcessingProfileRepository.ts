@@ -5,6 +5,7 @@ import type { ProfileStatus } from "./ProfileStatus";
 
 export interface ProcessingProfileRepository
   extends Repository<ProcessingProfile, ProcessingProfileId> {
+  findAll(): Promise<ProcessingProfile[]>;
   findByStatus(status: ProfileStatus): Promise<ProcessingProfile[]>;
   findActiveById(id: ProcessingProfileId): Promise<ProcessingProfile | null>;
 }

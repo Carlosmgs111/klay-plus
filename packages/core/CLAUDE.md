@@ -5,7 +5,7 @@ Semantic Knowledge Platform core library. 4 bounded contexts, dual runtime (Serv
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 169 tests (vitest)
+pnpm --filter @klay/core test    # 155 tests (vitest), 153 pass + 2 skipped
 ```
 
 ## Structure
@@ -13,11 +13,21 @@ pnpm --filter @klay/core test    # 169 tests (vitest)
 ```
 src/
   contexts/       # 4 bounded contexts (source-ingestion, semantic-knowledge, semantic-processing, knowledge-retrieval)
-  application/    # Orchestrators: KnowledgePipelineOrchestrator, KnowledgeManagementOrchestrator
-  adapters/       # REST + UI adapters
+  application/    # 3 Orchestrators: KnowledgePipelineOrchestrator, KnowledgeManagementOrchestrator, KnowledgeLifecycleOrchestrator
+  adapters/       # REST + UI adapters (3 each: Pipeline, Management, Lifecycle)
   platform/       # Shared infra: persistence, eventing, vector stores
   shared/         # DDD building blocks: AggregateRoot, Result, Entity, ValueObject
 ```
+
+## Package Exports
+
+| Export path | Module |
+|-------------|--------|
+| `.` | knowledge-pipeline (main entry) |
+| `./adapters/rest` | 3 REST adapters (Pipeline, Management, Lifecycle) |
+| `./adapters/ui` | 3 UI adapters (Pipeline, Management, Lifecycle) |
+| `./lifecycle` | KnowledgeLifecyclePort + DTOs + factory |
+| `./management` | KnowledgeManagementPort + DTOs + factory |
 
 ## Key Files
 

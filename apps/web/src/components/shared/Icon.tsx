@@ -29,6 +29,13 @@ const ICON_PATHS: Record<string, string> = {
   zap: "bx bxs-bolt",
   server: "bx bxs-server",
   globe: "bx bxs-globe",
+  edit: "bx bxs-edit",
+  link: "bx bxs-link",
+  unlink: "bx bx-unlink",
+  "chevron-left": "bx bxs-chevron-left",
+  history: "bx bxs-history",
+  undo: "bx bx-undo",
+  "folder-plus": "bx bxs-folder-plus",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "ref"> {

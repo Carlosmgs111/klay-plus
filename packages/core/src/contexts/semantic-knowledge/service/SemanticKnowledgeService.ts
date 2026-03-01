@@ -466,6 +466,45 @@ export class SemanticKnowledgeService {
     });
   }
 
+  async unlinkSemanticUnits(params: {
+    fromUnitId: string;
+    toUnitId: string;
+  }): Promise<Result<DomainError, { fromUnitId: string; toUnitId: string }>> {
+    const result = await tryCatchAsync(
+      async () => {
+        const lineage = await this._lineageRepository.findBySemanticUnitId(params.fromUnitId);
+
+        if (!lineage) {
+          throw new Error(
+            `No lineage found for unit ${params.fromUnitId}`,
+          );
+        }
+
+        const removed = lineage.removeTrace(params.fromUnitId, params.toUnitId);
+
+        if (!removed) {
+          throw new Error(
+            `Link not found: ${params.fromUnitId} --> ${params.toUnitId}`,
+          );
+        }
+
+        await this._lineageRepository.save(lineage);
+        await this._lineageEventPublisher.publishAll(lineage.clearEvents());
+      },
+      (error) =>
+        new LineageOperationError("unlinkSemanticUnits", String(error)),
+    );
+
+    if (result.isFail()) {
+      return Result.fail(result.error);
+    }
+
+    return Result.ok({
+      fromUnitId: params.fromUnitId,
+      toUnitId: params.toUnitId,
+    });
+  }
+
   async getLinkedUnits(params: {
     unitId: string;
     relationship?: string;

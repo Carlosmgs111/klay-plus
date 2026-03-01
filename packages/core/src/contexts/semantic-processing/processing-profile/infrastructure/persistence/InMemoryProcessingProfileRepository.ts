@@ -8,6 +8,10 @@ export class InMemoryProcessingProfileRepository
   extends BaseInMemoryRepository<ProcessingProfile>
   implements ProcessingProfileRepository
 {
+  async findAll(): Promise<ProcessingProfile[]> {
+    return [...this.store.values()];
+  }
+
   async findByStatus(status: ProfileStatus): Promise<ProcessingProfile[]> {
     return this.findWhere((p) => p.status === status);
   }

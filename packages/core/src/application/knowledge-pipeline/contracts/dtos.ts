@@ -138,6 +138,41 @@ export interface SearchKnowledgeSuccess {
   totalFound: number;
 }
 
+export interface ListProfilesResult {
+  profiles: Array<{
+    id: string;
+    name: string;
+    version: number;
+    chunkingStrategyId: string;
+    embeddingStrategyId: string;
+    configuration: Record<string, unknown>;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
+export interface UpdateProfileInput {
+  id: string;
+  name?: string;
+  chunkingStrategyId?: string;
+  embeddingStrategyId?: string;
+  configuration?: Record<string, unknown>;
+}
+
+export interface UpdateProfileResult {
+  profileId: string;
+  version: number;
+}
+
+export interface DeprecateProfileInput {
+  id: string;
+  reason: string;
+}
+
+export interface DeprecateProfileResult {
+  profileId: string;
+}
+
 export interface GetManifestInput {
   /** Query by resource ID */
   resourceId?: string;

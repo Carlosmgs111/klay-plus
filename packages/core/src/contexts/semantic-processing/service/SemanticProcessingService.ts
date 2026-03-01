@@ -5,6 +5,7 @@ import type { ProjectionType } from "../projection/domain/ProjectionType";
 import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "../composition/factory";
 import { ProcessingProfile } from "../processing-profile/domain/ProcessingProfile";
 import { ProcessingProfileId } from "../processing-profile/domain/ProcessingProfileId";
+import { ProfileStatus } from "../processing-profile/domain/ProfileStatus";
 import {
   ProfileAlreadyExistsError,
   ProfileNameRequiredError,
@@ -60,6 +61,16 @@ export class SemanticProcessingService {
   }
 
   // ── Processing Profile operations ────────────────────────────────────
+
+  async listProcessingProfiles(): Promise<ProcessingProfile[]> {
+    const profiles = await this._profileRepository.findAll();
+    return profiles.sort((a, b) => {
+      if (a.status !== b.status) {
+        return a.status === ProfileStatus.Active ? -1 : 1;
+      }
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+  }
 
   async createProcessingProfile(params: {
     id: string;
