@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r \".tool_input.file_path // empty\"); PROTECTED=(\"pnpm-lock.yaml\" \"Origin.ts\" \"Meaning.ts\" \"SemanticVersion.ts\"); for pat in \"${PROTECTED[@]}\"; do if [[ \"$FILE\" == *\"$pat\"* ]]; then echo \"BLOCKED: $FILE is protected (legacy DTO compat or lock file)\" >&2; exit 2; fi; done; exit 0'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'INPUT=$(cat); FILE=$(echo \"$INPUT\" | jq -r \".tool_input.file_path // empty\"); if [[ \"$FILE\" == *\"packages/core/src\"* && \"$FILE\" == *.ts ]]; then cd \"$CLAUDE_PROJECT_DIR\" && pnpm --filter @klay/core test --reporter=dot 2>&1 | tail -5; fi'",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
