@@ -1,4 +1,4 @@
-# klay+ Core — Product Capabilities
+# klay+ Core — Domain Architecture
 
 ## Commands
 
@@ -17,92 +17,56 @@ pnpm --filter @klay/core test    # 169 tests (vitest)
 
 ## Vision
 
-klay+ es una **plataforma de gestion de conocimiento semantico** que transforma contenido de diversas fuentes (archivos, URLs, APIs) en conocimiento buscable semanticamente. El pipeline completo abarca: ingesta de contenido, extraccion de texto, representacion semantica con versionado, generacion de embeddings vectoriales, y busqueda por similitud semantica.
+Plataforma de gestion de conocimiento semantico: transforma contenido (archivos, URLs, APIs) en conocimiento buscable por similitud vectorial. Pipeline: ingesta → extraccion → representacion semantica versionada → embeddings → busqueda.
 
-## Arquitectura General
+## Architecture
 
 ```
-adapters/          Adaptadores externos (REST, UI) — punto de entrada para consumidores
-application/       Capa de orquestacion — coordina los bounded contexts via sus services
-contexts/          Bounded Contexts — subdominios del negocio (el core del sistema)
-platform/          Infraestructura compartida — config, persistence, eventing, vector stores
-shared/            Shared Kernel — building blocks DDD (AggregateRoot, Result, ValueObject, etc.)
+adapters/       REST + UI adapters (entry points for consumers)
+application/    Orchestration layer (coordinates bounded contexts)
+contexts/       4 Bounded Contexts (domain core)
+platform/       Shared infra (config, persistence, eventing, vectors)
+shared/         DDD building blocks (AggregateRoot, Result, ValueObject)
 ```
 
-## Bounded Contexts (Subdominios)
+## Bounded Contexts
 
-El sistema esta dividido en **4 bounded contexts** que encapsulan subdominios independientes del negocio:
+Each context has its own `CLAUDE.md` with full entity/port/event specs.
 
-### 1. Source Ingestion (`contexts/source-ingestion/`)
-> **Subdominio**: Adquisicion de contenido y extraccion de texto
+| Context | Subdominio | Service | Modules |
+|---------|-----------|---------|---------|
+| `source-ingestion/` | Adquisicion + extraccion de texto | `SourceIngestionService` | source, resource, extraction |
+| `semantic-knowledge/` | Representacion + lineage | `SemanticKnowledgeService` | semantic-unit, lineage |
+| `semantic-processing/` | Chunking + embeddings + vector store | `SemanticProcessingService` | projection, processing-profile |
+| `knowledge-retrieval/` | Busqueda semantica (read side) | `KnowledgeRetrievalService` | semantic-query |
 
-Responsable de recibir contenido desde diversas fuentes externas (archivos PDF, paginas web, APIs, texto plano) y producir texto extraido listo para procesamiento semantico. Gestiona el ciclo de vida de sources, resources (archivos fisicos) y extraction jobs.
+**Cross-context wiring**: Semantic Processing escribe al vector store; Knowledge Retrieval lee del mismo store. El wiring ocurre en el PipelineComposer. Ambos deben usar el mismo modelo de embeddings.
 
-**Modulos**: `source`, `resource`, `extraction`
-**Service**: `SourceIngestionService` — expone operaciones de registro, extraccion, ingesta de archivos y batch processing
-**Ver**: `contexts/source-ingestion/CLAUDE.md`
+## Application Layer
 
-### 2. Semantic Knowledge (`contexts/semantic-knowledge/`)
-> **Subdominio**: Representacion y lineage del conocimiento
+### Knowledge Pipeline Orchestrator (`application/knowledge-pipeline/`)
+Coordina los 4 contextos para **construccion inicial**. Gestiona `ContentManifest` (tracker cross-context: resourceId, sourceId, extractionJobId, semanticUnitId, projectionId).
 
-Gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen contenido, con versiones inmutables tipo snapshot que capturan el estado completo (fuentes + estrategia + proyecciones) en cada punto. Ciclo de vida completo (Draft → Active → Deprecated → Archived). Mantiene trazabilidad total de cada transformacion y enlaces entre unidades.
+Operaciones: `execute` (pipeline completo), `ingestDocument`, `processDocument`, `catalogDocument`, `searchKnowledge`, `createProcessingProfile`, `getManifest`
 
-**Modulos**: `semantic-unit`, `lineage`
-**Service**: `SemanticKnowledgeService` — expone creacion de unidades, gestion de fuentes (add/remove), reprocesamiento, rollback, deprecacion, enlaces entre unidades, todo con lineage automatico
-**Ver**: `contexts/semantic-knowledge/CLAUDE.md`
+### Knowledge Management Orchestrator (`application/knowledge-management/`)
+Flujos multi-step sobre unidades existentes. Operaciones atomicas se llaman directamente en el service.
 
-### 3. Semantic Processing (`contexts/semantic-processing/`)
-> **Subdominio**: Transformacion a representaciones buscables
+Operaciones: `ingestAndAddSource` (Ingestion → AddSource → Processing)
 
-Toma contenido textual, lo segmenta en chunks, genera embeddings vectoriales y los almacena en un vector store. Las estrategias de chunking y embedding son configurables via Processing Profiles declarativos y versionados.
+**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts`
 
-**Modulos**: `projection`, `processing-profile`
-**Service**: `SemanticProcessingService` — expone procesamiento de contenido, gestion de profiles y acceso al vector store
-**Ver**: `contexts/semantic-processing/CLAUDE.md`
+## Data Flow
 
-### 4. Knowledge Retrieval (`contexts/knowledge-retrieval/`)
-> **Subdominio**: Busqueda y descubrimiento semantico
-
-El lado de lectura del sistema. Recibe consultas en lenguaje natural, las convierte a vectores y encuentra las unidades de conocimiento mas relevantes por similitud semantica.
-
-**Modulos**: `semantic-query`
-**Service**: `KnowledgeRetrievalService` — expone busqueda semantica, deteccion de duplicados y descubrimiento de contenido relacionado
-**Ver**: `contexts/knowledge-retrieval/CLAUDE.md`
-
-## Application Layer (`application/`)
-
-### Knowledge Pipeline Orchestrator (`application/knowledge-pipeline/`) — [Ver detalle](../application/knowledge-pipeline/CLAUDE.md)
-> **No es un bounded context** — es la capa de orquestacion que coordina los 4 contextos para **construccion inicial**
-
-Expone un API unificado (`KnowledgePipelinePort`) que orquesta el flujo completo:
 ```
-Contenido crudo → [Ingestion] → [CreateUnit] → [AddSource] → [Processing] → [Search]
+Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
+  → [Semantic Knowledge] → SemanticUnit hub + version con snapshot
+  → [Semantic Processing] → Chunking + Embedding + Vector storage
+  → [Knowledge Retrieval] → Semantic query + Ranking → RetrievalResult
 ```
-
-Gestiona **ContentManifest**: un tracker cross-context que asocia todos los artefactos producidos por un documento (resourceId, sourceId, extractionJobId, semanticUnitId, projectionId).
-
-**Operaciones**:
-- `execute` — Pipeline completo: ingestar + crear unit + agregar fuente + procesar
-- `ingestDocument` — Solo ingesta y extraccion
-- `processDocument` — Solo chunking + embeddings + vector storage
-- `catalogDocument` — Solo creacion de unidad semantica + lineage
-- `searchKnowledge` — Busqueda semantica
-- `createProcessingProfile` — Crear perfil de procesamiento
-- `getManifest` — Consultar trazabilidad del pipeline
-
-### Knowledge Management Orchestrator (`application/knowledge-management/`) — [Ver detalle](../application/knowledge-management/CLAUDE.md)
-> **No es un bounded context** — es la capa de orquestacion para **flujos multi-step de ciclo de vida** sobre unidades semanticas existentes
-
-Complementa al Pipeline (construccion inicial) con flujos multi-step que coordinan multiples contextos. Usa `KnowledgeManagementError` con `step: ManagementStep` + `completedSteps` (misma estructura que el pipeline error). Las operaciones atomicas (removeSource, rollbackUnit, etc.) se llaman directamente en el service.
-
-**Operaciones**:
-- `ingestAndAddSource` — Ingesta contenido + agrega como source a unidad existente + procesa embeddings (3 steps: Ingestion → AddSource → Processing)
-
-**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` resuelve ambos orchestrators compartiendo services.
 
 ## Platform (`platform/`)
 
-Infraestructura compartida que NO contiene logica de dominio:
 - **Config**: `ConfigProvider`, `NodeConfigProvider`, `AstroConfigProvider`, `InMemoryConfigProvider`
 - **Persistence**: `IndexedDBStore`, `NeDBStore`, repository helpers
 - **Eventing**: `InMemoryEventPublisher`
@@ -111,63 +75,8 @@ Infraestructura compartida que NO contiene logica de dominio:
 
 ## Shared Kernel (`shared/`)
 
-Building blocks DDD usados por todos los contextos:
 - `AggregateRoot<T>`, `Entity<T>`, `ValueObject<T>`, `UniqueId`
 - `DomainEvent`, `EventPublisher`, `Repository<T>`
 - `Result<E, T>` (Ok/Fail pattern)
 - `DomainError`, `NotFoundError`, `OperationError`
 - `ProviderRegistry`, `ProviderFactory`
-
-## Flujo de Datos End-to-End
-
-```
-Archivo/URL/API
-    |
-    v
-[Source Ingestion]
-    Resource storage + Source registration + Text extraction
-    |
-    | texto extraido + contentHash
-    v
-[Semantic Knowledge]
-    SemanticUnit creation (empty hub) + Lineage registration
-    |
-    | unitId
-    v
-[Semantic Knowledge]
-    AddSource → nueva version con snapshot de fuente
-    |
-    | unitId + version + extractedContent
-    v
-[Semantic Processing]
-    Chunking + Embedding + Vector storage (guiado por ProcessingProfile)
-    |
-    | vectors almacenados
-    v
-[Knowledge Retrieval]
-    Semantic query + Ranking → RetrievalResult
-```
-
-## Catalogo de Eventos de Dominio (21 eventos)
-
-| Contexto | Evento | Significado |
-|----------|--------|-------------|
-| Source Ingestion / Source | `SourceRegistered` | Nueva referencia de source creada |
-| Source Ingestion / Source | `SourceUpdated` | Content hash actualizado (nueva version de extraccion) |
-| Source Ingestion / Source | `SourceExtracted` | Extraccion completada |
-| Source Ingestion / Resource | `ResourceStored` | Archivo subido o referencia externa registrada |
-| Source Ingestion / Resource | `ResourceDeleted` | Resource eliminado |
-| Source Ingestion / Extraction | `ExtractionCompleted` | Texto extraido exitosamente |
-| Source Ingestion / Extraction | `ExtractionFailed` | Extraccion fallida |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitCreated` | Nueva unidad de conocimiento (hub vacio) |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitSourceAdded` | Fuente agregada a la unidad |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitSourceRemoved` | Fuente eliminada de la unidad |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitVersioned` | Nueva version creada (snapshot inmutable) |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitDeprecated` | Unidad deprecada |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitReprocessRequested` | Reprocesamiento solicitado |
-| Semantic Knowledge / Semantic Unit | `SemanticUnitRolledBack` | Rollback a version anterior |
-| Semantic Processing / Projection | `ProjectionGenerated` | Vectores generados exitosamente |
-| Semantic Processing / Projection | `ProjectionFailed` | Generacion de vectores fallida |
-| Semantic Processing / Profile | `ProfileCreated` | Nuevo perfil de procesamiento |
-| Semantic Processing / Profile | `ProfileUpdated` | Perfil actualizado |
-| Semantic Processing / Profile | `ProfileDeprecated` | Perfil retirado |

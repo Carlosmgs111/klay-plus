@@ -2,13 +2,11 @@
 
 ## Subdominio
 
-Transformacion de contenido textual en representaciones vectoriales buscables. Este contexto toma texto, lo segmenta en chunks, genera embeddings vectoriales y los almacena en un vector store. Las estrategias son configurables y reproducibles via Processing Profiles.
+Transformacion de contenido textual en representaciones vectoriales buscables. Toma texto, lo segmenta en chunks, genera embeddings vectoriales y los almacena en un vector store. Estrategias configurables y reproducibles via Processing Profiles.
 
 ## Service: `SemanticProcessingService`
 
 Punto de entrada unico del contexto. Coordina projection y processing-profile, materializando las estrategias declarativas de un profile en instancias concretas al momento de procesar.
-
-### Capacidades expuestas
 
 | Operacion | Descripcion | Modulos involucrados |
 |-----------|-------------|---------------------|
@@ -19,9 +17,11 @@ Punto de entrada unico del contexto. Coordina projection y processing-profile, m
 | `deprecateProcessingProfile` | Retira un perfil de procesamiento | processing-profile |
 | `vectorStoreConfig` (getter) | Expone config del vector store para wiring cross-context | (infraestructura) |
 
-### Composicion
+### Cross-Context Wiring
 
-La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
+El `vectorStoreConfig` se expone para que Knowledge Retrieval pueda leer del mismo vector store fisico donde Semantic Processing escribe. Este wiring ocurre en el PipelineComposer.
+
+### Composicion
 
 ```
 composition/
@@ -34,86 +34,65 @@ resolveSemanticProcessingModules(policy)
 └── ProcessingProfileMaterializer    → resuelve strategyIds declarativos en instancias concretas
 ```
 
-El Service recibe las dependencias resueltas via constructor injection:
-```
-createSemanticProcessingService(policy) → resolveModules(policy) → new SemanticProcessingService(modules)
-```
-
-### Cross-Context Wiring
-
-El `vectorStoreConfig` se expone para que Knowledge Retrieval pueda leer del mismo vector store fisico donde Semantic Processing escribe. Este wiring ocurre en el PipelineComposer.
-
 ---
 
-## Modulos
+## Module: Projection (`projection/`)
 
-### 1. Projection (`projection/`) — [Ver detalle](projection/CLAUDE.md)
+Gestiona el ciclo de vida de transformar contenido en representaciones vectoriales. Orquesta chunking, embedding y almacenamiento vectorial.
 
-**Responsabilidad**: Gestiona el ciclo de vida de transformar contenido en representaciones vectoriales. Trackea que version de semantic unit fue proyectada y con que configuracion de procesamiento.
-
-**Aggregate Root**: `SemanticProjection`
+**Aggregate Root**: `SemanticProjection` — Constructor privado + `create()` / `reconstitute()`
+- Propiedades: semanticUnitId, semanticUnitVersion, sourceId (nullable), type (`ProjectionType`), status, result, error, createdAt
 - Ciclo de vida: `Pending` → `Processing` → `Completed` / `Failed`
-- Registra: semanticUnitId, semanticUnitVersion, sourceId (nullable), projectionType, resultado
+- Maquina de estados: `create()` → `markProcessing()` → `complete(result)` / `fail(error)`
 
 **Value Objects**:
-- `ProjectionId` — identidad unica
-- `ProjectionType` — tipo de proyeccion (ej: `EMBEDDING`)
-- `ProjectionStatus` — estado del ciclo de vida
-- `ProjectionResult` — resultado del procesamiento (profileId, profileVersion, chunksCount, dimensions, model)
+- `ProjectionId`, `ProjectionType` (Embedding, Summary, Keywords, Classification)
+- `ProjectionStatus` (Pending, Processing, Completed, Failed)
+- `ProjectionResult` — type, data, processingProfileId, version, generatedAt
 
-**Eventos**:
-- `ProjectionGenerated` — vectores generados exitosamente (lleva semanticUnitId, version, projectionType, profileId)
-- `ProjectionFailed` — generacion fallida (lleva semanticUnitId, error)
+**Eventos**: `ProjectionGenerated` (semanticUnitId, version, type, profileId), `ProjectionFailed` (semanticUnitId, error)
 
 **Use Cases**: `GenerateProjection`
 
+Pipeline de GenerateProjection:
+```
+1. Valida inputs → 2. Resuelve ProcessingProfile → 3. Materializa estrategias
+→ 4. Content → [Chunking] → Chunks[] → [Embedding] → Vectors → [VectorWriteStore.upsert()]
+→ 5. Completa proyeccion con resultados
+```
+
 **Ports**:
-- `SemanticProjectionRepository` — persistencia de proyecciones + `findBySourceId()`, `deleteBySourceId()`
-- `ChunkingStrategy` — segmentacion de texto en chunks
-- `EmbeddingStrategy` — generacion de embeddings vectoriales
-- `VectorWriteStore` — escritura de vectores (upsert, delete, deleteBySourceId)
+- `SemanticProjectionRepository` — CRUD + `findBySourceId()`, `deleteBySourceId()`
+- `ChunkingStrategy` — segmentacion de texto (`strategyId`, `version`, `chunk()`)
+- `EmbeddingStrategy` — generacion de embeddings (`embed()`, `embedBatch()`)
+- `VectorWriteStore` — escritura de vectores (`upsert()`, `delete()`, `deleteBySemanticUnitId()`, `deleteBySourceId()`)
 
-**Implementaciones de Chunking**:
-- `FixedSizeChunker` — chunks de tamano fijo por caracteres
-- `SentenceChunker` — chunks por oraciones
-- `RecursiveChunker` — chunking recursivo con separadores jerarquicos
-- `ChunkerFactory` — resuelve instancias por strategyId
-
-**Implementaciones de Embedding**:
-- `HashEmbeddingStrategy` — embeddings deterministicos via hash (testing/desarrollo)
-- `AISdkEmbeddingStrategy` — embeddings via AI SDK (OpenAI, Cohere, etc.)
-- `WebLLMEmbeddingStrategy` — embeddings en browser via WebLLM
-
-**Implementaciones de VectorWriteStore**:
-- `InMemoryVectorWriteStore` (platform/)
-- `IndexedDBVectorWriteStore` — browser
-- `NeDBVectorWriteStore` — server
-
-**Materializacion**: `ProcessingProfileMaterializer` toma los IDs declarativos de un profile (ej: `"recursive-500"`, `"ai-sdk-openai"`) y produce instancias concretas de `ChunkingStrategy` y `EmbeddingStrategy`.
+**Chunking impls**: `FixedSizeChunker` (`fixed-{size}`), `SentenceChunker` (`sentence`), `RecursiveChunker` (`recursive-{size}`), `ChunkerFactory`, `BaseChunker`
+**Embedding impls**: `HashEmbeddingStrategy` (`hash`, testing), `AISdkEmbeddingStrategy` (`ai-sdk-{provider}`, server), `WebLLMEmbeddingStrategy` (`webllm`, browser)
+**VectorWriteStore impls**: InMemory (test, platform/), IndexedDB (browser), NeDB (server)
+**Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
 
 ---
 
-### 2. Processing Profile (`processing-profile/`) — [Ver detalle](processing-profile/CLAUDE.md)
+## Module: Processing Profile (`processing-profile/`)
 
-**Responsabilidad**: Configuraciones de procesamiento versionables, seleccionables y reproducibles. Un profile declara que estrategias de chunking y embedding usar. El usuario selecciona explicitamente un profile para cada run, garantizando reproducibilidad.
+Configuraciones de procesamiento declarativas, versionables y reproducibles. Declara *que* estrategias usar sin importar *como* se implementan.
 
-**Aggregate Root**: `ProcessingProfile`
-- Campos: name, chunkingStrategyId, embeddingStrategyId, config, version, status
-- Invariantes: no se puede modificar despues de deprecacion; version auto-incrementa en update
-- Los strategyIds son declarativos — se resuelven en runtime por el Materializer
+**Aggregate Root**: `ProcessingProfile` — Constructor privado + `create()` / `reconstitute()`
+- Propiedades: name, version (auto-incrementa), chunkingStrategyId, embeddingStrategyId, configuration (`Record`, frozen), status, createdAt
+- Ciclo de vida: `Active` → `Deprecated` (irreversible)
+- Invariantes: no se puede modificar despues de deprecacion; version auto-incrementa; configuration inmutable
 
-**Value Objects**:
-- `ProcessingProfileId` — identidad unica
-- `ProfileStatus` — `Active` / `Deprecated`
+**Value Objects**: `ProcessingProfileId`, `ProfileStatus` (Active, Deprecated)
 
-**Eventos**:
-- `ProfileCreated` — perfil creado (lleva name, strategyIds, version)
-- `ProfileUpdated` — perfil actualizado (lleva campos actualizados, version incrementada)
-- `ProfileDeprecated` — perfil retirado (lleva reason, version final)
+**Eventos**: `ProfileCreated`, `ProfileUpdated`, `ProfileDeprecated`
 
 **Use Cases**: `CreateProcessingProfile`, `UpdateProcessingProfile`, `DeprecateProcessingProfile`
 
-**Port**: `ProcessingProfileRepository`
+**Port**: `ProcessingProfileRepository` — CRUD + `findActiveById(id)`
+**Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
+
+**Materializacion**: `ProcessingProfileMaterializer` toma los IDs declarativos (ej: `"recursive-512"`) y produce instancias concretas via `ChunkerFactory` y providers de embedding.
 
 ---
 
@@ -129,8 +108,8 @@ El `vectorStoreConfig` se expone para que Knowledge Retrieval pueda leer del mis
 
 ### Embedding
 
-| Strategy ID | Implementacion | Entorno | Descripcion |
-|-------------|---------------|---------|-------------|
-| `hash` | HashEmbeddingStrategy | Cualquiera | Deterministico, para testing |
-| `ai-sdk-{provider}` | AISdkEmbeddingStrategy | Server | Via AI SDK (OpenAI, Cohere, etc.) |
-| `webllm` | WebLLMEmbeddingStrategy | Browser | Embeddings locales en browser |
+| Strategy ID | Implementacion | Entorno |
+|-------------|---------------|---------|
+| `hash` | HashEmbeddingStrategy | Testing (deterministico) |
+| `ai-sdk-{provider}` | AISdkEmbeddingStrategy | Server (OpenAI, Cohere, etc.) |
+| `webllm` | WebLLMEmbeddingStrategy | Browser (embeddings locales) |

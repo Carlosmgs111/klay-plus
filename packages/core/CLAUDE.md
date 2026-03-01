@@ -28,4 +28,4 @@ src/
 ## Detailed Documentation
 
 Domain architecture, bounded contexts, events catalog, and data flow: see `src/.claude/CLAUDE.md`.
-Each context and module has its own `CLAUDE.md` with entities, value objects, ports, and implementations.
+Each context has its own `CLAUDE.md` with entities, value objects, ports, events, and implementations.

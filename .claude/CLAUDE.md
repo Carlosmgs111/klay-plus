@@ -34,7 +34,7 @@ pnpm --filter @klay/web build         # Production build (currently broken — s
 
 - **PRD**: `PRD.md` — Product requirements, functional specs, user workflows
 - **Domain architecture**: `packages/core/src/.claude/CLAUDE.md`
-- **Module specs**: each `contexts/*/CLAUDE.md` and `contexts/*/*/CLAUDE.md`
+- **Context specs**: each `contexts/*/CLAUDE.md` (entities, ports, events, implementations)
 - **Domain mapping template**: `DOMAIN-MAPPING-TEMPLATE.md`
 
 ---

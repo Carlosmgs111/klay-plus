@@ -2,13 +2,11 @@
 
 ## Subdominio
 
-Adquisicion de contenido y extraccion de texto. Este contexto es la puerta de entrada del sistema: recibe contenido desde diversas fuentes externas y produce texto extraido listo para procesamiento semantico.
+Adquisicion de contenido y extraccion de texto. Puerta de entrada del sistema: recibe contenido desde diversas fuentes externas y produce texto extraido listo para procesamiento semantico.
 
 ## Service: `SourceIngestionService`
 
 Punto de entrada unico del contexto. Coordina los 3 modulos internos.
-
-### Capacidades expuestas
 
 | Operacion | Descripcion | Modulos involucrados |
 |-----------|-------------|---------------------|
@@ -23,8 +21,6 @@ Punto de entrada unico del contexto. Coordina los 3 modulos internos.
 
 ### Composicion
 
-La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
-
 ```
 composition/
 ├── factory.ts    → SourceIngestionServicePolicy + resolveSourceIngestionModules()
@@ -36,89 +32,95 @@ resolveSourceIngestionModules(policy)
 └── extractionFactory(policy)  → { useCases: ExtractionUseCases, infra }
 ```
 
-El Service recibe las dependencias resueltas via constructor injection:
-```
-createSourceIngestionService(policy) → resolveModules(policy) → new SourceIngestionService(modules)
-```
-
 ---
 
-## Modulos
+## Module: Source (`source/`)
 
-### 1. Source (`source/`) — [Ver detalle](source/CLAUDE.md)
+Representa una referencia logica a una fuente de contenido externo. **No almacena contenido** — solo metadata, tipo y tracking de versiones via content hash.
 
-**Responsabilidad**: Representa una referencia logica a una fuente de contenido. NO almacena contenido — solo metadata, tipo y tracking de versiones via content hash.
-
-**Aggregate Root**: `Source`
-- Constructor privado + `create()` / `reconstitute()`
-- Campos: name, uri, type, contentHash, extractedAt, version
+**Aggregate Root**: `Source` — Constructor privado + `create()` / `reconstitute()`
+- Propiedades: name, uri, type (`SourceType`), currentVersion (`SourceVersion | null`), versions[], registeredAt, hasBeenExtracted (getter)
+- Ciclo de vida: Registrado (sin extraccion) → Extraido (con content hash)
 
 **Value Objects**: `SourceId`, `SourceType` (PDF, WEB, API, PLAIN_TEXT, MARKDOWN, CSV, JSON), `SourceVersion`
 
 **Eventos**:
-- `SourceRegistered` (`source-ingestion.source.registered`)
-- `SourceUpdated` (`source-ingestion.source.updated`) — cuando la extraccion produce un nuevo content hash
-- `SourceExtracted` (`source-ingestion.source.extracted`)
+| Evento | Significado |
+|--------|-------------|
+| `SourceRegistered` | Nueva referencia de source creada |
+| `SourceUpdated` | Content hash cambio (nueva extraccion detectada) |
+| `SourceExtracted` | Extraccion completada para este source |
 
 **Use Cases**: `RegisterSource`, `UpdateSource`
 
-**Port**: `SourceRepository`
+**Port**: `SourceRepository` — `save`, `findById`, `delete`, `findByType`, `findByUri`, `exists`
+
+**Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
+
+**Nota de diseno**: Source es un aggregate de referencia pura. El texto extraido vive en `ExtractionJob` (modulo extraction). Source solo trackea *que* se extrajo via content hash en `SourceVersion`.
 
 ---
 
-### 2. Resource (`resource/`) — [Ver detalle](resource/CLAUDE.md)
+## Module: Resource (`resource/`)
 
-**Responsabilidad**: Representa un archivo fisico o referencia externa. Gestiona upload a storage providers y el ciclo de vida del recurso (Stored → Deleted).
+Representa un archivo fisico o referencia externa. Gestiona upload a storage providers y el ciclo de vida del recurso.
 
-**Aggregate Root**: `Resource`
-- Campos: originalName, mimeType, sizeBytes, status, storageLocation
+**Aggregate Root**: `Resource` — Factories: `Resource.store()`, `Resource.reference()`, `Resource.reconstitute()`
+- Propiedades: originalName, mimeType, size, status (`ResourceStatus`), storageLocation (`StorageLocation | null`), createdAt
+- Ciclo de vida: `Pending` → `Stored` / `Failed` / `Deleted`
 
-**Value Objects**: `ResourceId`, `ResourceStatus` (Stored / Failed / Deleted), `StorageLocation` (uri + provider)
+**Value Objects**: `ResourceId`, `ResourceStatus` (Pending, Stored, Failed, Deleted), `StorageLocation` (uri + provider)
 
-**Eventos**:
-- `ResourceStored` — archivo subido o referencia externa registrada
-- `ResourceDeleted` — recurso eliminado
+**Eventos**: `ResourceStored`, `ResourceDeleted`
 
 **Use Cases**: `StoreResource`, `RegisterExternalResource`, `DeleteResource`, `GetResource`
 
-**Ports**: `ResourceRepository`, `ResourceStorage` (upload, delete, exists)
+**Ports**: `ResourceRepository` (CRUD + `findByStatus`, `exists`), `ResourceStorage` (`upload`, `delete`, `exists`)
 
-**Implementaciones de Storage**: `InMemoryResourceStorage`, `LocalFileResourceStorage`
+**Storage impls**: `InMemoryResourceStorage` (test), `LocalFileResourceStorage` (server)
+**Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
 
 ---
 
-### 3. Extraction (`extraction/`) — [Ver detalle](extraction/CLAUDE.md)
+## Module: Extraction (`extraction/`)
 
-**Responsabilidad**: Ejecuta la extraccion real de texto desde el contenido de un source. Gestiona el ciclo de vida de extraction jobs (Pending → Running → Completed / Failed).
+Ejecuta la extraccion real de texto desde el contenido de un source. Delega a content extractors pluggables por MIME type.
 
-**Aggregate Root**: `ExtractionJob`
-- Campos: sourceId, status, extractedText, contentHash, mimeType, metadata, error
+**Aggregate Root**: `ExtractionJob` — Constructor privado + `create()` / `reconstitute()`
+- Propiedades: sourceId, status (`ExtractionStatus`), extractedText, contentHash, metadata, error, startedAt, completedAt, createdAt
+- Ciclo de vida: `Pending` → `Running` → `Completed` / `Failed`
+- Maquina de estados: `create()` → `start()` → `complete(result)` / `fail(error)`
 
-**Value Objects**: `ExtractionJobId`, `ExtractionStatus` (Pending / Running / Completed / Failed)
+**Value Objects**: `ExtractionJobId`, `ExtractionStatus` (Pending, Running, Completed, Failed)
 
-**Eventos**:
-- `ExtractionCompleted` — extraccion exitosa (lleva sourceId, contentHash)
-- `ExtractionFailed` — extraccion fallida (lleva sourceId, error)
+**Eventos**: `ExtractionCompleted` (sourceId, contentHash), `ExtractionFailed` (sourceId, error)
 
 **Use Cases**: `ExecuteExtraction`
 
-**Ports**: `ExtractionJobRepository`, `ContentExtractor` (pluggable por MIME type)
+**Ports**: `ExtractionJobRepository` (CRUD), `ContentExtractor` (pluggable por MIME type)
 
-**Implementaciones de Extractor**:
-- `TextContentExtractor` — texto plano, markdown, CSV, JSON
-- `BrowserPdfContentExtractor` — PDF en browser (pdfjs-dist)
-- `ServerPdfContentExtractor` — PDF en server (pdf-extraction)
+**ContentExtractor interface**:
+```typescript
+interface ContentExtractor {
+  canExtract(mimeType: string): boolean;
+  extract(source: { uri: string; content?: ArrayBuffer; mimeType: string }):
+    Promise<{ text: string; contentHash: string; metadata: Record }>;
+}
+```
+
+**Extractors**: `TextContentExtractor` (PLAIN_TEXT, MARKDOWN, CSV, JSON), `BrowserPdfContentExtractor` (PDF via pdfjs-dist), `ServerPdfContentExtractor` (PDF via pdf-extraction)
+**Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
 
 ---
 
 ## Tipos de Source Soportados
 
-| SourceType | Descripcion | Extractor |
-|------------|-------------|-----------|
-| `PLAIN_TEXT` | Texto plano | TextContentExtractor |
-| `MARKDOWN` | Markdown | TextContentExtractor |
-| `CSV` | Datos tabulares | TextContentExtractor |
-| `JSON` | Datos estructurados | TextContentExtractor |
-| `PDF` | Documentos PDF | BrowserPdf / ServerPdf (segun environment) |
-| `WEB` | Paginas web | (pendiente de implementacion) |
-| `API` | Respuestas de API | (pendiente de implementacion) |
+| SourceType | Extractor | Estado |
+|------------|-----------|--------|
+| `PLAIN_TEXT` | TextContentExtractor | Implementado |
+| `MARKDOWN` | TextContentExtractor | Implementado |
+| `CSV` | TextContentExtractor | Implementado |
+| `JSON` | TextContentExtractor | Implementado |
+| `PDF` | BrowserPdf / ServerPdf (segun environment) | Implementado |
+| `WEB` | (pendiente) | Pendiente |
+| `API` | (pendiente) | Pendiente |

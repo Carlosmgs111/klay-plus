@@ -2,17 +2,15 @@
 
 ## Subdominio
 
-Representacion del conocimiento y trazabilidad de transformaciones. Este contexto gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen contenido con versionado inmutable tipo snapshot, y mantiene un registro de auditoria de cada transformacion aplicada.
+Representacion del conocimiento y trazabilidad de transformaciones. Gestiona unidades semanticas como **hubs** donde multiples fuentes contribuyen contenido con versionado inmutable tipo snapshot, y mantiene un registro de auditoria de cada transformacion aplicada.
 
 ## Service: `SemanticKnowledgeService`
 
 Punto de entrada unico del contexto. Coordina semantic-unit y lineage de forma atomica: cada operacion sobre una unidad semantica registra automaticamente la transformacion correspondiente en el lineage.
 
-### Capacidades expuestas
-
 | Operacion | Descripcion | Modulos involucrados |
 |-----------|-------------|---------------------|
-| `createSemanticUnit` | Crea unidad semantica vacia (sin fuentes) + registra transformacion de extraccion | semantic-unit, lineage |
+| `createSemanticUnit` | Crea unidad semantica vacia + registra transformacion de extraccion | semantic-unit, lineage |
 | `addSourceToSemanticUnit` | Agrega fuente a unidad (crea nueva version) + registra transformacion | semantic-unit, lineage |
 | `removeSourceFromSemanticUnit` | Elimina fuente de unidad (crea nueva version) | semantic-unit |
 | `reprocessSemanticUnit` | Reprocesa todas las fuentes con nuevo profile | semantic-unit |
@@ -21,13 +19,11 @@ Punto de entrada unico del contexto. Coordina semantic-unit y lineage de forma a
 | `linkSemanticUnits` | Enlaza dos unidades con una relacion nombrada | lineage |
 | `getLinkedUnits` | Obtiene unidades enlazadas (inbound + outbound) | lineage |
 | `batchCreateSemanticUnitsWithLineage` | Creacion paralela de multiples unidades con lineage | semantic-unit, lineage |
-| `getLineageForUnit` | Obtiene historial completo de transformaciones de una unidad | lineage |
+| `getLineageForUnit` | Obtiene historial completo de transformaciones | lineage |
 
 **Backward compat**: `createSemanticUnitWithLineage` se mantiene como alias de `createSemanticUnit`.
 
 ### Composicion
-
-La composicion vive en `composition/` a nivel raiz del contexto (no dentro de `service/`):
 
 ```
 composition/
@@ -39,89 +35,78 @@ resolveSemanticKnowledgeModules(policy)
 └── lineageFactory(policy)      → { useCases: LineageUseCases, infra }
 ```
 
-El Service recibe las dependencias resueltas via constructor injection:
-```
-createSemanticKnowledgeService(policy) → resolveModules(policy) → new SemanticKnowledgeService(modules)
-```
-
 ---
 
-## Modulos
+## Module: Semantic Unit (`semantic-unit/`)
 
-### 1. Semantic Unit (`semantic-unit/`) — [Ver detalle](semantic-unit/CLAUDE.md)
+El artefacto central de conocimiento. Cada unidad actua como un **hub** donde multiples fuentes contribuyen contenido, con versiones inmutables tipo snapshot.
 
-**Responsabilidad**: El artefacto central de conocimiento. Cada unidad actua como un hub donde multiples fuentes contribuyen contenido, con versiones inmutables tipo snapshot.
+**Aggregate Root**: `SemanticUnit` — Constructor privado + `create()` / `reconstitute()`
 
-**Aggregate Root**: `SemanticUnit`
-- Constructor privado + `create()` / `reconstitute()`
-- Ciclo de vida: `Draft` → `Active` → `Deprecated` → `Archived` (transiciones guardadas)
-- Versionado implicito: addSource/removeSource/reprocess crean versiones automaticamente
-- `currentVersion` es `UnitVersion | null` (null cuando no tiene fuentes)
+Propiedades:
+- name, description, language, state (`SemanticState`), metadata (`UnitMetadata`)
+- `currentVersion` — `UnitVersion | null` (null cuando no tiene fuentes)
+- `versions` — historial de `UnitVersion[]`
+- `allSources` — pool completo de `UnitSource[]`
+- `activeSources` — fuentes en la version actual
+
+Comportamientos:
+- `create(id, name, description, language, metadata)` → Draft, emite `SemanticUnitCreated`
+- `addSource(source, profileId, profileVersion)` → nueva version, emite `SourceAdded` + `Versioned`
+- `removeSource(sourceId)` → nueva version sin esa fuente, emite `SourceRemoved` + `Versioned`
+- `reprocess(profileId, profileVersion, reason)` → nueva version con nuevo profile, emite `ReprocessRequested` + `Versioned`
+- `rollbackToVersion(targetVersion)` → mueve puntero (no destructivo), emite `RolledBack`
+- `recordProjectionForSource(sourceId, projectionId)` → registra projectionId en snapshot
+- `activate()`, `deprecate(reason)`, `archive()`
+
+Invariantes clave:
+1. Todas las fuentes en una version usan la misma estrategia de procesamiento
+2. Reprocesar crea nueva version y reprocesa TODAS las fuentes
+3. No se puede agregar/eliminar/reprocesar fuentes en estado Archived
+4. Rollback mueve puntero — las fuentes futuras no estan activas
+
+**Ciclo de vida**:
+```
+create() → [Draft] → activate() → [Active] ←→ deprecate() → [Deprecated] → archive() → [Archived]
+```
 
 **Value Objects**:
-- `SemanticUnitId` — identidad unica
-- `UnitSource` — fuente con contenido extraido (sourceId, sourceType, extractedContent, contentHash)
-- `UnitVersion` — snapshot inmutable de version (processingProfileId, sourceSnapshots[])
-- `VersionSourceSnapshot` — snapshot de fuente en una version (sourceId, contentHash, projectionIds[])
-- `SemanticState` — estado de ciclo de vida con transiciones validadas
-- `UnitMetadata` — tags, atributos, timestamps
+- `SemanticUnitId`, `SemanticState` (Draft, Active, Deprecated, Archived)
+- `UnitSource` — sourceId, sourceType, resourceId?, extractedContent, contentHash, addedAt
+- `UnitVersion` — version#, processingProfileId, processingProfileVersion, sourceSnapshots[], createdAt, reason
+- `VersionSourceSnapshot` — sourceId, contentHash, projectionIds[]
+- `UnitMetadata` — tags, attributes, timestamps
 
-**Eventos**:
-- `SemanticUnitCreated` — unidad creada
-- `SemanticUnitSourceAdded` — fuente agregada
-- `SemanticUnitSourceRemoved` — fuente eliminada
-- `SemanticUnitVersioned` — nueva version creada
-- `SemanticUnitDeprecated` — unidad deprecada
-- `SemanticUnitReprocessRequested` — reprocesamiento solicitado
-- `SemanticUnitRolledBack` — rollback ejecutado
+**Eventos**: `SemanticUnitCreated`, `SemanticUnitSourceAdded`, `SemanticUnitSourceRemoved`, `SemanticUnitVersioned`, `SemanticUnitDeprecated`, `SemanticUnitReprocessRequested`, `SemanticUnitRolledBack`
 
 **Use Cases**: `CreateSemanticUnit`, `AddSourceToSemanticUnit`, `RemoveSourceFromSemanticUnit`, `ReprocessSemanticUnit`, `RollbackSemanticUnit`, `DeprecateSemanticUnit`
 
-**Port**: `SemanticUnitRepository`
+**Port**: `SemanticUnitRepository` — CRUD + `findBySourceId`, `findByState`, `findByTags`, `exists`
+**Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
+
+**DTO Backward Compat**: `fromDTO` handles legacy (origins/Meaning) and new (sources/UnitVersion) formats.
 
 ---
 
-### 2. Lineage (`lineage/`) — [Ver detalle](lineage/CLAUDE.md)
+## Module: Lineage (`lineage/`)
 
-**Responsabilidad**: Mantiene el grafo de proveniencia completo para cada unidad semantica. Registra cada transformacion aplicada (extraccion, chunking, enrichment, embedding, merge, split) con la estrategia exacta usada y las versiones de entrada/salida. Tambien gestiona enlaces entre unidades semanticas.
+Mantiene el grafo de proveniencia completo para cada unidad semantica. Registro de auditoria inmutable.
 
-**Aggregate Root**: `KnowledgeLineage`
-- Asociado 1:1 con un SemanticUnit (via semanticUnitId)
-- Acumula transformaciones ordenadas cronologicamente
-- Gestiona enlaces bidireccionales entre unidades
+**Aggregate Root**: `KnowledgeLineage` — Asociado 1:1 con un `SemanticUnit` (via semanticUnitId)
+- Acumula transformaciones cronologicamente. **No emite domain events**.
+- Propiedades: semanticUnitId, transformations[], traces[]
 
 **Value Objects**:
-- `LineageId` — identidad unica
-- `Transformation` — registro de una transformacion (type, strategy, inputVersion, outputVersion, parameters, timestamp)
-- `TransformationType` — `EXTRACTION`, `CHUNKING`, `ENRICHMENT`, `EMBEDDING`, `MERGE`, `SPLIT`
-- `Trace` — informacion adicional de tracing
+- `LineageId`, `Trace`
+- `Transformation` — type, strategyUsed, inputVersion, outputVersion, parameters, appliedAt
+- `TransformationType` — `Extraction`, `Chunking`, `Enrichment`, `Embedding`, `Merge`, `Split`
 
 **Use Cases**: `RegisterTransformation`, `LinkSemanticUnits`, `GetLinkedUnits`
 
-**Port**: `KnowledgeLineageRepository` (incluye `findBySemanticUnitId`)
+**Port**: `KnowledgeLineageRepository` — CRUD + `findBySemanticUnitId(unitId)`
+**Repos**: InMemory (test), IndexedDB (browser, con `LineageDTO`), NeDB (server)
 
 ---
-
-## Ciclo de Vida de una Unidad Semantica
-
-```
-         create() → unidad vacia, sin fuentes
-            |
-            v
-         [Draft]
-            |  activate()
-            v
-         [Active] <── activate() (reactivar)
-           / \
-          /   \ deprecate()
-         v     v
-    [Active]  [Deprecated]
-                  |  archive()
-                  v
-              [Archived]
-```
-
-Cada transicion queda registrada en el Lineage como una Transformation.
 
 ## Modelo de Versionado
 
