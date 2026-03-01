@@ -1,11 +1,19 @@
-## Memory
-You have access to Engram persistent memory via MCP tools (mem_save, mem_search, mem_session_summary, etc.).
-- Save proactively after significant work — don't wait to be asked.
-- After any compaction or context reset, call `mem_context` to recover session state before continuing.
-
----
-
 # klay+ Core — Product Capabilities
+
+## Commands
+
+```bash
+pnpm --filter @klay/core test    # 169 tests (vitest)
+```
+
+## Conventions
+
+- Extensionless imports (no `.js` suffixes)
+- Aggregates: private constructor + `create()` / `reconstitute()`
+- Triple repo: InMemory (test), NeDB (server), IndexedDB (browser)
+- Composition lives in `context/composition/`, never inside `service/`
+- Services are the public API of each bounded context
+- 2 test files (source-ingestion e2e, config) use non-vitest format — report as failures but aren't real failures
 
 ## Vision
 
