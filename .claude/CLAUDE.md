@@ -12,7 +12,7 @@ Monorepo (pnpm workspaces) que transforma documentos en conocimiento buscable se
 ```bash
 pnpm --filter @klay/core test         # 169 tests (vitest)
 pnpm --filter @klay/web dev           # Astro dev server
-pnpm --filter @klay/web build         # Production build (currently broken — see Known Issues)
+pnpm --filter @klay/web build         # Production build
 ```
 
 ## Conventions
@@ -26,7 +26,6 @@ pnpm --filter @klay/web build         # Production build (currently broken — s
 
 ## Known Issues
 
-- `@klay/web build` fails: package.json exports reference removed file
 - 2 test files (source-ingestion e2e, config) use non-vitest format
 - Tests pass via vitest (esbuild) but `tsc` may report errors
 
