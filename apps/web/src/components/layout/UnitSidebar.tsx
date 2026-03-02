@@ -2,44 +2,53 @@ import { Icon } from "../shared/Icon";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { IconName } from "../shared/Icon";
 
-const NAV_ITEMS: { label: string; href: string; icon: IconName }[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "grid" },
-  { label: "Documents", href: "/documents", icon: "file-text" },
-  { label: "Units", href: "/units", icon: "brain" },
-  { label: "Search", href: "/search", icon: "search" },
-  { label: "Profiles", href: "/profiles", icon: "sliders" },
-  { label: "Settings", href: "/settings", icon: "settings" },
+const UNIT_NAV_ITEMS: { label: string; page: string; icon: IconName }[] = [
+  { label: "Dashboard", page: "dashboard", icon: "layout-dashboard" },
+  { label: "Sources", page: "sources", icon: "database" },
+  { label: "Versions", page: "versions", icon: "clock" },
+  { label: "Projections", page: "projections", icon: "layers" },
+  { label: "Search", page: "search", icon: "search" },
 ];
 
-interface SidebarProps {
+interface UnitSidebarProps {
+  unitId: string;
   activePage: string;
 }
 
-export function Sidebar({ activePage }: SidebarProps) {
+export function UnitSidebar({ unitId, activePage }: UnitSidebarProps) {
   const { resolved, toggleTheme } = useTheme();
+  const truncatedId = unitId.length > 8 ? `${unitId.slice(0, 8)}...` : unitId;
 
   return (
     <aside className="sticky left-0 top-0 bottom-0 flex flex-col z-10 bg-slate-200/40 dark:bg-slate-800/40 border-r border-slate-200 dark:border-slate-800">
-      {/* Logo */}
-      <div className="h-header flex items-center px-3 py-4 border-b border-slate-200 dark:border-slate-800">
-        <i className="bx bxs-layers-plus-alt text-2xl mr-2 bg-slate-200/60 dark:bg-slate-800/60 rounded-md p-2 aspect-square w-12 h-12 flex items-center justify-center"></i>
-        <span
-          className="text-xl font-bold"
-          style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
+      {/* Back + Unit ID */}
+      <div className="h-header flex flex-col justify-center px-3 py-4 border-b border-slate-200 dark:border-slate-800">
+        <a
+          href="/knowledge"
+          className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors duration-150 mb-1"
         >
-          klay+
+          <Icon name="arrow-left" className="text-xs" />
+          All Units
+        </a>
+        <span
+          className="text-sm font-mono"
+          style={{ color: "var(--text-secondary)" }}
+          title={unitId}
+        >
+          {truncatedId}
         </span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 flex flex-col px-3 py-4 gap-2 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const isActive = activePage === item.label.toLowerCase();
+        {UNIT_NAV_ITEMS.map((item) => {
+          const isActive = activePage === item.page;
+          const href = `/units/${unitId}/${item.page}`;
           return (
             <a
-              key={item.href}
-              href={item.href}
-              className={`px-6 py-3 font-thin text-lg bg-slate-300/60 dark:bg-slate-800/60 hover:bg-slate-200/60 
+              key={item.page}
+              href={href}
+              className={`px-6 py-3 font-thin text-lg bg-slate-300/60 dark:bg-slate-800/60 hover:bg-slate-200/60
                 dark:hover:bg-slate-700/60 rounded-lg block flex items-center gap-2 text-slate-800 dark:text-slate-200
                 ${isActive && "bg-slate-200/60 dark:bg-slate-600/60"} transition-all duration-150 ease-in-out`}
             >

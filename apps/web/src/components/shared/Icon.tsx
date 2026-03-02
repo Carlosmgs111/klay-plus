@@ -36,6 +36,10 @@ const ICON_PATHS: Record<string, string> = {
   history: "bx bxs-history",
   undo: "bx bx-undo",
   "folder-plus": "bx bxs-folder-plus",
+  "arrow-left": "bx bxs-left-arrow-alt",
+  database: "bx bxs-data",
+  clock: "bx bxs-time",
+  "layout-dashboard": "bx bxs-layout",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "ref"> {

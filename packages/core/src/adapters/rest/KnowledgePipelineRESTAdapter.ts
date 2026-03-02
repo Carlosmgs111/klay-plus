@@ -104,6 +104,7 @@ export class KnowledgePipelineRESTAdapter {
       resourceId: req.query?.resourceId ?? (req.body as any)?.resourceId,
       sourceId: req.query?.sourceId ?? (req.body as any)?.sourceId,
       manifestId: req.params?.manifestId ?? req.query?.manifestId ?? (req.body as any)?.manifestId,
+      semanticUnitId: req.query?.semanticUnitId ?? (req.body as any)?.semanticUnitId,
     };
     const result = await this._pipeline.getManifest(input);
     return this._toResponse(result);

@@ -2,18 +2,49 @@ import { useRuntimeMode } from "../../contexts/RuntimeModeContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Icon } from "../shared/Icon";
 
-interface HeaderProps {
-  title: string;
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
 }
 
-export function Header({ title }: HeaderProps) {
+interface HeaderProps {
+  title: string;
+  breadcrumbs?: BreadcrumbItem[];
+}
+
+export function Header({ title, breadcrumbs }: HeaderProps) {
   const { mode, setMode, isInitializing } = useRuntimeMode();
   const { resolved, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 left-0 flex items-center justify-between px-6 z-10 backdrop-blur-xl w-full h-20">
-      {/* Page Title */}
-      <h1 className="text-lg font-semibold letter-spacing-[-0.02em]">{title}</h1>
+      {/* Page Title / Breadcrumbs */}
+      {breadcrumbs && breadcrumbs.length > 0 ? (
+        <nav className="flex items-center gap-1 text-lg font-semibold" style={{ letterSpacing: "-0.02em" }}>
+          {breadcrumbs.map((crumb, i) => (
+            <span key={i} className="flex items-center gap-1">
+              {i > 0 && (
+                <span style={{ color: "var(--text-tertiary)" }}>
+                  <Icon name="chevron-right" className="text-sm" />
+                </span>
+              )}
+              {crumb.href ? (
+                <a
+                  href={crumb.href}
+                  className="hover:underline"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {crumb.label}
+                </a>
+              ) : (
+                <span>{crumb.label}</span>
+              )}
+            </span>
+          ))}
+        </nav>
+      ) : (
+        <h1 className="text-lg font-semibold" style={{ letterSpacing: "-0.02em" }}>{title}</h1>
+      )}
 
       {/* Controls */}
       <div className="flex items-center gap-2">

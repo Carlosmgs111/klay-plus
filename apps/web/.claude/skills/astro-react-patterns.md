@@ -29,13 +29,17 @@ apps/web/
 │   │   ├── features/           # Componentes por feature (domain-specific)
 │   │   │   ├── dashboard/      # DashboardPage.tsx
 │   │   │   ├── documents/      # DocumentList, DocumentsPage, DocumentUploadForm
-│   │   │   ├── knowledge/      # KnowledgePage, ManifestDetail, SemanticUnitsList
-│   │   │   ├── profiles/       # CreateProfileForm, ProfilesPage
+│   │   │   ├── knowledge/      # Action components (AddSourceForm, RemoveSourceAction, etc.)
+│   │   │   ├── profiles/       # CreateProfileForm, ProfilesPage, ProfileList, ProfileEditForm
 │   │   │   ├── search/         # SearchBar, SearchPage, SearchResultCard, SearchResults
-│   │   │   └── settings/       # SettingsPage
+│   │   │   ├── settings/       # SettingsPage
+│   │   │   └── units/          # UnitsIndexPage, UnitCard, UnitDashboardPage, UnitSourcesPage, UnitVersionsPage, UnitProjectionsPage, UnitSearchPage
 │   │   ├── layout/             # Shell components
-│   │   │   ├── DashboardShell.tsx   # Main shell con Sidebar + Header + page routing
+│   │   │   ├── DashboardShell.tsx   # Global shell con Sidebar + Header + page routing
+│   │   │   ├── UnitShell.tsx        # Unit-scoped shell con UnitSidebar + Header + unit page routing
+│   │   │   ├── UnitSidebar.tsx
 │   │   │   ├── Header.tsx
+│   │   │   ├── ProviderStack.tsx
 │   │   │   └── Sidebar.tsx
 │   │   └── shared/             # Componentes UI reutilizables
 │   │       ├── Button.tsx
@@ -50,13 +54,17 @@ apps/web/
 │   │       └── StatusBadge.tsx
 │   ├── pages/                  # Astro pages + API routes
 │   │   ├── api/pipeline/       # REST endpoints (server-side)
+│   │   ├── api/lifecycle/      # Lifecycle/management endpoints
 │   │   ├── dashboard.astro
 │   │   ├── documents.astro
-│   │   ├── knowledge.astro
+│   │   ├── knowledge.astro     # Redirect to /units
 │   │   ├── profiles.astro
 │   │   ├── search.astro
 │   │   ├── settings.astro
-│   │   └── index.astro
+│   │   ├── index.astro         # Redirect to /units
+│   │   └── units/
+│   │       ├── index.astro     # Units list
+│   │       └── [id]/           # Unit sub-pages (dashboard, sources, versions, projections, search)
 │   ├── layouts/
 │   │   └── DashboardLayout.astro
 │   ├── contexts/
