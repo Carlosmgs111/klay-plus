@@ -1,7 +1,7 @@
 import { ValueObject } from "../../../../shared/domain";
 
 interface RetrievalItemProps {
-  semanticUnitId: string;
+  sourceId: string;
   content: string;
   score: number;
   version: number;
@@ -9,8 +9,8 @@ interface RetrievalItemProps {
 }
 
 export class RetrievalItem extends ValueObject<RetrievalItemProps> {
-  get semanticUnitId(): string {
-    return this.props.semanticUnitId;
+  get sourceId(): string {
+    return this.props.sourceId;
   }
 
   get content(): string {
@@ -30,14 +30,14 @@ export class RetrievalItem extends ValueObject<RetrievalItemProps> {
   }
 
   static create(
-    semanticUnitId: string,
+    sourceId: string,
     content: string,
     score: number,
     version: number,
     metadata: Record<string, unknown> = {},
   ): RetrievalItem {
     return new RetrievalItem({
-      semanticUnitId,
+      sourceId,
       content,
       score,
       version,

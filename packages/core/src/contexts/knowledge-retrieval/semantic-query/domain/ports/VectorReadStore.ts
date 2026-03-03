@@ -1,6 +1,6 @@
 export interface SearchHit {
   id: string;
-  semanticUnitId: string;
+  sourceId: string;
   content: string;
   score: number;
   metadata: Record<string, unknown>;

@@ -27,7 +27,7 @@ export class InMemoryVectorReadStore implements VectorReadStore {
 
     const scored: SearchHit[] = candidates.map((entry) => ({
       id: entry.id,
-      semanticUnitId: entry.semanticUnitId,
+      sourceId: entry.sourceId,
       content: entry.content,
       score: cosineSimilarity(queryVector, entry.vector),
       metadata: entry.metadata,

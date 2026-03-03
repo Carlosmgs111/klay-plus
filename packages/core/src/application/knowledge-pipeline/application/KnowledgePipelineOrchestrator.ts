@@ -1,6 +1,7 @@
 import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { SemanticKnowledgeService } from "../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { SourceKnowledgeService } from "../../../contexts/source-knowledge/service/SourceKnowledgeService";
+import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
 import type { KnowledgeRetrievalService } from "../../../contexts/knowledge-retrieval/service/KnowledgeRetrievalService";
 import type { ManifestRepository } from "../contracts/ManifestRepository";
 import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort";
@@ -38,7 +39,8 @@ const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
 export interface ResolvedPipelineDependencies {
   ingestion: SourceIngestionService;
   processing: SemanticProcessingService;
-  knowledge: SemanticKnowledgeService;
+  sourceKnowledge: SourceKnowledgeService;
+  contextManagement: ContextManagementService;
   retrieval: KnowledgeRetrievalService;
   manifestRepository: ManifestRepository;
 }
@@ -46,7 +48,8 @@ export interface ResolvedPipelineDependencies {
 export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   private readonly _ingestion: SourceIngestionService;
   private readonly _processing: SemanticProcessingService;
-  private readonly _knowledge: SemanticKnowledgeService;
+  private readonly _sourceKnowledge: SourceKnowledgeService;
+  private readonly _contextManagement: ContextManagementService;
   private readonly _retrieval: KnowledgeRetrievalService;
   private readonly _manifestRepository: ManifestRepository;
   private readonly _executeFullPipeline: ExecuteFullPipeline;
@@ -54,14 +57,16 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   constructor(deps: ResolvedPipelineDependencies) {
     this._ingestion = deps.ingestion;
     this._processing = deps.processing;
-    this._knowledge = deps.knowledge;
+    this._sourceKnowledge = deps.sourceKnowledge;
+    this._contextManagement = deps.contextManagement;
     this._retrieval = deps.retrieval;
     this._manifestRepository = deps.manifestRepository;
 
     this._executeFullPipeline = new ExecuteFullPipeline(
       deps.ingestion,
       deps.processing,
-      deps.knowledge,
+      deps.sourceKnowledge,
+      deps.contextManagement,
       deps.manifestRepository,
     );
   }
@@ -110,8 +115,7 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     try {
       const result = await this._processing.processContent({
         projectionId: input.projectionId,
-        semanticUnitId: input.semanticUnitId,
-        semanticUnitVersion: input.semanticUnitVersion,
+        sourceId: input.sourceId,
         content: input.content,
         type: (input.projectionType ?? DEFAULT_PROJECTION_TYPE) as ProjectionType,
         processingProfileId: input.processingProfileId,
@@ -122,6 +126,14 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
           PipelineError.fromStep(PipelineStep.Processing, result.error, []),
         );
       }
+
+      // Register projection in source-knowledge hub (best-effort)
+      await this._sourceKnowledge.registerProjection({
+        sourceId: input.sourceId,
+        projectionId: result.value.projectionId,
+        profileId: input.processingProfileId,
+        status: "COMPLETED",
+      });
 
       return Result.ok({
         projectionId: result.value.projectionId,
@@ -140,11 +152,12 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     input: CatalogDocumentInput,
   ): Promise<Result<KnowledgePipelineError, CatalogDocumentSuccess>> {
     try {
-      const result = await this._knowledge.createSemanticUnit({
-        id: input.semanticUnitId,
+      const result = await this._contextManagement.createContext({
+        id: input.contextId,
         name: input.name,
         description: input.description,
         language: input.language,
+        requiredProfileId: input.requiredProfileId,
         createdBy: input.createdBy,
         tags: input.tags,
         attributes: input.attributes,
@@ -156,7 +169,7 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
         );
       }
 
-      return Result.ok({ unitId: result.value.unitId });
+      return Result.ok({ contextId: result.value.id.value });
     } catch (error) {
       return Result.fail(
         PipelineError.fromStep(PipelineStep.Cataloging, error, []),
@@ -178,10 +191,9 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
       return Result.ok({
         queryText: result.queryText,
         items: result.items.map((item) => ({
-          semanticUnitId: item.semanticUnitId,
+          sourceId: item.sourceId,
           content: item.content,
           score: item.score,
-          version: item.version,
           metadata: item.metadata as Record<string, unknown>,
         })),
         totalFound: result.totalFound,
@@ -296,8 +308,8 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
         const manifests = await this._manifestRepository.findBySourceId(input.sourceId);
         return Result.ok({ manifests });
       }
-      if (input.semanticUnitId) {
-        const manifests = await this._manifestRepository.findBySemanticUnitId(input.semanticUnitId);
+      if (input.contextId) {
+        const manifests = await this._manifestRepository.findByContextId(input.contextId);
         return Result.ok({ manifests });
       }
       const manifests = await this._manifestRepository.findAll();

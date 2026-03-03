@@ -9,8 +9,8 @@
  */
 
 export interface IngestAndAddSourceInput {
-  /** Existing semantic unit to add the source to */
-  unitId: string;
+  /** Existing context to add the source to */
+  contextId: string;
   /** ID for the new source */
   sourceId: string;
   /** Display name for the source */
@@ -33,8 +33,8 @@ export interface IngestAndAddSourceInput {
 
 export interface IngestAndAddSourceSuccess {
   sourceId: string;
-  unitId: string;
-  version: number;
+  sourceKnowledgeId: string;
+  contextId: string;
   projectionId: string;
   contentHash: string;
   extractedTextLength: number;

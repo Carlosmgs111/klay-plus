@@ -20,8 +20,8 @@ export class InMemoryManifestRepository implements ManifestRepository {
     return [...this.store.values()].filter((m) => m.sourceId === sourceId);
   }
 
-  async findBySemanticUnitId(semanticUnitId: string): Promise<ContentManifestEntry[]> {
-    return [...this.store.values()].filter((m) => m.semanticUnitId === semanticUnitId);
+  async findByContextId(contextId: string): Promise<ContentManifestEntry[]> {
+    return [...this.store.values()].filter((m) => m.contextId === contextId);
   }
 
   async findAll(): Promise<ContentManifestEntry[]> {

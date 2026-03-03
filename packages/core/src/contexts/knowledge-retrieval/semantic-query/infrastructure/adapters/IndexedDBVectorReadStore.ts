@@ -33,7 +33,7 @@ export class IndexedDBVectorReadStore implements VectorReadStore {
       const entry = fromDTO(dto);
       return {
         id: entry.id,
-        semanticUnitId: entry.semanticUnitId,
+        sourceId: entry.sourceId,
         content: entry.content,
         score: cosineSimilarity(queryVector, entry.vector),
         metadata: entry.metadata,

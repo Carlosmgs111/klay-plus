@@ -1,6 +1,7 @@
 import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SourceKnowledgeService } from "../../../contexts/source-knowledge/service/SourceKnowledgeService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { SemanticKnowledgeService } from "../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
 import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
 import type {
   IngestAndAddSourceInput,
@@ -16,17 +17,18 @@ import { IngestAndAddSource } from "./use-cases/IngestAndAddSource";
  */
 export interface ResolvedManagementDependencies {
   ingestion: SourceIngestionService;
-  knowledge: SemanticKnowledgeService;
+  sourceKnowledge: SourceKnowledgeService;
   processing: SemanticProcessingService;
+  contextManagement: ContextManagementService;
 }
 
 /**
  * KnowledgeManagementOrchestrator — Application Boundary.
  *
  * Implements KnowledgeManagementPort as the single public API for multi-step
- * lifecycle operations on existing semantic units.
+ * lifecycle operations on existing contexts.
  *
- * Receives 3 services privately (ingestion + knowledge + processing).
+ * Receives 4 services privately (ingestion + sourceKnowledge + processing + contextManagement).
  * Creates use cases internally (like the pipeline orchestrator).
  *
  * This is NOT a bounded context — it's an application layer that
@@ -44,8 +46,9 @@ export class KnowledgeManagementOrchestrator implements KnowledgeManagementPort 
   constructor(deps: ResolvedManagementDependencies) {
     this._ingestAndAddSource = new IngestAndAddSource(
       deps.ingestion,
-      deps.knowledge,
+      deps.sourceKnowledge,
       deps.processing,
+      deps.contextManagement,
     );
   }
 

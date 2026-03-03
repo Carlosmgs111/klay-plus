@@ -87,8 +87,7 @@ export class GenerateProjection {
 
       const vectorEntries: VectorEntry[] = chunks.map((chunk, i) => ({
         id: `${command.sourceId}-${command.projectionId}-${chunk.index}`,
-        // TODO: rename to sourceId when VectorEntry is updated (Phase 4)
-        semanticUnitId: command.sourceId,
+        sourceId: command.sourceId,
         vector: embeddings[i].vector,
         content: chunk.content,
         metadata: {

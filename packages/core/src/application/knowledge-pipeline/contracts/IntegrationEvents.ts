@@ -3,8 +3,9 @@
  *
  * Flow:
  *   SourceExtracted (Source Ingestion)
- *     → SemanticUnitCreated (Semantic Knowledge)
- *       → ProjectionGenerated (Semantic Processing)
+ *     -> SourceKnowledgeCreated (Source Knowledge)
+ *       -> ProjectionGenerated (Semantic Processing)
+ *         -> (Optional) ContextSourceAdded (Context Management)
  *
  * Each context listens to events from other contexts via these contracts.
  * No shared repositories, no cross-context entity references, no coupled infrastructure.
@@ -20,44 +21,39 @@ export interface SourceExtractedEvent {
   readonly extractedAt: Date;
 }
 
-export interface SemanticUnitCreatedEvent {
-  readonly eventType: "semantic-knowledge.semantic-unit.created";
-  readonly semanticUnitId: string;
-  readonly content: string;
-  readonly language: string;
-  readonly version: number;
+export interface SourceKnowledgeCreatedEvent {
+  readonly eventType: "source-knowledge.source-knowledge.created";
+  readonly sourceKnowledgeId: string;
   readonly sourceId: string;
-  readonly sourceType: string;
-}
-
-export interface SemanticUnitVersionedEvent {
-  readonly eventType: "semantic-knowledge.semantic-unit.versioned";
-  readonly semanticUnitId: string;
-  readonly content: string;
-  readonly version: number;
-  readonly reason: string;
-}
-
-export interface SemanticUnitReprocessRequestedEvent {
-  readonly eventType: "semantic-knowledge.semantic-unit.reprocess-requested";
-  readonly semanticUnitId: string;
-  readonly currentVersion: number;
-  readonly reason: string;
+  readonly contentHash: string;
+  readonly defaultProfileId: string;
 }
 
 export interface ProjectionGeneratedEvent {
   readonly eventType: "semantic-processing.projection.generated";
   readonly projectionId: string;
-  readonly semanticUnitId: string;
-  readonly semanticUnitVersion: number;
+  readonly sourceId: string;
   readonly projectionType: string;
   readonly processingProfileId: string;
-  readonly processingProfileVersion: number;
+}
+
+export interface ProjectionFailedEvent {
+  readonly eventType: "semantic-processing.projection.failed";
+  readonly projectionId: string;
+  readonly sourceId: string;
+  readonly error: string;
+}
+
+export interface ContextSourceAddedEvent {
+  readonly eventType: "context-management.context.source-added";
+  readonly contextId: string;
+  readonly sourceId: string;
+  readonly sourceKnowledgeId: string;
 }
 
 export type IntegrationEvent =
   | SourceExtractedEvent
-  | SemanticUnitCreatedEvent
-  | SemanticUnitVersionedEvent
-  | SemanticUnitReprocessRequestedEvent
-  | ProjectionGeneratedEvent;
+  | SourceKnowledgeCreatedEvent
+  | ProjectionGeneratedEvent
+  | ProjectionFailedEvent
+  | ContextSourceAddedEvent;

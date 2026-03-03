@@ -8,8 +8,10 @@
  */
 export const ManagementStep = {
   Ingestion: "ingestion",
-  AddSource: "add-source",
+  CreateSourceKnowledge: "create-source-knowledge",
   Processing: "processing",
+  RegisterProjection: "register-projection",
+  AddToContext: "add-to-context",
 } as const;
 
 export type ManagementStep =

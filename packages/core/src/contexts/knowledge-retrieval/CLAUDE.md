@@ -42,7 +42,7 @@ Ejecuta busquedas de similitud semantica contra el vector store. Modulo de **sol
 - `Query` — parametros de busqueda: text, topK (default 10), filters, minScore (0-1)
 - `QueryId` — identidad para tracing
 - `RetrievalResult` — queryText, items[], totalFound, executedAt
-- `RetrievalItem` — semanticUnitId, content, score, version, metadata
+- `RetrievalItem` — sourceId, content, score, version, metadata
 
 **Use Cases**: `ExecuteSemanticQuery`
 

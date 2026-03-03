@@ -12,17 +12,14 @@ import { ContextDeprecated } from "./events/ContextDeprecated";
 import { ContextRolledBack } from "./events/ContextRolledBack";
 
 /**
- * Context aggregate — the replacement for SemanticUnit.
+ * Context aggregate.
  *
  * A Context is a hub that groups sources, declares a required projection
  * profile, and versions based on source add/remove history.
  *
- * Key differences from SemanticUnit:
- * - NO profileId/profileVersion in versions (Context doesn't manage profiles per version)
- * - NO VersionSourceSnapshot with projectionIds (projections managed by source-knowledge)
- * - NO recordProjectionForSource method
  * - Context only tracks which sourceIds are in each version
  * - requiredProfileId is a top-level field, not per-version
+ * - Projections are managed by source-knowledge context, not here
  */
 export class Context extends AggregateRoot<ContextId> {
   private _name: string;

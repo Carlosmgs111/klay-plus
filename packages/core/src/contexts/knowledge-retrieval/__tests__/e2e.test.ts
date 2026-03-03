@@ -14,35 +14,35 @@ describe("Knowledge Retrieval Context E2E", () => {
   const testEntries: VectorEntry[] = [
     {
       id: "entry-1",
-      semanticUnitId: "unit-1",
+      sourceId: "unit-1",
       vector: hashToVector("machine learning algorithms and neural networks", DIMENSIONS),
       content: "Machine learning algorithms and neural networks are used for pattern recognition.",
       metadata: { domain: "ai", version: 1 },
     },
     {
       id: "entry-2",
-      semanticUnitId: "unit-2",
+      sourceId: "unit-2",
       vector: hashToVector("deep learning neural network training", DIMENSIONS),
       content: "Deep learning involves training neural networks with multiple layers.",
       metadata: { domain: "ai", version: 1 },
     },
     {
       id: "entry-3",
-      semanticUnitId: "unit-3",
+      sourceId: "unit-3",
       vector: hashToVector("database indexing and query optimization", DIMENSIONS),
       content: "Database indexing improves query performance through efficient data structures.",
       metadata: { domain: "databases", version: 2 },
     },
     {
       id: "entry-4",
-      semanticUnitId: "unit-4",
+      sourceId: "unit-4",
       vector: hashToVector("frontend react component architecture", DIMENSIONS),
       content: "React components follow a declarative architecture pattern.",
       metadata: { domain: "frontend", version: 1 },
     },
     {
       id: "entry-5",
-      semanticUnitId: "unit-5",
+      sourceId: "unit-5",
       vector: hashToVector("machine learning model training optimization", DIMENSIONS),
       content: "Model training optimization techniques improve convergence speed.",
       metadata: { domain: "ai", version: 3 },
@@ -81,7 +81,7 @@ describe("Knowledge Retrieval Context E2E", () => {
     });
 
     expect(result.items.length).toBe(1);
-    expect(result.items[0].semanticUnitId).toBe("unit-1");
+    expect(result.items[0].sourceId).toBe("unit-1");
   });
 
   it("should return empty results for high threshold", async () => {

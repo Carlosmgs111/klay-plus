@@ -35,7 +35,8 @@ import type {
  */
 export interface KnowledgePipelinePort {
   /**
-   * Executes the full knowledge pipeline: Ingest → Process → Catalog.
+   * Executes the full knowledge pipeline:
+   * Ingest -> CreateSourceKnowledge -> Process -> RegisterProjection -> (optional) AddToContext
    * This is the main entry point for end-to-end document processing.
    */
   execute(
@@ -52,13 +53,15 @@ export interface KnowledgePipelinePort {
 
   /**
    * Processes content into semantic projections (chunking + embeddings).
+   * Uses sourceId + processingProfileId.
    */
   processDocument(
     input: ProcessDocumentInput,
   ): Promise<Result<KnowledgePipelineError, ProcessDocumentSuccess>>;
 
   /**
-   * Catalogs content as a semantic unit with lineage tracking.
+   * Creates a Context (replaces "catalog document" / "create semantic unit").
+   * A Context groups sources and declares a requiredProfileId.
    */
   catalogDocument(
     input: CatalogDocumentInput,
@@ -92,7 +95,7 @@ export interface KnowledgePipelinePort {
   ): Promise<Result<KnowledgePipelineError, DeprecateProfileResult>>;
 
   /**
-   * Retrieves content manifests for a resource, source, or by manifest ID.
+   * Retrieves content manifests for a resource, source, context, or by manifest ID.
    * Provides a top-down view of all artifacts produced from a resource.
    */
   getManifest(

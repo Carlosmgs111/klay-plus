@@ -46,7 +46,7 @@ Each context has its own `CLAUDE.md` with full entity/port/event specs.
 ## Application Layer
 
 ### Knowledge Pipeline Orchestrator (`application/knowledge-pipeline/`)
-Coordina los 4 contextos para **construccion inicial**. Gestiona `ContentManifest` (tracker cross-context: resourceId, sourceId, extractionJobId, semanticUnitId, projectionId).
+Coordina los 4 contextos para **construccion inicial**. Gestiona `ContentManifest` (tracker cross-context: resourceId, sourceId, extractionJobId, contextId, projectionId).
 
 Operaciones: `execute` (pipeline completo), `ingestDocument`, `processDocument`, `catalogDocument`, `searchKnowledge`, `createProcessingProfile`, `getManifest`
 

@@ -27,31 +27,34 @@ export interface ExecutePipelineInput {
   projectionType?: string;
   /** Processing profile ID — determines chunking and embedding strategies */
   processingProfileId: string;
-  /** Unique ID for the semantic unit */
-  semanticUnitId: string;
+  /** Context ID — optional, groups sources and declares requiredProfileId */
+  contextId?: string;
   /** Content language */
   language: string;
   /** Creator identifier */
   createdBy: string;
-  /** Optional topics for the semantic unit */
+  /** Optional topics for the context */
   topics?: string[];
-  /** Optional tags for the semantic unit */
+  /** Optional tags for the context */
   tags?: string[];
-  /** Optional summary for the semantic unit */
+  /** Optional summary for the context */
   summary?: string;
-  /** Optional attributes for the semantic unit */
+  /** Optional attributes for the context */
   attributes?: Record<string, string>;
 }
 
 export interface ExecutePipelineSuccess {
   sourceId: string;
-  unitId: string;
+  /** Source-knowledge aggregate ID */
+  sourceKnowledgeId: string;
   projectionId: string;
   contentHash: string;
   extractedTextLength: number;
   chunksCount: number;
   dimensions: number;
   model: string;
+  /** Context ID if provided in input */
+  contextId?: string;
   /** Resource ID if provided in input */
   resourceId?: string;
   /** Manifest ID if manifest tracking is enabled */
@@ -76,8 +79,8 @@ export interface IngestDocumentSuccess {
 
 export interface ProcessDocumentInput {
   projectionId: string;
-  semanticUnitId: string;
-  semanticUnitVersion: number;
+  /** Source ID — primary key for projection */
+  sourceId: string;
   content: string;
   projectionType?: string;
   /** Processing profile ID — determines chunking and embedding strategies */
@@ -92,18 +95,20 @@ export interface ProcessDocumentSuccess {
 }
 
 export interface CatalogDocumentInput {
-  semanticUnitId: string;
+  /** Context ID */
+  contextId: string;
   name: string;
   description: string;
   language: string;
   createdBy: string;
+  /** Required processing profile ID for sources in this context */
+  requiredProfileId: string;
   tags?: string[];
   attributes?: Record<string, string>;
-  completedSteps?: string[];
 }
 
 export interface CatalogDocumentSuccess {
-  unitId: string;
+  contextId: string;
 }
 
 export interface CreateProcessingProfileInput {
@@ -129,10 +134,10 @@ export interface SearchKnowledgeInput {
 export interface SearchKnowledgeSuccess {
   queryText: string;
   items: Array<{
-    semanticUnitId: string;
+    /** Source ID */
+    sourceId: string;
     content: string;
     score: number;
-    version: number;
     metadata: Record<string, unknown>;
   }>;
   totalFound: number;
@@ -180,8 +185,8 @@ export interface GetManifestInput {
   sourceId?: string;
   /** Query by manifest ID */
   manifestId?: string;
-  /** Query by semantic unit ID */
-  semanticUnitId?: string;
+  /** Query by context ID */
+  contextId?: string;
 }
 
 export interface GetManifestSuccess {

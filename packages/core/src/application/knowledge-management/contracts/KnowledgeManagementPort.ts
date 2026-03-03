@@ -7,7 +7,7 @@ import type {
 
 /**
  * KnowledgeManagementPort — the single public entry point for multi-step
- * lifecycle operations on existing semantic units.
+ * lifecycle operations on existing contexts.
  *
  * This is a Port in the Hexagonal Architecture sense:
  * - Primary adapters (UI, REST) depend on this port
@@ -15,15 +15,15 @@ import type {
  * - The factory returns this port type (not the implementation)
  *
  * Only exposes flows that coordinate multiple bounded contexts.
- * Atomic operations (removeSource, rollbackUnit, linkUnits, etc.) are
+ * Atomic operations (removeSource, rollbackContext, etc.) are
  * called directly on the service by the client.
  */
 export interface KnowledgeManagementPort {
   /**
-   * Ingests content from a URI, adds it as a source to an existing semantic unit,
-   * and processes it to generate embeddings.
+   * Ingests content from a URI, creates a SourceKnowledge hub, processes
+   * the content to generate embeddings, and adds the source to an existing context.
    *
-   * Multi-step flow: Ingestion → AddSource → Processing
+   * Multi-step flow: Ingestion → CreateSourceKnowledge → Processing → RegisterProjection → AddToContext
    */
   ingestAndAddSource(
     input: IngestAndAddSourceInput,

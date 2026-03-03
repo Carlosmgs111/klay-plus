@@ -1,6 +1,7 @@
 import type { SourceIngestionService } from "../../../../contexts/source-ingestion/service/SourceIngestionService";
 import type { SemanticProcessingService } from "../../../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { SemanticKnowledgeService } from "../../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { SourceKnowledgeService } from "../../../../contexts/source-knowledge/service/SourceKnowledgeService";
+import type { ContextManagementService } from "../../../../contexts/context-management/service/ContextManagementService";
 import type { SourceType } from "../../../../contexts/source-ingestion/source/domain/SourceType";
 import type { ProjectionType } from "../../../../contexts/semantic-processing/projection/domain/ProjectionType";
 import type { ExecutePipelineInput, ExecutePipelineSuccess } from "../../contracts/dtos";
@@ -16,8 +17,13 @@ const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
 /**
  * Use Case: Execute Full Pipeline
  *
- * Coordinates the complete knowledge pipeline: Ingest → Process → Catalog.
- * Uses only the 3 construction services (no Retrieval).
+ * Coordinates the complete knowledge pipeline:
+ * 1. Ingest source via ingestion service
+ * 2. Create SourceKnowledge (projection hub) for the source
+ * 3. Process content via processing service (sourceId-primary)
+ * 4. Register projection in source-knowledge hub
+ * 5. (Optional) If contextId provided, add source to context
+ * 6. Record manifest
  *
  * Each step tracks completed steps for error reporting.
  * If a step fails, the error includes which steps completed successfully.
@@ -29,7 +35,8 @@ export class ExecuteFullPipeline {
   constructor(
     private readonly _ingestion: SourceIngestionService,
     private readonly _processing: SemanticProcessingService,
-    private readonly _knowledge: SemanticKnowledgeService,
+    private readonly _sourceKnowledge: SourceKnowledgeService,
+    private readonly _contextManagement: ContextManagementService,
     private readonly _manifestRepository: ManifestRepository | null = null,
   ) {}
 
@@ -39,6 +46,7 @@ export class ExecuteFullPipeline {
     const completedSteps: PipelineStep[] = [];
     const manifestId = input.resourceId ? crypto.randomUUID() : undefined;
 
+    // ── Step 1: Ingest source ──────────────────────────────────────
     const ingestionResult = await this._ingestion.ingestAndExtract({
       sourceId: input.sourceId,
       sourceName: input.sourceName,
@@ -60,22 +68,21 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Ingestion);
 
-    const catalogResult = await this._knowledge.createSemanticUnit({
-      id: input.semanticUnitId,
-      name: input.sourceName ?? "Untitled",
-      description: input.summary ?? "",
-      language: input.language,
-      createdBy: input.createdBy,
-      tags: input.tags,
-      attributes: input.attributes,
+    // ── Step 2: Create SourceKnowledge (projection hub) ────────────
+    const sourceKnowledgeId = `sk-${input.sourceId}`;
+    const skResult = await this._sourceKnowledge.createSourceKnowledge({
+      id: sourceKnowledgeId,
+      sourceId: input.sourceId,
+      contentHash: ingestionResult.value.contentHash,
+      defaultProfileId: input.processingProfileId,
     });
 
-    if (catalogResult.isFail()) {
+    if (skResult.isFail()) {
       await this._recordManifest(input, manifestId, "failed", completedSteps, PipelineStep.Cataloging);
       return Result.fail(
         KnowledgePipelineError.fromStep(
           PipelineStep.Cataloging,
-          catalogResult.error,
+          skResult.error,
           completedSteps,
         ),
       );
@@ -83,32 +90,10 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Cataloging);
 
-    const addSourceResult = await this._knowledge.addSourceToSemanticUnit({
-      unitId: input.semanticUnitId,
-      sourceId: input.sourceId,
-      sourceType: input.sourceType,
-      resourceId: input.resourceId,
-      extractedContent: ingestionResult.value.extractedText,
-      contentHash: ingestionResult.value.contentHash,
-      processingProfileId: input.processingProfileId,
-      processingProfileVersion: 1,
-    });
-
-    if (addSourceResult.isFail()) {
-      await this._recordManifest(input, manifestId, "failed", completedSteps, PipelineStep.Cataloging);
-      return Result.fail(
-        KnowledgePipelineError.fromStep(
-          PipelineStep.Cataloging,
-          addSourceResult.error,
-          completedSteps,
-        ),
-      );
-    }
-
+    // ── Step 3: Process content (sourceId-primary) ─────────────────
     const processingResult = await this._processing.processContent({
       projectionId: input.projectionId,
-      semanticUnitId: input.semanticUnitId,
-      semanticUnitVersion: addSourceResult.value.version,
+      sourceId: input.sourceId,
       content: ingestionResult.value.extractedText,
       type: (input.projectionType ?? DEFAULT_PROJECTION_TYPE) as ProjectionType,
       processingProfileId: input.processingProfileId,
@@ -127,7 +112,33 @@ export class ExecuteFullPipeline {
 
     completedSteps.push(PipelineStep.Processing);
 
+    // ── Step 4: Register projection in source-knowledge hub ────────
+    await this._sourceKnowledge.registerProjection({
+      sourceId: input.sourceId,
+      projectionId: input.projectionId,
+      profileId: input.processingProfileId,
+      status: "COMPLETED",
+    });
+
+    // ── Step 5: (Optional) Add source to context ───────────────────
+    if (input.contextId) {
+      const addToContextResult = await this._contextManagement.addSourceToContext({
+        contextId: input.contextId,
+        sourceId: input.sourceId,
+        sourceKnowledgeId,
+        profileSatisfied: true,
+      });
+
+      if (addToContextResult.isFail()) {
+        // Non-fatal: context association failed but core pipeline succeeded.
+        // Log but don't fail the pipeline. The source is processed.
+        // TODO: Consider whether this should be a partial success.
+      }
+    }
+
+    // ── Step 6: Record manifest ────────────────────────────────────
     await this._recordManifest(input, manifestId, "complete", completedSteps, undefined, {
+      sourceKnowledgeId,
       contentHash: ingestionResult.value.contentHash,
       extractedTextLength: ingestionResult.value.extractedText.length,
       chunksCount: processingResult.value.chunksCount,
@@ -137,13 +148,14 @@ export class ExecuteFullPipeline {
 
     return Result.ok({
       sourceId: input.sourceId,
-      unitId: catalogResult.value.unitId,
+      sourceKnowledgeId,
       projectionId: processingResult.value.projectionId,
       contentHash: ingestionResult.value.contentHash,
       extractedTextLength: ingestionResult.value.extractedText.length,
       chunksCount: processingResult.value.chunksCount,
       dimensions: processingResult.value.dimensions,
       model: processingResult.value.model,
+      contextId: input.contextId,
       resourceId: input.resourceId,
       manifestId,
     });
@@ -160,6 +172,7 @@ export class ExecuteFullPipeline {
     completedSteps: PipelineStep[],
     failedStep?: PipelineStep,
     metrics?: {
+      sourceKnowledgeId?: string;
       contentHash?: string;
       extractedTextLength?: number;
       chunksCount?: number;
@@ -177,8 +190,9 @@ export class ExecuteFullPipeline {
         resourceId: input.resourceId,
         sourceId: input.sourceId,
         extractionJobId: input.extractionJobId,
-        semanticUnitId: input.semanticUnitId,
+        sourceKnowledgeId: metrics?.sourceKnowledgeId,
         projectionId: input.projectionId,
+        contextId: input.contextId,
         status,
         completedSteps: [...completedSteps],
         failedStep,

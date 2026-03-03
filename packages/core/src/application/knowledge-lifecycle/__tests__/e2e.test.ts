@@ -5,7 +5,7 @@
  * Validates removeSource, reprocessContext, rollbackContext, linkContexts, and unlinkContexts.
  *
  * Updated for the new domain model:
- * - Context (context-management) replaces SemanticUnit grouping
+ * - Context (context-management) manages source grouping + lineage
  * - SourceKnowledge (source-knowledge) manages per-source projection hubs
  * - ContextManagementService replaces SemanticKnowledgeService
  * - linkContexts/unlinkContexts use lineage sub-domain within context-management

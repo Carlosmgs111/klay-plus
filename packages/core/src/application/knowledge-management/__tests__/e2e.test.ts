@@ -6,6 +6,11 @@
  *
  * Uses the combined platform factory to share services between
  * pipeline (for setup) and management (for testing).
+ *
+ * Updated for the new domain model:
+ * - Context (context-management) manages source grouping + lineage
+ * - SourceKnowledge (source-knowledge) manages per-source projection hubs
+ * - SemanticProjection uses sourceId-primary
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -56,30 +61,53 @@ describe("Knowledge Management Orchestrator — E2E", () => {
   // 1. ingestAndAddSource — Full Flow
 
   describe("ingestAndAddSource", () => {
-    it("should ingest, add source, and process for an existing unit", async () => {
-      // Setup: create a unit via pipeline
-      const dddFile = path.join(FIXTURES_DIR, "ddd-overview.txt");
-      const execResult = await pipeline.execute({
+    it("should ingest, create source-knowledge, process, and add to context", async () => {
+      // Setup: create a context via pipeline's catalogDocument
+      const ctxResult = await pipeline.catalogDocument({
+        contextId: "ctx-mgmt-ias-001",
+        name: "DDD Knowledge",
+        description: "Domain-Driven Design concepts and patterns",
+        language: "en",
+        createdBy: "test",
+        requiredProfileId: profileId,
+      });
+      expect(ctxResult.isOk()).toBe(true);
+
+      // Act: add a source to the context via management (full multi-step flow)
+      const cleanFile = path.join(FIXTURES_DIR, "clean-architecture.txt");
+      const result = await management.ingestAndAddSource({
+        contextId: "ctx-mgmt-ias-001",
         sourceId: "src-mgmt-ias-001",
-        sourceName: "DDD Overview",
-        uri: dddFile,
+        sourceName: "Clean Architecture",
+        uri: cleanFile,
         sourceType: "PLAIN_TEXT",
         extractionJobId: "job-mgmt-ias-001",
         projectionId: "proj-mgmt-ias-001",
-        semanticUnitId: "unit-mgmt-ias-001",
-        language: "en",
-        createdBy: "test",
         processingProfileId: profileId,
       });
-      expect(execResult.isOk()).toBe(true);
 
-      // Act: add a second source via management (full multi-step flow)
-      const cleanFile = path.join(FIXTURES_DIR, "clean-architecture.txt");
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.sourceId).toBe("src-mgmt-ias-001");
+        expect(result.value.sourceKnowledgeId).toBe("sk-src-mgmt-ias-001");
+        expect(result.value.contextId).toBe("ctx-mgmt-ias-001");
+        expect(result.value.projectionId).toBe("proj-mgmt-ias-001");
+        expect(result.value.contentHash).toBeTruthy();
+        expect(result.value.extractedTextLength).toBeGreaterThan(0);
+        expect(result.value.chunksCount).toBeGreaterThan(0);
+        expect(result.value.dimensions).toBe(128);
+        expect(result.value.model).toBeTruthy();
+      }
+    });
+
+    it("should add a second source to the same context", async () => {
+      // Act: add another source to the same context
+      const dddFile = path.join(FIXTURES_DIR, "ddd-overview.txt");
       const result = await management.ingestAndAddSource({
-        unitId: "unit-mgmt-ias-001",
+        contextId: "ctx-mgmt-ias-001",
         sourceId: "src-mgmt-ias-002",
-        sourceName: "Clean Architecture",
-        uri: cleanFile,
+        sourceName: "DDD Overview",
+        uri: dddFile,
         sourceType: "PLAIN_TEXT",
         extractionJobId: "job-mgmt-ias-002",
         projectionId: "proj-mgmt-ias-002",
@@ -89,44 +117,33 @@ describe("Knowledge Management Orchestrator — E2E", () => {
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.sourceId).toBe("src-mgmt-ias-002");
-        expect(result.value.unitId).toBe("unit-mgmt-ias-001");
-        expect(result.value.version).toBeGreaterThan(1);
-        expect(result.value.projectionId).toBe("proj-mgmt-ias-002");
-        expect(result.value.contentHash).toBeTruthy();
-        expect(result.value.extractedTextLength).toBeGreaterThan(0);
-        expect(result.value.chunksCount).toBeGreaterThan(0);
-        expect(result.value.dimensions).toBe(128);
-        expect(result.value.model).toBeTruthy();
+        expect(result.value.contextId).toBe("ctx-mgmt-ias-001");
+        expect(result.value.sourceKnowledgeId).toBe("sk-src-mgmt-ias-002");
       }
     });
 
     it("should support optional resourceId", async () => {
-      // Setup: create another unit
+      // Setup: create another context
+      const ctxResult = await pipeline.catalogDocument({
+        contextId: "ctx-mgmt-ias-002",
+        name: "Event Sourcing Knowledge",
+        description: "Event sourcing concepts",
+        language: "en",
+        createdBy: "test",
+        requiredProfileId: profileId,
+      });
+      expect(ctxResult.isOk()).toBe(true);
+
+      // Act: add source with resourceId
       const esFile = path.join(FIXTURES_DIR, "event-sourcing.txt");
-      const execResult = await pipeline.execute({
+      const result = await management.ingestAndAddSource({
+        contextId: "ctx-mgmt-ias-002",
         sourceId: "src-mgmt-ias-003",
         sourceName: "Event Sourcing",
         uri: esFile,
         sourceType: "PLAIN_TEXT",
         extractionJobId: "job-mgmt-ias-003",
         projectionId: "proj-mgmt-ias-003",
-        semanticUnitId: "unit-mgmt-ias-002",
-        language: "en",
-        createdBy: "test",
-        processingProfileId: profileId,
-      });
-      expect(execResult.isOk()).toBe(true);
-
-      // Act: add source with resourceId
-      const dddUpdFile = path.join(FIXTURES_DIR, "ddd-overview-updated.txt");
-      const result = await management.ingestAndAddSource({
-        unitId: "unit-mgmt-ias-002",
-        sourceId: "src-mgmt-ias-004",
-        sourceName: "DDD Updated",
-        uri: dddUpdFile,
-        sourceType: "PLAIN_TEXT",
-        extractionJobId: "job-mgmt-ias-004",
-        projectionId: "proj-mgmt-ias-004",
         processingProfileId: profileId,
         resourceId: "res-mgmt-ias-001",
       });
@@ -142,11 +159,22 @@ describe("Knowledge Management Orchestrator — E2E", () => {
 
   describe("error at ingestion step", () => {
     it("should return error with step=ingestion and empty completedSteps", async () => {
+      // Setup: create a context
+      const ctxResult = await pipeline.catalogDocument({
+        contextId: "ctx-mgmt-err-ing",
+        name: "Error Test Context",
+        description: "For error testing",
+        language: "en",
+        createdBy: "test",
+        requiredProfileId: profileId,
+      });
+      expect(ctxResult.isOk()).toBe(true);
+
       // Act: try to register a source with a duplicate sourceId (already used in first test)
       // The ingestion step (registerSource) should fail due to the duplicate ID
       const dddFile = path.join(FIXTURES_DIR, "ddd-overview.txt");
       const result = await management.ingestAndAddSource({
-        unitId: "unit-mgmt-ias-001",
+        contextId: "ctx-mgmt-err-ing",
         sourceId: "src-mgmt-ias-001", // duplicate — already registered in first test
         sourceName: "Duplicate Source",
         uri: dddFile,
@@ -166,33 +194,39 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     });
   });
 
-  // 3. Error at AddSource Step
+  // 3. Error at AddToContext Step
 
-  describe("error at add-source step", () => {
-    it("should return error with step=add-source and completedSteps=[ingestion]", async () => {
-      // Act: ingest a file that hasn't been used yet, targeting a non-existent unit
-      // Ingestion succeeds (valid file), but addSource fails (unit doesn't exist)
+  describe("error at add-to-context step", () => {
+    it("should return error with step=add-to-context when context does not exist", async () => {
+      // Act: ingest a file with a valid source, targeting a non-existent context
+      // Ingestion, CreateSourceKnowledge, Processing, RegisterProjection succeed,
+      // but AddToContext fails (context doesn't exist)
       const tmpFile = path.join(os.tmpdir(), `klay-mgmt-test-${Date.now()}.txt`);
-      fs.writeFileSync(tmpFile, "Temporary content for add-source error test.");
+      fs.writeFileSync(tmpFile, "Temporary content for add-to-context error test.");
 
       try {
         const result = await management.ingestAndAddSource({
-          unitId: "non-existent-unit-for-add-source",
-          sourceId: "src-mgmt-err-add-001",
+          contextId: "non-existent-context-for-add",
+          sourceId: "src-mgmt-err-ctx-001",
           sourceName: "Temp Source",
           uri: tmpFile,
           sourceType: "PLAIN_TEXT",
-          extractionJobId: "job-mgmt-err-add-001",
-          projectionId: "proj-mgmt-err-add-001",
+          extractionJobId: "job-mgmt-err-ctx-001",
+          projectionId: "proj-mgmt-err-ctx-001",
           processingProfileId: profileId,
         });
 
         expect(result.isFail()).toBe(true);
         if (result.isFail()) {
           expect(result.error).toBeInstanceOf(KnowledgeManagementError);
-          expect(result.error.step).toBe(ManagementStep.AddSource);
-          expect(result.error.code).toBe("MANAGEMENT_ADD_SOURCE_FAILED");
-          expect(result.error.completedSteps).toEqual([ManagementStep.Ingestion]);
+          expect(result.error.step).toBe(ManagementStep.AddToContext);
+          expect(result.error.code).toBe("MANAGEMENT_ADD_TO_CONTEXT_FAILED");
+          expect(result.error.completedSteps).toEqual([
+            ManagementStep.Ingestion,
+            ManagementStep.CreateSourceKnowledge,
+            ManagementStep.Processing,
+            ManagementStep.RegisterProjection,
+          ]);
         }
       } finally {
         fs.unlinkSync(tmpFile);
@@ -206,25 +240,30 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     it("should extract info, handle unknown errors, serialize to JSON, and copy completedSteps", () => {
       // fromStep with structured error
       const fromKnown = KnowledgeManagementError.fromStep(
-        ManagementStep.AddSource,
-        { message: "Unit not found", code: "UNIT_NOT_FOUND" },
-        [ManagementStep.Ingestion],
+        ManagementStep.AddToContext,
+        { message: "Context not found", code: "CONTEXT_NOT_FOUND" },
+        [ManagementStep.Ingestion, ManagementStep.CreateSourceKnowledge, ManagementStep.Processing, ManagementStep.RegisterProjection],
       );
-      expect(fromKnown.step).toBe("add-source");
-      expect(fromKnown.code).toBe("MANAGEMENT_ADD_SOURCE_FAILED");
-      expect(fromKnown.completedSteps).toEqual(["ingestion"]);
-      expect(fromKnown.originalCode).toBe("UNIT_NOT_FOUND");
-      expect(fromKnown.originalMessage).toBe("Unit not found");
+      expect(fromKnown.step).toBe("add-to-context");
+      expect(fromKnown.code).toBe("MANAGEMENT_ADD_TO_CONTEXT_FAILED");
+      expect(fromKnown.completedSteps).toEqual([
+        "ingestion",
+        "create-source-knowledge",
+        "processing",
+        "register-projection",
+      ]);
+      expect(fromKnown.originalCode).toBe("CONTEXT_NOT_FOUND");
+      expect(fromKnown.originalMessage).toBe("Context not found");
 
       // fromStep with unknown error type
       const fromUnknown = KnowledgeManagementError.fromStep(
         ManagementStep.Processing,
         42,
-        [ManagementStep.Ingestion, ManagementStep.AddSource],
+        [ManagementStep.Ingestion, ManagementStep.CreateSourceKnowledge],
       );
       expect(fromUnknown.step).toBe("processing");
       expect(fromUnknown.code).toBe("MANAGEMENT_PROCESSING_FAILED");
-      expect(fromUnknown.completedSteps).toEqual(["ingestion", "add-source"]);
+      expect(fromUnknown.completedSteps).toEqual(["ingestion", "create-source-knowledge"]);
       expect(fromUnknown.originalCode).toBeUndefined();
       expect(fromUnknown.originalMessage).toBeUndefined();
 
@@ -244,7 +283,7 @@ describe("Knowledge Management Orchestrator — E2E", () => {
       // completedSteps is a copy (not a reference)
       const steps: ManagementStep[] = [ManagementStep.Ingestion];
       const copyError = KnowledgeManagementError.fromStep(
-        ManagementStep.AddSource,
+        ManagementStep.CreateSourceKnowledge,
         new Error("fail"),
         steps,
       );

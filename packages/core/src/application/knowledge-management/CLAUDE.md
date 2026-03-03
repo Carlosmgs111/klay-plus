@@ -2,9 +2,9 @@
 
 ## Rol
 
-**No es un bounded context** — es la capa de orquestacion para flujos multi-step de ciclo de vida sobre unidades semanticas existentes. Complementa al Knowledge Pipeline (que maneja construccion inicial).
+**No es un bounded context** — es la capa de orquestacion para flujos multi-step de ciclo de vida sobre contextos existentes. Complementa al Knowledge Pipeline (que maneja construccion inicial).
 
-Solo expone flujos complejos que coordinan multiples bounded contexts. Las operaciones atomicas (removeSource, rollbackUnit, linkUnits, addProjection, reprocessUnit) se llaman directamente en el service por el cliente.
+Solo expone flujos complejos que coordinan multiples bounded contexts. Las operaciones atomicas (removeSource, rollbackContext, etc.) se llaman directamente en el service por el cliente.
 
 ## Port: `KnowledgeManagementPort`
 
@@ -14,13 +14,13 @@ Punto de entrada unico. Primary port en el sentido hexagonal.
 
 | Operacion | Descripcion | Contextos coordinados |
 |-----------|-------------|----------------------|
-| `ingestAndAddSource` | Ingesta contenido, lo agrega como source a unidad existente, y procesa embeddings | Ingestion, Knowledge, Processing |
+| `ingestAndAddSource` | Ingesta contenido, crea SourceKnowledge hub, procesa embeddings, y agrega source a un contexto existente | Ingestion, SourceKnowledge, Processing, ContextManagement |
 
 Retorna `Result<KnowledgeManagementError, IngestAndAddSourceSuccess>` para error handling funcional con tracking de steps.
 
 ## Orchestrator: `KnowledgeManagementOrchestrator`
 
-Implementa `KnowledgeManagementPort`. Recibe 3 services (ingestion + knowledge + processing) como dependencias privadas. Crea use cases internamente.
+Implementa `KnowledgeManagementPort`. Recibe 4 services (ingestion + sourceKnowledge + processing + contextManagement) como dependencias privadas. Crea use cases internamente.
 
 **Reglas de diseno** (mismas que pipeline):
 - Sin getters de services
@@ -30,29 +30,35 @@ Implementa `KnowledgeManagementPort`. Recibe 3 services (ingestion + knowledge +
 
 ## Use Case: `IngestAndAddSource`
 
-Flujo multi-step equivalente a `ExecuteFullPipeline` pero sobre una unidad existente (sin crear unit):
+Flujo multi-step para agregar una nueva source a un contexto existente:
 
 ```
-Input: unitId + URI + profileId + IDs
+Input: contextId + URI + profileId + IDs
     |
     v
 [1. Ingestion] → ingestExtractAndReturn → extractedText, contentHash
     |
     v
-[2. AddSource] → addSourceToSemanticUnit → version
+[2. CreateSourceKnowledge] → create projection hub → sourceKnowledgeId
     |
     v
-[3. Processing] → processContent → projectionId, chunks, dimensions, model
+[3. Processing] → processContent (sourceId-primary) → projectionId, chunks, dimensions, model
     |
     v
-Result<Error, { sourceId, unitId, version, projectionId, contentHash, ... }>
+[4. RegisterProjection] → register projection in hub → confirmed
+    |
+    v
+[5. AddToContext] → addSourceToContext → context updated
+    |
+    v
+Result<Error, { sourceId, sourceKnowledgeId, contextId, projectionId, contentHash, ... }>
 ```
 
 ## Domain Objects
 
 ### `ManagementStep`
 
-Identifica cada etapa del flujo: `Ingestion`, `AddSource`, `Processing`.
+Identifica cada etapa del flujo: `Ingestion`, `CreateSourceKnowledge`, `Processing`, `RegisterProjection`, `AddToContext`.
 
 ### `KnowledgeManagementError`
 
@@ -73,7 +79,7 @@ La factory del management vive en `composition/knowledge-management.factory.ts`:
 
 ```
 createKnowledgeManagement(policy)
-├── Resuelve 3 services (ingestion + knowledge + processing) via sus composition/factory.ts
+├── Resuelve 4 services (ingestion + sourceKnowledge + processing + contextManagement) via sus composition/factory.ts
 └── Retorna KnowledgeManagementPort (no la implementacion)
 ```
 

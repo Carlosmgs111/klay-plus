@@ -7,7 +7,7 @@
  */
 export interface VectorEntry {
   id: string;
-  semanticUnitId: string;
+  sourceId: string;
   vector: number[];
   content: string;
   metadata: Record<string, unknown>;

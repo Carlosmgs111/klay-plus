@@ -7,11 +7,12 @@
  *
  * A manifest records which artifacts were produced from a resource
  * across all pipeline steps:
- * - resource (physical file) → source-ingestion/resource
- * - source (logical reference) → source-ingestion/source
- * - extraction job → source-ingestion/extraction
- * - semantic unit → semantic-knowledge
- * - projection (vectors) → semantic-processing
+ * - resource (physical file) -> source-ingestion/resource
+ * - source (logical reference) -> source-ingestion/source
+ * - extraction job -> source-ingestion/extraction
+ * - source-knowledge -> source-knowledge (projection hub)
+ * - projection (vectors) -> semantic-processing
+ * - context (optional) -> context-management
  */
 export interface ContentManifestEntry {
   /** Unique manifest ID */
@@ -22,10 +23,12 @@ export interface ContentManifestEntry {
   sourceId: string;
   /** Extraction job ID (in source-ingestion/extraction) */
   extractionJobId: string;
-  /** Semantic unit ID (in semantic-knowledge) */
-  semanticUnitId: string;
+  /** Source-knowledge aggregate ID */
+  sourceKnowledgeId?: string;
   /** Projection ID (in semantic-processing) */
   projectionId: string;
+  /** Context ID (in context-management) — optional */
+  contextId?: string;
   /** Pipeline execution status */
   status: "partial" | "complete" | "failed";
   /** Steps that completed successfully */

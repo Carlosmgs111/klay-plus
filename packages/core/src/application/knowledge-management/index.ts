@@ -2,7 +2,7 @@
  * Knowledge Management — Orchestrator Module
  *
  * Application service for multi-step lifecycle operations on existing
- * semantic units. Coordinates ingestion + knowledge + processing contexts.
+ * contexts. Coordinates ingestion + source-knowledge + processing + context-management.
  *
  * Public API:
  * - KnowledgeManagementPort: the single entry point (interface)

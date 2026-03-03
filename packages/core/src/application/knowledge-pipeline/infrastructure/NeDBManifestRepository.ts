@@ -39,9 +39,9 @@ export class NeDBManifestRepository implements ManifestRepository {
     return store.find((m) => m.sourceId === sourceId);
   }
 
-  async findBySemanticUnitId(semanticUnitId: string): Promise<ContentManifestEntry[]> {
+  async findByContextId(contextId: string): Promise<ContentManifestEntry[]> {
     const store = await this.getStore();
-    return store.find((m) => m.semanticUnitId === semanticUnitId);
+    return store.find((m) => m.contextId === contextId);
   }
 
   async findAll(): Promise<ContentManifestEntry[]> {

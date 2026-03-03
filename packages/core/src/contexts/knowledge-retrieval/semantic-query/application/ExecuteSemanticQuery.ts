@@ -41,7 +41,7 @@ export class ExecuteSemanticQuery {
       .slice(0, query.topK)
       .map((hit) =>
         RetrievalItem.create(
-          hit.semanticUnitId,
+          hit.sourceId,
           hit.content,
           hit.rerankedScore,
           (hit.metadata["version"] as number) ?? 0,
