@@ -21,7 +21,7 @@ export { ProjectionFailed } from "./events/ProjectionFailed";
 export {
   ProjectionNotFoundError,
   ProjectionAlreadyExistsError,
-  ProjectionSemanticUnitIdRequiredError,
+  ProjectionSourceIdRequiredError,
   ProjectionContentRequiredError,
   ProjectionInvalidTypeError,
   ProjectionInvalidStateError,

@@ -11,7 +11,7 @@ import type { ProcessingProfileRepository } from "../../processing-profile/domai
 import type { ProcessingProfileMaterializer } from "../composition/ProcessingProfileMaterializer";
 import { ProcessingProfileId } from "../../processing-profile/domain/ProcessingProfileId";
 import {
-  ProjectionSemanticUnitIdRequiredError,
+  ProjectionSourceIdRequiredError,
   ProjectionContentRequiredError,
   ProjectionProcessingError,
   type ProjectionError,
@@ -19,12 +19,10 @@ import {
 
 export interface GenerateProjectionCommand {
   projectionId: string;
-  semanticUnitId: string;
-  semanticUnitVersion: number;
+  sourceId: string;
   content: string;
   type: ProjectionType;
   processingProfileId: string;
-  sourceId?: string;
 }
 
 export interface GenerateProjectionResult {
@@ -46,8 +44,8 @@ export class GenerateProjection {
   async execute(
     command: GenerateProjectionCommand,
   ): Promise<Result<ProjectionError, GenerateProjectionResult>> {
-    if (!command.semanticUnitId || command.semanticUnitId.trim() === "") {
-      return Result.fail(new ProjectionSemanticUnitIdRequiredError());
+    if (!command.sourceId || command.sourceId.trim() === "") {
+      return Result.fail(new ProjectionSourceIdRequiredError());
     }
 
     if (!command.content || command.content.trim() === "") {
@@ -60,7 +58,7 @@ export class GenerateProjection {
     if (!profile) {
       return Result.fail(
         new ProjectionProcessingError(
-          command.semanticUnitId,
+          command.sourceId,
           `Processing profile '${command.processingProfileId}' not found or not active`,
           "embedding",
         ),
@@ -74,10 +72,9 @@ export class GenerateProjection {
 
     const projection = SemanticProjection.create(
       projectionId,
-      command.semanticUnitId,
-      command.semanticUnitVersion,
-      command.type,
       command.sourceId,
+      command.processingProfileId,
+      command.type,
     );
 
     projection.markProcessing();
@@ -89,12 +86,11 @@ export class GenerateProjection {
       const embeddings = await embeddingStrategy.embedBatch(chunkContents);
 
       const vectorEntries: VectorEntry[] = chunks.map((chunk, i) => ({
-        id: `${command.semanticUnitId}-${command.projectionId}-${chunk.index}`,
-        semanticUnitId: command.semanticUnitId,
+        id: `${command.sourceId}-${command.projectionId}-${chunk.index}`,
+        semanticUnitId: command.sourceId,
         vector: embeddings[i].vector,
         content: chunk.content,
         metadata: {
-          version: command.semanticUnitVersion,
           chunkIndex: chunk.index,
           model: embeddings[i].model,
           projectionId: command.projectionId,
@@ -142,7 +138,7 @@ export class GenerateProjection {
 
       return Result.fail(
         new ProjectionProcessingError(
-          command.semanticUnitId,
+          command.sourceId,
           message,
           phase,
           error instanceof Error ? error : undefined,

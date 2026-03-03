@@ -1,6 +1,5 @@
 import type { SemanticProjectionRepository } from "../../domain/SemanticProjectionRepository";
 import type { SemanticProjection } from "../../domain/SemanticProjection";
-import type { ProjectionType } from "../../domain/ProjectionType";
 import type { ProjectionStatus } from "../../domain/ProjectionStatus";
 import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
 
@@ -8,25 +7,18 @@ export class InMemorySemanticProjectionRepository
   extends BaseInMemoryRepository<SemanticProjection>
   implements SemanticProjectionRepository
 {
-  async findBySemanticUnitId(semanticUnitId: string): Promise<SemanticProjection[]> {
-    return this.findWhere((p) => p.semanticUnitId === semanticUnitId);
+  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
+    return this.findWhere((p) => p.sourceId === sourceId);
   }
 
-  async findBySemanticUnitIdAndType(
-    semanticUnitId: string,
-    type: ProjectionType,
-  ): Promise<SemanticProjection | null> {
+  async findBySourceIdAndProfileId(sourceId: string, profileId: string): Promise<SemanticProjection | null> {
     return this.findOneWhere(
-      (p) => p.semanticUnitId === semanticUnitId && p.type === type,
+      (p) => p.sourceId === sourceId && p.processingProfileId === profileId,
     );
   }
 
   async findByStatus(status: ProjectionStatus): Promise<SemanticProjection[]> {
     return this.findWhere((p) => p.status === status);
-  }
-
-  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
-    return this.findWhere((p) => p.sourceId === sourceId);
   }
 
   async deleteBySourceId(sourceId: string): Promise<void> {

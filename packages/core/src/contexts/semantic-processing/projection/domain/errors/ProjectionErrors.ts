@@ -19,9 +19,9 @@ export class ProjectionAlreadyExistsError extends AlreadyExistsError {
   }
 }
 
-export class ProjectionSemanticUnitIdRequiredError extends ValidationError {
+export class ProjectionSourceIdRequiredError extends ValidationError {
   constructor() {
-    super("SemanticProjection", "semanticUnitId", "Semantic unit ID is required");
+    super("SemanticProjection", "sourceId", "Source ID is required");
   }
 }
 
@@ -89,19 +89,19 @@ export class VectorStoreFailedError extends OperationError {
 
 export class ProjectionProcessingError extends OperationError {
   constructor(
-    semanticUnitId: string,
+    sourceId: string,
     reason: string,
     public readonly phase: "chunking" | "embedding" | "storage",
     public readonly originalError?: Error,
   ) {
-    super("Projection processing", reason, { semanticUnitId, phase });
+    super("Projection processing", reason, { sourceId, phase });
   }
 }
 
 export type ProjectionError =
   | ProjectionNotFoundError
   | ProjectionAlreadyExistsError
-  | ProjectionSemanticUnitIdRequiredError
+  | ProjectionSourceIdRequiredError
   | ProjectionContentRequiredError
   | ProjectionInvalidTypeError
   | ProjectionInvalidStateError

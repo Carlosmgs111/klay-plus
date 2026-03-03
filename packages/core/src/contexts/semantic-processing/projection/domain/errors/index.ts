@@ -1,7 +1,7 @@
 export {
   ProjectionNotFoundError,
   ProjectionAlreadyExistsError,
-  ProjectionSemanticUnitIdRequiredError,
+  ProjectionSourceIdRequiredError,
   ProjectionContentRequiredError,
   ProjectionInvalidTypeError,
   ProjectionInvalidStateError,

@@ -173,16 +173,14 @@ export class SemanticProcessingService {
 
   async processContent(params: {
     projectionId: string;
-    semanticUnitId: string;
-    semanticUnitVersion: number;
+    sourceId: string;
     content: string;
     type: ProjectionType;
     processingProfileId: string;
   }): Promise<Result<DomainError, ProcessContentSuccess>> {
     const result = await this._projection.generateProjection.execute({
       projectionId: params.projectionId,
-      semanticUnitId: params.semanticUnitId,
-      semanticUnitVersion: params.semanticUnitVersion,
+      sourceId: params.sourceId,
       content: params.content,
       type: params.type,
       processingProfileId: params.processingProfileId,
@@ -203,8 +201,7 @@ export class SemanticProcessingService {
   async batchProcess(
     items: Array<{
       projectionId: string;
-      semanticUnitId: string;
-      semanticUnitVersion: number;
+      sourceId: string;
       content: string;
       type: ProjectionType;
       processingProfileId: string;

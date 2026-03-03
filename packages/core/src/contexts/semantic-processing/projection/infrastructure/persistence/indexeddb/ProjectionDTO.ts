@@ -6,8 +6,8 @@ import type { ProjectionStatus } from "../../../domain/ProjectionStatus";
 
 export interface ProjectionDTO {
   id: string;
-  semanticUnitId: string;
-  semanticUnitVersion: number;
+  sourceId: string;
+  processingProfileId: string;
   type: string;
   status: string;
   result: {
@@ -19,14 +19,13 @@ export interface ProjectionDTO {
   } | null;
   error: string | null;
   createdAt: string;
-  sourceId: string | null;
 }
 
 export function toDTO(projection: SemanticProjection): ProjectionDTO {
   return {
     id: projection.id.value,
-    semanticUnitId: projection.semanticUnitId,
-    semanticUnitVersion: projection.semanticUnitVersion,
+    sourceId: projection.sourceId,
+    processingProfileId: projection.processingProfileId,
     type: projection.type,
     status: projection.status,
     result: projection.result
@@ -40,7 +39,6 @@ export function toDTO(projection: SemanticProjection): ProjectionDTO {
       : null,
     error: projection.error,
     createdAt: projection.createdAt.toISOString(),
-    sourceId: projection.sourceId,
   };
 }
 
@@ -56,13 +54,12 @@ export function fromDTO(dto: ProjectionDTO): SemanticProjection {
 
   return SemanticProjection.reconstitute(
     ProjectionId.create(dto.id),
-    dto.semanticUnitId,
-    dto.semanticUnitVersion,
+    dto.sourceId,
+    dto.processingProfileId,
     dto.type as ProjectionType,
     dto.status as ProjectionStatus,
     result,
     dto.error,
     new Date(dto.createdAt),
-    dto.sourceId ?? null,
   );
 }

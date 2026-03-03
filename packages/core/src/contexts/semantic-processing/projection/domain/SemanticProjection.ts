@@ -7,43 +7,40 @@ import { ProjectionGenerated } from "./events/ProjectionGenerated";
 import { ProjectionFailed } from "./events/ProjectionFailed";
 
 export class SemanticProjection extends AggregateRoot<ProjectionId> {
-  private _semanticUnitId: string;
-  private _semanticUnitVersion: number;
+  private _sourceId: string;
+  private _processingProfileId: string;
   private _type: ProjectionType;
   private _status: ProjectionStatus;
   private _result: ProjectionResult | null;
   private _error: string | null;
   private _createdAt: Date;
-  private _sourceId: string | null;
 
   private constructor(
     id: ProjectionId,
-    semanticUnitId: string,
-    semanticUnitVersion: number,
+    sourceId: string,
+    processingProfileId: string,
     type: ProjectionType,
     status: ProjectionStatus,
     result: ProjectionResult | null,
     error: string | null,
     createdAt: Date,
-    sourceId: string | null = null,
   ) {
     super(id);
-    this._semanticUnitId = semanticUnitId;
-    this._semanticUnitVersion = semanticUnitVersion;
+    this._sourceId = sourceId;
+    this._processingProfileId = processingProfileId;
     this._type = type;
     this._status = status;
     this._result = result;
     this._error = error;
     this._createdAt = createdAt;
-    this._sourceId = sourceId;
   }
 
-  get semanticUnitId(): string {
-    return this._semanticUnitId;
+  get sourceId(): string {
+    return this._sourceId;
   }
 
-  get semanticUnitVersion(): number {
-    return this._semanticUnitVersion;
+  get processingProfileId(): string {
+    return this._processingProfileId;
   }
 
   get type(): ProjectionType {
@@ -66,44 +63,38 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
     return this._createdAt;
   }
 
-  get sourceId(): string | null {
-    return this._sourceId;
-  }
-
   static create(
     id: ProjectionId,
-    semanticUnitId: string,
-    semanticUnitVersion: number,
+    sourceId: string,
+    processingProfileId: string,
     type: ProjectionType,
-    sourceId?: string,
   ): SemanticProjection {
-    if (!semanticUnitId) throw new Error("semanticUnitId is required");
+    if (!sourceId) throw new Error("sourceId is required");
+    if (!processingProfileId) throw new Error("processingProfileId is required");
     return new SemanticProjection(
       id,
-      semanticUnitId,
-      semanticUnitVersion,
+      sourceId,
+      processingProfileId,
       type,
       ProjectionStatus.Pending,
       null,
       null,
       new Date(),
-      sourceId ?? null,
     );
   }
 
   static reconstitute(
     id: ProjectionId,
-    semanticUnitId: string,
-    semanticUnitVersion: number,
+    sourceId: string,
+    processingProfileId: string,
     type: ProjectionType,
     status: ProjectionStatus,
     result: ProjectionResult | null,
     error: string | null,
     createdAt: Date,
-    sourceId?: string | null,
   ): SemanticProjection {
     return new SemanticProjection(
-      id, semanticUnitId, semanticUnitVersion, type, status, result, error, createdAt, sourceId ?? null,
+      id, sourceId, processingProfileId, type, status, result, error, createdAt,
     );
   }
 
@@ -127,12 +118,10 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
       eventType: ProjectionGenerated.EVENT_TYPE,
       aggregateId: this.id.value,
       payload: {
-        semanticUnitId: this._semanticUnitId,
-        semanticUnitVersion: this._semanticUnitVersion,
-        projectionType: this._type,
-        processingProfileId: result.processingProfileId,
-        processingProfileVersion: result.processingProfileVersion,
         sourceId: this._sourceId,
+        processingProfileId: this._processingProfileId,
+        projectionType: this._type,
+        processingProfileVersion: result.processingProfileVersion,
       },
     });
   }
@@ -150,7 +139,8 @@ export class SemanticProjection extends AggregateRoot<ProjectionId> {
       eventType: ProjectionFailed.EVENT_TYPE,
       aggregateId: this.id.value,
       payload: {
-        semanticUnitId: this._semanticUnitId,
+        sourceId: this._sourceId,
+        processingProfileId: this._processingProfileId,
         error,
       },
     });

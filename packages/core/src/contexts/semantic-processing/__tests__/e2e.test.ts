@@ -44,7 +44,7 @@ describe("Semantic Processing Context E2E", () => {
       expect(createProfileResult.value.version).toBe(1);
     }
 
-    const semanticUnitId = crypto.randomUUID();
+    const sourceId = crypto.randomUUID();
     const testContent = `
 # Introduction to Machine Learning
 
@@ -70,8 +70,7 @@ There are three main types of machine learning:
 
     const processResult = await service.processContent({
       projectionId: crypto.randomUUID(),
-      semanticUnitId,
-      semanticUnitVersion: 1,
+      sourceId,
       content: testContent,
       type: ProjectionType.Embedding,
       processingProfileId: profileId,
@@ -87,16 +86,14 @@ There are three main types of machine learning:
     const batchItems = [
       {
         projectionId: crypto.randomUUID(),
-        semanticUnitId: crypto.randomUUID(),
-        semanticUnitVersion: 1,
+        sourceId: crypto.randomUUID(),
         content: "Python is a popular programming language for data science.",
         type: ProjectionType.Embedding,
         processingProfileId: profileId,
       },
       {
         projectionId: crypto.randomUUID(),
-        semanticUnitId: crypto.randomUUID(),
-        semanticUnitVersion: 1,
+        sourceId: crypto.randomUUID(),
         content: "JavaScript is widely used for web development.",
         type: ProjectionType.Embedding,
         processingProfileId: profileId,
@@ -110,19 +107,17 @@ There are three main types of machine learning:
     // Empty content should fail
     const emptyContentResult = await service.processContent({
       projectionId: crypto.randomUUID(),
-      semanticUnitId: crypto.randomUUID(),
-      semanticUnitVersion: 1,
+      sourceId: crypto.randomUUID(),
       content: "",
       type: ProjectionType.Embedding,
       processingProfileId: profileId,
     });
     expect(emptyContentResult.isFail()).toBe(true);
 
-    // Empty semantic unit ID should fail
+    // Empty source ID should fail
     const emptyIdResult = await service.processContent({
       projectionId: crypto.randomUUID(),
-      semanticUnitId: "",
-      semanticUnitVersion: 1,
+      sourceId: "",
       content: "Some content",
       type: ProjectionType.Embedding,
       processingProfileId: profileId,
@@ -132,8 +127,7 @@ There are three main types of machine learning:
     // Non-existent profile should fail
     const badProfileResult = await service.processContent({
       projectionId: crypto.randomUUID(),
-      semanticUnitId: crypto.randomUUID(),
-      semanticUnitVersion: 1,
+      sourceId: crypto.randomUUID(),
       content: "Some content",
       type: ProjectionType.Embedding,
       processingProfileId: "non-existent-profile",
@@ -178,8 +172,7 @@ There are three main types of machine learning:
     // Processing with deprecated profile should fail
     const processResult = await service.processContent({
       projectionId: crypto.randomUUID(),
-      semanticUnitId: crypto.randomUUID(),
-      semanticUnitVersion: 1,
+      sourceId: crypto.randomUUID(),
       content: "Some content to process",
       type: ProjectionType.Embedding,
       processingProfileId: profileId,

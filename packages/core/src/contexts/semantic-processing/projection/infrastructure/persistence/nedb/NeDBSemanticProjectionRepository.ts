@@ -1,6 +1,5 @@
 import type { SemanticProjectionRepository } from "../../../domain/SemanticProjectionRepository";
 import type { SemanticProjection } from "../../../domain/SemanticProjection";
-import type { ProjectionType } from "../../../domain/ProjectionType";
 import type { ProjectionStatus } from "../../../domain/ProjectionStatus";
 import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
 import { toDTO, fromDTO, type ProjectionDTO } from "../indexeddb/ProjectionDTO";
@@ -12,25 +11,18 @@ export class NeDBSemanticProjectionRepository
   protected toDTO = toDTO;
   protected fromDTO = fromDTO;
 
-  async findBySemanticUnitId(semanticUnitId: string): Promise<SemanticProjection[]> {
-    return this.findWhere((d) => d.semanticUnitId === semanticUnitId);
+  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
+    return this.findWhere((d) => d.sourceId === sourceId);
   }
 
-  async findBySemanticUnitIdAndType(
-    semanticUnitId: string,
-    type: ProjectionType,
-  ): Promise<SemanticProjection | null> {
+  async findBySourceIdAndProfileId(sourceId: string, profileId: string): Promise<SemanticProjection | null> {
     return this.findOneWhere(
-      (d) => d.semanticUnitId === semanticUnitId && d.type === type,
+      (d) => d.sourceId === sourceId && d.processingProfileId === profileId,
     );
   }
 
   async findByStatus(status: ProjectionStatus): Promise<SemanticProjection[]> {
     return this.findWhere((d) => d.status === status);
-  }
-
-  async findBySourceId(sourceId: string): Promise<SemanticProjection[]> {
-    return this.findWhere((d) => d.sourceId === sourceId);
   }
 
   async deleteBySourceId(sourceId: string): Promise<void> {
