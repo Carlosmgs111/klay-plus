@@ -39,10 +39,10 @@
     "test:watch": "vitest src",
     "test:source-ingestion": "vitest run src/contexts/source-ingestion/__tests__/e2e.test.ts",
     "test:semantic-processing": "vitest run src/contexts/semantic-processing/__tests__/e2e.test.ts",
-    "test:semantic-knowledge": "vitest run src/contexts/semantic-knowledge/__tests__/e2e.test.ts",
+    "test:context-management": "vitest run src/contexts/context-management/__tests__/e2e.test.ts",
+    "test:source-knowledge": "vitest run src/contexts/source-knowledge/__tests__/e2e.test.ts",
     "test:knowledge-retrieval": "vitest run src/contexts/knowledge-retrieval/__tests__/e2e.test.ts",
     "test:orchestrator": "vitest run src/application/knowledge-pipeline/__tests__/e2e.test.ts",
-    "test:integration": "vitest run src/tests/integration/full-pipeline.e2e.test.ts",
     "test:integration:pdf": "node src/tests/integration/run-with-pdf.mjs",
     "test:config": "vitest run src/platform/config/__tests__/config.test.ts"
   },

@@ -138,7 +138,7 @@ The shared kernel provides the building blocks that all bounded contexts depend 
 | Identity  | Has unique ID               | No identity                        |
 | Equality  | Compared by `_id`           | Compared by value (`JSON.stringify`) |
 | Mutability| Mutable state (protected)   | Immutable (`Object.freeze`)        |
-| Example   | `Source`, `SemanticUnit`     | `SourceType`, `UnitSource`, `Chunk`|
+| Example   | `Source`, `Context`, `SourceKnowledge` | `SourceType`, `ProjectionHub`, `Chunk`|
 
 **UniqueId** is a concrete ValueObject wrapping string identifiers. Its factory method `create()` validates that the value is not empty before construction.
 
@@ -213,7 +213,7 @@ DomainError (abstract, extends Error)
        code: "OPERATION_FAILED"
 ```
 
-All are **abstract**. Each bounded context creates concrete subclasses: `SourceNotFoundError`, `SemanticUnitValidationError`, etc. This ensures error codes are **unique per context** and programmatically processable.
+All are **abstract**. Each bounded context creates concrete subclasses: `SourceNotFoundError`, `ContextValidationError`, etc. This ensures error codes are **unique per context** and programmatically processable.
 
 ### 3.5 Repository\<T, Id\> -- Minimal Persistence Port
 
@@ -303,12 +303,13 @@ context-name/
   index.ts                          <-- Public re-exports
 ```
 
-### 4.1 The 4 Bounded Contexts
+### 4.1 The 5 Bounded Contexts
 
 | Context                  | Modules                         | Aggregates                                  | Role                          |
 | ------------------------ | ------------------------------- | ------------------------------------------- | ----------------------------- |
 | **Source Ingestion**      | source, resource, extraction    | Source, Resource, ExtractionJob              | Write: acquires content       |
-| **Semantic Knowledge**   | semantic-unit, lineage          | SemanticUnit, KnowledgeLineage              | Write: represents knowledge   |
+| **Source Knowledge**      | source-knowledge                | SourceKnowledge                             | Write: per-source projection hub |
+| **Context Management**   | context, lineage                | Context, KnowledgeLineage                   | Write: context grouping + lineage |
 | **Semantic Processing**  | projection, processing-profile  | SemanticProjection, ProcessingProfile        | Write: transforms to vectors  |
 | **Knowledge Retrieval**  | semantic-query                  | *(none -- read-only)*                       | Read: semantic search         |
 
@@ -391,31 +392,29 @@ function createSourceIngestionService(
 - `ingestFile()` --> upload resource --> register source --> execute extraction
 - `batchIngestAndExtract()` --> parallelizes multiple ingestions
 
-### 4.5 Semantic Knowledge -- Architectural Detail
+### 4.5 Source Knowledge + Context Management -- Architectural Detail
 
-**2 modules** modeling knowledge representation and traceability:
+**Source Knowledge** (per-source projection hub):
+- `SourceKnowledge` is a per-source hub that tracks projection processing
+- Contains `ProjectionHub` value object with processing states per profile
+- State machine: `Pending --> Processing --> Ready --> Stale`
+- Service methods: createSourceKnowledge, getSourceKnowledge, findBySourceId
 
-**SemanticUnit** (hub model):
-- SemanticUnit is a **hub** -- multiple sources contribute content, each version is an immutable snapshot
-- State machine: `Draft --> Active --> Deprecated --> Archived`
-- **UnitSource**: sourceId, sourceType, resourceId?, extractedContent, contentHash, addedAt
-- **UnitVersion**: version number, processingProfileId, processingProfileVersion, sourceSnapshots[], createdAt, reason
-- **VersionSourceSnapshot**: sourceId, contentHash, projectionIds[]
-- Implicit versioning: addSource/removeSource/reprocess auto-create new versions
-- Rollback = non-destructive pointer move (`_currentVersionNumber`)
-- `currentVersion` is `UnitVersion | null` (null when no sources added yet)
-- SemanticProjection now has nullable `sourceId` for cascade delete support
-- Service methods: createSemanticUnit, addSourceToSemanticUnit, removeSourceFromSemanticUnit, reprocessSemanticUnit, rollbackSemanticUnit, linkSemanticUnits, getLinkedUnits
+**Context Management** (context grouping + lineage):
+- `Context` aggregate groups sources under a named context with metadata
+- Tracks version, description, language, createdBy, requiredProfileId
+- State machine: `Active --> Deprecated --> Archived`
+- Service methods: createContext, addSource, removeSource, getContext, reprocess, rollback, deprecate
 
-**Lineage** (transformation audit):
+**Lineage** (transformation audit, within context-management):
 - `KnowledgeLineage` aggregate: append-only (past transformations are never modified)
 - Each `Transformation` records: type, strategy used, input/output version, parameters, timestamp
 - 6 types: Extraction, Chunking, Enrichment, Embedding, Merge, Split
 - **Does not emit events** -- lineage is inherently an immutable log
 
-**Service** coordinates both modules atomically:
-- `createSemanticUnitWithLineage()` -- creates unit + records Extraction transformation
-- Guarantees every semantic unit has its lineage from the start
+**ContextManagementService** coordinates both modules atomically:
+- `createContext()` -- creates context + records lineage
+- Guarantees every context has its lineage from the start
 
 ### 4.6 Semantic Processing -- Architectural Detail
 
@@ -555,9 +554,12 @@ createKnowledgePlatform(policy)                     <-- Combined entry point (pi
     |               |       +-- resourceFactory(policy) --> repos + storage + use cases
     |               |       +-- extractionFactory(policy) --> repos + extractors + use cases
     |               |
-    |               +-- createSemanticKnowledgeService(policy)
-    |               |       +-- semanticUnitFactory(policy) --> repos + use cases
+    |               +-- createContextManagementService(policy)
+    |               |       +-- contextFactory(policy) --> repos + use cases
     |               |       +-- lineageFactory(policy) --> repos + use cases
+    |               |
+    |               +-- createSourceKnowledgeService(policy)
+    |               |       +-- sourceKnowledgeFactory(policy) --> repos + use cases
     |               |
     |               +-- createSemanticProcessingService(policy)
     |               |       +-- projectionFactory(policy) --> repos + strategies + vector store + use cases
@@ -668,15 +670,14 @@ Consumer calls: pipeline.execute({ sourceType: "PDF", uri: "file:///doc.pdf", ..
     | Returns: { sourceId, resourceId, extractionJobId, extractedText, contentHash }
     |
     v
-[2] CREATE UNIT + ADD SOURCE
-    | SemanticKnowledgeService.createSemanticUnit()
-    |   +-- SemanticUnit.create(metadata) --> SemanticUnitCreated event
-    | SemanticKnowledgeService.addSourceToSemanticUnit(unitId, source)
-    |   +-- UnitSource created with extractedContent, contentHash
-    |   +-- UnitVersion auto-created (immutable snapshot)
-    |   +-- SemanticUnitSourceAdded event
-    |   +-- SemanticUnitVersioned event
-    | Returns: { semanticUnitId, version }
+[2] CREATE CONTEXT + ADD SOURCE
+    | ContextManagementService.createContext()
+    |   +-- Context.create(metadata) --> ContextCreated event
+    | SourceKnowledgeService.addSource(sourceId, source)
+    |   +-- SourceKnowledge hub created with projection tracking
+    |   +-- Context source list updated
+    |   +-- SourceKnowledgeCreated event
+    | Returns: { contextId, version }
     |
     v
 [3] PROCESSING
@@ -696,12 +697,12 @@ Consumer calls: pipeline.execute({ sourceType: "PDF", uri: "file:///doc.pdf", ..
 [4] MANIFEST (best-effort)
     | ManifestRepository.save({
     |   resourceId, sourceId, extractionJobId,
-    |   semanticUnitId, projectionId,
+    |   contextId, projectionId,
     |   status: "complete", completedSteps: ["ingestion", "cataloging", "processing"]
     | })
     |
     v
-Result.ok({ sourceId, resourceId, semanticUnitId, projectionId, ... })
+Result.ok({ sourceId, resourceId, contextId, projectionId, ... })
 ```
 
 ### 7.2 Knowledge Management Flow (ingestAndAddSource)
@@ -716,10 +717,10 @@ Consumer calls: management.ingestAndAddSource({ unitId, file, profileId })
     |
     v
 [2] ADD SOURCE
-    | SemanticKnowledgeService.addSourceToSemanticUnit(unitId, source)
-    |   +-- New UnitSource attached to existing SemanticUnit
-    |   +-- New UnitVersion auto-created with sourceSnapshots[]
-    | Returns: { updatedUnit, newVersion }
+    | ContextManagementService.addSource(contextId, source)
+    |   +-- New source attached to existing Context
+    |   +-- SourceKnowledge hub created for the new source
+    | Returns: { contextId, version }
     |
     v
 [3] PROCESSING
@@ -727,7 +728,7 @@ Consumer calls: management.ingestAndAddSource({ unitId, file, profileId })
     | Returns: { projectionId }
     |
     v
-Result.ok({ sourceId, semanticUnitId, projectionId, version })
+Result.ok({ sourceId, contextId, projectionId, version })
 ```
 
 ### 7.3 Semantic Search (searchKnowledge)
@@ -754,7 +755,7 @@ Consumer calls: pipeline.searchKnowledge({ query: "machine learning", topK: 5 })
     | Trim: take first topK results
     |
     v
-Result.ok({ queryText, items: [{ semanticUnitId, content, score, ... }], totalFound })
+Result.ok({ queryText, items: [{ sourceId, content, score, ... }], totalFound })
 ```
 
 ### 7.4 Error Propagation
@@ -786,12 +787,12 @@ Errors are **wrapped** when crossing boundaries, never lost. The original domain
 
 | Pattern             | Where Used                                      | Implementation                                   |
 | ------------------- | ----------------------------------------------- | ------------------------------------------------ |
-| **Aggregate Root**  | Source, Resource, ExtractionJob, SemanticUnit, KnowledgeLineage, SemanticProjection, ProcessingProfile | `extends AggregateRoot<Id>` with `record()` for events |
+| **Aggregate Root**  | Source, Resource, ExtractionJob, SourceKnowledge, Context, KnowledgeLineage, SemanticProjection, ProcessingProfile | `extends AggregateRoot<Id>` with `record()` for events |
 | **Value Object**    | IDs, States, UnitSource, UnitVersion, Chunk, Embedding, etc. | `extends ValueObject<T>` with `Object.freeze()` |
 | **Repository**      | Every aggregate has its repository              | `implements Repository<T, Id>`                   |
 | **Domain Event**    | 21 events cataloged (see [Section 9](#9-domain-events-catalog)) | `DomainEvent` interface with payload             |
 | **Factory Method**  | `create()` and `reconstitute()` on all aggregates | Static methods on aggregate class                |
-| **Bounded Context** | 4 contexts with explicit boundaries             | Isolated directories, no cross-imports           |
+| **Bounded Context** | 5 contexts with explicit boundaries             | Isolated directories, no cross-imports           |
 
 ### 8.2 Architectural Patterns
 
@@ -840,13 +841,14 @@ Errors are **wrapped** when crossing boundaries, never lost. The original domain
 | Source Ingestion      | `ResourceDeleted`                   | Resource.markDeleted()                         |
 | Source Ingestion      | `ExtractionCompleted`               | ExtractionJob.complete()                       |
 | Source Ingestion      | `ExtractionFailed`                  | ExtractionJob.fail()                           |
-| Semantic Knowledge    | `SemanticUnitCreated`               | SemanticUnit.create()                          |
-| Semantic Knowledge    | `SemanticUnitSourceAdded`           | SemanticUnit.addSource()                       |
-| Semantic Knowledge    | `SemanticUnitSourceRemoved`         | SemanticUnit.removeSource()                    |
-| Semantic Knowledge    | `SemanticUnitVersioned`             | SemanticUnit.addVersion() (auto on source changes) |
-| Semantic Knowledge    | `SemanticUnitDeprecated`            | SemanticUnit.deprecate()                       |
-| Semantic Knowledge    | `SemanticUnitReprocessRequested`    | SemanticUnit.requestReprocessing()             |
-| Semantic Knowledge    | `SemanticUnitRolledBack`            | SemanticUnit.rollback()                        |
+| Source Knowledge      | `SourceKnowledgeCreated`            | SourceKnowledge.create()                       |
+| Context Management    | `ContextCreated`                    | Context.create()                               |
+| Context Management    | `ContextSourceAdded`                | Context.addSource()                            |
+| Context Management    | `ContextSourceRemoved`              | Context.removeSource()                         |
+| Context Management    | `ContextVersioned`                  | Context version auto-increment on changes      |
+| Context Management    | `ContextDeprecated`                 | Context.deprecate()                            |
+| Context Management    | `ContextReprocessRequested`         | Context.requestReprocessing()                  |
+| Context Management    | `ContextRolledBack`                 | Context.rollback()                             |
 | Semantic Processing   | `ProjectionGenerated`               | SemanticProjection.complete()                  |
 | Semantic Processing   | `ProjectionFailed`                  | SemanticProjection.fail()                      |
 | Semantic Processing   | `ProfileCreated`                    | ProcessingProfile.create()                     |
@@ -965,11 +967,11 @@ Events are transient -- no persistence. The publisher is in-memory because the s
 **Vector Store**:
 ```
 VectorEntry (technical DTO, not a domain object):
-  id, semanticUnitId, vector[], content, metadata
+  id, sourceId, vector[], content, metadata
 
 InMemoryVectorWriteStore:
   Map<string, VectorEntry>
-  upsert(), delete(), deleteBySemanticUnitId()
+  upsert(), delete(), deleteBySourceId()
   sharedEntries --> exposes the Map (for cross-context wiring)
 
 hashToVector(content, dimensions) --> number[]
@@ -1054,18 +1056,18 @@ cosineSimilarity(a, b) --> number
 - (-) Additional level of indirection (Materializer)
 - (-) The Materializer needs to know all available strategies
 
-### 11.7 SemanticUnit Hub Model
+### 11.7 Context + SourceKnowledge Split Model
 
-**Decision**: SemanticUnit acts as a hub -- multiple sources contribute content, each version is an immutable snapshot.
+**Decision**: Split the old SemanticUnit hub into two concerns: Context (grouping + metadata) and SourceKnowledge (per-source projection tracking).
 
 **Trade-off**:
-- (+) Supports multi-source knowledge units naturally
-- (+) Immutable versions provide audit trail and rollback
-- (+) Non-destructive rollback (pointer move, no data loss)
-- (-) More complex than single-source model
-- (-) Version snapshots consume more storage
+- (+) Each source gets its own projection hub (simpler processing)
+- (+) Context provides clean grouping semantics without coupling to projections
+- (+) SourceKnowledge tracks processing state per-profile independently
+- (-) Two aggregates to coordinate instead of one
+- (-) Migration from single-hub model
 
-**Reason**: Knowledge often comes from multiple sources. The hub model allows a single SemanticUnit to aggregate content from PDFs, web pages, and manual input while maintaining full version history.
+**Reason**: The old SemanticUnit hub model coupled source management, versioning, and projection tracking in one aggregate. Splitting separates concerns: Context manages grouping and metadata, SourceKnowledge manages per-source projection lifecycle.
 
 ### 11.8 Dual Orchestrator Strategy
 
@@ -1105,18 +1107,29 @@ cosineSimilarity(a, b) --> number
 +--------------------------------------------------------------------+
 
 +--------------------------------------------------------------------+
-|                    SEMANTIC KNOWLEDGE                                |
+|                    SOURCE KNOWLEDGE                                  |
 |                                                                     |
 |  Aggregates:                                                        |
-|    SemanticUnit ---- SemanticUnitRepo --- NeDB|IndexedDB|InMemory   |
-|    KnowledgeLineage - LineageRepo ------- NeDB|IndexedDB|InMemory   |
+|    SourceKnowledge -- SourceKnowledgeRepo - InMemory                |
 |                                                                     |
-|  Value Objects: UnitSource, UnitVersion, VersionSourceSnapshot      |
+|  Value Objects: ProjectionHub                                       |
 |                                                                     |
-|  Events: SemanticUnitCreated, SemanticUnitSourceAdded,              |
-|          SemanticUnitSourceRemoved, SemanticUnitVersioned,           |
-|          SemanticUnitDeprecated, SemanticUnitReprocessRequested,     |
-|          SemanticUnitRolledBack                                     |
+|  Events: SourceKnowledgeCreated                                     |
++--------------------------------------------------------------------+
+
++--------------------------------------------------------------------+
+|                   CONTEXT MANAGEMENT                                 |
+|                                                                     |
+|  Aggregates:                                                        |
+|    Context ---------- ContextRepo -------- InMemory                 |
+|    KnowledgeLineage - LineageRepo -------- NeDB|IndexedDB|InMemory  |
+|                                                                     |
+|  Value Objects: ContextMetadata                                     |
+|                                                                     |
+|  Events: ContextCreated, ContextSourceAdded,                        |
+|          ContextSourceRemoved, ContextVersioned,                    |
+|          ContextDeprecated, ContextReprocessRequested,               |
+|          ContextRolledBack                                          |
 +--------------------------------------------------------------------+
 
 +--------------------------------------------------------------------+
@@ -1293,6 +1306,7 @@ Run this checklist periodically. Every unchecked item is a potential architectur
 | 8  | 2024-09    | [TRADE-OFF] Manifest as DTO, not aggregate                      | Full DDD aggregate with events             | Infrastructure concern, not domain; avoid over-engineering     |
 | 9  | 2024-09    | [TRADE-OFF] KnowledgePipelineError separate from DomainError    | Extend DomainError, union type             | Step tracking does not fit domain error hierarchy              |
 | 10 | 2025-02    | [BOUNDARY] SemanticUnit hub model (multi-source)                | Single-source units, separate merge entity | Knowledge naturally aggregates from multiple sources           |
+| 10a| 2026-03    | [BOUNDARY] Split SemanticUnit into Context + SourceKnowledge    | Keep single hub model                      | Separates grouping from per-source projection tracking         |
 | 11 | 2025-02    | [PATTERN] Immutable UnitVersion snapshots with rollback         | Mutable versions, event-sourced history    | Non-destructive rollback with simpler implementation           |
 | 12 | 2025-02    | [STRUCTURE] Rename Facade --> Service, Origin --> UnitSource     | Keep original names                        | Better semantic clarity; "Service" is the standard DDD term    |
 | 13 | 2025-02    | [STRUCTURE] Dual orchestrator (Pipeline + Management)           | Single orchestrator, command pattern       | Construction vs management flows have different lifecycles     |

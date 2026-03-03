@@ -498,7 +498,8 @@ El Pipeline existe **al mismo nivel que los contextos**, NO dentro de uno. Es el
 ```
 klay+/
 ├── source-ingestion/          ← Bounded Context
-├── semantic-knowledge/        ← Bounded Context
+├── context-management/        ← Bounded Context
+├── source-knowledge/          ← Bounded Context
 ├── semantic-processing/       ← Bounded Context
 ├── knowledge-retrieval/       ← Bounded Context
 ├── shared/                    ← Shared Kernel
@@ -558,7 +559,7 @@ export interface PipelinePolicy {
   // Overrides granulares por contexto (opcional)
   overrides?: {
     ingestion?: Partial<SourceIngestionServicePolicy>;
-    knowledge?: Partial<SemanticKnowledgeServicePolicy>;
+    knowledge?: Partial<ContextManagementServicePolicy>;
     processing?: Partial<SemanticProcessingServicePolicy>;
     retrieval?: Partial<KnowledgeRetrievalServicePolicy>;
   };
@@ -566,7 +567,7 @@ export interface PipelinePolicy {
 
 export interface ResolvedPipelineServices {
   ingestion: SourceIngestionService;
-  knowledge: SemanticKnowledgeService;
+  knowledge: ContextManagementService;
   processing: SemanticProcessingService;
   retrieval: KnowledgeRetrievalService;
 }
@@ -588,8 +589,8 @@ export class PipelineComposer {
           ...policy.overrides?.ingestion,
         }),
       ),
-      import("../../semantic-knowledge/service").then(
-        (m) => m.createSemanticKnowledgeService({
+      import("../../context-management/service").then(
+        (m) => m.createContextManagementService({
           provider: policy.provider,
           ...policy.overrides?.knowledge,
         }),
@@ -630,7 +631,7 @@ export interface IngestDocumentCommand {
   uri: string;
   sourceType: SourceType;
   extractionJobId: string;
-  semanticUnitId: string;
+  contextId: string;
   projectionId: string;
   content: string;
   language: string;
@@ -640,7 +641,7 @@ export interface IngestDocumentCommand {
 
 export interface IngestDocumentSuccess {
   sourceId: string;
-  unitId: string;
+  contextId: string;
   projectionId: string;
   chunksCount: number;
 }
@@ -648,7 +649,7 @@ export interface IngestDocumentSuccess {
 export class IngestDocumentWorkflow {
   constructor(
     private readonly ingestion: SourceIngestionService,
-    private readonly knowledge: SemanticKnowledgeService,
+    private readonly knowledge: ContextManagementService,
     private readonly processing: SemanticProcessingService,
   ) {}
 
@@ -670,12 +671,11 @@ export class IngestDocumentWorkflow {
       );
     }
 
-    // Paso 2: Crear unidad semántica con lineage
-    const knowledgeResult = await this.knowledge.createSemanticUnitWithLineage({
-      id: command.semanticUnitId,
-      sourceId: command.sourceId,
-      sourceType: command.sourceType,
-      content: command.content,
+    // Paso 2: Crear context con lineage
+    const knowledgeResult = await this.knowledge.createContext({
+      id: command.contextId,
+      name: command.sourceName,
+      description: command.content.slice(0, 200),
       language: command.language,
       createdBy: command.createdBy,
     });
@@ -689,8 +689,7 @@ export class IngestDocumentWorkflow {
     // Paso 3: Generar proyección semántica
     const projectionResult = await this.processing.processContent({
       projectionId: command.projectionId,
-      semanticUnitId: command.semanticUnitId,
-      semanticUnitVersion: 1,
+      sourceId: command.sourceId,
       content: command.content,
       type: command.projectionType,
     });
@@ -703,7 +702,7 @@ export class IngestDocumentWorkflow {
 
     return Result.ok({
       sourceId: command.sourceId,
-      unitId: knowledgeResult.value.unitId,
+      contextId: knowledgeResult.value.contextId,
       projectionId: projectionResult.value.projectionId,
       chunksCount: projectionResult.value.chunksCount,
     });
@@ -779,7 +778,7 @@ export class PipelineOrchestrator {
 
   // ─── Direct Service Access ────────────────────────────────
   get ingestion(): SourceIngestionService { return this._services.ingestion; }
-  get knowledge(): SemanticKnowledgeService { return this._services.knowledge; }
+  get knowledge(): ContextManagementService { return this._services.knowledge; }
   get processing(): SemanticProcessingService { return this._services.processing; }
   get retrieval(): KnowledgeRetrievalService { return this._services.retrieval; }
 }
@@ -826,10 +825,10 @@ interface SourceExtractedEvent {
   readonly contentHash: string;
 }
 
-interface SemanticUnitCreatedEvent {
-  readonly eventType: "semantic-knowledge.semantic-unit.created";
-  readonly semanticUnitId: string;
-  readonly content: string;
+interface ContextCreatedEvent {
+  readonly eventType: "context-management.context.created";
+  readonly contextId: string;
+  readonly name: string;
   readonly version: number;
 }
 ```
@@ -837,11 +836,11 @@ interface SemanticUnitCreatedEvent {
 ### 5.2 Flujo de Eventos
 
 ```
-Source Ingestion ──SourceExtracted──▶ Semantic Knowledge
+Source Ingestion ──SourceExtracted──▶ Context Management
                                           │
-                                 SemanticUnitCreated
-                                 SemanticUnitVersioned
-                                 ReprocessRequested
+                                    ContextCreated
+                                    ContextVersioned
+                                    ReprocessRequested
                                           │
                                           ▼
 Knowledge Retrieval ◀──ProjectionGenerated── Semantic Processing
@@ -931,12 +930,12 @@ import { SemanticProjectionRepository } from "../../semantic-processing/projecti
 // ✅ CORRECTO - Solo el Pipeline coordina services
 // pipeline/use-cases/IngestDocumentWorkflow.ts
 import type { SourceIngestionService } from "../../source-ingestion/service";
-import type { SemanticKnowledgeService } from "../../semantic-knowledge/service";
+import type { ContextManagementService } from "../../context-management/service";
 
 export class IngestDocumentWorkflow {
   constructor(
     private readonly ingestion: SourceIngestionService,  // Solo API pública
-    private readonly knowledge: SemanticKnowledgeService, // Solo API pública
+    private readonly knowledge: ContextManagementService, // Solo API pública
   ) {}
 }
 ```

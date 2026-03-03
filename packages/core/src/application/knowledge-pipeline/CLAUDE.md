@@ -15,7 +15,7 @@ Punto de entrada unico. Primary port en el sentido hexagonal: los adaptadores (U
 | `execute` | Pipeline completo: Ingest → CreateUnit → AddSource → Process | Ingestion, Knowledge, Processing |
 | `ingestDocument` | Registra source + extrae texto | Ingestion |
 | `processDocument` | Chunking + embeddings + vector storage | Processing |
-| `catalogDocument` | Crea semantic unit + lineage | Knowledge |
+| `catalogDocument` | Crea context + lineage | Context Management |
 | `searchKnowledge` | Busqueda semantica por similitud | Retrieval |
 | `createProcessingProfile` | Crea perfil de procesamiento | Processing |
 | `getManifest` | Consulta trazabilidad cross-context | ManifestRepository |
@@ -58,7 +58,7 @@ Tracker cross-context que asocia todos los artefactos producidos por un document
 | `resourceId` | Resource fisico (source-ingestion/resource) |
 | `sourceId` | Referencia logica (source-ingestion/source) |
 | `extractionJobId` | Job de extraccion (source-ingestion/extraction) |
-| `semanticUnitId` | Unidad semantica (semantic-knowledge) |
+| `contextId` | Context grouping (context-management) |
 | `projectionId` | Proyeccion vectorial (semantic-processing) |
 | `status` | `partial` / `complete` / `failed` |
 | `completedSteps` | Steps completados exitosamente |
@@ -128,7 +128,7 @@ Input (sourceId, uri, type, profileId, ...)
 [1. Ingestion] → registra source + extrae texto → contentHash, extractedText
     |
     v
-[2. Cataloging] → crea SemanticUnit (name, description) + registra lineage → unitId
+[2. Cataloging] → crea Context (name, description) + registra lineage → contextId
     |
     v
 [3. AddSource] → agrega fuente a la unidad → version 1 con snapshot

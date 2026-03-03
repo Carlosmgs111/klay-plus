@@ -190,7 +190,7 @@ export class PipelineComposer {
     // 1. Contextos independientes (paralelo)
     const [ingestion, knowledge] = await Promise.all([
       createSourceIngestionService({ provider: policy.provider }),
-      createSemanticKnowledgeService({ provider: policy.provider }),
+      createContextManagementService({ provider: policy.provider }),
     ]);
 
     // 2. Contextos con dependencias (secuencial)
@@ -211,7 +211,7 @@ export class PipelineComposer {
 export class IngestDocumentWorkflow {
   constructor(
     private readonly ingestion: SourceIngestionService,
-    private readonly knowledge: SemanticKnowledgeService,
+    private readonly knowledge: ContextManagementService,
     private readonly processing: SemanticProcessingService,
   ) {}
 
@@ -221,7 +221,7 @@ export class IngestDocumentWorkflow {
     if (step1.isFail()) return Result.fail(PipelineError.fromStep("ingestion", step1.error));
 
     // Paso 2: Crear unidad semántica
-    const step2 = await this.knowledge.createSemanticUnitWithLineage({...});
+    const step2 = await this.knowledge.createContext({...});
     if (step2.isFail()) return Result.fail(PipelineError.fromStep("knowledge", step2.error, ["ingestion"]));
 
     // Paso 3: Generar proyección

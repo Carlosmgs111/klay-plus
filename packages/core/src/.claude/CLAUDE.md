@@ -24,7 +24,7 @@ Plataforma de gestion de conocimiento semantico: transforma contenido (archivos,
 ```
 adapters/       REST + UI adapters (entry points for consumers)
 application/    Orchestration layer (coordinates bounded contexts)
-contexts/       4 Bounded Contexts (domain core)
+contexts/       5 Bounded Contexts (domain core)
 platform/       Shared infra (config, persistence, eventing, vectors)
 shared/         DDD building blocks (AggregateRoot, Result, ValueObject)
 ```
@@ -36,7 +36,8 @@ Each context has its own `CLAUDE.md` with full entity/port/event specs.
 | Context | Subdominio | Service | Modules |
 |---------|-----------|---------|---------|
 | `source-ingestion/` | Adquisicion + extraccion de texto | `SourceIngestionService` | source, resource, extraction |
-| `semantic-knowledge/` | Representacion + lineage | `SemanticKnowledgeService` | semantic-unit, lineage |
+| `source-knowledge/` | Per-source projection hub + versioning | `SourceKnowledgeService` | source-knowledge |
+| `context-management/` | Context grouping + lineage | `ContextManagementService` | context, lineage |
 | `semantic-processing/` | Chunking + embeddings + vector store | `SemanticProcessingService` | projection, processing-profile |
 | `knowledge-retrieval/` | Busqueda semantica (read side) | `KnowledgeRetrievalService` | semantic-query |
 
@@ -57,7 +58,7 @@ Operaciones: `ingestAndAddSource` (Ingestion → AddSource → Processing)
 ### Knowledge Lifecycle Orchestrator (`application/knowledge-lifecycle/`)
 Operaciones atomicas de ciclo de vida sobre unidades semanticas existentes. Coordina knowledge + processing contexts.
 
-Operaciones: `removeSource`, `reprocessUnit`, `rollbackUnit`, `linkUnits`, `unlinkUnits`
+Operaciones: `removeSource`, `reprocessContext`, `rollbackContext`, `linkContexts`, `unlinkContexts`
 
 **Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` — retorna `{ pipeline, management, lifecycle }`
 
@@ -65,7 +66,8 @@ Operaciones: `removeSource`, `reprocessUnit`, `rollbackUnit`, `linkUnits`, `unli
 
 ```
 Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
-  → [Semantic Knowledge] → SemanticUnit hub + version con snapshot
+  → [Context Management] → Context grouping + lineage
+  → [Source Knowledge] → SourceKnowledge hub + version con snapshot
   → [Semantic Processing] → Chunking + Embedding + Vector storage
   → [Knowledge Retrieval] → Semantic query + Ranking → RetrievalResult
 ```

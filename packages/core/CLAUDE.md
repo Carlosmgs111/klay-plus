@@ -12,7 +12,7 @@ pnpm --filter @klay/core test    # 155 tests (vitest), 153 pass + 2 skipped
 
 ```
 src/
-  contexts/       # 4 bounded contexts (source-ingestion, semantic-knowledge, semantic-processing, knowledge-retrieval)
+  contexts/       # 5 bounded contexts (source-ingestion, source-knowledge, context-management, semantic-processing, knowledge-retrieval)
   application/    # 3 Orchestrators: KnowledgePipelineOrchestrator, KnowledgeManagementOrchestrator, KnowledgeLifecycleOrchestrator
   adapters/       # REST + UI adapters (3 each: Pipeline, Management, Lifecycle)
   platform/       # Shared infra: persistence, eventing, vector stores
