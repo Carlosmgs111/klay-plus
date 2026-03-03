@@ -41,7 +41,7 @@ resolveSemanticProcessingModules(policy)
 Gestiona el ciclo de vida de transformar contenido en representaciones vectoriales. Orquesta chunking, embedding y almacenamiento vectorial.
 
 **Aggregate Root**: `SemanticProjection` — Constructor privado + `create()` / `reconstitute()`
-- Propiedades: semanticUnitId, semanticUnitVersion, sourceId (nullable), type (`ProjectionType`), status, result, error, createdAt
+- Propiedades: sourceId, processingProfileId, type (`ProjectionType`), status, result, error, createdAt
 - Ciclo de vida: `Pending` → `Processing` → `Completed` / `Failed`
 - Maquina de estados: `create()` → `markProcessing()` → `complete(result)` / `fail(error)`
 
@@ -50,7 +50,7 @@ Gestiona el ciclo de vida de transformar contenido en representaciones vectorial
 - `ProjectionStatus` (Pending, Processing, Completed, Failed)
 - `ProjectionResult` — type, data, processingProfileId, version, generatedAt
 
-**Eventos**: `ProjectionGenerated` (semanticUnitId, version, type, profileId), `ProjectionFailed` (semanticUnitId, error)
+**Eventos**: `ProjectionGenerated` (sourceId, processingProfileId, projectionType, processingProfileVersion), `ProjectionFailed` (sourceId, processingProfileId, error)
 
 **Use Cases**: `GenerateProjection`
 
@@ -65,7 +65,7 @@ Pipeline de GenerateProjection:
 - `SemanticProjectionRepository` — CRUD + `findBySourceId()`, `deleteBySourceId()`
 - `ChunkingStrategy` — segmentacion de texto (`strategyId`, `version`, `chunk()`)
 - `EmbeddingStrategy` — generacion de embeddings (`embed()`, `embedBatch()`)
-- `VectorWriteStore` — escritura de vectores (`upsert()`, `delete()`, `deleteBySemanticUnitId()`, `deleteBySourceId()`)
+- `VectorWriteStore` — escritura de vectores (`upsert()`, `delete()`, `deleteByProjectionId()`, `deleteBySourceId()`)
 
 **Chunking impls**: `FixedSizeChunker` (`fixed-{size}`), `SentenceChunker` (`sentence`), `RecursiveChunker` (`recursive-{size}`), `ChunkerFactory`, `BaseChunker`
 **Embedding impls**: `HashEmbeddingStrategy` (`hash`, testing), `AISdkEmbeddingStrategy` (`ai-sdk-{provider}`, server), `WebLLMEmbeddingStrategy` (`webllm`, browser)

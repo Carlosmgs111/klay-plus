@@ -22,14 +22,6 @@ export class IndexedDBVectorWriteStore implements VectorWriteStore {
     }
   }
 
-  async deleteBySemanticUnitId(semanticUnitId: string): Promise<void> {
-    const all = await this.store.getAll();
-    const matching = all.filter((d) => d.semanticUnitId === semanticUnitId);
-    for (const dto of matching) {
-      await this.store.remove(dto.id);
-    }
-  }
-
   async deleteByProjectionId(projectionId: string): Promise<void> {
     const all = await this.store.getAll();
     const matching = all.filter((d) => d.metadata?.projectionId === projectionId);

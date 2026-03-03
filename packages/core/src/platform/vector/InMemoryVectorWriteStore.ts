@@ -22,14 +22,6 @@ export class InMemoryVectorWriteStore {
     }
   }
 
-  async deleteBySemanticUnitId(semanticUnitId: string): Promise<void> {
-    for (const [id, entry] of this.entries) {
-      if (entry.semanticUnitId === semanticUnitId) {
-        this.entries.delete(id);
-      }
-    }
-  }
-
   async deleteByProjectionId(projectionId: string): Promise<void> {
     for (const [id, entry] of this.entries) {
       if (entry.metadata?.projectionId === projectionId) {
