@@ -24,6 +24,31 @@ export { ContextRolledBack } from "./context/domain/events/ContextRolledBack";
 
 export { InMemoryContextRepository } from "./context/infrastructure/InMemoryContextRepository";
 
+// ── Lineage Domain ─────────────────────────────────────────────────
+
+export {
+  KnowledgeLineage,
+  LineageId,
+  Transformation,
+  TransformationType,
+  Trace,
+} from "./lineage/domain";
+
+export type { KnowledgeLineageRepository } from "./lineage/domain";
+
+// ── Lineage Infrastructure ─────────────────────────────────────────
+
+export { InMemoryKnowledgeLineageRepository } from "./lineage/infrastructure/persistence/InMemoryKnowledgeLineageRepository";
+
+// ── Lineage Composition ────────────────────────────────────────────
+
+export { lineageFactory } from "./lineage/composition";
+export type {
+  LineageInfrastructurePolicy,
+  ResolvedLineageInfra,
+  LineageFactoryResult,
+} from "./lineage/composition";
+
 // ── Service ─────────────────────────────────────────────────────────
 
 export {
