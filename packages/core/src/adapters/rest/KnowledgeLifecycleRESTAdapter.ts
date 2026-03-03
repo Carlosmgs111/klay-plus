@@ -1,10 +1,10 @@
 import type { KnowledgeLifecyclePort } from "../../application/knowledge-lifecycle/contracts/KnowledgeLifecyclePort";
 import type {
   RemoveSourceInput,
-  ReprocessUnitInput,
-  RollbackUnitInput,
-  LinkUnitsInput,
-  UnlinkUnitsInput,
+  ReprocessContextInput,
+  RollbackContextInput,
+  LinkContextsInput,
+  UnlinkContextsInput,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter";
 
@@ -17,27 +17,27 @@ export class KnowledgeLifecycleRESTAdapter {
     return this._toResponse(result);
   }
 
-  async reprocessUnit(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as ReprocessUnitInput;
-    const result = await this._lifecycle.reprocessUnit(input);
+  async reprocessContext(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as ReprocessContextInput;
+    const result = await this._lifecycle.reprocessContext(input);
     return this._toResponse(result);
   }
 
-  async rollbackUnit(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as RollbackUnitInput;
-    const result = await this._lifecycle.rollbackUnit(input);
+  async rollbackContext(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as RollbackContextInput;
+    const result = await this._lifecycle.rollbackContext(input);
     return this._toResponse(result);
   }
 
-  async linkUnits(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as LinkUnitsInput;
-    const result = await this._lifecycle.linkUnits(input);
+  async linkContexts(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as LinkContextsInput;
+    const result = await this._lifecycle.linkContexts(input);
     return this._toResponse(result);
   }
 
-  async unlinkUnits(req: RESTRequest): Promise<RESTResponse> {
-    const input = req.body as UnlinkUnitsInput;
-    const result = await this._lifecycle.unlinkUnits(input);
+  async unlinkContexts(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as UnlinkContextsInput;
+    const result = await this._lifecycle.unlinkContexts(input);
     return this._toResponse(result);
   }
 

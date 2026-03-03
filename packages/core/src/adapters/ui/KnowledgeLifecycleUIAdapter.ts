@@ -2,14 +2,14 @@ import type { KnowledgeLifecyclePort } from "../../application/knowledge-lifecyc
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { UIResult } from "./KnowledgePipelineUIAdapter";
 
@@ -21,23 +21,23 @@ export class KnowledgeLifecycleUIAdapter {
     return this._unwrap(result);
   }
 
-  async reprocessUnit(input: ReprocessUnitInput): Promise<UIResult<ReprocessUnitResult>> {
-    const result = await this._lifecycle.reprocessUnit(input);
+  async reprocessContext(input: ReprocessContextInput): Promise<UIResult<ReprocessContextResult>> {
+    const result = await this._lifecycle.reprocessContext(input);
     return this._unwrap(result);
   }
 
-  async rollbackUnit(input: RollbackUnitInput): Promise<UIResult<RollbackUnitResult>> {
-    const result = await this._lifecycle.rollbackUnit(input);
+  async rollbackContext(input: RollbackContextInput): Promise<UIResult<RollbackContextResult>> {
+    const result = await this._lifecycle.rollbackContext(input);
     return this._unwrap(result);
   }
 
-  async linkUnits(input: LinkUnitsInput): Promise<UIResult<LinkUnitsResult>> {
-    const result = await this._lifecycle.linkUnits(input);
+  async linkContexts(input: LinkContextsInput): Promise<UIResult<LinkContextsResult>> {
+    const result = await this._lifecycle.linkContexts(input);
     return this._unwrap(result);
   }
 
-  async unlinkUnits(input: UnlinkUnitsInput): Promise<UIResult<UnlinkUnitsResult>> {
-    const result = await this._lifecycle.unlinkUnits(input);
+  async unlinkContexts(input: UnlinkContextsInput): Promise<UIResult<UnlinkContextsResult>> {
+    const result = await this._lifecycle.unlinkContexts(input);
     return this._unwrap(result);
   }
 

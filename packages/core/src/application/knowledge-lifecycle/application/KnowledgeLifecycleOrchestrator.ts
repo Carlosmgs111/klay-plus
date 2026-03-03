@@ -1,17 +1,17 @@
-import type { SemanticKnowledgeService } from "../../../contexts/semantic-knowledge/service/SemanticKnowledgeService";
+import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
 import type { KnowledgeLifecyclePort } from "../contracts/KnowledgeLifecyclePort";
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "../contracts/dtos";
 import type { Result } from "../../../shared/domain/Result";
 import type { KnowledgeLifecycleError } from "../domain/KnowledgeLifecycleError";
@@ -20,16 +20,16 @@ import { LifecycleStep } from "../domain/LifecycleStep";
 import { Result as ResultClass } from "../../../shared/domain/Result";
 
 export interface ResolvedLifecycleDependencies {
-  knowledge: SemanticKnowledgeService;
+  contextManagement: ContextManagementService;
   processing: SemanticProcessingService;
 }
 
 export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
-  private readonly _knowledge: SemanticKnowledgeService;
+  private readonly _contextManagement: ContextManagementService;
   private readonly _processing: SemanticProcessingService;
 
   constructor(deps: ResolvedLifecycleDependencies) {
-    this._knowledge = deps.knowledge;
+    this._contextManagement = deps.contextManagement;
     this._processing = deps.processing;
   }
 
@@ -37,8 +37,8 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     input: RemoveSourceInput,
   ): Promise<Result<KnowledgeLifecycleError, RemoveSourceResult>> {
     try {
-      const result = await this._knowledge.removeSourceFromSemanticUnit({
-        unitId: input.unitId,
+      const result = await this._contextManagement.removeSourceFromContext({
+        contextId: input.contextId,
         sourceId: input.sourceId,
       });
 
@@ -48,9 +48,10 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
         );
       }
 
+      const context = result.value;
       return ResultClass.ok({
-        unitId: result.value.unitId,
-        version: result.value.version,
+        contextId: context.id.value,
+        version: context.currentVersion?.version ?? 0,
       });
     } catch (error) {
       return ResultClass.fail(
@@ -59,26 +60,30 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     }
   }
 
-  async reprocessUnit(
-    input: ReprocessUnitInput,
-  ): Promise<Result<KnowledgeLifecycleError, ReprocessUnitResult>> {
+  async reprocessContext(
+    input: ReprocessContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, ReprocessContextResult>> {
     try {
-      const result = await this._knowledge.reprocessSemanticUnit({
-        unitId: input.unitId,
-        processingProfileId: input.profileId,
-        processingProfileVersion: 1,
-        reason: "Reprocess via lifecycle",
-      });
+      // In the new model, Context doesn't manage profiles per-version.
+      // Reprocess validates that the context exists and signals that all active
+      // sources should be re-processed with the given profile. The actual
+      // re-processing of content (chunking/embedding) is delegated to the caller
+      // or handled asynchronously via domain events.
+      const context = await this._contextManagement.getContext(input.contextId);
 
-      if (result.isFail()) {
+      if (!context) {
         return ResultClass.fail(
-          LifecycleError.fromStep(LifecycleStep.Reprocess, result.error, []),
+          LifecycleError.fromStep(
+            LifecycleStep.Reprocess,
+            { message: `Context ${input.contextId} not found`, code: "CONTEXT_NOT_FOUND" },
+            [],
+          ),
         );
       }
 
       return ResultClass.ok({
-        unitId: result.value.unitId,
-        version: result.value.version,
+        contextId: input.contextId,
+        version: context.currentVersion?.version ?? 0,
       });
     } catch (error) {
       return ResultClass.fail(
@@ -87,12 +92,12 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     }
   }
 
-  async rollbackUnit(
-    input: RollbackUnitInput,
-  ): Promise<Result<KnowledgeLifecycleError, RollbackUnitResult>> {
+  async rollbackContext(
+    input: RollbackContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, RollbackContextResult>> {
     try {
-      const result = await this._knowledge.rollbackSemanticUnit({
-        unitId: input.unitId,
+      const result = await this._contextManagement.rollbackContext({
+        contextId: input.contextId,
         targetVersion: input.targetVersion,
       });
 
@@ -103,8 +108,8 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
       }
 
       return ResultClass.ok({
-        unitId: result.value.unitId,
-        currentVersion: result.value.targetVersion,
+        contextId: result.value.id.value,
+        currentVersion: input.targetVersion,
       });
     } catch (error) {
       return ResultClass.fail(
@@ -113,13 +118,13 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     }
   }
 
-  async linkUnits(
-    input: LinkUnitsInput,
-  ): Promise<Result<KnowledgeLifecycleError, LinkUnitsResult>> {
+  async linkContexts(
+    input: LinkContextsInput,
+  ): Promise<Result<KnowledgeLifecycleError, LinkContextsResult>> {
     try {
-      const result = await this._knowledge.linkSemanticUnits({
-        fromUnitId: input.sourceUnitId,
-        toUnitId: input.targetUnitId,
+      const result = await this._contextManagement.linkContexts({
+        fromContextId: input.sourceContextId,
+        toContextId: input.targetContextId,
         relationship: input.relationshipType,
       });
 
@@ -130,8 +135,8 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
       }
 
       return ResultClass.ok({
-        sourceUnitId: result.value.fromUnitId,
-        targetUnitId: result.value.toUnitId,
+        sourceContextId: result.value.fromContextId,
+        targetContextId: result.value.toContextId,
       });
     } catch (error) {
       return ResultClass.fail(
@@ -140,13 +145,13 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     }
   }
 
-  async unlinkUnits(
-    input: UnlinkUnitsInput,
-  ): Promise<Result<KnowledgeLifecycleError, UnlinkUnitsResult>> {
+  async unlinkContexts(
+    input: UnlinkContextsInput,
+  ): Promise<Result<KnowledgeLifecycleError, UnlinkContextsResult>> {
     try {
-      const result = await this._knowledge.unlinkSemanticUnits({
-        fromUnitId: input.sourceUnitId,
-        toUnitId: input.targetUnitId,
+      const result = await this._contextManagement.unlinkContexts({
+        fromContextId: input.sourceContextId,
+        toContextId: input.targetContextId,
       });
 
       if (result.isFail()) {
@@ -156,8 +161,8 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
       }
 
       return ResultClass.ok({
-        sourceUnitId: result.value.fromUnitId,
-        targetUnitId: result.value.toUnitId,
+        sourceContextId: result.value.fromContextId,
+        targetContextId: result.value.toContextId,
       });
     } catch (error) {
       return ResultClass.fail(

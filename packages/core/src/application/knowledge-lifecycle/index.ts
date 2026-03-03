@@ -3,14 +3,14 @@ export type { KnowledgeLifecyclePort } from "./contracts/KnowledgeLifecyclePort"
 export type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "./contracts/dtos";
 
 export { KnowledgeLifecycleError } from "./domain/KnowledgeLifecycleError";

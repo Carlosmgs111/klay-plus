@@ -28,13 +28,18 @@ export async function createKnowledgePlatform(
   const deps = await resolvePipelineDependencies(policy);
 
   const pipeline = new KnowledgePipelineOrchestrator(deps);
+
+  // ── Management uses new services from pipeline deps ──
   const management = new KnowledgeManagementOrchestrator({
     ingestion: deps.ingestion,
-    knowledge: deps.knowledge,
+    sourceKnowledge: deps.sourceKnowledge,
     processing: deps.processing,
+    contextManagement: deps.contextManagement,
   });
+
+  // ── Lifecycle uses ContextManagementService (same instance as pipeline/management) ──
   const lifecycle = new KnowledgeLifecycleOrchestrator({
-    knowledge: deps.knowledge,
+    contextManagement: deps.contextManagement,
     processing: deps.processing,
   });
 

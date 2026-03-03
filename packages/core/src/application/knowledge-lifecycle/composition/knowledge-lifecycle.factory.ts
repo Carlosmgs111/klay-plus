@@ -12,29 +12,45 @@ async function resolveLifecycleDependencies(
   policy: KnowledgeLifecyclePolicy,
 ): Promise<ResolvedLifecycleDependencies> {
   const [
-    { createSemanticKnowledgeService },
+    { createContextManagementContext },
     { createSemanticProcessingService },
   ] = await Promise.all([
-    import("../../../contexts/semantic-knowledge/service"),
+    import("../../../contexts/context-management/composition/factory"),
     import("../../../contexts/semantic-processing/service"),
   ]);
 
-  const [knowledge, processing] = await Promise.all([
-    createSemanticKnowledgeService({
-      provider: policy.provider,
-      dbPath: policy.dbPath,
-      dbName: policy.dbName,
-      configOverrides: policy.configOverrides,
-    }),
-    createSemanticProcessingService({
-      provider: policy.provider,
-      dbPath: policy.dbPath,
-      dbName: policy.dbName,
-      configOverrides: policy.configOverrides,
-    }),
-  ]);
+  // ── Context-management infra ──────────────────────────────────────
+  const { InMemoryEventPublisher } = await import(
+    "../../../platform/eventing/InMemoryEventPublisher"
+  );
+  const { InMemoryContextRepository } = await import(
+    "../../../contexts/context-management/context/infrastructure/InMemoryContextRepository"
+  );
+  const { lineageFactory } = await import(
+    "../../../contexts/context-management/lineage/composition/factory"
+  );
 
-  return { knowledge, processing };
+  const { infra: lineageInfra } = await lineageFactory({
+    provider: policy.provider,
+    dbPath: policy.dbPath,
+    dbName: policy.dbName,
+  });
+
+  const { service: contextManagement } = createContextManagementContext({
+    contextRepository: new InMemoryContextRepository(),
+    contextEventPublisher: new InMemoryEventPublisher(),
+    lineageRepository: lineageInfra.repository,
+    lineageEventPublisher: lineageInfra.eventPublisher,
+  });
+
+  const processing = await createSemanticProcessingService({
+    provider: policy.provider,
+    dbPath: policy.dbPath,
+    dbName: policy.dbName,
+    configOverrides: policy.configOverrides,
+  });
+
+  return { contextManagement, processing };
 }
 
 export async function createKnowledgeLifecycle(

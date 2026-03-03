@@ -3,14 +3,14 @@ import type { KnowledgeLifecycleError } from "../domain/KnowledgeLifecycleError"
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "./dtos";
 
 export interface KnowledgeLifecyclePort {
@@ -18,19 +18,19 @@ export interface KnowledgeLifecyclePort {
     input: RemoveSourceInput,
   ): Promise<Result<KnowledgeLifecycleError, RemoveSourceResult>>;
 
-  reprocessUnit(
-    input: ReprocessUnitInput,
-  ): Promise<Result<KnowledgeLifecycleError, ReprocessUnitResult>>;
+  reprocessContext(
+    input: ReprocessContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, ReprocessContextResult>>;
 
-  rollbackUnit(
-    input: RollbackUnitInput,
-  ): Promise<Result<KnowledgeLifecycleError, RollbackUnitResult>>;
+  rollbackContext(
+    input: RollbackContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, RollbackContextResult>>;
 
-  linkUnits(
-    input: LinkUnitsInput,
-  ): Promise<Result<KnowledgeLifecycleError, LinkUnitsResult>>;
+  linkContexts(
+    input: LinkContextsInput,
+  ): Promise<Result<KnowledgeLifecycleError, LinkContextsResult>>;
 
-  unlinkUnits(
-    input: UnlinkUnitsInput,
-  ): Promise<Result<KnowledgeLifecycleError, UnlinkUnitsResult>>;
+  unlinkContexts(
+    input: UnlinkContextsInput,
+  ): Promise<Result<KnowledgeLifecycleError, UnlinkContextsResult>>;
 }

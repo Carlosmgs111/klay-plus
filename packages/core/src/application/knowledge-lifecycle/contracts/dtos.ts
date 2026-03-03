@@ -1,50 +1,50 @@
 export interface RemoveSourceInput {
-  unitId: string;
+  contextId: string;
   sourceId: string;
 }
 
 export interface RemoveSourceResult {
-  unitId: string;
+  contextId: string;
   version: number;
 }
 
-export interface ReprocessUnitInput {
-  unitId: string;
+export interface ReprocessContextInput {
+  contextId: string;
   profileId: string;
 }
 
-export interface ReprocessUnitResult {
-  unitId: string;
+export interface ReprocessContextResult {
+  contextId: string;
   version: number;
 }
 
-export interface RollbackUnitInput {
-  unitId: string;
+export interface RollbackContextInput {
+  contextId: string;
   targetVersion: number;
 }
 
-export interface RollbackUnitResult {
-  unitId: string;
+export interface RollbackContextResult {
+  contextId: string;
   currentVersion: number;
 }
 
-export interface LinkUnitsInput {
-  sourceUnitId: string;
-  targetUnitId: string;
+export interface LinkContextsInput {
+  sourceContextId: string;
+  targetContextId: string;
   relationshipType: string;
 }
 
-export interface LinkUnitsResult {
-  sourceUnitId: string;
-  targetUnitId: string;
+export interface LinkContextsResult {
+  sourceContextId: string;
+  targetContextId: string;
 }
 
-export interface UnlinkUnitsInput {
-  sourceUnitId: string;
-  targetUnitId: string;
+export interface UnlinkContextsInput {
+  sourceContextId: string;
+  targetContextId: string;
 }
 
-export interface UnlinkUnitsResult {
-  sourceUnitId: string;
-  targetUnitId: string;
+export interface UnlinkContextsResult {
+  sourceContextId: string;
+  targetContextId: string;
 }

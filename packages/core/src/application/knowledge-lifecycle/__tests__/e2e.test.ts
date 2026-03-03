@@ -1,3 +1,16 @@
+/**
+ * Knowledge Lifecycle Orchestrator -- E2E Tests
+ *
+ * Tests lifecycle operations on existing contexts using in-memory infrastructure.
+ * Validates removeSource, reprocessContext, rollbackContext, linkContexts, and unlinkContexts.
+ *
+ * Updated for the new domain model:
+ * - Context (context-management) replaces SemanticUnit grouping
+ * - SourceKnowledge (source-knowledge) manages per-source projection hubs
+ * - ContextManagementService replaces SemanticKnowledgeService
+ * - linkContexts/unlinkContexts use lineage sub-domain within context-management
+ */
+
 import { describe, it, expect, beforeAll } from "vitest";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -13,7 +26,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, "../../../tests/integration/fixtures");
 
-describe("Knowledge Lifecycle Orchestrator — E2E", () => {
+describe("Knowledge Lifecycle Orchestrator -- E2E", () => {
   let pipeline: KnowledgePipelinePort;
   let management: KnowledgeManagementPort;
   let lifecycle: KnowledgeLifecyclePort;
@@ -42,8 +55,19 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
   });
 
   describe("removeSource", () => {
-    it("should remove a source from a unit with multiple sources", async () => {
-      // Create unit with first source via pipeline
+    it("should remove a source from a context with multiple sources", async () => {
+      // Create a context
+      const ctxResult = await pipeline.catalogDocument({
+        contextId: "ctx-lc-rm-001",
+        name: "Remove Source Test",
+        description: "Context for testing source removal",
+        language: "en",
+        createdBy: "test",
+        requiredProfileId: profileId,
+      });
+      expect(ctxResult.isOk()).toBe(true);
+
+      // Add first source via pipeline (creates source-knowledge + adds to context)
       const dddFile = path.join(FIXTURES_DIR, "ddd-overview.txt");
       const execResult = await pipeline.execute({
         sourceId: "src-lc-rm-001",
@@ -52,7 +76,7 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
         sourceType: "PLAIN_TEXT",
         extractionJobId: "job-lc-rm-001",
         projectionId: "proj-lc-rm-001",
-        semanticUnitId: "unit-lc-rm-001",
+        contextId: "ctx-lc-rm-001",
         language: "en",
         createdBy: "test",
         processingProfileId: profileId,
@@ -62,7 +86,7 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
       // Add a second source via management
       const cleanFile = path.join(FIXTURES_DIR, "clean-architecture.txt");
       const addResult = await management.ingestAndAddSource({
-        unitId: "unit-lc-rm-001",
+        contextId: "ctx-lc-rm-001",
         sourceId: "src-lc-rm-002",
         sourceName: "Clean Architecture",
         uri: cleanFile,
@@ -73,21 +97,31 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
       });
       expect(addResult.isOk()).toBe(true);
 
-      // Now remove the first source (unit has 2 sources, so this should work)
+      // Now remove the first source (context has 2 sources, so this should work)
       const result = await lifecycle.removeSource({
-        unitId: "unit-lc-rm-001",
+        contextId: "ctx-lc-rm-001",
         sourceId: "src-lc-rm-001",
       });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.unitId).toBe("unit-lc-rm-001");
+        expect(result.value.contextId).toBe("ctx-lc-rm-001");
         expect(typeof result.value.version).toBe("number");
       }
     });
 
     it("should fail when removing the last source", async () => {
-      // Create unit with only one source
+      // Create a context with only one source
+      const ctxResult = await pipeline.catalogDocument({
+        contextId: "ctx-lc-rm-last-001",
+        name: "Last Source Test",
+        description: "Context for testing last source removal",
+        language: "en",
+        createdBy: "test",
+        requiredProfileId: profileId,
+      });
+      expect(ctxResult.isOk()).toBe(true);
+
       const esFile = path.join(FIXTURES_DIR, "event-sourcing.txt");
       const execResult = await pipeline.execute({
         sourceId: "src-lc-rm-last-001",
@@ -96,7 +130,7 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
         sourceType: "PLAIN_TEXT",
         extractionJobId: "job-lc-rm-last-001",
         projectionId: "proj-lc-rm-last-001",
-        semanticUnitId: "unit-lc-rm-last-001",
+        contextId: "ctx-lc-rm-last-001",
         language: "en",
         createdBy: "test",
         processingProfileId: profileId,
@@ -104,7 +138,7 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
       expect(execResult.isOk()).toBe(true);
 
       const result = await lifecycle.removeSource({
-        unitId: "unit-lc-rm-last-001",
+        contextId: "ctx-lc-rm-last-001",
         sourceId: "src-lc-rm-last-001",
       });
 
@@ -116,9 +150,9 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
       }
     });
 
-    it("should fail when unit does not exist", async () => {
+    it("should fail when context does not exist", async () => {
       const result = await lifecycle.removeSource({
-        unitId: "non-existent-unit",
+        contextId: "non-existent-context",
         sourceId: "some-source",
       });
 
@@ -131,8 +165,19 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
     });
   });
 
-  describe("reprocessUnit", () => {
-    it("should reprocess an existing unit", async () => {
+  describe("reprocessContext", () => {
+    it("should reprocess an existing context", async () => {
+      // Create a context with a source
+      const ctxResult = await pipeline.catalogDocument({
+        contextId: "ctx-lc-rp-001",
+        name: "Reprocess Test",
+        description: "Context for testing reprocessing",
+        language: "en",
+        createdBy: "test",
+        requiredProfileId: profileId,
+      });
+      expect(ctxResult.isOk()).toBe(true);
+
       const dddUpdFile = path.join(FIXTURES_DIR, "ddd-overview-updated.txt");
       const execResult = await pipeline.execute({
         sourceId: "src-lc-rp-001",
@@ -141,28 +186,28 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
         sourceType: "PLAIN_TEXT",
         extractionJobId: "job-lc-rp-001",
         projectionId: "proj-lc-rp-001",
-        semanticUnitId: "unit-lc-rp-001",
+        contextId: "ctx-lc-rp-001",
         language: "en",
         createdBy: "test",
         processingProfileId: profileId,
       });
       expect(execResult.isOk()).toBe(true);
 
-      const result = await lifecycle.reprocessUnit({
-        unitId: "unit-lc-rp-001",
+      const result = await lifecycle.reprocessContext({
+        contextId: "ctx-lc-rp-001",
         profileId,
       });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.unitId).toBe("unit-lc-rp-001");
+        expect(result.value.contextId).toBe("ctx-lc-rp-001");
         expect(typeof result.value.version).toBe("number");
       }
     });
 
-    it("should fail when unit does not exist", async () => {
-      const result = await lifecycle.reprocessUnit({
-        unitId: "non-existent-unit",
+    it("should fail when context does not exist", async () => {
+      const result = await lifecycle.reprocessContext({
+        contextId: "non-existent-context",
         profileId,
       });
 
@@ -175,24 +220,24 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
     });
   });
 
-  describe("rollbackUnit", () => {
-    it("should rollback a unit to a previous version", async () => {
-      // unit-lc-rp-001 now has version 2 from the reprocess test
-      const result = await lifecycle.rollbackUnit({
-        unitId: "unit-lc-rp-001",
+  describe("rollbackContext", () => {
+    it("should rollback a context to a previous version", async () => {
+      // ctx-lc-rp-001 has version 1 from the source addition
+      const result = await lifecycle.rollbackContext({
+        contextId: "ctx-lc-rp-001",
         targetVersion: 1,
       });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.unitId).toBe("unit-lc-rp-001");
+        expect(result.value.contextId).toBe("ctx-lc-rp-001");
         expect(result.value.currentVersion).toBe(1);
       }
     });
 
-    it("should fail when unit does not exist", async () => {
-      const result = await lifecycle.rollbackUnit({
-        unitId: "non-existent-unit",
+    it("should fail when context does not exist", async () => {
+      const result = await lifecycle.rollbackContext({
+        contextId: "non-existent-context",
         targetVersion: 1,
       });
 
@@ -205,25 +250,25 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
     });
   });
 
-  describe("linkUnits", () => {
-    it("should link two existing units", async () => {
-      const result = await lifecycle.linkUnits({
-        sourceUnitId: "unit-lc-rm-001",
-        targetUnitId: "unit-lc-rp-001",
+  describe("linkContexts", () => {
+    it("should link two existing contexts", async () => {
+      const result = await lifecycle.linkContexts({
+        sourceContextId: "ctx-lc-rm-001",
+        targetContextId: "ctx-lc-rp-001",
         relationshipType: "related-to",
       });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.sourceUnitId).toBe("unit-lc-rm-001");
-        expect(result.value.targetUnitId).toBe("unit-lc-rp-001");
+        expect(result.value.sourceContextId).toBe("ctx-lc-rm-001");
+        expect(result.value.targetContextId).toBe("ctx-lc-rp-001");
       }
     });
 
-    it("should fail when linking a unit to itself", async () => {
-      const result = await lifecycle.linkUnits({
-        sourceUnitId: "unit-lc-rm-001",
-        targetUnitId: "unit-lc-rm-001",
+    it("should fail when linking a context to itself", async () => {
+      const result = await lifecycle.linkContexts({
+        sourceContextId: "ctx-lc-rm-001",
+        targetContextId: "ctx-lc-rm-001",
         relationshipType: "self-ref",
       });
 
@@ -236,24 +281,24 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
     });
   });
 
-  describe("unlinkUnits", () => {
-    it("should unlink two previously linked units", async () => {
-      const result = await lifecycle.unlinkUnits({
-        sourceUnitId: "unit-lc-rm-001",
-        targetUnitId: "unit-lc-rp-001",
+  describe("unlinkContexts", () => {
+    it("should unlink two previously linked contexts", async () => {
+      const result = await lifecycle.unlinkContexts({
+        sourceContextId: "ctx-lc-rm-001",
+        targetContextId: "ctx-lc-rp-001",
       });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
-        expect(result.value.sourceUnitId).toBe("unit-lc-rm-001");
-        expect(result.value.targetUnitId).toBe("unit-lc-rp-001");
+        expect(result.value.sourceContextId).toBe("ctx-lc-rm-001");
+        expect(result.value.targetContextId).toBe("ctx-lc-rp-001");
       }
     });
 
     it("should fail when link does not exist", async () => {
-      const result = await lifecycle.unlinkUnits({
-        sourceUnitId: "unit-lc-rm-001",
-        targetUnitId: "unit-lc-rp-001",
+      const result = await lifecycle.unlinkContexts({
+        sourceContextId: "ctx-lc-rm-001",
+        targetContextId: "ctx-lc-rp-001",
       });
 
       expect(result.isFail()).toBe(true);
@@ -269,14 +314,14 @@ describe("Knowledge Lifecycle Orchestrator — E2E", () => {
     it("should extract info, handle unknown errors, and serialize to JSON", () => {
       const fromKnown = KnowledgeLifecycleError.fromStep(
         LifecycleStep.RemoveSource,
-        { message: "Unit not found", code: "UNIT_NOT_FOUND" },
+        { message: "Context not found", code: "CONTEXT_NOT_FOUND" },
         [],
       );
       expect(fromKnown.step).toBe("remove-source");
       expect(fromKnown.code).toBe("LIFECYCLE_REMOVE_SOURCE_FAILED");
       expect(fromKnown.completedSteps).toEqual([]);
-      expect(fromKnown.originalCode).toBe("UNIT_NOT_FOUND");
-      expect(fromKnown.originalMessage).toBe("Unit not found");
+      expect(fromKnown.originalCode).toBe("CONTEXT_NOT_FOUND");
+      expect(fromKnown.originalMessage).toBe("Context not found");
 
       const fromUnknown = KnowledgeLifecycleError.fromStep(
         LifecycleStep.Reprocess,
