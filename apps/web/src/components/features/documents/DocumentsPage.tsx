@@ -72,7 +72,6 @@ export function DocumentsPage() {
               <DocumentUploadForm
                 onSuccess={() => {
                   execute({});
-                  setShowForm(false);
                 }}
               />
             </div>
