@@ -3,7 +3,6 @@ import {
   useContext,
   useState,
   useEffect,
-  useRef,
   type ReactNode,
 } from "react";
 import type { RuntimeMode } from "../services/types";
@@ -23,27 +22,26 @@ const RuntimeModeContext = createContext<RuntimeModeContextValue | null>(null);
 const STORAGE_KEY = "klay-runtime-mode";
 
 export function RuntimeModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<RuntimeMode>(() => {
-    if (typeof window === "undefined") return "server";
-    return (localStorage.getItem(STORAGE_KEY) as RuntimeMode) ?? "server";
-  });
+  // Always start as "server" to match SSR. Real mode read in useEffect.
+  const [mode, setModeState] = useState<RuntimeMode>("server");
   const [service, setService] = useState<PipelineService | null>(null);
   const [lifecycleService, setLifecycleService] = useState<LifecycleService | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
-  const initRef = useRef(false);
+
+  // Read stored mode after mount to avoid hydration mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY) as RuntimeMode | null;
+    if (stored && stored !== "server") {
+      setModeState(stored);
+    }
+  }, []);
 
   const setMode = (newMode: RuntimeMode) => {
     setModeState(newMode);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, newMode);
-    }
+    localStorage.setItem(STORAGE_KEY, newMode);
   };
 
   useEffect(() => {
-    // Prevent double-init in StrictMode
-    if (initRef.current && service) return;
-    initRef.current = true;
-
     let cancelled = false;
     setIsInitializing(true);
 

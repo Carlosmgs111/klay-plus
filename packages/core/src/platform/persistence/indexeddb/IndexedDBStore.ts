@@ -16,7 +16,10 @@ export class IndexedDBStore<T> {
     if (this.dbPromise) return this.dbPromise;
 
     this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.version);
+      // Each store gets its own database to avoid onupgradeneeded conflicts
+      // when multiple stores share a dbName but need different object stores.
+      const scopedDbName = `${this.dbName}--${this.storeName}`;
+      const request = indexedDB.open(scopedDbName, this.version);
 
       request.onupgradeneeded = () => {
         const db = request.result;

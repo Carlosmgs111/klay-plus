@@ -30,13 +30,14 @@ export default function UnitsIndexPage() {
     }
   }, [service, isInitializing]);
 
-  // Group manifests by semanticUnitId
+  // Group manifests by contextId (the unit/context they belong to)
   const manifestsByUnit = useMemo(() => {
     const map = new Map<string, ContentManifestEntry[]>();
     for (const manifest of data?.manifests ?? []) {
-      const group = map.get(manifest.semanticUnitId) ?? [];
+      if (!manifest.contextId) continue;
+      const group = map.get(manifest.contextId) ?? [];
       group.push(manifest);
-      map.set(manifest.semanticUnitId, group);
+      map.set(manifest.contextId, group);
     }
     return map;
   }, [data]);
@@ -82,7 +83,7 @@ export default function UnitsIndexPage() {
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <MetricCard
-          label="Semantic Units"
+          label="Contexts"
           value={metrics.totalUnits}
           icon="brain"
         />
@@ -113,7 +114,7 @@ export default function UnitsIndexPage() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                All Units
+                All Contexts
               </h2>
               {isLoading && (
                 <div className="skeleton w-4 h-4 rounded-full" />
@@ -123,7 +124,7 @@ export default function UnitsIndexPage() {
               className="text-xs"
               style={{ color: "var(--text-tertiary)" }}
             >
-              {filteredUnitIds.length} of {manifestsByUnit.size} unit
+              {filteredUnitIds.length} of {manifestsByUnit.size} context
               {manifestsByUnit.size !== 1 ? "s" : ""}
             </span>
           </div>
@@ -139,7 +140,7 @@ export default function UnitsIndexPage() {
               type="text"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Filter units by ID..."
+              placeholder="Filter contexts by ID..."
               className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition-all duration-150"
               style={{ color: "var(--text-primary)" }}
             />
@@ -160,7 +161,7 @@ export default function UnitsIndexPage() {
                     className="text-sm"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    No semantic units yet
+                    No contexts yet
                   </p>
                   <a
                     href="/documents"
@@ -176,7 +177,7 @@ export default function UnitsIndexPage() {
                       e.currentTarget.style.opacity = "1";
                     }}
                   >
-                    Ingest your first document to create a unit
+                    Ingest your first document to create a context
                   </a>
                 </>
               ) : (
@@ -184,7 +185,7 @@ export default function UnitsIndexPage() {
                   className="text-sm"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  No units match "{filterText}"
+                  No contexts match "{filterText}"
                 </p>
               )}
             </div>

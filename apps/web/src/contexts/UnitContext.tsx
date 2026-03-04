@@ -39,7 +39,7 @@ export function UnitContextProvider({
     setLoading(true);
     setError(null);
     try {
-      const result = await service.getManifest({ semanticUnitId: unitId });
+      const result = await service.getManifest({ contextId: unitId });
       if (result.success) {
         setManifests(result.data.manifests);
       } else {

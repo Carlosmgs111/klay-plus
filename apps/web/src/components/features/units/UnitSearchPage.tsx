@@ -27,7 +27,7 @@ export default function UnitSearchPage() {
       queryText,
       topK,
       minScore,
-      filters: { semanticUnitId: unitId },
+      filters: { contextId: unitId },
     });
   };
 

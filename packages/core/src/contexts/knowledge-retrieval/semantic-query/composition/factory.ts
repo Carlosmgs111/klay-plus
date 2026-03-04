@@ -2,7 +2,6 @@ import type { QueryEmbedder } from "../domain/ports/QueryEmbedder";
 import type { VectorReadStore } from "../domain/ports/VectorReadStore";
 import type { RankingStrategy } from "../domain/ports/RankingStrategy";
 import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
-import type { ConfigProvider } from "../../../../platform/config";
 import type { SemanticQueryUseCases } from "../application";
 
 export interface VectorStoreConfig {
@@ -33,21 +32,6 @@ export interface SemanticQueryFactoryResult {
   infra: ResolvedSemanticQueryInfra;
 }
 
-async function resolveConfigProvider(
-  policy: SemanticQueryInfrastructurePolicy,
-): Promise<ConfigProvider> {
-  if (policy.configOverrides) {
-    const { InMemoryConfigProvider } = await import(
-      "../../../../platform/config/InMemoryConfigProvider"
-    );
-    return new InMemoryConfigProvider(policy.configOverrides);
-  }
-  const { NodeConfigProvider } = await import(
-    "../../../../platform/config/NodeConfigProvider"
-  );
-  return new NodeConfigProvider();
-}
-
 export async function semanticQueryFactory(
   policy: SemanticQueryInfrastructurePolicy,
 ): Promise<SemanticQueryFactoryResult> {
@@ -58,10 +42,9 @@ export async function semanticQueryFactory(
   const embedderProvider =
     policy.embeddingProvider && policy.embeddingProvider !== "hash"
       ? policy.embeddingProvider
-      : policy.provider === "browser"
-        ? "browser-webllm"
-        : "hash";
+      : "hash";
 
+  const { resolveConfigProvider } = await import("../../../../platform/config/resolveConfigProvider");
   const config = await resolveConfigProvider(policy);
 
   const vectorReadStoreRegistry = new ProviderRegistryBuilder<VectorReadStore>()

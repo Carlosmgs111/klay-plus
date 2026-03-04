@@ -2,13 +2,13 @@ import { Icon } from "../shared/Icon";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { IconName } from "../shared/Icon";
 
-const NAV_ITEMS: { label: string; href: string; icon: IconName }[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "grid" },
-  { label: "Documents", href: "/documents", icon: "file-text" },
-  { label: "Units", href: "/units", icon: "brain" },
-  { label: "Search", href: "/search", icon: "search" },
-  { label: "Profiles", href: "/profiles", icon: "sliders" },
-  { label: "Settings", href: "/settings", icon: "settings" },
+const NAV_ITEMS: { label: string; page: string; href: string; icon: IconName }[] = [
+  { label: "Dashboard", page: "dashboard", href: "/dashboard", icon: "grid" },
+  { label: "Documents", page: "documents", href: "/documents", icon: "file-text" },
+  { label: "Contexts", page: "units", href: "/units", icon: "brain" },
+  { label: "Search", page: "search", href: "/search", icon: "search" },
+  { label: "Profiles", page: "profiles", href: "/profiles", icon: "sliders" },
+  { label: "Settings", page: "settings", href: "/settings", icon: "settings" },
 ];
 
 interface SidebarProps {
@@ -34,7 +34,7 @@ export function Sidebar({ activePage }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 flex flex-col px-3 py-4 gap-2 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
-          const isActive = activePage === item.label.toLowerCase();
+          const isActive = activePage === item.page;
           return (
             <a
               key={item.href}

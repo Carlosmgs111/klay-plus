@@ -53,6 +53,7 @@ export class ExecuteFullPipeline {
       uri: input.uri,
       type: input.sourceType as SourceType,
       extractionJobId: input.extractionJobId,
+      content: input.content,
     });
 
     if (ingestionResult.isFail()) {

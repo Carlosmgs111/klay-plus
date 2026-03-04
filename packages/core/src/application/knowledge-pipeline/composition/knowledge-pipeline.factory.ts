@@ -163,6 +163,13 @@ async function createManifestRepository(
     return new InMemoryManifestRepository();
   }
 
+  if (policy.provider === "browser") {
+    const { IndexedDBManifestRepository } = await import(
+      "../infrastructure/IndexedDBManifestRepository"
+    );
+    return new IndexedDBManifestRepository(policy.dbName);
+  }
+
   const { NeDBManifestRepository } = await import(
     "../infrastructure/NeDBManifestRepository"
   );

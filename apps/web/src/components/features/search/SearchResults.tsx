@@ -2,10 +2,9 @@ import { SearchResultCard } from "./SearchResultCard";
 import { EmptyState } from "../../shared/EmptyState";
 
 interface SearchItem {
-  semanticUnitId: string;
+  sourceId: string;
   content: string;
   score: number;
-  version: number;
   metadata: Record<string, unknown>;
 }
 
@@ -30,10 +29,10 @@ export function SearchResults({ items, queryText }: SearchResultsProps) {
     <div className="space-y-3">
       {items.map((item, idx) => (
         <SearchResultCard
-          key={`${item.semanticUnitId}-${idx}`}
+          key={`${item.sourceId}-${idx}`}
           content={item.content}
           score={item.score}
-          semanticUnitId={item.semanticUnitId}
+          sourceId={item.sourceId}
           metadata={item.metadata}
         />
       ))}

@@ -23,6 +23,9 @@ export class BrowserPdfContentExtractor implements ContentExtractor {
     }
 
     const pdfjs = await import("pdfjs-dist");
+    // Load worker from CDN to avoid Vite bundling issues with the worker file.
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
     const pdfSource = source.content
       ? { data: new Uint8Array(source.content) }

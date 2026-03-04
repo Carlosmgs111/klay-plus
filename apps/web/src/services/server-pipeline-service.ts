@@ -85,7 +85,7 @@ export class ServerPipelineService implements PipelineService {
     if (input.resourceId) params.set("resourceId", input.resourceId);
     if (input.sourceId) params.set("sourceId", input.sourceId);
     if (input.manifestId) params.set("manifestId", input.manifestId);
-    if (input.semanticUnitId) params.set("semanticUnitId", input.semanticUnitId);
+    if (input.contextId) params.set("contextId", input.contextId);
     const qs = params.toString();
     return this._get(`/api/pipeline/manifest${qs ? `?${qs}` : ""}`);
   }

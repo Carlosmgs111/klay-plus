@@ -1,14 +1,14 @@
 interface SearchResultCardProps {
   content: string;
   score: number;
-  semanticUnitId: string;
+  sourceId: string;
   metadata: Record<string, unknown>;
 }
 
 export function SearchResultCard({
   content,
   score,
-  semanticUnitId,
+  sourceId,
   metadata,
 }: SearchResultCardProps) {
   const scorePercent = Math.round(score * 100);
@@ -74,7 +74,7 @@ export function SearchResultCard({
       </div>
 
       <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-tertiary)" }}>
-        <span className="font-mono">Unit: {semanticUnitId.slice(0, 8)}...</span>
+        <span className="font-mono">Source: {sourceId.slice(0, 8)}...</span>
         {Object.entries(metadata).slice(0, 3).map(([key, val]) => (
           <span key={key}>
             {key}: {String(val)}

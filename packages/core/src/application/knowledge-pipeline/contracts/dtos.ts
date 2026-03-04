@@ -15,6 +15,8 @@ export interface ExecutePipelineInput {
   sourceName: string;
   /** URI pointing to the content (file path, URL, etc.) */
   uri: string;
+  /** Raw file content — required for browser mode where file:// URIs are not fetchable */
+  content?: ArrayBuffer;
   /** Source type as string (e.g., "PDF", "PLAIN_TEXT", "MARKDOWN") */
   sourceType: string;
   /** Unique ID for the extraction job */

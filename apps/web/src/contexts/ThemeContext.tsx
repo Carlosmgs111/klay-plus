@@ -45,15 +45,22 @@ function applyToDOM(resolved: "light" | "dark") {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeRaw] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "system";
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "dark" || stored === "light" || stored === "system")
-      return stored;
-    return "system";
-  });
+  const [theme, setThemeRaw] = useState<Theme>("system");
+  const [hasMounted, setHasMounted] = useState(false);
 
-  const resolved = resolve(theme);
+  // During SSR and initial client render, always resolve to "light"
+  // to match server HTML. The inline script in DashboardLayout.astro
+  // already applies the correct dark class to prevent visual flash.
+  const resolved = hasMounted ? resolve(theme) : "light";
+
+  // Read stored theme after mount to avoid hydration mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "dark" || stored === "light" || stored === "system") {
+      setThemeRaw(stored);
+    }
+    setHasMounted(true);
+  }, []);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeRaw(next);
@@ -66,10 +73,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(current === "light" ? "dark" : "light");
   }, [theme, setTheme]);
 
-  // Apply on mount and when resolved changes
+  // Apply theme to DOM after mount and when resolved changes
   useEffect(() => {
+    if (!hasMounted) return;
     applyToDOM(resolved);
-  }, [resolved]);
+  }, [resolved, hasMounted]);
 
   // Listen for system preference changes when theme is "system"
   useEffect(() => {

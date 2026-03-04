@@ -175,6 +175,7 @@ export class SourceIngestionService {
     uri: string;
     type: SourceType;
     extractionJobId: string;
+    content?: ArrayBuffer;
   }): Promise<Result<DomainError, IngestAndExtractSuccess>> {
     // 1. Register source
     const registerResult = await this.registerSource({
@@ -195,6 +196,7 @@ export class SourceIngestionService {
       sourceId: params.sourceId,
       uri: params.uri,
       mimeType,
+      content: params.content,
     });
 
     if (extractionResult.isFail()) {

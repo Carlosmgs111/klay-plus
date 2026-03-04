@@ -40,7 +40,7 @@ const PAGE_TITLES: Record<string, string> = {
   search: "Semantic Search",
   profiles: "Processing Profiles",
   settings: "Settings",
-  units: "Semantic Units",
+  units: "Contexts",
 };
 
 const PAGE_COMPONENTS: Record<string, React.ComponentType> = {

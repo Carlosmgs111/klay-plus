@@ -24,11 +24,11 @@ export function UnitSidebar({ unitId, activePage }: UnitSidebarProps) {
       {/* Back + Unit ID */}
       <div className="h-header flex flex-col justify-center px-3 py-4 border-b border-slate-200 dark:border-slate-800">
         <a
-          href="/knowledge"
+          href="/units"
           className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors duration-150 mb-1"
         >
           <Icon name="arrow-left" className="text-xs" />
-          All Units
+          All Contexts
         </a>
         <span
           className="text-sm font-mono"

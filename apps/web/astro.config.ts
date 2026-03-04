@@ -14,6 +14,9 @@ export default defineConfig({
       // Optional providers not installed — keep external (resolved at runtime or tree-shaken)
       external: ["@ai-sdk/cohere", "@ai-sdk/huggingface"],
     },
+    optimizeDeps: {
+      include: ["pdfjs-dist"],
+    },
     build: {
       rollupOptions: {
         external: ["@ai-sdk/cohere", "@ai-sdk/huggingface"],
