@@ -11,13 +11,10 @@ interface MetricCardProps {
   children?: ReactNode;
 }
 
-const VARIANT_ACCENT = {
-  default:
-    "from-blue-300 via-blue-400 to-blue-300 dark:from-blue-500 dark:via-blue-600 dark:to-blue-600 border-2 border-blue-300 dark:border-blue-600 shadow-lg shadow-blue-600/80",
-  success:
-    "from-green-300 via-green-400 to-green-300 dark:from-green-600 dark:via-green-600 dark:to-green-600 border-2 border-green-300 dark:border-green-700 shadow-lg shadow-green-600/80",
-  danger:
-    "from-red-300 via-red-400 to-red-300 dark:from-red-600 dark:via-red-500 dark:to-red-600 border-2 border-red-300 dark:border-red-700 shadow-lg shadow-red-600/80",
+const VARIANT_STYLES = {
+  default: "bg-accent-muted border border-accent text-accent",
+  success: "bg-success-muted border border-success text-success",
+  danger: "bg-danger-muted border border-danger text-danger",
 };
 
 const TREND_CONFIG = {
@@ -34,10 +31,10 @@ export function MetricCard({
   trend,
   children,
 }: MetricCardProps) {
-  const accent = VARIANT_ACCENT[variant];
+  const variantClass = VARIANT_STYLES[variant];
 
   return (
-    <div className={`rounded-lg p-4 bg-gradient-to-b ${accent}`}>
+    <div className={`rounded-lg p-4 ${variantClass}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium uppercase tracking-[0.1em]">

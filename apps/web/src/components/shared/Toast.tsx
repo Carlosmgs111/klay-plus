@@ -7,10 +7,10 @@ const TYPE_ICON: Record<string, string> = {
   info: "info",
 };
 
-const TYPE_STYLE: Record<string, string> = {
-  success: "var(--semantic-success)",
-  error: "var(--semantic-danger)",
-  info: "var(--accent-primary)",
+const TYPE_COLOR: Record<string, string> = {
+  success: "text-success",
+  error: "text-danger",
+  info: "text-accent",
 };
 
 export function ToastContainer() {
@@ -29,17 +29,12 @@ export function ToastContainer() {
         >
           <Icon
             name={TYPE_ICON[toast.type]}
-            size={18}
-            className="flex-shrink-0"
-            style={{ color: TYPE_STYLE[toast.type] }}
+            className={`flex-shrink-0 ${TYPE_COLOR[toast.type]}`}
           />
           <span className="flex-1">{toast.message}</span>
           <button
             onClick={() => removeToast(toast.id)}
-            className="flex-shrink-0"
-            style={{ color: "var(--text-ghost)", transition: "color 150ms" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-primary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; }}
+            className="flex-shrink-0 text-ghost hover:text-primary transition-colors duration-fast"
           >
             <Icon name="x" size={14} />
           </button>
