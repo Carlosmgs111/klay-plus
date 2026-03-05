@@ -62,15 +62,9 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
   };
 
   return (
-    <div
-      className="rounded-lg p-4"
-      style={{
-        backgroundColor: "var(--surface-1)",
-        border: "1px solid var(--border-default)",
-      }}
-    >
+    <div className="rounded-lg p-4 bg-surface-1 border border-default">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+        <h3 className="text-sm font-semibold text-primary">
           Edit Profile
         </h3>
         {onCancel && (
@@ -103,7 +97,7 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
           />
         </div>
 
-        <p className="text-xs font-mono" style={{ color: "var(--text-tertiary)" }}>
+        <p className="text-xs font-mono text-tertiary">
           ID: {profile.id} | Version: {profile.version}
         </p>
 

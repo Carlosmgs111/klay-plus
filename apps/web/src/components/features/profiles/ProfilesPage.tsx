@@ -31,8 +31,8 @@ export function ProfilesPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icon name="sliders" style={{ color: "var(--text-tertiary)" }} />
-              <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              <Icon name="sliders" className="text-tertiary" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
                 Processing Profiles
               </h2>
             </div>
@@ -74,8 +74,8 @@ export function ProfilesPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="layers" style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="layers" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               All Profiles
             </h2>
           </div>
@@ -92,63 +92,45 @@ export function ProfilesPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="info" style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="info" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               About Processing Profiles
             </h2>
           </div>
         </CardHeader>
         <CardBody>
-          <div className="text-sm space-y-4" style={{ color: "var(--text-secondary)" }}>
+          <div className="text-sm space-y-4 text-secondary">
             <p>
-              A <strong style={{ color: "var(--text-primary)" }}>Processing Profile</strong> determines how documents are
+              A <strong className="text-primary">Processing Profile</strong> determines how documents are
               chunked and embedded during the semantic processing phase.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div
-                className="p-4 rounded-lg"
-                style={{
-                  backgroundColor: "var(--surface-1)",
-                  border: "1px solid var(--border-subtle)",
-                }}
-              >
-                <h4
-                  className="font-semibold text-xs uppercase mb-2"
-                  style={{ color: "var(--text-primary)", letterSpacing: "0.06em" }}
-                >
+              <div className="p-4 rounded-lg bg-surface-1 border border-subtle">
+                <h4 className="font-semibold text-xs uppercase mb-2 text-primary tracking-caps">
                   Chunking Strategies
                 </h4>
-                <ul className="text-xs space-y-1.5" style={{ color: "var(--text-tertiary)" }}>
+                <ul className="text-xs space-y-1.5 text-tertiary">
                   <li>
-                    <strong style={{ color: "var(--text-secondary)" }}>Recursive</strong> — Splits by paragraphs, then sentences
+                    <strong className="text-secondary">Recursive</strong> — Splits by paragraphs, then sentences
                   </li>
                   <li>
-                    <strong style={{ color: "var(--text-secondary)" }}>Sentence</strong> — Splits at sentence boundaries
+                    <strong className="text-secondary">Sentence</strong> — Splits at sentence boundaries
                   </li>
                   <li>
-                    <strong style={{ color: "var(--text-secondary)" }}>Fixed Size</strong> — Splits at fixed character count
+                    <strong className="text-secondary">Fixed Size</strong> — Splits at fixed character count
                   </li>
                 </ul>
               </div>
-              <div
-                className="p-4 rounded-lg"
-                style={{
-                  backgroundColor: "var(--surface-1)",
-                  border: "1px solid var(--border-subtle)",
-                }}
-              >
-                <h4
-                  className="font-semibold text-xs uppercase mb-2"
-                  style={{ color: "var(--text-primary)", letterSpacing: "0.06em" }}
-                >
+              <div className="p-4 rounded-lg bg-surface-1 border border-subtle">
+                <h4 className="font-semibold text-xs uppercase mb-2 text-primary tracking-caps">
                   Embedding Strategies
                 </h4>
-                <ul className="text-xs space-y-1.5" style={{ color: "var(--text-tertiary)" }}>
+                <ul className="text-xs space-y-1.5 text-tertiary">
                   <li>
-                    <strong style={{ color: "var(--text-secondary)" }}>Hash</strong> — Deterministic, no API key required
+                    <strong className="text-secondary">Hash</strong> — Deterministic, no API key required
                   </li>
                   <li>
-                    <strong style={{ color: "var(--text-secondary)" }}>OpenAI</strong> — text-embedding-3-small via AI SDK
+                    <strong className="text-secondary">OpenAI</strong> — text-embedding-3-small via AI SDK
                   </li>
                 </ul>
               </div>

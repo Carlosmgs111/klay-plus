@@ -67,7 +67,7 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       key: "name",
       header: "Name",
       render: (row: ProfileEntry) => (
-        <span className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>
+        <span className="font-medium text-sm text-primary">
           {row.name}
         </span>
       ),
@@ -76,7 +76,7 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       key: "chunkingStrategyId",
       header: "Chunking",
       render: (row: ProfileEntry) => (
-        <span className="text-xs font-mono" style={{ color: "var(--text-secondary)" }}>
+        <span className="text-xs font-mono text-secondary">
           {row.chunkingStrategyId}
         </span>
       ),
@@ -85,7 +85,7 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       key: "embeddingStrategyId",
       header: "Embedding",
       render: (row: ProfileEntry) => (
-        <span className="text-xs font-mono" style={{ color: "var(--text-secondary)" }}>
+        <span className="text-xs font-mono text-secondary">
           {row.embeddingStrategyId}
         </span>
       ),
@@ -148,17 +148,11 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       {deprecateError && <ErrorDisplay {...deprecateError} />}
 
       {confirmDeprecateId && (
-        <div
-          className="rounded-lg p-4"
-          style={{
-            backgroundColor: "var(--surface-1)",
-            border: "1px solid var(--border-default)",
-          }}
-        >
-          <p className="text-sm font-medium mb-2" style={{ color: "var(--text-primary)" }}>
+        <div className="rounded-lg p-4 bg-surface-1 border border-default">
+          <p className="text-sm font-medium mb-2 text-primary">
             Deprecate Profile
           </p>
-          <p className="text-xs mb-3" style={{ color: "var(--text-tertiary)" }}>
+          <p className="text-xs mb-3 text-tertiary">
             This will mark the profile as deprecated. It can no longer be used for new processing.
           </p>
           <input
