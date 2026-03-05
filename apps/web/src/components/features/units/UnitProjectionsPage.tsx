@@ -45,10 +45,7 @@ export default function UnitProjectionsPage() {
       key: "projectionId",
       header: "Projection ID",
       render: (row: ProjectionRow) => (
-        <span
-          className="font-mono text-xs"
-          style={{ color: "var(--text-primary)" }}
-        >
+        <span className="font-mono text-xs text-primary">
           {row.projectionId.slice(0, 12)}...
         </span>
       ),
@@ -57,10 +54,7 @@ export default function UnitProjectionsPage() {
       key: "sourceId",
       header: "Source",
       render: (row: ProjectionRow) => (
-        <span
-          className="font-mono text-xs"
-          style={{ color: "var(--text-secondary)" }}
-        >
+        <span className="font-mono text-xs text-secondary">
           {row.sourceId.slice(0, 12)}...
         </span>
       ),
@@ -69,7 +63,7 @@ export default function UnitProjectionsPage() {
       key: "model",
       header: "Model",
       render: (row: ProjectionRow) => (
-        <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+        <span className="text-xs text-secondary">
           {row.model ?? "—"}
         </span>
       ),
@@ -78,10 +72,7 @@ export default function UnitProjectionsPage() {
       key: "dimensions",
       header: "Dimensions",
       render: (row: ProjectionRow) => (
-        <span
-          className="font-mono text-xs"
-          style={{ color: "var(--text-secondary)" }}
-        >
+        <span className="font-mono text-xs text-secondary">
           {row.dimensions ?? "—"}
         </span>
       ),
@@ -90,10 +81,7 @@ export default function UnitProjectionsPage() {
       key: "chunksCount",
       header: "Chunks",
       render: (row: ProjectionRow) => (
-        <span
-          className="font-mono text-xs"
-          style={{ color: "var(--text-secondary)" }}
-        >
+        <span className="font-mono text-xs text-secondary">
           {row.chunksCount ?? "—"}
         </span>
       ),
@@ -129,23 +117,11 @@ export default function UnitProjectionsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icon name="layers" style={{ color: "var(--text-tertiary)" }} />
-              <h2
-                className="text-sm font-semibold"
-                style={{
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.02em",
-                }}
-              >
+              <Icon name="layers" className="text-tertiary" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
                 Projections
               </h2>
-              <span
-                className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium"
-                style={{
-                  backgroundColor: "var(--surface-3)",
-                  color: "var(--text-secondary)",
-                }}
-              >
+              <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-surface-3 text-secondary">
                 {projections.length}
               </span>
             </div>
@@ -153,13 +129,7 @@ export default function UnitProjectionsPage() {
             {/* Source filter */}
             {uniqueSources.length > 1 && (
               <div className="flex items-center gap-2">
-                <label
-                  className="text-xs"
-                  style={{
-                    color: "var(--text-tertiary)",
-                    letterSpacing: "0.06em",
-                  }}
-                >
+                <label className="text-xs text-tertiary tracking-caps">
                   Source:
                 </label>
                 <select
@@ -239,20 +209,11 @@ export default function UnitProjectionsPage() {
 
 function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="p-3 rounded-lg text-center"
-      style={{ backgroundColor: "var(--surface-1)" }}
-    >
-      <p
-        className="text-lg font-semibold font-mono"
-        style={{ color: "var(--text-primary)" }}
-      >
+    <div className="p-3 rounded-lg text-center bg-surface-1">
+      <p className="text-lg font-semibold font-mono text-primary">
         {value}
       </p>
-      <p
-        className="text-xs mt-0.5"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.06em" }}
-      >
+      <p className="text-xs mt-0.5 text-tertiary tracking-caps">
         {label}
       </p>
     </div>

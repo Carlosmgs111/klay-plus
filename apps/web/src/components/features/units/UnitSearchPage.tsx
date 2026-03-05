@@ -56,34 +56,18 @@ export default function UnitSearchPage() {
           <div className="flex items-center gap-2">
             <Icon
               name="search"
-              size={16}
-              style={{ color: "var(--text-tertiary)" }}
+              className="text-tertiary"
             />
-            <h2
-              className="text-sm font-semibold"
-              style={{
-                color: "var(--text-primary)",
-                letterSpacing: "-0.02em",
-              }}
-            >
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               Unit Search
             </h2>
-            <span
-              className="ml-2 text-xs px-2 py-0.5 rounded font-mono"
-              style={{
-                backgroundColor: "var(--surface-1)",
-                color: "var(--text-tertiary)",
-              }}
-            >
+            <span className="ml-2 text-xs px-2 py-0.5 rounded font-mono bg-surface-1 text-tertiary">
               scoped to {unitId.slice(0, 8)}...
             </span>
           </div>
         </CardHeader>
         <CardBody>
-          <p
-            className="text-xs mb-4"
-            style={{ color: "var(--text-tertiary)" }}
-          >
+          <p className="text-xs mb-4 text-tertiary">
             Search across this unit's projections using semantic similarity.
           </p>
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
@@ -109,18 +93,11 @@ export default function UnitSearchPage() {
             <div className="flex items-center gap-2">
               <Icon
                 name="layers"
-                size={16}
-                style={{ color: "var(--text-tertiary)" }}
+                className="text-tertiary"
               />
-              <p
-                className="text-sm font-medium"
-                style={{ color: "var(--text-secondary)" }}
-              >
+              <p className="text-sm font-medium text-secondary">
                 Found{" "}
-                <span
-                  className="font-semibold"
-                  style={{ color: "var(--text-primary)" }}
-                >
+                <span className="font-semibold text-primary">
                   {data.totalFound}
                 </span>{" "}
                 result{data.totalFound !== 1 ? "s" : ""} for "{data.queryText}"

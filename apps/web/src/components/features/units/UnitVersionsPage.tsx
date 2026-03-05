@@ -90,35 +90,17 @@ export default function UnitVersionsPage() {
 
   if (error) {
     return (
-      <div
-        className="rounded-lg p-4"
-        style={{
-          backgroundColor: "var(--semantic-danger-muted)",
-          border: "1px solid var(--semantic-danger)",
-          borderColor: "rgba(240, 104, 104, 0.2)",
-        }}
-      >
+      <div className="rounded-lg p-4 bg-danger-muted border border-danger">
         <div className="flex items-start gap-3">
           <Icon
             name="alert-circle"
-            size={18}
-            style={{
-              color: "var(--semantic-danger)",
-              marginTop: "2px",
-              flexShrink: 0,
-            }}
+            className="text-danger mt-0.5 flex-shrink-0"
           />
           <div>
-            <p
-              className="text-sm font-medium"
-              style={{ color: "var(--semantic-danger)" }}
-            >
+            <p className="text-sm font-medium text-danger">
               {error}
             </p>
-            <p
-              className="text-xs mt-1 font-mono"
-              style={{ color: "var(--text-tertiary)" }}
-            >
+            <p className="text-xs mt-1 font-mono text-tertiary">
               VERSIONS_FETCH_ERROR
             </p>
           </div>
@@ -132,14 +114,8 @@ export default function UnitVersionsPage() {
       {/* Header + Rollback Action */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <Icon name="clock" style={{ color: "var(--text-tertiary)" }} />
-          <h2
-            className="text-sm font-semibold"
-            style={{
-              color: "var(--text-primary)",
-              letterSpacing: "-0.02em",
-            }}
-          >
+          <Icon name="clock" className="text-tertiary" />
+          <h2 className="text-sm font-semibold text-primary tracking-heading">
             Versions ({versions.length})
           </h2>
         </div>
@@ -152,62 +128,29 @@ export default function UnitVersionsPage() {
 
       {/* Current Version Info */}
       {currentVersion && (
-        <div
-          className="p-4 rounded-lg"
-          style={{
-            backgroundColor: "var(--surface-0)",
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
+        <div className="p-4 rounded-lg bg-surface-0 border border-subtle">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p
-                className="text-xs font-medium"
-                style={{
-                  color: "var(--text-tertiary)",
-                  letterSpacing: "0.06em",
-                }}
-              >
+              <p className="text-xs font-medium text-tertiary tracking-caps">
                 CURRENT VERSION
               </p>
-              <p
-                className="font-mono mt-1 text-lg"
-                style={{ color: "var(--text-primary)" }}
-              >
+              <p className="font-mono mt-1 text-lg text-primary">
                 {estimatedCurrentVersion}
               </p>
             </div>
             <div>
-              <p
-                className="text-xs font-medium"
-                style={{
-                  color: "var(--text-tertiary)",
-                  letterSpacing: "0.06em",
-                }}
-              >
+              <p className="text-xs font-medium text-tertiary tracking-caps">
                 TOTAL SOURCES
               </p>
-              <p
-                className="font-mono mt-1 text-lg"
-                style={{ color: "var(--text-primary)" }}
-              >
+              <p className="font-mono mt-1 text-lg text-primary">
                 {getUnitSources(manifests).length}
               </p>
             </div>
             <div>
-              <p
-                className="text-xs font-medium"
-                style={{
-                  color: "var(--text-tertiary)",
-                  letterSpacing: "0.06em",
-                }}
-              >
+              <p className="text-xs font-medium text-tertiary tracking-caps">
                 LAST UPDATED
               </p>
-              <p
-                className="mt-1 text-sm"
-                style={{ color: "var(--text-primary)" }}
-              >
+              <p className="mt-1 text-sm text-primary">
                 {new Date(currentVersion.createdAt).toLocaleDateString(
                   undefined,
                   {
@@ -231,19 +174,12 @@ export default function UnitVersionsPage() {
             <div className="text-center py-8">
               <Icon
                 name="clock"
-                className="mx-auto mb-3 text-3xl"
-                style={{ color: "var(--text-ghost)" }}
+                className="mx-auto mb-3 text-3xl text-ghost"
               />
-              <p
-                className="text-sm"
-                style={{ color: "var(--text-tertiary)" }}
-              >
+              <p className="text-sm text-tertiary">
                 No version history available.
               </p>
-              <p
-                className="text-xs mt-1"
-                style={{ color: "var(--text-ghost)" }}
-              >
+              <p className="text-xs mt-1 text-ghost">
                 Versions are created when sources are added, removed, or
                 reprocessed.
               </p>
@@ -253,10 +189,7 @@ export default function UnitVersionsPage() {
       ) : (
         <div className="relative">
           {/* Timeline line */}
-          <div
-            className="absolute left-4 top-0 bottom-0 w-px"
-            style={{ backgroundColor: "var(--border-subtle)" }}
-          />
+          <div className="absolute left-4 top-0 bottom-0 w-px bg-[var(--border-subtle)]" />
 
           <div className="space-y-4">
             {versions.map((version) => {
@@ -267,24 +200,17 @@ export default function UnitVersionsPage() {
                 <div key={version.versionNumber} className="relative pl-10">
                   {/* Timeline dot */}
                   <div
-                    className="absolute left-2.5 top-4 w-3 h-3 rounded-full"
-                    style={{
-                      backgroundColor: isCurrent
-                        ? "var(--accent-primary)"
-                        : "var(--text-ghost)",
-                      border: isCurrent
-                        ? "2px solid var(--accent-primary)"
-                        : "2px solid var(--border-subtle)",
-                      boxShadow: isCurrent
-                        ? "0 0 0 3px rgba(59, 130, 246, 0.2)"
-                        : "none",
-                    }}
+                    className={`absolute left-2.5 top-4 w-3 h-3 rounded-full border-2 transition-all
+                      ${isCurrent
+                        ? "bg-accent border-accent shadow-[0_0_0_3px_var(--accent-primary-glow)]"
+                        : "bg-surface-2 border-subtle"
+                      }`}
                   />
 
                   <Card
                     className={
                       isCurrent
-                        ? "border-blue-400 dark:border-blue-500 shadow-sm"
+                        ? "border-accent shadow-sm"
                         : ""
                     }
                   >
@@ -293,21 +219,11 @@ export default function UnitVersionsPage() {
                         {/* Version Header */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span
-                              className="text-sm font-semibold font-mono"
-                              style={{ color: "var(--text-primary)" }}
-                            >
+                            <span className="text-sm font-semibold font-mono text-primary">
                               v{version.versionNumber}
                             </span>
                             {isCurrent && (
-                              <span
-                                className="text-xs px-2 py-0.5 rounded-full font-medium"
-                                style={{
-                                  backgroundColor:
-                                    "rgba(59, 130, 246, 0.15)",
-                                  color: "var(--accent-primary)",
-                                }}
-                              >
+                              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[var(--accent-primary-glow)] text-accent">
                                 Current
                               </span>
                             )}
@@ -315,72 +231,40 @@ export default function UnitVersionsPage() {
                               status={version.status as any}
                             />
                           </div>
-                          <span
-                            className="text-xs"
-                            style={{ color: "var(--text-ghost)" }}
-                          >
+                          <span className="text-xs text-ghost">
                             {new Date(version.date).toLocaleString()}
                           </span>
                         </div>
 
                         {/* Sources Snapshot */}
                         <div>
-                          <p
-                            className="text-xs font-medium mb-2"
-                            style={{
-                              color: "var(--text-tertiary)",
-                              letterSpacing: "0.06em",
-                            }}
-                          >
+                          <p className="text-xs font-medium mb-2 text-tertiary tracking-caps">
                             SOURCES IN THIS VERSION
                           </p>
                           <div className="space-y-2">
                             {version.sources.map((source) => (
                               <div
                                 key={source.sourceId}
-                                className="p-2 rounded"
-                                style={{
-                                  backgroundColor: "var(--surface-0)",
-                                  border:
-                                    "1px solid var(--border-subtle)",
-                                }}
+                                className="p-2 rounded bg-surface-0 border border-subtle"
                               >
                                 <div className="flex items-center gap-2 text-xs">
-                                  <span
-                                    className="font-mono"
-                                    style={{
-                                      color: "var(--accent-primary)",
-                                    }}
-                                  >
+                                  <span className="font-mono text-accent">
                                     {source.sourceId.length > 16
                                       ? `${source.sourceId.slice(0, 16)}...`
                                       : source.sourceId}
                                   </span>
                                   {source.contentHash && (
-                                    <span
-                                      className="font-mono"
-                                      style={{
-                                        color: "var(--text-ghost)",
-                                      }}
-                                    >
+                                    <span className="font-mono text-ghost">
                                       #{source.contentHash.slice(0, 8)}
                                     </span>
                                   )}
                                   {source.chunksCount != null && (
-                                    <span
-                                      style={{
-                                        color: "var(--text-tertiary)",
-                                      }}
-                                    >
+                                    <span className="text-tertiary">
                                       {source.chunksCount} chunks
                                     </span>
                                   )}
                                   {source.model && (
-                                    <span
-                                      style={{
-                                        color: "var(--text-tertiary)",
-                                      }}
-                                    >
+                                    <span className="text-tertiary">
                                       {source.model}
                                     </span>
                                   )}
