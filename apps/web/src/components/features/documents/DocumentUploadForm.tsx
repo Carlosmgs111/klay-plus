@@ -233,13 +233,10 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
         <Spinner size="lg" />
-        <p
-          className="mt-4 text-sm font-medium"
-          style={{ color: "var(--text-primary)" }}
-        >
+        <p className="mt-4 text-sm font-medium text-primary">
           Processing document...
         </p>
-        <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
+        <p className="mt-1 text-xs text-tertiary">
           {file?.name}
         </p>
       </div>
@@ -255,54 +252,37 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
           <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4 bg-success-muted animate-scale-spring">
             <Icon name="check" className="text-xl text-success" />
           </div>
-          <p
-            className="text-sm font-medium"
-            style={{ color: "var(--text-primary)" }}
-          >
+          <p className="text-sm font-medium text-primary">
             Document processed successfully
           </p>
-          <p
-            className="mt-1 text-xs"
-            style={{ color: "var(--text-tertiary)" }}
-          >
+          <p className="mt-1 text-xs text-tertiary">
             {file?.name}
           </p>
         </div>
 
-        <div
-          className="grid grid-cols-3 gap-4 p-4 rounded-lg mb-6"
-          style={{ backgroundColor: "var(--surface-secondary)" }}
-        >
+        <div className="grid grid-cols-3 gap-4 p-4 rounded-lg mb-6 bg-surface-1">
+
           <div className="text-center">
-            <p
-              className="text-lg font-semibold"
-              style={{ color: "var(--accent-primary)" }}
-            >
+            <p className="text-lg font-semibold text-accent">
               {result.chunksCount}
             </p>
-            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+            <p className="text-xs text-tertiary">
               Chunks
             </p>
           </div>
           <div className="text-center">
-            <p
-              className="text-lg font-semibold"
-              style={{ color: "var(--accent-primary)" }}
-            >
+            <p className="text-lg font-semibold text-accent">
               {result.dimensions}
             </p>
-            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+            <p className="text-xs text-tertiary">
               Dimensions
             </p>
           </div>
           <div className="text-center">
-            <p
-              className="text-lg font-semibold truncate"
-              style={{ color: "var(--accent-primary)" }}
-            >
+            <p className="text-lg font-semibold truncate text-accent">
               {result.model}
             </p>
-            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+            <p className="text-xs text-tertiary">
               Model
             </p>
           </div>
@@ -420,18 +400,13 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
         }}
         className={`relative rounded-xl border-2 h-[200px] flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ease-out-expo ${
           isDragOver
-            ? "border-solid border-accent bg-accent-muted animate-pulse-ring"
+            ? "border-solid border-accent bg-accent-muted animate-pulse-ring shadow-[0_0_0_4px_var(--accent-primary-glow),0_0_30px_var(--accent-primary-glow)]"
             : isDragging
               ? "border-dashed border-accent bg-accent-muted"
               : hasFile
                 ? "border-solid border-accent bg-accent-muted"
                 : "border-dashed border-subtle bg-transparent"
         }`}
-        style={{
-          boxShadow: isDragOver
-            ? "0 0 0 4px var(--accent-primary-glow), 0 0 30px var(--accent-primary-glow)"
-            : "none",
-        }}
       >
         {renderDropZoneContent()}
         <input
@@ -446,13 +421,8 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
       {/* Validation Error */}
       {fileError && (
-        <div
-          className="flex items-center gap-2 p-3 rounded-lg text-sm"
-          style={{
-            backgroundColor: "var(--semantic-danger-muted)",
-            color: "var(--semantic-danger)",
-          }}
-        >
+        <div className="flex items-center gap-2 p-3 rounded-lg text-sm bg-danger-muted text-danger">
+
           <Icon name="alert-circle" className="text-base flex-shrink-0" />
           {fileError}
         </div>
@@ -474,8 +444,7 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-medium transition-colors"
-            style={{ color: "var(--text-tertiary)" }}
+            className="flex items-center gap-1.5 text-xs font-medium transition-colors text-tertiary"
           >
             <Icon
               name={showAdvanced ? "chevron-up" : "chevron-down"}

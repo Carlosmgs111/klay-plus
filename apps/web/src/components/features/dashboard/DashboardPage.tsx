@@ -56,7 +56,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 text-slate-800 dark:text-slate-200">
+    <div className="space-y-8 text-primary">
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricCard label="Documents" value={totalDocs} icon="file-text" />
@@ -81,16 +81,10 @@ export function DashboardPage() {
         {/* Pipeline Status */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div className="flex items-center justify-between border-b border-subtle pb-2">
               <div className="flex items-center gap-2">
                 <Icon name="zap" />
-                <h2
-                  className="text-lg font-semibold"
-                  style={{
-                    color: "var(--text-primary)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
+                <h2 className="text-lg font-semibold text-primary tracking-heading">
                   Pipeline Status
                 </h2>
               </div>
@@ -106,17 +100,7 @@ export function DashboardPage() {
                 <p className="text-sm">No documents processed yet</p>
                 <a
                   href="/documents"
-                  className="text-xs mt-1 inline-block"
-                  style={{
-                    color: "var(--accent-primary)",
-                    transition: "opacity 150ms",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "0.8";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                  }}
+                  className="text-xs mt-1 inline-block text-accent hover:opacity-80 transition-opacity duration-fast"
                 >
                   Ingest your first document
                 </a>
@@ -154,25 +138,19 @@ export function DashboardPage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div className="flex items-center gap-2 border-b border-subtle pb-2">
               <Icon
                 name="zap"
                 className="text-4xl"
               />
-              <h2
-                className="text-lg font-semibold"
-                style={{
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.02em",
-                }}
-              >
+              <h2 className="text-lg font-semibold text-primary tracking-heading">
                 Quick Actions
               </h2>
             </div>
           </CardHeader>
           <CardBody>
             <div className="flex flex-col gap-4">
-              <a href="/documents" className="action-card flex items-center p-4 bg-slate-200/60 dark:bg-slate-800/60 rounded-lg">
+              <a href="/documents" className="action-card">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Icon name="upload" className="text-2xl mr-2" />
                 </div>
@@ -188,7 +166,7 @@ export function DashboardPage() {
                 />
               </a>
 
-              <a href="/search" className="action-card flex items-center p-4 bg-slate-200/60 dark:bg-slate-800/60 rounded-lg">
+              <a href="/search" className="action-card">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Icon name="search" className="text-2xl mr-2" />
                 </div>
@@ -204,7 +182,7 @@ export function DashboardPage() {
                 />
               </a>
 
-              <a href="/profiles" className="action-card flex items-center p-4 bg-slate-200/60 dark:bg-slate-800/60 rounded-lg">
+              <a href="/profiles" className="action-card">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Icon name="sliders" className="text-2xl mr-2" />
                 </div>
