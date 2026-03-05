@@ -79,7 +79,7 @@ export default function UnitsIndexPage() {
   }
 
   return (
-    <div className="space-y-8 text-slate-800 dark:text-slate-200">
+    <div className="space-y-8 text-primary">
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <MetricCard
@@ -106,13 +106,9 @@ export default function UnitsIndexPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Icon name="brain" style={{ color: "var(--text-tertiary)" }} />
+              <Icon name="brain" className="text-tertiary" />
               <h2
-                className="text-sm font-semibold"
-                style={{
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.02em",
-                }}
+                className="text-sm font-semibold text-primary tracking-heading"
               >
                 All Contexts
               </h2>
@@ -121,8 +117,7 @@ export default function UnitsIndexPage() {
               )}
             </div>
             <span
-              className="text-xs"
-              style={{ color: "var(--text-tertiary)" }}
+              className="text-xs text-tertiary"
             >
               {filteredUnitIds.length} of {manifestsByUnit.size} context
               {manifestsByUnit.size !== 1 ? "s" : ""}
@@ -133,16 +128,14 @@ export default function UnitsIndexPage() {
           <div className="relative mb-4">
             <Icon
               name="search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
-              style={{ color: "var(--text-tertiary)" }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-tertiary"
             />
             <input
               type="text"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               placeholder="Filter contexts by ID..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition-all duration-150"
-              style={{ color: "var(--text-primary)" }}
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm bg-surface-3 border border-default text-primary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-150"
             />
           </div>
 
@@ -151,39 +144,26 @@ export default function UnitsIndexPage() {
               <div className="w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center">
                 <Icon
                   name="brain"
-                  className="text-3xl"
-                  style={{ color: "var(--text-tertiary)" }}
+                  className="text-3xl text-tertiary"
                 />
               </div>
               {manifestsByUnit.size === 0 ? (
                 <>
                   <p
-                    className="text-sm"
-                    style={{ color: "var(--text-secondary)" }}
+                    className="text-sm text-secondary"
                   >
                     No contexts yet
                   </p>
                   <a
                     href="/documents"
-                    className="text-xs mt-2 inline-block"
-                    style={{
-                      color: "var(--accent-primary)",
-                      transition: "opacity 150ms",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = "0.8";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = "1";
-                    }}
+                    className="text-xs mt-2 inline-block text-accent hover:opacity-80 transition-opacity duration-fast"
                   >
                     Ingest your first document to create a context
                   </a>
                 </>
               ) : (
                 <p
-                  className="text-sm"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-sm text-secondary"
                 >
                   No contexts match "{filterText}"
                 </p>

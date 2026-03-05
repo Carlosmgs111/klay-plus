@@ -42,21 +42,18 @@ export default function UnitCard({ unitId, manifests }: UnitCardProps) {
   return (
     <a
       href={`/units/${unitId}/dashboard`}
-      className="block group"
-      style={{ textDecoration: "none" }}
+      className="block group no-underline"
     >
-      <Card className="transition-all duration-150 ease-in-out group-hover:border-blue-400 dark:group-hover:border-blue-500 group-hover:shadow-lg group-hover:shadow-blue-200/30 dark:group-hover:shadow-blue-800/30 cursor-pointer">
+      <Card className="transition-all duration-150 ease-in-out group-hover:border-accent group-hover:shadow-md cursor-pointer">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <Icon
                 name="brain"
-                className="text-lg"
-                style={{ color: "var(--text-tertiary)" }}
+                className="text-lg text-tertiary"
               />
               <h3
-                className="text-sm font-semibold font-mono truncate"
-                style={{ color: "var(--text-primary)" }}
+                className="text-sm font-semibold font-mono truncate text-primary"
               >
                 {truncatedId}
               </h3>
@@ -66,12 +63,10 @@ export default function UnitCard({ unitId, manifests }: UnitCardProps) {
               <div className="flex items-center gap-1.5">
                 <Icon
                   name="database"
-                  className="text-sm"
-                  style={{ color: "var(--text-tertiary)" }}
+                  className="text-sm text-tertiary"
                 />
                 <span
-                  className="text-xs"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-xs text-secondary"
                 >
                   {sources.length} source{sources.length !== 1 ? "s" : ""}
                 </span>
@@ -80,12 +75,10 @@ export default function UnitCard({ unitId, manifests }: UnitCardProps) {
               <div className="flex items-center gap-1.5">
                 <Icon
                   name="layers"
-                  className="text-sm"
-                  style={{ color: "var(--text-tertiary)" }}
+                  className="text-sm text-tertiary"
                 />
                 <span
-                  className="text-xs"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-xs text-secondary"
                 >
                   {projections.length} projection
                   {projections.length !== 1 ? "s" : ""}
@@ -95,12 +88,10 @@ export default function UnitCard({ unitId, manifests }: UnitCardProps) {
               <div className="flex items-center gap-1.5">
                 <Icon
                   name="clock"
-                  className="text-sm"
-                  style={{ color: "var(--text-tertiary)" }}
+                  className="text-sm text-tertiary"
                 />
                 <span
-                  className="text-xs"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-xs text-secondary"
                 >
                   {formattedDate}
                 </span>
