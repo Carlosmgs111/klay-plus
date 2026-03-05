@@ -37,8 +37,8 @@ export function SearchPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="search" size={16} style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="search" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               Semantic Search
             </h2>
           </div>
@@ -62,9 +62,9 @@ export function SearchPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Icon name="layers" size={16} style={{ color: "var(--text-tertiary)" }} />
-              <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-                Found <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{data.totalFound}</span> result{data.totalFound !== 1 ? "s" : ""} for "{data.queryText}"
+              <Icon name="layers" className="text-tertiary" />
+              <p className="text-sm font-medium text-secondary">
+                Found <span className="font-semibold text-primary">{data.totalFound}</span> result{data.totalFound !== 1 ? "s" : ""} for "{data.queryText}"
               </p>
             </div>
           </CardHeader>
