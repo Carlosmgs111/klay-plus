@@ -19,10 +19,10 @@
     --text-tertiary: #8a8a94;
     --text-ghost: #b4b4bc;
 
-    /* Borders — visible on light backgrounds */
-    --border-subtle: rgba(0, 0, 0, 0.08);
-    --border-default: rgba(0, 0, 0, 0.14);
-    --border-strong: rgba(0, 0, 0, 0.22);
+    /* Borders — glass edge style */
+    --border-subtle: rgba(255, 255, 255, 0.25);
+    --border-default: rgba(255, 255, 255, 0.18);
+    --border-strong: rgba(255, 255, 255, 0.30);
 
     /* Accent */
     --accent-primary: #2563eb;
