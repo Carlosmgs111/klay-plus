@@ -20,19 +20,18 @@ export function Header({ title, breadcrumbs }: HeaderProps) {
     <header className="sticky top-0 left-0 flex items-center justify-between px-6 z-10 backdrop-blur-xl w-full h-20">
       {/* Page Title / Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 ? (
-        <nav className="flex items-center gap-1 text-lg font-semibold" style={{ letterSpacing: "-0.02em" }}>
+        <nav className="flex items-center gap-1 text-lg font-semibold tracking-heading">
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1">
               {i > 0 && (
-                <span style={{ color: "var(--text-tertiary)" }}>
+                <span className="text-tertiary">
                   <Icon name="chevron-right" className="text-sm" />
                 </span>
               )}
               {crumb.href ? (
                 <a
                   href={crumb.href}
-                  className="hover:underline"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="hover:underline text-secondary"
                 >
                   {crumb.label}
                 </a>
@@ -43,7 +42,7 @@ export function Header({ title, breadcrumbs }: HeaderProps) {
           ))}
         </nav>
       ) : (
-        <h1 className="text-lg font-semibold" style={{ letterSpacing: "-0.02em" }}>{title}</h1>
+        <h1 className="text-lg font-semibold tracking-heading">{title}</h1>
       )}
 
       {/* Controls */}
@@ -56,72 +55,31 @@ export function Header({ title, breadcrumbs }: HeaderProps) {
         <div className="flex items-center rounded-lg p-[3px]">
           <button
             onClick={() => setMode("server")}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium text-black dark:text-white"
-            style={{
-              backgroundColor:
-                mode === "server" ? "var(--accent-primary)" : "transparent",
-              boxShadow: mode === "server" ? "var(--shadow-xs)" : "none",
-              transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all duration-fast ease-out-expo ${mode === "server" ? "bg-accent text-white shadow-xs" : "bg-transparent text-primary"}`}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{
-                backgroundColor: mode === "server" ? "#fff" : "currentColor",
-                opacity: mode === "server" ? 1 : 0.3,
-                boxShadow:
-                  mode === "server" ? "0 0 4px rgba(255,255,255,0.6)" : "none",
-                transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-fast ease-out-expo ${mode === "server" ? "bg-white opacity-100 shadow-[0_0_4px_rgba(255,255,255,0.6)]" : "bg-current opacity-30"}`}
             />
             Server
           </button>
           <button
             onClick={() => setMode("browser")}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium text-black dark:text-white"
-            style={{
-              backgroundColor:
-                mode === "browser" ? "var(--semantic-success)" : "transparent",
-              boxShadow: mode === "browser" ? "var(--shadow-xs)" : "none",
-              transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all duration-fast ease-out-expo ${mode === "browser" ? "bg-success text-white shadow-xs" : "bg-transparent text-primary"}`}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{
-                backgroundColor: mode === "browser" ? "#fff" : "currentColor",
-                opacity: mode === "browser" ? 1 : 0.3,
-                boxShadow:
-                  mode === "browser" ? "0 0 4px rgba(255,255,255,0.6)" : "none",
-                transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-fast ease-out-expo ${mode === "browser" ? "bg-white opacity-100 shadow-[0_0_4px_rgba(255,255,255,0.6)]" : "bg-current opacity-30"}`}
             />
             Browser
           </button>
         </div>
 
         {/* Divider */}
-        <div
-          className="w-px h-5 mx-1"
-          style={{ backgroundColor: "var(--border-default)" }}
-        />
+        <div className="w-px h-5 mx-1 bg-[var(--border-default)]" />
 
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg"
-          style={{
-            color: "var(--text-tertiary)",
-            transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--surface-3)";
-            e.currentTarget.style.color = "var(--text-primary)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--text-tertiary)";
-          }}
+          className="p-2 rounded-lg text-tertiary hover:text-primary hover:bg-surface-3 transition-all duration-fast ease-out-expo"
           aria-label="Toggle theme"
         >
           <Icon name={resolved === "dark" ? "sun" : "moon"} />

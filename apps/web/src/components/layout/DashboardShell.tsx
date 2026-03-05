@@ -74,7 +74,7 @@ export function DashboardShell({ activePage }: DashboardShellProps) {
                 </div>
               </Suspense>
             ) : (
-              <p style={{ color: "var(--text-tertiary)" }}>
+              <p className="text-tertiary">
                 Page not found
               </p>
             )}

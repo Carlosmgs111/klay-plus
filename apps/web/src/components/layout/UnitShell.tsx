@@ -61,7 +61,7 @@ export function UnitShell({ unitId, activePage }: UnitShellProps) {
                   </div>
                 </Suspense>
               ) : (
-                <p style={{ color: "var(--text-tertiary)" }}>
+                <p className="text-tertiary">
                   Page not found
                 </p>
               )}
