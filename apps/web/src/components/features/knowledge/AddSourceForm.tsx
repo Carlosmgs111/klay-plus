@@ -66,7 +66,7 @@ export function AddSourceForm({ unitId, onSuccess, onCancel }: AddSourceFormProp
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <p className="text-xs font-mono" style={{ color: "var(--text-tertiary)" }}>
+      <p className="text-xs font-mono text-tertiary">
         Adding source to unit: {unitId.slice(0, 12)}...
       </p>
 

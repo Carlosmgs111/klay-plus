@@ -57,7 +57,7 @@ export function LinkUnitsForm({ sourceUnitId, onSuccess, onCancel }: LinkUnitsFo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <p className="text-xs font-mono" style={{ color: "var(--text-tertiary)" }}>
+      <p className="text-xs font-mono text-tertiary">
         Linking from: {sourceUnitId.slice(0, 12)}...
       </p>
 

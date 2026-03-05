@@ -41,8 +41,8 @@ export function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="sun" size={16} style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="sun" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               Appearance
             </h2>
           </div>
@@ -55,22 +55,19 @@ export function SettingsPage() {
                 <button
                   key={opt.value}
                   onClick={() => setTheme(opt.value)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2"
-                  style={{
-                    borderColor: isActive ? "var(--accent-primary)" : "var(--border-default)",
-                    backgroundColor: isActive ? "var(--accent-primary-muted)" : "var(--surface-2)",
-                    boxShadow: isActive ? "var(--shadow-glow)" : undefined,
-                    transition: "all 200ms cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2
+                    transition-all duration-normal ease-out-expo
+                    ${isActive
+                      ? "border-accent bg-accent-muted shadow-glow"
+                      : "border-default bg-surface-2"
+                    }`}
                 >
                   <Icon
                     name={opt.icon}
-                    size={20}
-                    style={{ color: isActive ? "var(--accent-primary)" : "var(--text-tertiary)" }}
+                    className={isActive ? "text-accent" : "text-tertiary"}
                   />
                   <span
-                    className="text-sm font-medium"
-                    style={{ color: isActive ? "var(--accent-primary)" : "var(--text-secondary)" }}
+                    className={`text-sm font-medium ${isActive ? "text-accent" : "text-secondary"}`}
                   >
                     {opt.label}
                   </span>
@@ -85,8 +82,8 @@ export function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="server" size={16} style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="server" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               Runtime Mode
             </h2>
           </div>
@@ -99,28 +96,21 @@ export function SettingsPage() {
             >
               <div className="flex items-center gap-2.5 mb-2">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    backgroundColor: mode === "server" ? "var(--accent-primary-muted)" : "var(--surface-3)",
-                  }}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center
+                    ${mode === "server" ? "bg-accent-muted" : "bg-surface-3"}`}
                 >
                   <Icon
                     name="server"
-                    size={16}
-                    style={{ color: mode === "server" ? "var(--accent-primary)" : "var(--text-tertiary)" }}
+                    className={mode === "server" ? "text-accent" : "text-tertiary"}
                   />
                 </div>
                 <h3
-                  className="font-semibold text-sm"
-                  style={{
-                    color: mode === "server" ? "var(--accent-primary)" : "var(--text-primary)",
-                    letterSpacing: "-0.02em",
-                  }}
+                  className={`font-semibold text-sm tracking-heading ${mode === "server" ? "text-accent" : "text-primary"}`}
                 >
                   Server Mode (SSR)
                 </h3>
               </div>
-              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+              <p className="text-xs text-tertiary">
                 Astro API routes + NeDB + OpenAI/Hash embeddings
               </p>
             </button>
@@ -130,28 +120,21 @@ export function SettingsPage() {
             >
               <div className="flex items-center gap-2.5 mb-2">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    backgroundColor: mode === "browser" ? "var(--semantic-success-muted)" : "var(--surface-3)",
-                  }}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center
+                    ${mode === "browser" ? "bg-success-muted" : "bg-surface-3"}`}
                 >
                   <Icon
                     name="globe"
-                    size={16}
-                    style={{ color: mode === "browser" ? "var(--semantic-success)" : "var(--text-tertiary)" }}
+                    className={mode === "browser" ? "text-success" : "text-tertiary"}
                   />
                 </div>
                 <h3
-                  className="font-semibold text-sm"
-                  style={{
-                    color: mode === "browser" ? "var(--semantic-success)" : "var(--text-primary)",
-                    letterSpacing: "-0.02em",
-                  }}
+                  className={`font-semibold text-sm tracking-heading ${mode === "browser" ? "text-success" : "text-primary"}`}
                 >
                   Browser Mode
                 </h3>
               </div>
-              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+              <p className="text-xs text-tertiary">
                 Direct import + IndexedDB + WebLLM/Hash embeddings
               </p>
             </button>
@@ -163,20 +146,15 @@ export function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="layers" size={16} style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="layers" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               Architecture Flow
             </h2>
           </div>
         </CardHeader>
         <CardBody>
           <div
-            className="font-mono text-xs rounded-lg p-5 overflow-x-auto leading-relaxed"
-            style={{
-              backgroundColor: "var(--code-bg)",
-              color: "var(--text-secondary)",
-              border: "1px solid var(--border-subtle)",
-            }}
+            className="font-mono text-xs rounded-lg p-5 overflow-x-auto leading-relaxed bg-code text-secondary border border-subtle"
           >
             {mode === "server" ? (
               <pre>{`React Component
@@ -207,15 +185,15 @@ export function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Icon name="zap" size={16} style={{ color: "var(--text-tertiary)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            <Icon name="zap" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
               Health Check
             </h2>
           </div>
         </CardHeader>
         <CardBody>
           <div className="space-y-4">
-            <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
+            <p className="text-sm text-tertiary">
               Run a test search to verify the pipeline is operational in the current mode.
             </p>
             <Button
@@ -229,7 +207,7 @@ export function SettingsPage() {
                 </span>
               ) : (
                 <>
-                  <Icon name="zap" size={16} />
+                  <Icon name="zap" />
                   Run Health Check
                 </>
               )}

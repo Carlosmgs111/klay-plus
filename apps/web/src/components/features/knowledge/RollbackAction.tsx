@@ -56,7 +56,7 @@ export function RollbackAction({ unitId, currentVersion, onSuccess }: RollbackAc
           onChange={(e) => setTargetVersion(Number(e.target.value))}
           required
         />
-        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+        <p className="text-xs text-tertiary">
           Current version: {currentVersion}. Rollback is non-destructive (pointer move).
         </p>
         {error && <ErrorDisplay {...error} />}
