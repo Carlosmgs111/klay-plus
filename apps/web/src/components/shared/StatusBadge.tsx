@@ -2,32 +2,32 @@ type BadgeStatus = "complete" | "failed" | "pending" | "processing" | "partial";
 
 const BADGE_CONFIG: Record<
   BadgeStatus,
-  { className: string; label: string; dotColor: string }
+  { className: string; label: string; dotClassName: string }
 > = {
   complete: {
-    className: "bg-green-600",
+    className: "badge-complete",
     label: "Complete",
-    dotColor: "bg-green-300",
+    dotClassName: "bg-success",
   },
   failed: {
-    className: "bg-red-500",
+    className: "badge-failed",
     label: "Failed",
-    dotColor: "bg-red-500",
+    dotClassName: "bg-danger",
   },
   pending: {
     className: "badge-pending",
     label: "Pending",
-    dotColor: "var(--semantic-warning)",
+    dotClassName: "bg-warning",
   },
   processing: {
     className: "badge-processing",
     label: "Processing",
-    dotColor: "var(--accent-primary)",
+    dotClassName: "bg-accent",
   },
   partial: {
     className: "badge-pending",
     label: "Partial",
-    dotColor: "var(--semantic-warning)",
+    dotClassName: "bg-warning",
   },
 };
 
@@ -36,11 +36,15 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const config = BADGE_CONFIG[status] ?? { className: "badge", label: status };
+  const config = BADGE_CONFIG[status] ?? {
+    className: "badge",
+    label: status,
+    dotClassName: "bg-tertiary",
+  };
 
   return (
-    <span className={"p-1 px-2 rounded-md flex items-center gap-2 " + config.className}>
-      <span className={"w-2 h-2 rounded-full " + config.dotColor} />
+    <span className={config.className}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dotClassName}`} />
       {config.label}
     </span>
   );

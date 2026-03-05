@@ -13,7 +13,7 @@ interface MetricCardProps {
 
 const VARIANT_STYLES = {
   default:
-    "bg-gradient-to-b from-[rgba(108,84,224,0.18)] to-[rgba(108,84,224,0.08)] dark:from-[rgba(124,106,239,0.22)] dark:to-[rgba(124,106,239,0.08)] border-2 border-accent shadow-md",
+    "bg-gradient-to-b from-[rgba(37,99,235,0.18)] to-[rgba(37,99,235,0.08)] dark:from-[rgba(59,130,246,0.22)] dark:to-[rgba(59,130,246,0.08)] border-2 border-accent shadow-md",
   success:
     "bg-gradient-to-b from-[rgba(22,163,74,0.18)] to-[rgba(22,163,74,0.08)] dark:from-[rgba(62,207,142,0.22)] dark:to-[rgba(62,207,142,0.08)] border-2 border-success shadow-md",
   danger:

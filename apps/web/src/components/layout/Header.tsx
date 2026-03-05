@@ -17,7 +17,7 @@ export function Header({ title, breadcrumbs }: HeaderProps) {
   const { resolved, toggleTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 left-0 flex items-center justify-between px-6 z-10 backdrop-blur-xl w-full h-20">
+    <header className="sticky top-0 left-0 flex items-center justify-between px-6 z-10 backdrop-blur-xl w-full h-20 bg-[var(--header-bg)] border-b border-subtle">
       {/* Page Title / Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 ? (
         <nav className="flex items-center gap-1 text-lg font-semibold tracking-heading">

@@ -19,10 +19,10 @@ export function Sidebar({ activePage }: SidebarProps) {
   const { resolved, toggleTheme } = useTheme();
 
   return (
-    <aside className="sticky left-0 top-0 bottom-0 flex flex-col z-10 bg-surface-1 border-r border-default">
+    <aside className="sticky left-0 top-0 bottom-0 flex flex-col z-10 bg-surface-1/70 backdrop-blur-xl border-r border-subtle">
       {/* Logo */}
-      <div className="h-header flex items-center px-3 py-4 border-b border-default">
-        <i className="bx bxs-layers-plus-alt text-2xl mr-2 bg-surface-3 rounded-md p-2 aspect-square w-12 h-12 flex items-center justify-center"></i>
+      <div className="h-header flex items-center px-3 py-4 border-b border-subtle">
+        <i className="bx bxs-layers-plus-alt text-2xl mr-2 bg-accent text-white rounded-lg p-2 aspect-square w-10 h-10 flex items-center justify-center shadow-md"></i>
         <span className="text-xl font-bold text-primary tracking-heading">
           klay+
         </span>

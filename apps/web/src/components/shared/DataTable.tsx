@@ -21,7 +21,9 @@ export function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   if (rows.length === 0) {
     return (
-      <div className="text-center py-8 text-sm text-tertiary">{emptyMessage}</div>
+      <div className="text-center py-10 animate-fade-in">
+        <p className="text-sm text-tertiary">{emptyMessage}</p>
+      </div>
     );
   }
 

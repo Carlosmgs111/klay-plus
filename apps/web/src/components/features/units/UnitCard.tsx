@@ -44,7 +44,7 @@ export default function UnitCard({ unitId, manifests }: UnitCardProps) {
       href={`/units/${unitId}/dashboard`}
       className="block group no-underline"
     >
-      <Card className="transition-all duration-150 ease-in-out group-hover:border-accent group-hover:shadow-md cursor-pointer">
+      <Card className="transition-all duration-150 ease-in-out group-hover:border-accent group-hover:shadow-md cursor-pointer p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">

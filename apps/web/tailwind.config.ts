@@ -114,8 +114,8 @@ export default {
           "100%": { transform: "translateY(0) scale(1)", opacity: "1" },
         },
         "pulse-ring": {
-          "0%, 100%": { boxShadow: "0 0 0 0px rgba(108, 84, 224, 0.15)" },
-          "50%": { boxShadow: "0 0 0 10px rgba(108, 84, 224, 0.3)" },
+          "0%, 100%": { boxShadow: "0 0 0 0px rgba(37, 99, 235, 0.15)" },
+          "50%": { boxShadow: "0 0 0 10px rgba(37, 99, 235, 0.3)" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0)" },

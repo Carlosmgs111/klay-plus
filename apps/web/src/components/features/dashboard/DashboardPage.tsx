@@ -81,10 +81,10 @@ export function DashboardPage() {
         {/* Pipeline Status */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between border-b border-subtle pb-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Icon name="zap" />
-                <h2 className="text-lg font-semibold text-primary tracking-heading">
+                <Icon name="zap" className="text-tertiary" />
+                <h2 className="text-sm font-semibold text-primary tracking-heading">
                   Pipeline Status
                 </h2>
               </div>
@@ -93,16 +93,16 @@ export function DashboardPage() {
           </CardHeader>
           <CardBody>
             {manifests.length === 0 ? (
-              <div className="text-center py-6">
-                <div className="w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                  <Icon name="file-text" />
+              <div className="text-center py-8 animate-fade-in">
+                <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-accent-muted">
+                  <Icon name="file-text" className="text-3xl text-accent animate-float" />
                 </div>
-                <p className="text-sm">No documents processed yet</p>
+                <p className="text-sm font-medium text-primary">No documents processed yet</p>
                 <a
                   href="/documents"
-                  className="text-xs mt-1 inline-block text-accent hover:opacity-80 transition-opacity duration-fast"
+                  className="text-sm mt-2 inline-block text-accent font-medium hover:underline"
                 >
-                  Ingest your first document
+                  Ingest your first document &rarr;
                 </a>
               </div>
             ) : (
@@ -138,12 +138,9 @@ export function DashboardPage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2 border-b border-subtle pb-2">
-              <Icon
-                name="zap"
-                className="text-4xl"
-              />
-              <h2 className="text-lg font-semibold text-primary tracking-heading">
+            <div className="flex items-center gap-2">
+              <Icon name="zap" className="text-tertiary" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
                 Quick Actions
               </h2>
             </div>
@@ -151,50 +148,50 @@ export function DashboardPage() {
           <CardBody>
             <div className="flex flex-col gap-4">
               <a href="/documents" className="action-card">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon name="upload" className="text-2xl mr-2" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-muted">
+                  <Icon name="upload" className="text-lg text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-medium">Ingest Document</p>
-                  <p className="text-xs font-thin mt-0.5">
+                  <p className="text-sm font-medium">Ingest Document</p>
+                  <p className="text-xs text-tertiary mt-0.5">
                     Process and index new documents
                   </p>
                 </div>
                 <Icon
                   name="chevron-right"
-                  className="ml-auto flex-shrink-0 text-2xl"
+                  className="ml-auto flex-shrink-0 text-tertiary"
                 />
               </a>
 
               <a href="/search" className="action-card">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon name="search" className="text-2xl mr-2" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-muted">
+                  <Icon name="search" className="text-lg text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-medium">Search Knowledge</p>
-                  <p className="text-xs font-thin mt-0.5">
+                  <p className="text-sm font-medium">Search Knowledge</p>
+                  <p className="text-xs text-tertiary mt-0.5">
                     Query your semantic knowledge base
                   </p>
                 </div>
                 <Icon
                   name="chevron-right"
-                  className="ml-auto flex-shrink-0 text-2xl"
+                  className="ml-auto flex-shrink-0 text-tertiary"
                 />
               </a>
 
               <a href="/profiles" className="action-card">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon name="sliders" className="text-2xl mr-2" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-accent-muted">
+                  <Icon name="sliders" className="text-lg text-accent" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-medium">Create Profile</p>
-                  <p className="text-xs font-thin mt-0.5">
+                  <p className="text-sm font-medium">Create Profile</p>
+                  <p className="text-xs text-tertiary mt-0.5">
                     Configure chunking and embedding strategies
                   </p>
                 </div>
                 <Icon
                   name="chevron-right"
-                  className="ml-auto flex-shrink-0 text-2xl"
+                  className="ml-auto flex-shrink-0 text-tertiary"
                 />
               </a>
             </div>
