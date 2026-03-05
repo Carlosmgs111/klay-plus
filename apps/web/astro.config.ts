@@ -6,7 +6,7 @@ import node from "@astrojs/node";
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-  integrations: [react(), tailwind()],
+  integrations: [react(), tailwind({ applyBaseStyles: false })],
   vite: {
     ssr: {
       // Bundle @klay/core (source .ts files need transpilation)

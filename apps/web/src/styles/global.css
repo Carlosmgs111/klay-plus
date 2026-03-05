@@ -53,6 +53,10 @@
     /* Code */
     --code-bg: #f0f0f4;
 
+    /* Card glassmorphism */
+    --card-bg: rgba(255, 255, 255, 0.55);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+
     /* Header */
     --header-bg: rgba(237, 237, 240, 0.85);
 
@@ -108,6 +112,10 @@
     /* Code */
     --code-bg: #141418;
 
+    /* Card glassmorphism */
+    --card-bg: rgba(24, 24, 30, 0.55);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+
     /* Header */
     --header-bg: rgba(10, 10, 12, 0.80);
 
@@ -126,16 +134,19 @@
 @layer components {
   /* ---- Cards ---- */
   .card {
-    background-color: var(--surface-2);
+    background-color: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-default);
-    box-shadow: var(--shadow-sm);
-    @apply rounded-lg transition-all;
+    box-shadow: var(--card-shadow);
+    @apply rounded-2xl transition-all;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     transition-duration: 180ms;
   }
 
   .card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-strong);
   }
 
   .card-header {

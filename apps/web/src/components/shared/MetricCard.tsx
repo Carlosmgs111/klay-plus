@@ -12,9 +12,12 @@ interface MetricCardProps {
 }
 
 const VARIANT_STYLES = {
-  default: "bg-accent-muted border border-accent text-accent",
-  success: "bg-success-muted border border-success text-success",
-  danger: "bg-danger-muted border border-danger text-danger",
+  default:
+    "bg-gradient-to-b from-[rgba(108,84,224,0.18)] to-[rgba(108,84,224,0.08)] dark:from-[rgba(124,106,239,0.22)] dark:to-[rgba(124,106,239,0.08)] border-2 border-accent shadow-md",
+  success:
+    "bg-gradient-to-b from-[rgba(22,163,74,0.18)] to-[rgba(22,163,74,0.08)] dark:from-[rgba(62,207,142,0.22)] dark:to-[rgba(62,207,142,0.08)] border-2 border-success shadow-md",
+  danger:
+    "bg-gradient-to-b from-[rgba(220,38,38,0.18)] to-[rgba(220,38,38,0.08)] dark:from-[rgba(240,104,104,0.22)] dark:to-[rgba(240,104,104,0.08)] border-2 border-danger shadow-md",
 };
 
 const TREND_CONFIG = {
