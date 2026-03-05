@@ -34,6 +34,7 @@ export default {
           DEFAULT: "var(--semantic-info)",
           muted: "var(--semantic-info-muted)",
         },
+        code: "var(--code-bg)",
       },
       textSize: {
         "3xl": "1.875rem",
@@ -57,6 +58,19 @@ export default {
       fontFamily: {
         sans: ["ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["ui-mono", "JetBrains Mono", "Menlo", "monospace"],
+      },
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        glow: "var(--shadow-glow)",
+        "glow-accent": "var(--glow-accent)",
+        "glow-focus": "var(--glow-focus)",
+      },
+      letterSpacing: {
+        heading: "-0.02em",
+        caps: "0.06em",
       },
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
