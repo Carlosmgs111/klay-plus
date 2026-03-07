@@ -96,7 +96,7 @@ export default function UnitVersionsPage() {
       const currentSourceIds = new Set(version.sources.map((s) => s.sourceId));
       const sourcesWithDiff: SourceWithDiff[] = version.sources.map((s) => ({
         ...s,
-        diff: cumulativeSources.has(s.sourceId) ? "unchanged" as DiffTag : "added" as DiffTag,
+        diff: cumulativeSources.has(s.sourceId) ? "unchanged" : "added",
       }));
 
       // Add current sources to cumulative set

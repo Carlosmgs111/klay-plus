@@ -30,11 +30,15 @@ export default function UnitProjectionsPage() {
   // Fetch profiles on mount for model-to-profile resolution
   useEffect(() => {
     if (!service) return;
+    let cancelled = false;
     service.listProfiles().then((result) => {
-      if (result.success) {
+      if (!cancelled && result.success) {
         setProfiles(result.data.profiles);
       }
+    }).catch(() => {
+      // Profiles are optional enrichment; silently degrade
     });
+    return () => { cancelled = true; };
   }, [service]);
 
   const projections = useMemo<ProjectionRow[]>(
@@ -80,8 +84,9 @@ export default function UnitProjectionsPage() {
   const uniqueProfileNames = useMemo(() => {
     const names = new Set<string>();
     filteredProjections.forEach((p) => {
-      const name = resolveProfileName(p);
-      if (name !== "—") names.add(name);
+      if (!p.model) return;
+      const name = modelToProfileName.get(p.model) ?? p.model;
+      names.add(name);
     });
     return Array.from(names);
   }, [filteredProjections, modelToProfileName]);
