@@ -24,7 +24,9 @@ interface VersionGroup {
   status: string;
 }
 
-type DiffTag = "added" | "removed" | "unchanged";
+// Each manifest maps to one pipeline run. "removed" would require
+// aggregate version snapshots which the current data model doesn't provide.
+type DiffTag = "added" | "unchanged";
 
 interface SourceWithDiff {
   sourceId: string;
@@ -289,9 +291,7 @@ export default function UnitVersionsPage() {
                                 className={`p-2 rounded border ${
                                   source.diff === "added"
                                     ? "bg-success-muted/30 border-success/30"
-                                    : source.diff === "removed"
-                                      ? "bg-danger-muted/30 border-danger/30"
-                                      : "bg-surface-0 border-subtle"
+                                    : "bg-surface-0 border-subtle"
                                 }`}
                               >
                                 <div className="flex items-center gap-2 text-xs">
@@ -299,11 +299,6 @@ export default function UnitVersionsPage() {
                                   {source.diff === "added" && (
                                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-success-muted text-success">
                                       + New
-                                    </span>
-                                  )}
-                                  {source.diff === "removed" && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-danger-muted text-danger">
-                                      - Removed
                                     </span>
                                   )}
                                   <span className="font-mono text-accent">
