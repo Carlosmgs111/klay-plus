@@ -2,6 +2,7 @@ import type { SourceIngestionService } from "../../../contexts/source-ingestion/
 import type { SourceKnowledgeService } from "../../../contexts/source-knowledge/service/SourceKnowledgeService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
 import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
+import type { ManifestRepository } from "../../knowledge-pipeline/contracts/ManifestRepository";
 import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
 import type {
   IngestAndAddSourceInput,
@@ -20,6 +21,7 @@ export interface ResolvedManagementDependencies {
   sourceKnowledge: SourceKnowledgeService;
   processing: SemanticProcessingService;
   contextManagement: ContextManagementService;
+  manifestRepository?: ManifestRepository;
 }
 
 /**
@@ -42,6 +44,7 @@ export interface ResolvedManagementDependencies {
  */
 export class KnowledgeManagementOrchestrator implements KnowledgeManagementPort {
   private readonly _ingestAndAddSource: IngestAndAddSource;
+  private readonly _manifestRepository: ManifestRepository | null;
 
   constructor(deps: ResolvedManagementDependencies) {
     this._ingestAndAddSource = new IngestAndAddSource(
@@ -50,11 +53,45 @@ export class KnowledgeManagementOrchestrator implements KnowledgeManagementPort 
       deps.processing,
       deps.contextManagement,
     );
+    this._manifestRepository = deps.manifestRepository ?? null;
   }
 
   async ingestAndAddSource(
     input: IngestAndAddSourceInput,
   ): Promise<Result<KnowledgeManagementError, IngestAndAddSourceSuccess>> {
-    return this._ingestAndAddSource.execute(input);
+    const result = await this._ingestAndAddSource.execute(input);
+
+    if (result.isOk() && this._manifestRepository) {
+      try {
+        await this._manifestRepository.save({
+          id: crypto.randomUUID(),
+          resourceId: input.resourceId ?? input.sourceId,
+          sourceId: input.sourceId,
+          extractionJobId: input.extractionJobId,
+          sourceKnowledgeId: result.value.sourceKnowledgeId,
+          projectionId: result.value.projectionId,
+          contextId: input.contextId,
+          status: "complete",
+          completedSteps: [
+            "ingestion",
+            "create-source-knowledge",
+            "processing",
+            "register-projection",
+            "add-to-context",
+          ],
+          contentHash: result.value.contentHash,
+          extractedTextLength: result.value.extractedTextLength,
+          chunksCount: result.value.chunksCount,
+          dimensions: result.value.dimensions,
+          model: result.value.model,
+          createdAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+        });
+      } catch {
+        // Best-effort: manifest recording should not fail the operation
+      }
+    }
+
+    return result;
   }
 }

@@ -197,36 +197,28 @@ describe("Knowledge Management Orchestrator — E2E", () => {
   // 3. Error at AddToContext Step
 
   describe("error at add-to-context step", () => {
-    it("should return error with step=add-to-context when context does not exist", async () => {
-      // Act: ingest a file with a valid source, targeting a non-existent context
-      // Ingestion, CreateSourceKnowledge, Processing, RegisterProjection succeed,
-      // but AddToContext fails (context doesn't exist)
+    it("should auto-create context when it does not exist", async () => {
+      // Act: ingest a file targeting a non-existent context — should auto-create it
       const tmpFile = path.join(os.tmpdir(), `klay-mgmt-test-${Date.now()}.txt`);
-      fs.writeFileSync(tmpFile, "Temporary content for add-to-context error test.");
+      fs.writeFileSync(tmpFile, "Temporary content for auto-create context test.");
 
       try {
         const result = await management.ingestAndAddSource({
-          contextId: "non-existent-context-for-add",
-          sourceId: "src-mgmt-err-ctx-001",
+          contextId: "auto-created-context-001",
+          sourceId: "src-mgmt-auto-ctx-001",
           sourceName: "Temp Source",
           uri: tmpFile,
           sourceType: "PLAIN_TEXT",
-          extractionJobId: "job-mgmt-err-ctx-001",
-          projectionId: "proj-mgmt-err-ctx-001",
+          extractionJobId: "job-mgmt-auto-ctx-001",
+          projectionId: "proj-mgmt-auto-ctx-001",
           processingProfileId: profileId,
         });
 
-        expect(result.isFail()).toBe(true);
-        if (result.isFail()) {
-          expect(result.error).toBeInstanceOf(KnowledgeManagementError);
-          expect(result.error.step).toBe(ManagementStep.AddToContext);
-          expect(result.error.code).toBe("MANAGEMENT_ADD_TO_CONTEXT_FAILED");
-          expect(result.error.completedSteps).toEqual([
-            ManagementStep.Ingestion,
-            ManagementStep.CreateSourceKnowledge,
-            ManagementStep.Processing,
-            ManagementStep.RegisterProjection,
-          ]);
+        expect(result.isOk()).toBe(true);
+        if (result.isOk()) {
+          expect(result.value.contextId).toBe("auto-created-context-001");
+          expect(result.value.sourceId).toBe("src-mgmt-auto-ctx-001");
+          expect(result.value.chunksCount).toBeGreaterThan(0);
         }
       } finally {
         fs.unlinkSync(tmpFile);

@@ -31,7 +31,7 @@ const SettingsPage = lazy(() =>
   }))
 );
 const UnitsIndexPage = lazy(
-  () => import("../features/units/UnitsIndexPage")
+  () => import("../features/knowledgeContext/ContextsIndexPage")
 );
 
 const PAGE_TITLES: Record<string, string> = {

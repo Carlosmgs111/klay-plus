@@ -10,8 +10,8 @@ import {
   SkeletonCard,
   SkeletonLine,
 } from "../../shared/Skeleton";
-import UnitCard from "./UnitCard";
 import type { GetManifestInput, ContentManifestEntry } from "@klay/core";
+import ContextCard from "./ContextCard";
 
 export default function UnitsIndexPage() {
   const { service, isInitializing } = useRuntimeMode();
@@ -171,11 +171,11 @@ export default function UnitsIndexPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredUnitIds.map((unitId) => (
-                <UnitCard
-                  key={unitId}
-                  unitId={unitId}
-                  manifests={manifestsByUnit.get(unitId) ?? []}
+              {filteredUnitIds.map((contextId) => (
+                <ContextCard
+                  key={contextId}
+                  contextId={contextId}
+                  manifests={manifestsByUnit.get(contextId) ?? []}
                 />
               ))}
             </div>

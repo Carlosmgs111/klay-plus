@@ -4,15 +4,15 @@ import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { SkeletonCard } from "../../shared/Skeleton";
 import { EmptyState } from "../../shared/EmptyState";
-import { useUnit } from "../../../contexts/UnitContext";
+import { useKnowledgeContext } from "../../../contexts/KnowledgeContextContext";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { SearchBar } from "../search/SearchBar";
 import { SearchResults } from "../search/SearchResults";
 import type { SearchKnowledgeInput } from "@klay/core";
 
-export default function UnitSearchPage() {
-  const { unitId, loading: unitLoading, error: unitError } = useUnit();
+export default function ContextSearchPage() {
+  const { contextId, loading: contextLoading, error: contextError } = useKnowledgeContext();
   const { service, isInitializing } = useRuntimeMode();
 
   const searchAction = useCallback(
@@ -27,11 +27,11 @@ export default function UnitSearchPage() {
       queryText,
       topK,
       minScore,
-      filters: { contextId: unitId },
+      filters: { contextId },
     });
   };
 
-  if (isInitializing || unitLoading) {
+  if (isInitializing || contextLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
         <SkeletonCard />
@@ -40,10 +40,10 @@ export default function UnitSearchPage() {
     );
   }
 
-  if (unitError) {
+  if (contextError) {
     return (
       <div className="space-y-6">
-        <ErrorDisplay message={unitError} code="UNIT_LOAD_ERROR" />
+        <ErrorDisplay message={contextError} code="CONTEXT_LOAD_ERROR" />
       </div>
     );
   }
@@ -59,16 +59,16 @@ export default function UnitSearchPage() {
               className="text-tertiary"
             />
             <h2 className="text-sm font-semibold text-primary tracking-heading">
-              Unit Search
+              Context Search
             </h2>
             <span className="ml-2 text-xs px-2 py-0.5 rounded font-mono bg-surface-1 text-tertiary">
-              scoped to {unitId.slice(0, 8)}...
+              scoped to {contextId.slice(0, 8)}...
             </span>
           </div>
         </CardHeader>
         <CardBody>
           <p className="text-xs mb-4 text-tertiary">
-            Search across this unit's projections using semantic similarity.
+            Search across this context's projections using semantic similarity.
           </p>
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
         </CardBody>

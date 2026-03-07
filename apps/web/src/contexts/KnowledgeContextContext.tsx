@@ -11,7 +11,7 @@ import { useRuntimeMode } from "./RuntimeModeContext";
 import type { ContentManifestEntry } from "@klay/core";
 
 interface UnitContextValue {
-  unitId: string;
+  contextId: string;
   manifests: ContentManifestEntry[];
   loading: boolean;
   error: string | null;
@@ -20,15 +20,15 @@ interface UnitContextValue {
 
 const UnitContext = createContext<UnitContextValue | null>(null);
 
-interface UnitContextProviderProps {
-  unitId: string;
+interface KnowledgeContextProviderProps {
+  contextId: string;
   children: ReactNode;
 }
 
-export function UnitContextProvider({
-  unitId,
+export function KnowledgeContextProvider({
+  contextId,
   children,
-}: UnitContextProviderProps) {
+}: KnowledgeContextProviderProps) {
   const { service, isInitializing } = useRuntimeMode();
   const [manifests, setManifests] = useState<ContentManifestEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export function UnitContextProvider({
     setLoading(true);
     setError(null);
     try {
-      const result = await service.getManifest({ contextId: unitId });
+      const result = await service.getManifest({ contextId });
       if (result.success) {
         setManifests(result.data.manifests);
       } else {
@@ -50,7 +50,7 @@ export function UnitContextProvider({
     } finally {
       setLoading(false);
     }
-  }, [service, unitId]);
+  }, [service, contextId]);
 
   useEffect(() => {
     if (!isInitializing && service) {
@@ -60,22 +60,22 @@ export function UnitContextProvider({
 
   const value = useMemo<UnitContextValue>(
     () => ({
-      unitId,
+      contextId,
       manifests,
       loading: loading || isInitializing,
       error,
       refresh: fetchManifests,
     }),
-    [unitId, manifests, loading, isInitializing, error, fetchManifests],
+    [contextId, manifests, loading, isInitializing, error, fetchManifests],
   );
 
   return <UnitContext.Provider value={value}>{children}</UnitContext.Provider>;
 }
 
-export function useUnit(): UnitContextValue {
+export function useKnowledgeContext(): UnitContextValue {
   const ctx = useContext(UnitContext);
   if (!ctx) {
-    throw new Error("useUnit must be used within a UnitContextProvider");
+    throw new Error("useKnowledgeContext must be used within a KnowledgeContextProvider");
   }
   return ctx;
 }

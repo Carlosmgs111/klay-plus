@@ -16,12 +16,12 @@ const SOURCE_TYPES = [
 ];
 
 interface AddSourceFormProps {
-  unitId: string;
+  contextId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function AddSourceForm({ unitId, onSuccess, onCancel }: AddSourceFormProps) {
+export function AddSourceForm({ contextId, onSuccess, onCancel }: AddSourceFormProps) {
   const { lifecycleService } = useRuntimeMode();
   const { addToast } = useToast();
   const [sourceName, setSourceName] = useState("");
@@ -41,7 +41,7 @@ export function AddSourceForm({ unitId, onSuccess, onCancel }: AddSourceFormProp
     if (!lifecycleService) return;
 
     const input: IngestAndAddSourceInput = {
-      unitId,
+      contextId,
       sourceId: crypto.randomUUID(),
       sourceName,
       uri,
@@ -67,7 +67,7 @@ export function AddSourceForm({ unitId, onSuccess, onCancel }: AddSourceFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-xs font-mono text-tertiary">
-        Adding source to unit: {unitId.slice(0, 12)}...
+        Adding source to context: {contextId.slice(0, 12)}...
       </p>
 
       <Input

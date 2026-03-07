@@ -6,17 +6,17 @@ import {
   getUnitSources,
   getUnitProjections,
   getOverallStatus,
-} from "../../../contexts/UnitContext";
+} from "../../../contexts/KnowledgeContextContext";
 import type { ContentManifestEntry } from "@klay/core";
 
-interface UnitCardProps {
-  unitId: string;
+interface ContextCardProps {
+  contextId: string;
   manifests: ContentManifestEntry[];
 }
 
-export default function UnitCard({ unitId, manifests }: UnitCardProps) {
+export default function ContextCard({ contextId, manifests }: ContextCardProps) {
   const truncatedId =
-    unitId.length > 8 ? `${unitId.slice(0, 8)}...` : unitId;
+    contextId.length > 8 ? `${contextId.slice(0, 8)}...` : contextId;
 
   const sources = useMemo(() => getUnitSources(manifests), [manifests]);
   const projections = useMemo(() => getUnitProjections(manifests), [manifests]);
@@ -41,7 +41,7 @@ export default function UnitCard({ unitId, manifests }: UnitCardProps) {
 
   return (
     <a
-      href={`/units/${unitId}/dashboard`}
+      href={`/contexts/${contextId}/dashboard`}
       className="block group no-underline"
     >
       <Card className="transition-all duration-150 ease-in-out group-hover:border-accent group-hover:shadow-md cursor-pointer p-5">

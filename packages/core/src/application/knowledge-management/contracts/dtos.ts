@@ -17,6 +17,8 @@ export interface IngestAndAddSourceInput {
   sourceName: string;
   /** URI of the content to ingest */
   uri: string;
+  /** Raw file content — required for browser uploads where file:// URIs are not fetchable */
+  content?: ArrayBuffer;
   /** Type of the source (e.g., "PLAIN_TEXT", "PDF") */
   sourceType: string;
   /** ID for the extraction job */

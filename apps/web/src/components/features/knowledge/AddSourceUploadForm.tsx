@@ -1,16 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
-import { usePipelineAction } from "../../../hooks/usePipelineAction";
+import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Button } from "../../shared/Button";
 import { Input } from "../../shared/Input";
 import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { Spinner } from "../../shared/Spinner";
 import type {
-  ExecutePipelineInput,
-  ExecutePipelineSuccess,
-} from "@klay/core";
+  IngestAndAddSourceInput,
+  IngestAndAddSourceSuccess,
+} from "@klay/core/management";
 
 // ─── File Type Detection ──────────────────────────────────────────────────────
 
@@ -47,14 +47,18 @@ function formatFileSize(bytes: number): string {
 
 type Phase = "idle" | "file-selected" | "processing" | "success" | "error";
 
-interface DocumentUploadFormProps {
+interface AddSourceUploadFormProps {
+  contextId: string;
   onSuccess?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
-  const { service } = useRuntimeMode();
+export function AddSourceUploadForm({
+  contextId,
+  onSuccess,
+}: AddSourceUploadFormProps) {
+  const { lifecycleService } = useRuntimeMode();
   const { addToast } = useToast();
 
   const [phase, setPhase] = useState<Phase>("idle");
@@ -63,20 +67,20 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
   const [isDraggingOnPage, setIsDraggingOnPage] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [language, setLanguage] = useState("en");
-  const [createdBy, setCreatedBy] = useState("dashboard-user");
-  const [result, setResult] = useState<ExecutePipelineSuccess | null>(null);
+  const [processingProfileId, setProcessingProfileId] = useState("default");
+  const [result, setResult] = useState<IngestAndAddSourceSuccess | null>(null);
 
   const dragCounterRef = useRef(0);
   const pageDragCounterRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const executePipeline = useCallback(
-    (input: ExecutePipelineInput) => service!.execute(input),
-    [service],
+  const addSourceAction = useCallback(
+    (input: IngestAndAddSourceInput) =>
+      lifecycleService!.ingestAndAddSource(input),
+    [lifecycleService],
   );
 
-  const { error, execute } = usePipelineAction(executePipeline);
+  const { error, execute } = useServiceAction(addSourceAction);
 
   // ─── Page-level drag detection ────────────────────────────────────────
 
@@ -173,14 +177,13 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) selectFile(selected);
-    // Reset input so same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // ─── Submit ───────────────────────────────────────────────────────────
 
   const handleProcess = async () => {
-    if (!service || !file) return;
+    if (!lifecycleService || !file) return;
 
     setPhase("processing");
 
@@ -191,29 +194,30 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       binary += String.fromCharCode(bytes[i]);
     }
     const base64Content = btoa(binary);
+
     const detected = detectFileType(file.name);
 
-    const input: ExecutePipelineInput = {
+    const input: IngestAndAddSourceInput = {
+      contextId,
       sourceId: crypto.randomUUID(),
       sourceName: file.name,
       uri: file.name,
       sourceType: detected?.type ?? "PLAIN_TEXT",
       extractionJobId: crypto.randomUUID(),
-      resourceId: crypto.randomUUID(),
       projectionId: crypto.randomUUID(),
       projectionType: "EMBEDDING",
-      processingProfileId: "default",
-      contextId: crypto.randomUUID(),
-      language,
-      createdBy,
+      processingProfileId,
       content: base64Content as unknown as ArrayBuffer,
     };
 
-    const pipelineResult = await execute(input);
-    if (pipelineResult) {
-      setResult(pipelineResult);
+    const actionResult = await execute(input);
+    if (actionResult) {
+      setResult(actionResult);
       setPhase("success");
-      addToast("Document processed successfully", "success");
+      addToast(
+        `Source added — ${actionResult.chunksCount} chunks, v${actionResult.contextId.slice(0, 8)}`,
+        "success",
+      );
       onSuccess?.();
     } else {
       setPhase("error");
@@ -240,11 +244,9 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
         <Spinner size="lg" />
         <p className="mt-4 text-sm font-medium text-primary">
-          Processing document...
+          Adding source to context...
         </p>
-        <p className="mt-1 text-xs text-tertiary">
-          {file?.name}
-        </p>
+        <p className="mt-1 text-xs text-tertiary">{file?.name}</p>
       </div>
     );
   }
@@ -259,38 +261,29 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
             <Icon name="check" className="text-xl text-success" />
           </div>
           <p className="text-sm font-medium text-primary">
-            Document processed successfully
+            Source added successfully
           </p>
-          <p className="mt-1 text-xs text-tertiary">
-            {file?.name}
-          </p>
+          <p className="mt-1 text-xs text-tertiary">{file?.name}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4 p-4 rounded-lg mb-6 bg-surface-1">
-
           <div className="text-center">
             <p className="text-lg font-semibold text-accent">
               {result.chunksCount}
             </p>
-            <p className="text-xs text-tertiary">
-              Chunks
-            </p>
+            <p className="text-xs text-tertiary">Chunks</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-semibold text-accent">
               {result.dimensions}
             </p>
-            <p className="text-xs text-tertiary">
-              Dimensions
-            </p>
+            <p className="text-xs text-tertiary">Dimensions</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-semibold truncate text-accent">
               {result.model}
             </p>
-            <p className="text-xs text-tertiary">
-              Model
-            </p>
+            <p className="text-xs text-tertiary">Model</p>
           </div>
         </div>
 
@@ -299,7 +292,7 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
           className="w-full"
           onClick={handleUploadAnother}
         >
-          Upload Another
+          Add Another Source
         </Button>
       </div>
     );
@@ -308,16 +301,18 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
   // ─── Render: Main (idle / file-selected / error) ──────────────────────
 
   const detected = file ? detectFileType(file.name) : null;
-  const hasFile = file && detected && (phase === "file-selected" || phase === "error");
+  const hasFile =
+    file && detected && (phase === "file-selected" || phase === "error");
   const isDragging = isDraggingOnPage || isDragOver;
 
-  // Drop zone content: drag feedback takes priority over static content
   const renderDropZoneContent = () => {
-    // ── State 1: hovering directly over the zone ──
     if (isDragOver) {
       return (
         <div className="flex flex-col items-center gap-3" key="drop">
-          <Icon name="arrow-down" className="text-5xl text-accent animate-bounce-drop" />
+          <Icon
+            name="arrow-down"
+            className="text-5xl text-accent animate-bounce-drop"
+          />
           <p className="text-base font-bold text-accent animate-scale-spring">
             Drop here
           </p>
@@ -325,11 +320,13 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       );
     }
 
-    // ── State 2: dragging on page, not yet over the zone ──
     if (isDraggingOnPage) {
       return (
         <div className="flex flex-col items-center gap-3" key="drag">
-          <Icon name="cloud-fill" className="text-5xl text-accent animate-float" />
+          <Icon
+            name="cloud-fill"
+            className="text-5xl text-accent animate-float"
+          />
           <p className="text-base font-bold text-accent animate-fade-in">
             Drag here
           </p>
@@ -337,10 +334,12 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       );
     }
 
-    // ── State 3: file already selected ──
     if (hasFile) {
       return (
-        <div className="flex flex-col items-center gap-3 animate-scale-spring" key="file">
+        <div
+          className="flex flex-col items-center gap-3 animate-scale-spring"
+          key="file"
+        >
           <Icon name="file-text" className="text-4xl text-accent" />
           <div className="text-center">
             <p className="text-sm font-medium truncate max-w-[280px] text-primary">
@@ -371,7 +370,6 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       );
     }
 
-    // ── State 4: idle — default upload prompt ──
     return (
       <div className="flex flex-col items-center" key="idle">
         <Icon name="cloud" className="text-4xl text-tertiary mb-3" />
@@ -428,7 +426,6 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       {/* Validation Error */}
       {fileError && (
         <div className="flex items-center gap-2 p-3 rounded-lg text-sm bg-danger-muted text-danger">
-
           <Icon name="alert-circle" className="text-base flex-shrink-0" />
           {fileError}
         </div>
@@ -459,18 +456,12 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
             Advanced options
           </button>
           {showAdvanced && (
-            <div className="grid grid-cols-2 gap-3 mt-3 animate-fade-in">
+            <div className="mt-3 animate-fade-in">
               <Input
-                label="Language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                placeholder="en"
-              />
-              <Input
-                label="Created By"
-                value={createdBy}
-                onChange={(e) => setCreatedBy(e.target.value)}
-                placeholder="dashboard-user"
+                label="Processing Profile ID"
+                value={processingProfileId}
+                onChange={(e) => setProcessingProfileId(e.target.value)}
+                placeholder="default"
               />
             </div>
           )}
@@ -479,8 +470,12 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
       {/* Process Button */}
       {phase === "file-selected" && (
-        <Button className="w-full" onClick={handleProcess} disabled={!service}>
-          Process Document
+        <Button
+          className="w-full"
+          onClick={handleProcess}
+          disabled={!lifecycleService}
+        >
+          Add Source
         </Button>
       )}
     </div>

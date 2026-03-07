@@ -5,7 +5,7 @@ import type { IconName } from "../shared/Icon";
 const NAV_ITEMS: { label: string; page: string; href: string; icon: IconName }[] = [
   { label: "Dashboard", page: "dashboard", href: "/dashboard", icon: "grid" },
   { label: "Documents", page: "documents", href: "/documents", icon: "file-text" },
-  { label: "Contexts", page: "units", href: "/units", icon: "brain" },
+  { label: "Contexts", page: "contexts", href: "/contexts", icon: "brain" },
   { label: "Search", page: "search", href: "/search", icon: "search" },
   { label: "Profiles", page: "profiles", href: "/profiles", icon: "sliders" },
   { label: "Settings", page: "settings", href: "/settings", icon: "settings" },

@@ -121,20 +121,26 @@ export class ExecuteFullPipeline {
       status: "COMPLETED",
     });
 
-    // ── Step 5: (Optional) Add source to context ───────────────────
+    // ── Step 5: (Optional) Ensure context exists, then add source ──
     if (input.contextId) {
-      const addToContextResult = await this._contextManagement.addSourceToContext({
+      const existingContext = await this._contextManagement.getContext(input.contextId);
+      if (!existingContext) {
+        await this._contextManagement.createContext({
+          id: input.contextId,
+          name: input.sourceName ?? input.sourceId,
+          description: "",
+          language: input.language ?? "en",
+          requiredProfileId: input.processingProfileId,
+          createdBy: input.createdBy ?? "pipeline",
+        });
+      }
+
+      await this._contextManagement.addSourceToContext({
         contextId: input.contextId,
         sourceId: input.sourceId,
         sourceKnowledgeId,
         profileSatisfied: true,
       });
-
-      if (addToContextResult.isFail()) {
-        // Non-fatal: context association failed but core pipeline succeeded.
-        // Log but don't fail the pipeline. The source is processed.
-        // TODO: Consider whether this should be a partial success.
-      }
     }
 
     // ── Step 6: Record manifest ────────────────────────────────────

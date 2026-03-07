@@ -4,13 +4,14 @@ import { Icon } from "../../shared/Icon";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { Button } from "../../shared/Button";
 import { SkeletonLine } from "../../shared/Skeleton";
-import { AddSourceForm } from "../knowledge/AddSourceForm";
+import { Overlay } from "../../shared/Overlay";
+import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
 import { RemoveSourceAction } from "../knowledge/RemoveSourceAction";
 import { ReprocessAction } from "../knowledge/ReprocessAction";
-import { useUnit, getUnitSources } from "../../../contexts/UnitContext";
+import { useKnowledgeContext, getUnitSources } from "../../../contexts/KnowledgeContextContext";
 
 export default function UnitSourcesPage() {
-  const { unitId, manifests, loading, error, refresh } = useUnit();
+  const { contextId, manifests, loading, error, refresh } = useKnowledgeContext();
   const [showAddSource, setShowAddSource] = useState(false);
 
   const sources = useMemo(() => getUnitSources(manifests), [manifests]);
@@ -64,37 +65,19 @@ export default function UnitSourcesPage() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <ReprocessAction unitId={unitId} onSuccess={handleActionSuccess} />
+          <ReprocessAction contextId={contextId} onSuccess={handleActionSuccess} />
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => setShowAddSource(!showAddSource)}
+            onClick={() => setShowAddSource(true)}
           >
             <span className="flex items-center gap-1">
               <Icon name="folder-plus" />
-              {showAddSource ? "Cancel" : "Add Source"}
+              Add Source
             </span>
           </Button>
         </div>
       </div>
-
-      {/* Add Source Form */}
-      {showAddSource && (
-        <Card>
-          <CardBody>
-            <div className="animate-fade-in">
-              <AddSourceForm
-                unitId={unitId}
-                onSuccess={() => {
-                  setShowAddSource(false);
-                  handleActionSuccess();
-                }}
-                onCancel={() => setShowAddSource(false)}
-              />
-            </div>
-          </CardBody>
-        </Card>
-      )}
 
       {/* Sources List */}
       {sources.length === 0 ? (
@@ -229,7 +212,7 @@ export default function UnitSourcesPage() {
                     {/* Remove Action */}
                     <div className="ml-3 flex-shrink-0">
                       <RemoveSourceAction
-                        unitId={unitId}
+                        contextId={contextId}
                         sourceId={manifest.sourceId}
                         onSuccess={handleActionSuccess}
                       />
@@ -241,6 +224,35 @@ export default function UnitSourcesPage() {
           })}
         </div>
       )}
+
+      {/* Add Source Overlay */}
+      <Overlay open={showAddSource} setOpen={setShowAddSource}>
+        <div className="h-full w-[420px] max-w-[90vw] flex flex-col bg-surface-2">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-subtle">
+            <div className="flex items-center gap-2">
+              <Icon name="folder-plus" className="text-accent" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
+                Add Source
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddSource(false)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <Icon name="x" className="text-tertiary" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <AddSourceUploadForm
+              contextId={contextId}
+              onSuccess={() => {
+                refresh();
+              }}
+            />
+          </div>
+        </div>
+      </Overlay>
     </div>
   );
 }

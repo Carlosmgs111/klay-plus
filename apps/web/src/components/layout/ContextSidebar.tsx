@@ -10,21 +10,21 @@ const UNIT_NAV_ITEMS: { label: string; page: string; icon: IconName }[] = [
   { label: "Search", page: "search", icon: "search" },
 ];
 
-interface UnitSidebarProps {
-  unitId: string;
+interface ContextSidebarProps {
+  contextId: string;
   activePage: string;
 }
 
-export function UnitSidebar({ unitId, activePage }: UnitSidebarProps) {
+export function ContextSidebar({ contextId, activePage }: ContextSidebarProps) {
   const { resolved, toggleTheme } = useTheme();
-  const truncatedId = unitId.length > 8 ? `${unitId.slice(0, 8)}...` : unitId;
+  const truncatedId = contextId.length > 8 ? `${contextId.slice(0, 8)}...` : contextId;
 
   return (
     <aside className="sticky left-0 top-0 bottom-0 flex flex-col z-10 bg-surface-1 border-r border-default">
       {/* Back + Unit ID */}
       <div className="h-header flex flex-col justify-center px-3 py-4 border-b border-default">
         <a
-          href="/units"
+          href="/contexts"
           className="flex items-center gap-1 text-sm text-tertiary hover:text-primary transition-all duration-fast ease-out-expo mb-1"
         >
           <Icon name="arrow-left" className="text-xs" />
@@ -32,7 +32,7 @@ export function UnitSidebar({ unitId, activePage }: UnitSidebarProps) {
         </a>
         <span
           className="text-sm font-mono text-secondary"
-          title={unitId}
+          title={contextId}
         >
           {truncatedId}
         </span>
@@ -42,7 +42,7 @@ export function UnitSidebar({ unitId, activePage }: UnitSidebarProps) {
       <nav className="flex-1 flex flex-col px-3 py-4 gap-2 overflow-y-auto">
         {UNIT_NAV_ITEMS.map((item) => {
           const isActive = activePage === item.page;
-          const href = `/units/${unitId}/${item.page}`;
+          const href = `/contexts/${contextId}/${item.page}`;
           return (
             <a
               key={item.page}

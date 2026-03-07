@@ -1,19 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { MetricCard } from "../../shared/MetricCard";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { Overlay } from "../../shared/Overlay";
 import { SkeletonMetricCards, SkeletonLine } from "../../shared/Skeleton";
+import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
 import {
-  useUnit,
+  useKnowledgeContext,
   getUnitSources,
   getUnitProjections,
   getOverallStatus,
   getCurrentVersion,
-} from "../../../contexts/UnitContext";
+} from "../../../contexts/KnowledgeContextContext";
 
-export default function UnitDashboardPage() {
-  const { unitId, manifests, loading, error } = useUnit();
+export default function ContextDashboardPage() {
+  const { contextId, manifests, loading, error, refresh } = useKnowledgeContext();
+  const [showAddSource, setShowAddSource] = useState(false);
 
   const sources = useMemo(() => getUnitSources(manifests), [manifests]);
   const projections = useMemo(() => getUnitProjections(manifests), [manifests]);
@@ -86,7 +89,7 @@ export default function UnitDashboardPage() {
           <h2
             className="text-sm font-semibold text-primary tracking-heading"
           >
-            Unit Dashboard
+            Context Dashboard
           </h2>
         </div>
         <StatusBadge status={overallStatus} />
@@ -119,16 +122,26 @@ export default function UnitDashboardPage() {
       {/* Sources Summary */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Icon
-              name="database"
-              className="text-tertiary"
-            />
-            <h3
-              className="text-sm font-semibold text-primary tracking-heading"
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <Icon
+                name="database"
+                className="text-tertiary"
+              />
+              <h3
+                className="text-sm font-semibold text-primary tracking-heading"
+              >
+                Sources ({sources.length})
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddSource(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors text-accent hover:bg-accent-muted"
             >
-              Sources ({sources.length})
-            </h3>
+              <Icon name="plus" className="text-sm" />
+              Add
+            </button>
           </div>
         </CardHeader>
         <CardBody>
@@ -143,12 +156,13 @@ export default function UnitDashboardPage() {
               >
                 No sources added yet.
               </p>
-              <a
-                href={`/units/${unitId}/sources`}
+              <button
+                type="button"
+                onClick={() => setShowAddSource(true)}
                 className="text-xs mt-1 inline-block text-accent"
               >
                 Add your first source
-              </a>
+              </button>
             </div>
           ) : (
             <div className="space-y-2">
@@ -166,7 +180,7 @@ export default function UnitDashboardPage() {
                         : manifest.sourceId}
                     </span>
                   </div>
-                  <StatusBadge status={manifest.status as any} />
+                  <StatusBadge status={manifest.status} />
                 </div>
               ))}
             </div>
@@ -209,7 +223,7 @@ export default function UnitDashboardPage() {
                           ? `${manifest.sourceId.slice(0, 16)}...`
                           : manifest.sourceId}
                       </span>
-                      <StatusBadge status={manifest.status as any} />
+                      <StatusBadge status={manifest.status} />
                     </div>
                     {manifest.completedSteps.length > 0 && (
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -266,9 +280,10 @@ export default function UnitDashboardPage() {
         </CardHeader>
         <CardBody>
           <div className="flex flex-col gap-3">
-            <a
-              href={`/units/${unitId}/sources`}
-              className="action-card no-underline"
+            <button
+              type="button"
+              onClick={() => setShowAddSource(true)}
+              className="action-card w-full text-left"
             >
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Icon name="folder-plus" className="text-xl mr-2" />
@@ -289,10 +304,10 @@ export default function UnitDashboardPage() {
                 name="chevron-right"
                 className="ml-auto flex-shrink-0 text-xl text-tertiary"
               />
-            </a>
+            </button>
 
             <a
-              href={`/units/${unitId}/sources`}
+              href={`/contexts/${contextId}/sources`}
               className="action-card no-underline"
             >
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -317,7 +332,7 @@ export default function UnitDashboardPage() {
             </a>
 
             <a
-              href={`/units/${unitId}/search`}
+              href={`/contexts/${contextId}/search`}
               className="action-card no-underline"
             >
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -343,6 +358,35 @@ export default function UnitDashboardPage() {
           </div>
         </CardBody>
       </Card>
+
+      {/* Add Source Overlay */}
+      <Overlay open={showAddSource} setOpen={setShowAddSource}>
+        <div className="h-full w-[420px] max-w-[90vw] flex flex-col bg-surface-2">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-subtle">
+            <div className="flex items-center gap-2">
+              <Icon name="folder-plus" className="text-accent" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
+                Add Source
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddSource(false)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <Icon name="x" className="text-tertiary" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <AddSourceUploadForm
+              contextId={contextId}
+              onSuccess={() => {
+                refresh();
+              }}
+            />
+          </div>
+        </div>
+      </Overlay>
     </div>
   );
 }

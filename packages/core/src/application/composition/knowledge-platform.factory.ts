@@ -35,6 +35,7 @@ export async function createKnowledgePlatform(
     sourceKnowledge: deps.sourceKnowledge,
     processing: deps.processing,
     contextManagement: deps.contextManagement,
+    manifestRepository: deps.manifestRepository,
   });
 
   // ── Lifecycle uses ContextManagementService (same instance as pipeline/management) ──

@@ -1,50 +1,50 @@
 import { lazy, Suspense } from "react";
 import { ProviderStack } from "./ProviderStack";
-import { UnitSidebar } from "./UnitSidebar";
+import { ContextSidebar } from "./ContextSidebar";
 import { Header } from "./Header";
 import { ToastContainer } from "../shared/Toast";
 import { SkeletonPage } from "../shared/Skeleton";
-import { UnitContextProvider } from "../../contexts/UnitContext";
+import { KnowledgeContextProvider } from "../../contexts/KnowledgeContextContext";
 
-const UnitDashboardPage = lazy(
-  () => import("../features/units/UnitDashboardPage")
+const ContextDashboardPage = lazy(
+  () => import("../features/knowledgeContext/ContextDashboardPage")
 );
-const UnitSourcesPage = lazy(
-  () => import("../features/units/UnitSourcesPage")
+const ContextSourcesPage = lazy(
+  () => import("../features/knowledgeContext/ContextSourcesPage")
 );
-const UnitVersionsPage = lazy(
-  () => import("../features/units/UnitVersionsPage")
+const ContextVersionsPage = lazy(
+  () => import("../features/knowledgeContext/ContextVersionsPage")
 );
-const UnitProjectionsPage = lazy(
-  () => import("../features/units/UnitProjectionsPage")
+const ContextProjectionsPage = lazy(
+  () => import("../features/knowledgeContext/ContextProjectionsPage")
 );
-const UnitSearchPage = lazy(
-  () => import("../features/units/UnitSearchPage")
+const ContextSearchPage = lazy(
+  () => import("../features/knowledgeContext/ContextSearchPage")
 );
 
 const PAGE_COMPONENTS: Record<string, React.ComponentType> = {
-  dashboard: UnitDashboardPage,
-  sources: UnitSourcesPage,
-  versions: UnitVersionsPage,
-  projections: UnitProjectionsPage,
-  search: UnitSearchPage,
+  dashboard: ContextDashboardPage,
+  sources: ContextSourcesPage,
+  versions: ContextVersionsPage,
+  projections: ContextProjectionsPage,
+  search: ContextSearchPage,
 };
 
-interface UnitShellProps {
-  unitId: string;
+interface ContextShellProps {
+  contextId: string;
   activePage: string;
 }
 
-export function UnitShell({ unitId, activePage }: UnitShellProps) {
+export function ContextShell({ contextId, activePage }: ContextShellProps) {
   const PageComponent = PAGE_COMPONENTS[activePage];
   const truncatedId =
-    unitId.length > 8 ? `${unitId.slice(0, 8)}...` : unitId;
+    contextId.length > 8 ? `${contextId.slice(0, 8)}...` : contextId;
 
   return (
     <ProviderStack>
-      <UnitContextProvider unitId={unitId}>
+      <KnowledgeContextProvider contextId={contextId}>
         <div className="h-screen flex flex-row w-full">
-          <UnitSidebar unitId={unitId} activePage={activePage} />
+          <ContextSidebar contextId={contextId} activePage={activePage} />
           <div className="min-h-screen overflow-y-auto w-full">
             <Header
               title={truncatedId}
@@ -69,7 +69,7 @@ export function UnitShell({ unitId, activePage }: UnitShellProps) {
           </div>
           <ToastContainer />
         </div>
-      </UnitContextProvider>
+      </KnowledgeContextProvider>
     </ProviderStack>
   );
 }

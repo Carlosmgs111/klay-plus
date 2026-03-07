@@ -5,10 +5,10 @@ import { StatusBadge } from "../../shared/StatusBadge";
 import { SkeletonLine } from "../../shared/Skeleton";
 import { RollbackAction } from "../knowledge/RollbackAction";
 import {
-  useUnit,
+  useKnowledgeContext,
   getUnitSources,
   getCurrentVersion,
-} from "../../../contexts/UnitContext";
+} from "../../../contexts/KnowledgeContextContext";
 
 interface VersionGroup {
   versionNumber: number;
@@ -25,7 +25,7 @@ interface VersionGroup {
 }
 
 export default function UnitVersionsPage() {
-  const { unitId, manifests, loading, error, refresh } = useUnit();
+  const { contextId, manifests, loading, error, refresh } = useKnowledgeContext();
 
   const currentVersion = useMemo(
     () => getCurrentVersion(manifests),
@@ -120,7 +120,7 @@ export default function UnitVersionsPage() {
           </h2>
         </div>
         <RollbackAction
-          unitId={unitId}
+          contextId={contextId}
           currentVersion={estimatedCurrentVersion}
           onSuccess={handleActionSuccess}
         />

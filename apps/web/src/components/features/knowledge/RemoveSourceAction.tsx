@@ -9,12 +9,12 @@ import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import type { RemoveSourceInput } from "@klay/core/lifecycle";
 
 interface RemoveSourceActionProps {
-  unitId: string;
+  contextId: string;
   sourceId: string;
   onSuccess?: () => void;
 }
 
-export function RemoveSourceAction({ unitId, sourceId, onSuccess }: RemoveSourceActionProps) {
+export function RemoveSourceAction({ contextId, sourceId, onSuccess }: RemoveSourceActionProps) {
   const { lifecycleService } = useRuntimeMode();
   const { addToast } = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -27,7 +27,7 @@ export function RemoveSourceAction({ unitId, sourceId, onSuccess }: RemoveSource
   const { error, isLoading, execute } = useServiceAction(removeAction);
 
   const handleRemove = async () => {
-    const result = await execute({ unitId, sourceId });
+    const result = await execute({ contextId, sourceId });
     if (result) {
       addToast(`Source removed. New version: ${result.version}`, "success");
       setShowConfirm(false);

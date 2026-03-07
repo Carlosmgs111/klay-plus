@@ -47,6 +47,7 @@ export class IngestAndAddSource {
       uri: input.uri,
       type: input.sourceType as SourceType,
       extractionJobId: input.extractionJobId,
+      content: input.content,
     });
 
     if (ingestionResult.isFail()) {
@@ -123,7 +124,28 @@ export class IngestAndAddSource {
 
     completedSteps.push(ManagementStep.RegisterProjection);
 
-    // ── Step 5: Add source to context ──────────────────────────────
+    // ── Step 5: Ensure context exists, then add source ─────────────
+    const existingContext = await this._contextManagement.getContext(input.contextId);
+    if (!existingContext) {
+      const createResult = await this._contextManagement.createContext({
+        id: input.contextId,
+        name: input.sourceName,
+        description: "",
+        language: "en",
+        requiredProfileId: input.processingProfileId,
+        createdBy: "management",
+      });
+      if (createResult.isFail()) {
+        return Result.fail(
+          KnowledgeManagementError.fromStep(
+            ManagementStep.AddToContext,
+            createResult.error,
+            completedSteps,
+          ),
+        );
+      }
+    }
+
     const addToContextResult = await this._contextManagement.addSourceToContext({
       contextId: input.contextId,
       sourceId: input.sourceId,

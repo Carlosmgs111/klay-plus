@@ -7,21 +7,21 @@ import { Input } from "../../shared/Input";
 import { Icon } from "../../shared/Icon";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
-import type { ReprocessUnitInput } from "@klay/core/lifecycle";
+import type { ReprocessContextInput } from "@klay/core/lifecycle";
 
 interface ReprocessActionProps {
-  unitId: string;
+  contextId: string;
   onSuccess?: () => void;
 }
 
-export function ReprocessAction({ unitId, onSuccess }: ReprocessActionProps) {
+export function ReprocessAction({ contextId, onSuccess }: ReprocessActionProps) {
   const { lifecycleService } = useRuntimeMode();
   const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [profileId, setProfileId] = useState("default");
 
   const reprocessAction = useCallback(
-    (input: ReprocessUnitInput) => lifecycleService!.reprocessUnit(input),
+    (input: ReprocessContextInput) => lifecycleService!.reprocessContext(input),
     [lifecycleService],
   );
 
@@ -29,9 +29,9 @@ export function ReprocessAction({ unitId, onSuccess }: ReprocessActionProps) {
 
   const handleReprocess = async () => {
     if (!profileId.trim()) return;
-    const result = await execute({ unitId, profileId });
+    const result = await execute({ contextId, profileId });
     if (result) {
-      addToast(`Unit reprocessed. New version: ${result.version}`, "success");
+      addToast(`Context reprocessed. New version: ${result.version}`, "success");
       setShowForm(false);
       onSuccess?.();
     }

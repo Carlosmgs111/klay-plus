@@ -1,0 +1,9 @@
+---
+import DashboardLayout from "../../../layouts/DashboardLayout.astro";
+import { ContextShell } from "../../../components/layout/ContextShell";
+const { id } = Astro.params;
+---
+
+<DashboardLayout title="Context Versions">
+  <ContextShell client:load contextId={id!} activePage="versions" />
+</DashboardLayout>

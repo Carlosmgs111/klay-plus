@@ -1,9 +1,0 @@
----
-import DashboardLayout from "../../../layouts/DashboardLayout.astro";
-import { UnitShell } from "../../../components/layout/UnitShell";
-const { id } = Astro.params;
----
-
-<DashboardLayout title="Unit Versions">
-  <UnitShell client:load unitId={id} activePage="versions" />
-</DashboardLayout>

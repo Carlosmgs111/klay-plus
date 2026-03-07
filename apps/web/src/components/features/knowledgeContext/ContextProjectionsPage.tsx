@@ -6,7 +6,7 @@ import { StatusBadge } from "../../shared/StatusBadge";
 import { EmptyState } from "../../shared/EmptyState";
 import { SkeletonCard } from "../../shared/Skeleton";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
-import { useUnit, getUnitProjections } from "../../../contexts/UnitContext";
+import { useKnowledgeContext, getUnitProjections } from "../../../contexts/KnowledgeContextContext";
 
 interface ProjectionRow {
   projectionId: string;
@@ -18,7 +18,7 @@ interface ProjectionRow {
 }
 
 export default function UnitProjectionsPage() {
-  const { manifests, loading, error } = useUnit();
+  const { manifests, loading, error } = useKnowledgeContext();
   const [sourceFilter, setSourceFilter] = useState<string>("all");
 
   const projections = useMemo<ProjectionRow[]>(

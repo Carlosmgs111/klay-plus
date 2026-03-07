@@ -1,9 +1,9 @@
 ---
 import DashboardLayout from "../../../layouts/DashboardLayout.astro";
-import { UnitShell } from "../../../components/layout/UnitShell";
+import { ContextShell } from "../../../components/layout/ContextShell";
 const { id } = Astro.params;
 ---
 
 <DashboardLayout title="Unit Search">
-  <UnitShell client:load unitId={id} activePage="search" />
+  <ContextShell client:load contextId={id!} activePage="search" />
 </DashboardLayout>

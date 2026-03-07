@@ -1,4 +1,4 @@
-type BadgeStatus = "complete" | "failed" | "pending" | "processing" | "partial";
+type BadgeStatus = "complete" | "failed" | "pending" | "processing" | "partial" | "empty";
 
 const BADGE_CONFIG: Record<
   BadgeStatus,
@@ -28,6 +28,11 @@ const BADGE_CONFIG: Record<
     className: "badge-pending",
     label: "Partial",
     dotClassName: "bg-warning",
+  },
+  empty: {
+    className: "badge-pending",
+    label: "Empty",
+    dotClassName: "bg-tertiary",
   },
 };
 
