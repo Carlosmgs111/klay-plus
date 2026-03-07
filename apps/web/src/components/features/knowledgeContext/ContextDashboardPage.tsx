@@ -9,6 +9,7 @@ import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
 import { ArchiveContextAction } from "../knowledge/ArchiveContextAction";
 import { DeprecateContextAction } from "../knowledge/DeprecateContextAction";
 import { ActivateContextAction } from "../knowledge/ActivateContextAction";
+import { RelatedContexts } from "../knowledge/RelatedContexts";
 import {
   useKnowledgeContext,
   getUnitSources,
@@ -195,6 +196,9 @@ export default function ContextDashboardPage() {
           )}
         </CardBody>
       </Card>
+
+      {/* Related Contexts */}
+      <RelatedContexts contextId={contextId} />
 
       {/* Recent Activity */}
       <Card>
