@@ -5,14 +5,14 @@ import type { KnowledgeManagementUIAdapter } from "@klay/core/adapters/ui";
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -68,32 +68,32 @@ export class BrowserLifecycleService implements LifecycleService {
     return lifecycle.removeSource(input) as Promise<ServiceResult<RemoveSourceResult>>;
   }
 
-  async reprocessUnit(
-    input: ReprocessUnitInput,
-  ): Promise<ServiceResult<ReprocessUnitResult>> {
+  async reprocessContext(
+    input: ReprocessContextInput,
+  ): Promise<ServiceResult<ReprocessContextResult>> {
     const { lifecycle } = await this._getAdapters();
-    return lifecycle.reprocessUnit(input) as Promise<ServiceResult<ReprocessUnitResult>>;
+    return lifecycle.reprocessContext(input) as Promise<ServiceResult<ReprocessContextResult>>;
   }
 
-  async rollbackUnit(
-    input: RollbackUnitInput,
-  ): Promise<ServiceResult<RollbackUnitResult>> {
+  async rollbackContext(
+    input: RollbackContextInput,
+  ): Promise<ServiceResult<RollbackContextResult>> {
     const { lifecycle } = await this._getAdapters();
-    return lifecycle.rollbackUnit(input) as Promise<ServiceResult<RollbackUnitResult>>;
+    return lifecycle.rollbackContext(input) as Promise<ServiceResult<RollbackContextResult>>;
   }
 
-  async linkUnits(
-    input: LinkUnitsInput,
-  ): Promise<ServiceResult<LinkUnitsResult>> {
+  async linkContexts(
+    input: LinkContextsInput,
+  ): Promise<ServiceResult<LinkContextsResult>> {
     const { lifecycle } = await this._getAdapters();
-    return lifecycle.linkUnits(input) as Promise<ServiceResult<LinkUnitsResult>>;
+    return lifecycle.linkContexts(input) as Promise<ServiceResult<LinkContextsResult>>;
   }
 
-  async unlinkUnits(
-    input: UnlinkUnitsInput,
-  ): Promise<ServiceResult<UnlinkUnitsResult>> {
+  async unlinkContexts(
+    input: UnlinkContextsInput,
+  ): Promise<ServiceResult<UnlinkContextsResult>> {
     const { lifecycle } = await this._getAdapters();
-    return lifecycle.unlinkUnits(input) as Promise<ServiceResult<UnlinkUnitsResult>>;
+    return lifecycle.unlinkContexts(input) as Promise<ServiceResult<UnlinkContextsResult>>;
   }
 
   async ingestAndAddSource(

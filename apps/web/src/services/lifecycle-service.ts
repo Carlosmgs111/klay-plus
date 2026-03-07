@@ -2,14 +2,14 @@ import type { ServiceResult } from "./types";
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -28,21 +28,21 @@ export interface LifecycleService {
     input: RemoveSourceInput,
   ): Promise<ServiceResult<RemoveSourceResult>>;
 
-  reprocessUnit(
-    input: ReprocessUnitInput,
-  ): Promise<ServiceResult<ReprocessUnitResult>>;
+  reprocessContext(
+    input: ReprocessContextInput,
+  ): Promise<ServiceResult<ReprocessContextResult>>;
 
-  rollbackUnit(
-    input: RollbackUnitInput,
-  ): Promise<ServiceResult<RollbackUnitResult>>;
+  rollbackContext(
+    input: RollbackContextInput,
+  ): Promise<ServiceResult<RollbackContextResult>>;
 
-  linkUnits(
-    input: LinkUnitsInput,
-  ): Promise<ServiceResult<LinkUnitsResult>>;
+  linkContexts(
+    input: LinkContextsInput,
+  ): Promise<ServiceResult<LinkContextsResult>>;
 
-  unlinkUnits(
-    input: UnlinkUnitsInput,
-  ): Promise<ServiceResult<UnlinkUnitsResult>>;
+  unlinkContexts(
+    input: UnlinkContextsInput,
+  ): Promise<ServiceResult<UnlinkContextsResult>>;
 
   ingestAndAddSource(
     input: IngestAndAddSourceInput,

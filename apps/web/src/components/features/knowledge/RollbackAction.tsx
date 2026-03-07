@@ -7,15 +7,15 @@ import { Input } from "../../shared/Input";
 import { Icon } from "../../shared/Icon";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
-import type { RollbackUnitInput } from "@klay/core/lifecycle";
+import type { RollbackContextInput } from "@klay/core/lifecycle";
 
 interface RollbackActionProps {
-  unitId: string;
+  contextId: string;
   currentVersion: number;
   onSuccess?: () => void;
 }
 
-export function RollbackAction({ unitId, currentVersion, onSuccess }: RollbackActionProps) {
+export function RollbackAction({ contextId, currentVersion, onSuccess }: RollbackActionProps) {
   const { lifecycleService } = useRuntimeMode();
   const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
@@ -24,7 +24,7 @@ export function RollbackAction({ unitId, currentVersion, onSuccess }: RollbackAc
   );
 
   const rollbackAction = useCallback(
-    (input: RollbackUnitInput) => lifecycleService!.rollbackUnit(input),
+    (input: RollbackContextInput) => lifecycleService!.rollbackContext(input),
     [lifecycleService],
   );
 
@@ -32,7 +32,7 @@ export function RollbackAction({ unitId, currentVersion, onSuccess }: RollbackAc
 
   const handleRollback = async () => {
     if (targetVersion < 1 || targetVersion >= currentVersion) return;
-    const result = await execute({ unitId, targetVersion });
+    const result = await execute({ contextId, targetVersion });
     if (result) {
       addToast(`Rolled back to version ${result.currentVersion}`, "success");
       setShowForm(false);

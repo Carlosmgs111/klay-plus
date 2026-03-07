@@ -3,14 +3,14 @@ import type { ServiceResult } from "./types";
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
-  ReprocessUnitInput,
-  ReprocessUnitResult,
-  RollbackUnitInput,
-  RollbackUnitResult,
-  LinkUnitsInput,
-  LinkUnitsResult,
-  UnlinkUnitsInput,
-  UnlinkUnitsResult,
+  ReprocessContextInput,
+  ReprocessContextResult,
+  RollbackContextInput,
+  RollbackContextResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -27,27 +27,27 @@ export class ServerLifecycleService implements LifecycleService {
     return this._post("/api/lifecycle/remove-source", input);
   }
 
-  async reprocessUnit(
-    input: ReprocessUnitInput,
-  ): Promise<ServiceResult<ReprocessUnitResult>> {
+  async reprocessContext(
+    input: ReprocessContextInput,
+  ): Promise<ServiceResult<ReprocessContextResult>> {
     return this._post("/api/lifecycle/reprocess", input);
   }
 
-  async rollbackUnit(
-    input: RollbackUnitInput,
-  ): Promise<ServiceResult<RollbackUnitResult>> {
+  async rollbackContext(
+    input: RollbackContextInput,
+  ): Promise<ServiceResult<RollbackContextResult>> {
     return this._post("/api/lifecycle/rollback", input);
   }
 
-  async linkUnits(
-    input: LinkUnitsInput,
-  ): Promise<ServiceResult<LinkUnitsResult>> {
+  async linkContexts(
+    input: LinkContextsInput,
+  ): Promise<ServiceResult<LinkContextsResult>> {
     return this._post("/api/lifecycle/link", input);
   }
 
-  async unlinkUnits(
-    input: UnlinkUnitsInput,
-  ): Promise<ServiceResult<UnlinkUnitsResult>> {
+  async unlinkContexts(
+    input: UnlinkContextsInput,
+  ): Promise<ServiceResult<UnlinkContextsResult>> {
     return this._post("/api/lifecycle/unlink", input);
   }
 
