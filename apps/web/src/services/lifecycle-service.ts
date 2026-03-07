@@ -10,6 +10,14 @@ import type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -47,4 +55,20 @@ export interface LifecycleService {
   ingestAndAddSource(
     input: IngestAndAddSourceInput,
   ): Promise<ServiceResult<IngestAndAddSourceSuccess>>;
+
+  createContext(
+    input: CreateContextInput,
+  ): Promise<ServiceResult<CreateContextResult>>;
+
+  archiveContext(
+    input: ArchiveContextInput,
+  ): Promise<ServiceResult<ArchiveContextResult>>;
+
+  deprecateContext(
+    input: DeprecateContextInput,
+  ): Promise<ServiceResult<DeprecateContextResult>>;
+
+  activateContext(
+    input: ActivateContextInput,
+  ): Promise<ServiceResult<ActivateContextResult>>;
 }

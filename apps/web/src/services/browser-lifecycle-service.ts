@@ -13,6 +13,14 @@ import type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -103,5 +111,33 @@ export class BrowserLifecycleService implements LifecycleService {
     return management.ingestAndAddSource(input) as Promise<
       ServiceResult<IngestAndAddSourceSuccess>
     >;
+  }
+
+  async createContext(
+    input: CreateContextInput,
+  ): Promise<ServiceResult<CreateContextResult>> {
+    const { lifecycle } = await this._getAdapters();
+    return lifecycle.createContext(input) as Promise<ServiceResult<CreateContextResult>>;
+  }
+
+  async archiveContext(
+    input: ArchiveContextInput,
+  ): Promise<ServiceResult<ArchiveContextResult>> {
+    const { lifecycle } = await this._getAdapters();
+    return lifecycle.archiveContext(input) as Promise<ServiceResult<ArchiveContextResult>>;
+  }
+
+  async deprecateContext(
+    input: DeprecateContextInput,
+  ): Promise<ServiceResult<DeprecateContextResult>> {
+    const { lifecycle } = await this._getAdapters();
+    return lifecycle.deprecateContext(input) as Promise<ServiceResult<DeprecateContextResult>>;
+  }
+
+  async activateContext(
+    input: ActivateContextInput,
+  ): Promise<ServiceResult<ActivateContextResult>> {
+    const { lifecycle } = await this._getAdapters();
+    return lifecycle.activateContext(input) as Promise<ServiceResult<ActivateContextResult>>;
   }
 }

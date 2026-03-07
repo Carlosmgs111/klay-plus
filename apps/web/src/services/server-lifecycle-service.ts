@@ -11,6 +11,14 @@ import type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -55,6 +63,30 @@ export class ServerLifecycleService implements LifecycleService {
     input: IngestAndAddSourceInput,
   ): Promise<ServiceResult<IngestAndAddSourceSuccess>> {
     return this._post("/api/lifecycle/ingest-add-source", input);
+  }
+
+  async createContext(
+    input: CreateContextInput,
+  ): Promise<ServiceResult<CreateContextResult>> {
+    return this._post("/api/lifecycle/create-context", input);
+  }
+
+  async archiveContext(
+    input: ArchiveContextInput,
+  ): Promise<ServiceResult<ArchiveContextResult>> {
+    return this._post("/api/lifecycle/archive-context", input);
+  }
+
+  async deprecateContext(
+    input: DeprecateContextInput,
+  ): Promise<ServiceResult<DeprecateContextResult>> {
+    return this._post("/api/lifecycle/deprecate-context", input);
+  }
+
+  async activateContext(
+    input: ActivateContextInput,
+  ): Promise<ServiceResult<ActivateContextResult>> {
+    return this._post("/api/lifecycle/activate-context", input);
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────
