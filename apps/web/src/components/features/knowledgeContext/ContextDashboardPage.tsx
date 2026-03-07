@@ -6,6 +6,9 @@ import { StatusBadge } from "../../shared/StatusBadge";
 import { Overlay } from "../../shared/Overlay";
 import { SkeletonMetricCards, SkeletonLine } from "../../shared/Skeleton";
 import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
+import { ArchiveContextAction } from "../knowledge/ArchiveContextAction";
+import { DeprecateContextAction } from "../knowledge/DeprecateContextAction";
+import { ActivateContextAction } from "../knowledge/ActivateContextAction";
 import {
   useKnowledgeContext,
   getUnitSources,
@@ -92,7 +95,12 @@ export default function ContextDashboardPage() {
             Context Dashboard
           </h2>
         </div>
-        <StatusBadge status={overallStatus} />
+        <div className="flex items-center gap-2">
+          <StatusBadge status={overallStatus} />
+          <ArchiveContextAction contextId={contextId} onSuccess={refresh} />
+          <DeprecateContextAction contextId={contextId} onSuccess={refresh} />
+          <ActivateContextAction contextId={contextId} onSuccess={refresh} />
+        </div>
       </div>
 
       {/* Metric Cards */}

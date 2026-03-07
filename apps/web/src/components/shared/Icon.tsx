@@ -45,6 +45,8 @@ const ICON_PATHS: Record<string, string> = {
   database: "bx bxs-data",
   clock: "bx bxs-time",
   "layout-dashboard": "bx bxs-layout",
+  archive: "bx bxs-archive",
+  "alert-triangle": "bx bxs-error",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "ref"> {

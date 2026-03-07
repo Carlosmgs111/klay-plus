@@ -1,4 +1,5 @@
-type BadgeStatus = "complete" | "failed" | "pending" | "processing" | "partial" | "empty";
+type BadgeStatus = "complete" | "failed" | "pending" | "processing" | "partial" | "empty"
+  | "ACTIVE" | "ARCHIVED" | "DEPRECATED" | "DRAFT";
 
 const BADGE_CONFIG: Record<
   BadgeStatus,
@@ -33,6 +34,26 @@ const BADGE_CONFIG: Record<
     className: "badge-pending",
     label: "Empty",
     dotClassName: "bg-tertiary",
+  },
+  ACTIVE: {
+    className: "badge-complete",
+    label: "Active",
+    dotClassName: "bg-success",
+  },
+  ARCHIVED: {
+    className: "badge-pending",
+    label: "Archived",
+    dotClassName: "bg-tertiary",
+  },
+  DEPRECATED: {
+    className: "badge-failed",
+    label: "Deprecated",
+    dotClassName: "bg-warning",
+  },
+  DRAFT: {
+    className: "badge-pending",
+    label: "Draft",
+    dotClassName: "bg-accent",
   },
 };
 

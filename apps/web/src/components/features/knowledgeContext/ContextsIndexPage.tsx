@@ -12,10 +12,13 @@ import {
 } from "../../shared/Skeleton";
 import type { GetManifestInput, ContentManifestEntry } from "@klay/core";
 import ContextCard from "./ContextCard";
+import { CreateContextForm } from "../knowledge/CreateContextForm";
+import { Overlay } from "../../shared/Overlay";
 
 export default function UnitsIndexPage() {
   const { service, isInitializing } = useRuntimeMode();
   const [filterText, setFilterText] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   const fetchManifests = useCallback(
     (input: GetManifestInput) => service!.getManifest(input),
@@ -116,12 +119,22 @@ export default function UnitsIndexPage() {
                 <div className="skeleton w-4 h-4 rounded-full" />
               )}
             </div>
-            <span
-              className="text-xs text-tertiary"
-            >
-              {filteredUnitIds.length} of {manifestsByUnit.size} context
-              {manifestsByUnit.size !== 1 ? "s" : ""}
-            </span>
+            <div className="flex items-center gap-3">
+              <span
+                className="text-xs text-tertiary"
+              >
+                {filteredUnitIds.length} of {manifestsByUnit.size} context
+                {manifestsByUnit.size !== 1 ? "s" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors text-accent hover:bg-accent-muted"
+              >
+                <Icon name="plus" className="text-sm" />
+                New Context
+              </button>
+            </div>
           </div>
         </CardHeader>
         <CardBody>
@@ -182,6 +195,35 @@ export default function UnitsIndexPage() {
           )}
         </CardBody>
       </Card>
+
+      {/* Create Context Overlay */}
+      <Overlay open={showCreate} setOpen={setShowCreate}>
+        <div className="h-full w-[420px] max-w-[90vw] flex flex-col bg-surface-2">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-subtle">
+            <div className="flex items-center gap-2">
+              <Icon name="folder-plus" className="text-accent" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
+                New Context
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowCreate(false)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <Icon name="x" className="text-tertiary" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <CreateContextForm
+              onSuccess={() => {
+                setShowCreate(false);
+                execute({});
+              }}
+            />
+          </div>
+        </div>
+      </Overlay>
     </div>
   );
 }
