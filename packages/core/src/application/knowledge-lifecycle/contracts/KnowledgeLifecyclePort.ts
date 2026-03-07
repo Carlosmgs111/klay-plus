@@ -11,6 +11,14 @@ import type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "./dtos";
 
 export interface KnowledgeLifecyclePort {
@@ -33,4 +41,20 @@ export interface KnowledgeLifecyclePort {
   unlinkContexts(
     input: UnlinkContextsInput,
   ): Promise<Result<KnowledgeLifecycleError, UnlinkContextsResult>>;
+
+  createContext(
+    input: CreateContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, CreateContextResult>>;
+
+  archiveContext(
+    input: ArchiveContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, ArchiveContextResult>>;
+
+  deprecateContext(
+    input: DeprecateContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, DeprecateContextResult>>;
+
+  activateContext(
+    input: ActivateContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, ActivateContextResult>>;
 }

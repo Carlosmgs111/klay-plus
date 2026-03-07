@@ -10,6 +10,14 @@ import type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { UIResult } from "./KnowledgePipelineUIAdapter";
 
@@ -38,6 +46,26 @@ export class KnowledgeLifecycleUIAdapter {
 
   async unlinkContexts(input: UnlinkContextsInput): Promise<UIResult<UnlinkContextsResult>> {
     const result = await this._lifecycle.unlinkContexts(input);
+    return this._unwrap(result);
+  }
+
+  async createContext(input: CreateContextInput): Promise<UIResult<CreateContextResult>> {
+    const result = await this._lifecycle.createContext(input);
+    return this._unwrap(result);
+  }
+
+  async archiveContext(input: ArchiveContextInput): Promise<UIResult<ArchiveContextResult>> {
+    const result = await this._lifecycle.archiveContext(input);
+    return this._unwrap(result);
+  }
+
+  async deprecateContext(input: DeprecateContextInput): Promise<UIResult<DeprecateContextResult>> {
+    const result = await this._lifecycle.deprecateContext(input);
+    return this._unwrap(result);
+  }
+
+  async activateContext(input: ActivateContextInput): Promise<UIResult<ActivateContextResult>> {
+    const result = await this._lifecycle.activateContext(input);
     return this._unwrap(result);
   }
 

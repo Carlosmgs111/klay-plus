@@ -12,6 +12,14 @@ import type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "../contracts/dtos";
 import type { Result } from "../../../shared/domain/Result";
 import type { KnowledgeLifecycleError } from "../domain/KnowledgeLifecycleError";
@@ -167,6 +175,125 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     } catch (error) {
       return ResultClass.fail(
         LifecycleError.fromStep(LifecycleStep.Unlink, error, []),
+      );
+    }
+  }
+
+  async createContext(
+    input: CreateContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, CreateContextResult>> {
+    try {
+      const createResult = await this._contextManagement.createContext({
+        id: input.id,
+        name: input.name,
+        description: input.description,
+        language: input.language,
+        requiredProfileId: input.requiredProfileId,
+        createdBy: input.createdBy,
+        tags: input.tags,
+        attributes: input.attributes,
+      });
+
+      if (createResult.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.CreateContext, createResult.error, []),
+        );
+      }
+
+      // Auto-activate for low-friction UX (Draft → Active)
+      const activateResult = await this._contextManagement.activateContext({
+        contextId: createResult.value.id.value,
+      });
+
+      if (activateResult.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.ActivateContext, activateResult.error, []),
+        );
+      }
+
+      return ResultClass.ok({
+        contextId: activateResult.value.id.value,
+        state: activateResult.value.state,
+      });
+    } catch (error) {
+      return ResultClass.fail(
+        LifecycleError.fromStep(LifecycleStep.CreateContext, error, []),
+      );
+    }
+  }
+
+  async archiveContext(
+    input: ArchiveContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, ArchiveContextResult>> {
+    try {
+      const result = await this._contextManagement.archiveContext({
+        contextId: input.contextId,
+      });
+
+      if (result.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.ArchiveContext, result.error, []),
+        );
+      }
+
+      return ResultClass.ok({
+        contextId: result.value.id.value,
+        state: result.value.state,
+      });
+    } catch (error) {
+      return ResultClass.fail(
+        LifecycleError.fromStep(LifecycleStep.ArchiveContext, error, []),
+      );
+    }
+  }
+
+  async deprecateContext(
+    input: DeprecateContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, DeprecateContextResult>> {
+    try {
+      const result = await this._contextManagement.deprecateContext({
+        contextId: input.contextId,
+        reason: input.reason,
+      });
+
+      if (result.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.DeprecateContext, result.error, []),
+        );
+      }
+
+      return ResultClass.ok({
+        contextId: result.value.id.value,
+        state: result.value.state,
+      });
+    } catch (error) {
+      return ResultClass.fail(
+        LifecycleError.fromStep(LifecycleStep.DeprecateContext, error, []),
+      );
+    }
+  }
+
+  async activateContext(
+    input: ActivateContextInput,
+  ): Promise<Result<KnowledgeLifecycleError, ActivateContextResult>> {
+    try {
+      const result = await this._contextManagement.activateContext({
+        contextId: input.contextId,
+      });
+
+      if (result.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.ActivateContext, result.error, []),
+        );
+      }
+
+      return ResultClass.ok({
+        contextId: result.value.id.value,
+        state: result.value.state,
+      });
+    } catch (error) {
+      return ResultClass.fail(
+        LifecycleError.fromStep(LifecycleStep.ActivateContext, error, []),
       );
     }
   }

@@ -11,6 +11,14 @@ export type {
   LinkContextsResult,
   UnlinkContextsInput,
   UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  ArchiveContextInput,
+  ArchiveContextResult,
+  DeprecateContextInput,
+  DeprecateContextResult,
+  ActivateContextInput,
+  ActivateContextResult,
 } from "./contracts/dtos";
 
 export { KnowledgeLifecycleError } from "./domain/KnowledgeLifecycleError";

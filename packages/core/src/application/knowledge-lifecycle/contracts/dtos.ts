@@ -48,3 +48,47 @@ export interface UnlinkContextsResult {
   sourceContextId: string;
   targetContextId: string;
 }
+
+export interface CreateContextInput {
+  id: string;
+  name: string;
+  description: string;
+  language: string;
+  requiredProfileId: string;
+  createdBy: string;
+  tags?: string[];
+  attributes?: Record<string, string>;
+}
+
+export interface CreateContextResult {
+  contextId: string;
+  state: string;
+}
+
+export interface ArchiveContextInput {
+  contextId: string;
+}
+
+export interface ArchiveContextResult {
+  contextId: string;
+  state: string;
+}
+
+export interface DeprecateContextInput {
+  contextId: string;
+  reason: string;
+}
+
+export interface DeprecateContextResult {
+  contextId: string;
+  state: string;
+}
+
+export interface ActivateContextInput {
+  contextId: string;
+}
+
+export interface ActivateContextResult {
+  contextId: string;
+  state: string;
+}

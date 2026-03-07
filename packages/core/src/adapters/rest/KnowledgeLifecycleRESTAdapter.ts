@@ -5,6 +5,10 @@ import type {
   RollbackContextInput,
   LinkContextsInput,
   UnlinkContextsInput,
+  CreateContextInput,
+  ArchiveContextInput,
+  DeprecateContextInput,
+  ActivateContextInput,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter";
 
@@ -38,6 +42,30 @@ export class KnowledgeLifecycleRESTAdapter {
   async unlinkContexts(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as UnlinkContextsInput;
     const result = await this._lifecycle.unlinkContexts(input);
+    return this._toResponse(result);
+  }
+
+  async createContext(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as CreateContextInput;
+    const result = await this._lifecycle.createContext(input);
+    return this._toResponse(result);
+  }
+
+  async archiveContext(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as ArchiveContextInput;
+    const result = await this._lifecycle.archiveContext(input);
+    return this._toResponse(result);
+  }
+
+  async deprecateContext(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as DeprecateContextInput;
+    const result = await this._lifecycle.deprecateContext(input);
+    return this._toResponse(result);
+  }
+
+  async activateContext(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as ActivateContextInput;
+    const result = await this._lifecycle.activateContext(input);
     return this._toResponse(result);
   }
 

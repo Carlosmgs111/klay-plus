@@ -4,6 +4,10 @@ export const LifecycleStep = {
   Rollback: "rollback",
   Link: "link",
   Unlink: "unlink",
+  CreateContext: "create-context",
+  ArchiveContext: "archive-context",
+  DeprecateContext: "deprecate-context",
+  ActivateContext: "activate-context",
 } as const;
 
 export type LifecycleStep =
