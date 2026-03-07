@@ -19,8 +19,8 @@ export function SearchPage() {
 
   const { data, error, isLoading, execute } = usePipelineAction(searchAction);
 
-  const handleSearch = (queryText: string, topK: number, minScore: number) => {
-    execute({ queryText, topK, minScore });
+  const handleSearch = (queryText: string, topK: number, minScore: number, filters?: Record<string, unknown>) => {
+    execute({ queryText, topK, minScore, filters });
   };
 
   if (isInitializing) {

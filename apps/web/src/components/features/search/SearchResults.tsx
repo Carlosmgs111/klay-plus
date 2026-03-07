@@ -34,6 +34,7 @@ export function SearchResults({ items, queryText }: SearchResultsProps) {
           score={item.score}
           sourceId={item.sourceId}
           metadata={item.metadata}
+          rank={idx + 1}
         />
       ))}
     </div>

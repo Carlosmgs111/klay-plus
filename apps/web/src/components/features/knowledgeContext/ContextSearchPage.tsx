@@ -22,12 +22,12 @@ export default function ContextSearchPage() {
 
   const { data, error, isLoading, execute } = usePipelineAction(searchAction);
 
-  const handleSearch = (queryText: string, topK: number, minScore: number) => {
+  const handleSearch = (queryText: string, topK: number, minScore: number, filters?: Record<string, unknown>) => {
     execute({
       queryText,
       topK,
       minScore,
-      filters: { contextId },
+      filters: { ...filters, contextId },
     });
   };
 
@@ -70,7 +70,7 @@ export default function ContextSearchPage() {
           <p className="text-xs mb-4 text-tertiary">
             Search across this context's projections using semantic similarity.
           </p>
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+          <SearchBar onSearch={handleSearch} isLoading={isLoading} hideContextFilter />
         </CardBody>
       </Card>
 
@@ -119,8 +119,8 @@ export default function ContextSearchPage() {
         <Card>
           <CardBody>
             <EmptyState
-              title="Search this unit"
-              description="Enter a query above to find relevant content within this semantic unit's projections."
+              title="Search this context"
+              description="Enter a query above to find relevant content within this context's projections."
               icon="search"
             />
           </CardBody>
