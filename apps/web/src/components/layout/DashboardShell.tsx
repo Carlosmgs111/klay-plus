@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { ProviderStack } from "./ProviderStack";
-import { Sidebar } from "./Sidebar";
+// import { Sidebar } from "./Sidebar"; // Stand-by: sidebar disabled for simplified layout
 import { Header } from "./Header";
 import { ToastContainer } from "../shared/Toast";
 import { SkeletonPage } from "../shared/Skeleton";
@@ -63,9 +63,9 @@ export function DashboardShell({ activePage }: DashboardShellProps) {
   return (
     <ProviderStack>
       <div className="h-screen flex flex-row w-full">
-        <Sidebar activePage={activePage} />
-        <div className=" min-h-screen overflow-y-auto w-full">
-          <Header title={title} />
+        {/* <Sidebar activePage={activePage} /> */}
+        <div className="min-h-screen overflow-y-auto w-full">
+          <Header title={title} showLogo />
           <main className="p-8 max-w-6xl mx-auto">
             {PageComponent ? (
               <Suspense fallback={<SkeletonPage />}>

@@ -48,8 +48,9 @@ export function ContextShell({ contextId, activePage }: ContextShellProps) {
           <div className="min-h-screen overflow-y-auto w-full">
             <Header
               title={truncatedId}
+              showLogo
               breadcrumbs={[
-                { label: "Knowledge", href: "/knowledge" },
+                { label: "Contexts", href: "/contexts" },
                 { label: truncatedId },
               ]}
             />
