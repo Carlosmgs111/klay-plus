@@ -13,11 +13,16 @@ import { useKnowledgeContext, getUnitSources } from "../../../contexts/Knowledge
 export default function UnitSourcesPage() {
   const { contextId, manifests, loading, error, refresh } = useKnowledgeContext();
   const [showAddSource, setShowAddSource] = useState(false);
+  const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
 
   const sources = useMemo(() => getUnitSources(manifests), [manifests]);
 
   const handleActionSuccess = () => {
     refresh();
+  };
+
+  const toggleExpand = (sourceId: string) => {
+    setExpandedSourceId((prev) => (prev === sourceId ? null : sourceId));
   };
 
   if (loading) {
@@ -100,10 +105,7 @@ export default function UnitSourcesPage() {
       ) : (
         <div className="space-y-3">
           {sources.map((manifest) => {
-            // Find all manifests for this source to get projection details
-            const sourceManifests = manifests.filter(
-              (m) => m.sourceId === manifest.sourceId,
-            );
+            const isExpanded = expandedSourceId === manifest.sourceId;
 
             return (
               <Card key={manifest.sourceId}>
@@ -207,10 +209,96 @@ export default function UnitSourcesPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Expandable Manifest Detail */}
+                      <div
+                        className="grid transition-[grid-template-rows,opacity] duration-fast ease-out-expo"
+                        style={{
+                          gridTemplateRows: isExpanded ? "1fr" : "0fr",
+                          opacity: isExpanded ? 1 : 0,
+                        }}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="pt-3 mt-3 border-t border-subtle space-y-2">
+                            <p className="text-xs font-medium text-tertiary tracking-caps">
+                              MANIFEST DETAIL
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                              <ManifestField label="Manifest ID" value={manifest.id} mono />
+                              <ManifestField label="Resource ID" value={manifest.resourceId} mono />
+                              <ManifestField label="Extraction Job ID" value={manifest.extractionJobId} mono />
+                              <ManifestField label="Projection ID" value={manifest.projectionId} mono />
+                              <ManifestField label="Context ID" value={manifest.contextId ?? "—"} mono />
+                              <ManifestField label="Content Hash" value={manifest.contentHash ?? "—"} mono />
+                              <ManifestField
+                                label="Extracted Text Length"
+                                value={manifest.extractedTextLength != null
+                                  ? manifest.extractedTextLength.toLocaleString()
+                                  : "—"}
+                              />
+                              <ManifestField
+                                label="Chunks"
+                                value={manifest.chunksCount != null ? String(manifest.chunksCount) : "—"}
+                              />
+                              <ManifestField
+                                label="Dimensions"
+                                value={manifest.dimensions != null ? String(manifest.dimensions) : "—"}
+                              />
+                              <ManifestField label="Model" value={manifest.model ?? "—"} />
+                              <ManifestField
+                                label="Created At"
+                                value={new Date(manifest.createdAt).toLocaleString()}
+                              />
+                              {manifest.failedStep && (
+                                <div>
+                                  <span className="text-tertiary">Failed Step: </span>
+                                  <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-danger-muted text-danger">
+                                    {manifest.failedStep}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Completed Steps Timeline */}
+                            {manifest.completedSteps.length > 0 && (
+                              <div className="pt-2">
+                                <span className="text-tertiary text-xs">Pipeline: </span>
+                                <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                  {manifest.completedSteps.map((step, idx) => (
+                                    <span key={step} className="flex items-center gap-1">
+                                      {idx > 0 && (
+                                        <Icon name="chevron-right" className="text-ghost" />
+                                      )}
+                                      <span className="badge-complete text-xs">{step}</span>
+                                    </span>
+                                  ))}
+                                  {manifest.failedStep && (
+                                    <>
+                                      <Icon name="chevron-right" className="text-ghost" />
+                                      <span className="badge-failed text-xs">{manifest.failedStep}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Remove Action */}
-                    <div className="ml-3 flex-shrink-0">
+                    {/* Actions: Expand Toggle + Remove */}
+                    <div className="ml-3 flex-shrink-0 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(manifest.sourceId)}
+                        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-surface-3"
+                        title={isExpanded ? "Collapse manifest detail" : "Expand manifest detail"}
+                      >
+                        <Icon
+                          name={isExpanded ? "chevron-up" : "chevron-down"}
+                          className="text-tertiary"
+                        />
+                      </button>
                       <RemoveSourceAction
                         contextId={contextId}
                         sourceId={manifest.sourceId}
@@ -253,6 +341,27 @@ export default function UnitSourcesPage() {
           </div>
         </div>
       </Overlay>
+    </div>
+  );
+}
+
+function ManifestField({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <span className="text-tertiary">{label}: </span>
+      <span
+        className={`text-secondary break-all ${mono ? "font-mono" : ""}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }

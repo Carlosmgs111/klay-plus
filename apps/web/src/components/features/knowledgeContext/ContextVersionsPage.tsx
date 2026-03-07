@@ -24,6 +24,18 @@ interface VersionGroup {
   status: string;
 }
 
+type DiffTag = "added" | "removed" | "unchanged";
+
+interface SourceWithDiff {
+  sourceId: string;
+  contentHash?: string;
+  projectionId: string;
+  status: string;
+  chunksCount?: number;
+  model?: string;
+  diff: DiffTag;
+}
+
 export default function UnitVersionsPage() {
   const { contextId, manifests, loading, error, refresh } = useKnowledgeContext();
 
@@ -68,6 +80,33 @@ export default function UnitVersionsPage() {
     // Return as array, newest first
     return Array.from(versionMap.values()).reverse();
   }, [manifests]);
+
+  // Compute diffs: for each version, tag its sources as added/removed/unchanged
+  // relative to the cumulative set of sourceIds from prior versions.
+  const versionDiffs = useMemo<Map<number, SourceWithDiff[]>>(() => {
+    const diffMap = new Map<number, SourceWithDiff[]>();
+
+    // Iterate chronologically (oldest first)
+    const chronological = [...versions].reverse();
+    const cumulativeSources = new Set<string>();
+
+    for (const version of chronological) {
+      const currentSourceIds = new Set(version.sources.map((s) => s.sourceId));
+      const sourcesWithDiff: SourceWithDiff[] = version.sources.map((s) => ({
+        ...s,
+        diff: cumulativeSources.has(s.sourceId) ? "unchanged" as DiffTag : "added" as DiffTag,
+      }));
+
+      // Add current sources to cumulative set
+      for (const sid of currentSourceIds) {
+        cumulativeSources.add(sid);
+      }
+
+      diffMap.set(version.versionNumber, sourcesWithDiff);
+    }
+
+    return diffMap;
+  }, [versions]);
 
   const estimatedCurrentVersion = manifests.length;
 
@@ -195,6 +234,8 @@ export default function UnitVersionsPage() {
             {versions.map((version) => {
               const isCurrent =
                 version.versionNumber === estimatedCurrentVersion;
+              const sourcesWithDiff =
+                versionDiffs.get(version.versionNumber) ?? [];
 
               return (
                 <div key={version.versionNumber} className="relative pl-10">
@@ -236,18 +277,35 @@ export default function UnitVersionsPage() {
                           </span>
                         </div>
 
-                        {/* Sources Snapshot */}
+                        {/* Sources Snapshot with Diffs */}
                         <div>
                           <p className="text-xs font-medium mb-2 text-tertiary tracking-caps">
                             SOURCES IN THIS VERSION
                           </p>
                           <div className="space-y-2">
-                            {version.sources.map((source) => (
+                            {sourcesWithDiff.map((source) => (
                               <div
                                 key={source.sourceId}
-                                className="p-2 rounded bg-surface-0 border border-subtle"
+                                className={`p-2 rounded border ${
+                                  source.diff === "added"
+                                    ? "bg-success-muted/30 border-success/30"
+                                    : source.diff === "removed"
+                                      ? "bg-danger-muted/30 border-danger/30"
+                                      : "bg-surface-0 border-subtle"
+                                }`}
                               >
                                 <div className="flex items-center gap-2 text-xs">
+                                  {/* Diff badge */}
+                                  {source.diff === "added" && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-success-muted text-success">
+                                      + New
+                                    </span>
+                                  )}
+                                  {source.diff === "removed" && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-danger-muted text-danger">
+                                      - Removed
+                                    </span>
+                                  )}
                                   <span className="font-mono text-accent">
                                     {source.sourceId.length > 16
                                       ? `${source.sourceId.slice(0, 16)}...`

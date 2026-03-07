@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { DataTable } from "../../shared/DataTable";
@@ -7,6 +7,10 @@ import { EmptyState } from "../../shared/EmptyState";
 import { SkeletonCard } from "../../shared/Skeleton";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { useKnowledgeContext, getUnitProjections } from "../../../contexts/KnowledgeContextContext";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import type { ListProfilesResult } from "@klay/core";
+
+type ProfileEntry = ListProfilesResult["profiles"][number];
 
 interface ProjectionRow {
   projectionId: string;
@@ -19,7 +23,19 @@ interface ProjectionRow {
 
 export default function UnitProjectionsPage() {
   const { manifests, loading, error } = useKnowledgeContext();
+  const { service } = useRuntimeMode();
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [profiles, setProfiles] = useState<ProfileEntry[]>([]);
+
+  // Fetch profiles on mount for model-to-profile resolution
+  useEffect(() => {
+    if (!service) return;
+    service.listProfiles().then((result) => {
+      if (result.success) {
+        setProfiles(result.data.profiles);
+      }
+    });
+  }, [service]);
 
   const projections = useMemo<ProjectionRow[]>(
     () => getUnitProjections(manifests) as ProjectionRow[],
@@ -40,6 +56,36 @@ export default function UnitProjectionsPage() {
     [projections, sourceFilter],
   );
 
+  // Build model->profile name lookup from fetched profiles
+  const modelToProfileName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of profiles) {
+      // Use the embedding strategy as the key since model in manifests
+      // corresponds to the embedding model/strategy used
+      if (p.embeddingStrategyId) {
+        map.set(p.embeddingStrategyId, p.name);
+      }
+    }
+    return map;
+  }, [profiles]);
+
+  const resolveProfileName = (row: ProjectionRow): string => {
+    if (!row.model) return "—";
+    // Try to match model to a profile's embedding strategy
+    const profileName = modelToProfileName.get(row.model);
+    return profileName ?? row.model;
+  };
+
+  // Unique profile/model names across filtered projections
+  const uniqueProfileNames = useMemo(() => {
+    const names = new Set<string>();
+    filteredProjections.forEach((p) => {
+      const name = resolveProfileName(p);
+      if (name !== "—") names.add(name);
+    });
+    return Array.from(names);
+  }, [filteredProjections, modelToProfileName]);
+
   const columns = [
     {
       key: "projectionId",
@@ -56,6 +102,15 @@ export default function UnitProjectionsPage() {
       render: (row: ProjectionRow) => (
         <span className="font-mono text-xs text-secondary">
           {row.sourceId.slice(0, 12)}...
+        </span>
+      ),
+    },
+    {
+      key: "profile",
+      header: "Profile",
+      render: (row: ProjectionRow) => (
+        <span className="text-xs text-secondary">
+          {resolveProfileName(row)}
         </span>
       ),
     },
@@ -159,7 +214,7 @@ export default function UnitProjectionsPage() {
           ) : (
             <>
               {/* Summary metrics */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                 <SummaryMetric
                   label="Total Projections"
                   value={String(filteredProjections.length)}
@@ -173,6 +228,10 @@ export default function UnitProjectionsPage() {
                         .filter(Boolean),
                     ).size,
                   )}
+                />
+                <SummaryMetric
+                  label="Profiles"
+                  value={String(uniqueProfileNames.length)}
                 />
                 <SummaryMetric
                   label="Total Chunks"

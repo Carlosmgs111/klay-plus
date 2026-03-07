@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { MetricCard } from "../../shared/MetricCard";
@@ -34,6 +34,52 @@ export function DashboardPage() {
   const completed = manifests.filter((m) => m.status === "complete").length;
   const failed = manifests.filter((m) => m.status === "failed").length;
 
+  // Unique contexts from manifests
+  const uniqueContextIds = useMemo(() => {
+    const ids = new Set<string>();
+    manifests.forEach((m) => {
+      if (m.contextId) ids.add(m.contextId);
+    });
+    return ids;
+  }, [manifests]);
+
+  // Top contexts by source count
+  const topContexts = useMemo(() => {
+    const contextSourceMap = new Map<string, Set<string>>();
+    manifests.forEach((m) => {
+      if (!m.contextId) return;
+      if (!contextSourceMap.has(m.contextId)) {
+        contextSourceMap.set(m.contextId, new Set());
+      }
+      contextSourceMap.get(m.contextId)!.add(m.sourceId);
+    });
+
+    return Array.from(contextSourceMap.entries())
+      .map(([contextId, sourceIds]) => ({
+        contextId,
+        sourceCount: sourceIds.size,
+      }))
+      .sort((a, b) => b.sourceCount - a.sourceCount)
+      .slice(0, 5);
+  }, [manifests]);
+
+  // Most recent failed manifest
+  const lastError = useMemo(() => {
+    const failedManifests = manifests
+      .filter((m) => m.status === "failed")
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    return failedManifests.length > 0 ? failedManifests[0] : null;
+  }, [manifests]);
+
+  // Max source count for bar scaling
+  const maxSourceCount = useMemo(
+    () => Math.max(...topContexts.map((c) => c.sourceCount), 1),
+    [topContexts]
+  );
+
   if (isInitializing) {
     return (
       <div className="space-y-8 animate-fade-in">
@@ -58,9 +104,10 @@ export function DashboardPage() {
   return (
     <div className="space-y-8 text-primary">
       {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
         <MetricCard label="Documents" value={totalDocs} icon="file-text" />
         <MetricCard label="Chunks" value={totalChunks} icon="layers" />
+        <MetricCard label="Contexts" value={uniqueContextIds.size} icon="database" />
         <MetricCard
           label="Completed"
           value={completed}
@@ -76,6 +123,124 @@ export function DashboardPage() {
       </div>
 
       {error && <ErrorDisplay {...error} />}
+
+      {/* Context Distribution + Last Error row */}
+      {manifests.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Contexts by Source Count */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Icon name="database" className="text-tertiary" />
+                <h2 className="text-sm font-semibold text-primary tracking-heading">
+                  Top Contexts by Sources
+                </h2>
+              </div>
+            </CardHeader>
+            <CardBody>
+              {topContexts.length === 0 ? (
+                <p className="text-sm text-ghost">
+                  No contexts found in manifests.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {topContexts.map((ctx) => (
+                    <div key={ctx.contextId} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-mono text-secondary truncate max-w-[200px]">
+                          {ctx.contextId.length > 20
+                            ? `${ctx.contextId.slice(0, 20)}...`
+                            : ctx.contextId}
+                        </span>
+                        <span className="font-mono text-primary font-medium">
+                          {ctx.sourceCount}
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-surface-3 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-accent transition-all"
+                          style={{
+                            width: `${(ctx.sourceCount / maxSourceCount) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Last Pipeline Error */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Icon name="alert-triangle" className="text-tertiary" />
+                <h2 className="text-sm font-semibold text-primary tracking-heading">
+                  Last Pipeline Error
+                </h2>
+              </div>
+            </CardHeader>
+            <CardBody>
+              {!lastError ? (
+                <div className="text-center py-6">
+                  <Icon name="check-circle" className="mx-auto mb-2 text-2xl text-success" />
+                  <p className="text-sm text-ghost">No recent errors</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <div>
+                      <span className="text-tertiary">Source: </span>
+                      <span className="font-mono text-secondary">
+                        {lastError.sourceId.length > 16
+                          ? `${lastError.sourceId.slice(0, 16)}...`
+                          : lastError.sourceId}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-tertiary">Date: </span>
+                      <span className="text-secondary">
+                        {new Date(lastError.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    {lastError.failedStep && (
+                      <div className="col-span-2">
+                        <span className="text-tertiary">Failed Step: </span>
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-danger-muted text-danger">
+                          {lastError.failedStep}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {lastError.completedSteps.length > 0 && (
+                    <div className="pt-2 border-t border-subtle">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {lastError.completedSteps.map((step, idx) => (
+                          <span key={step} className="flex items-center gap-1">
+                            {idx > 0 && (
+                              <Icon name="chevron-right" className="text-ghost" />
+                            )}
+                            <span className="badge-complete text-xs">{step}</span>
+                          </span>
+                        ))}
+                        {lastError.failedStep && (
+                          <>
+                            <Icon name="chevron-right" className="text-ghost" />
+                            <span className="badge-failed text-xs">
+                              {lastError.failedStep}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+      )}
 
       <div className="flex flex-col gap-6">
         {/* Pipeline Status */}
