@@ -10,7 +10,6 @@ interface SearchItem {
 
 interface SearchResultsProps {
   items: SearchItem[];
-  totalFound: number;
   queryText: string;
 }
 

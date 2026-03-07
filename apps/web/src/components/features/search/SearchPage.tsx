@@ -71,7 +71,6 @@ export function SearchPage() {
           <CardBody>
             <SearchResults
               items={data.items}
-              totalFound={data.totalFound}
               queryText={data.queryText}
             />
           </CardBody>

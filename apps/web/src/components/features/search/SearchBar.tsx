@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
 import { Spinner } from "../../shared/Spinner";
@@ -19,7 +19,6 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [contextFilter, setContextFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
-  const panelRef = useRef<HTMLDivElement>(null);
 
   const activeFilterCount = [
     topK !== 5,
@@ -68,6 +67,8 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
         <button
           type="button"
           onClick={() => setFiltersOpen((v) => !v)}
+          aria-expanded={filtersOpen}
+          aria-controls="search-filters-panel"
           className="btn-ghost flex items-center gap-1.5 relative"
         >
           <Icon name="filter" className="text-tertiary" />
@@ -95,13 +96,16 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
 
       {/* Collapsible advanced filters */}
       <div
-        ref={panelRef}
-        className="overflow-hidden transition-all duration-fast ease-out-expo"
+        id="search-filters-panel"
+        role="region"
+        aria-label="Advanced search filters"
+        className="grid transition-[grid-template-rows,opacity] duration-fast ease-out-expo"
         style={{
-          maxHeight: filtersOpen ? panelRef.current?.scrollHeight ?? 500 : 0,
+          gridTemplateRows: filtersOpen ? "1fr" : "0fr",
           opacity: filtersOpen ? 1 : 0,
         }}
       >
+        <div className="overflow-hidden">
         <div className="pt-1 pb-2 space-y-4">
           {/* Top K + Min Score row */}
           <div className="flex flex-wrap gap-6">
@@ -153,6 +157,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
                     key={status}
                     type="button"
                     onClick={() => toggleStatus(status)}
+                    aria-pressed={isActive}
                     className={`px-2.5 py-0.5 rounded text-xs font-medium transition-colors duration-fast cursor-pointer ${badgeClass} ${
                       isActive ? "ring-1 ring-current/20" : "hover:bg-surface-3"
                     }`}
@@ -189,6 +194,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
               />
             </div>
           </div>
+        </div>
         </div>
       </div>
     </form>

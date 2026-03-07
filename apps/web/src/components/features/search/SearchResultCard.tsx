@@ -62,13 +62,15 @@ export function SearchResultCard({
               {rank}
             </span>
           )}
-          <p
-            className={`text-sm flex-1 text-secondary cursor-pointer ${expanded ? "" : "line-clamp-3"}`}
+          <button
+            type="button"
             onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className={`text-sm flex-1 text-secondary cursor-pointer text-left ${expanded ? "" : "line-clamp-3"}`}
             title={expanded ? "Click to collapse" : "Click to expand"}
           >
             {content}
-          </p>
+          </button>
         </div>
         <div className="text-right flex-shrink-0">
           <span
@@ -98,6 +100,7 @@ export function SearchResultCard({
           onClick={handleCopySourceId}
           className="p-0.5 rounded hover:bg-surface-3 transition-colors duration-fast cursor-pointer"
           title="Copy source ID"
+          aria-label="Copy source ID"
         >
           <Icon name={copied ? "check" : "copy"} className={`text-xs ${copied ? "text-success" : "text-ghost"}`} />
         </button>
