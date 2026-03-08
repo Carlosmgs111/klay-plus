@@ -182,7 +182,7 @@ describe("PROVIDER_REGISTRY", () => {
     expect(PROVIDER_REGISTRY).toHaveLength(14);
   });
 
-  it("every entry has required fields including runtimes", () => {
+  it("every entry has required fields including runtimes and gateway", () => {
     for (const entry of PROVIDER_REGISTRY) {
       expect(entry.id).toBeTruthy();
       expect(entry.name).toBeTruthy();
@@ -191,7 +191,26 @@ describe("PROVIDER_REGISTRY", () => {
       expect(Array.isArray(entry.requirements)).toBe(true);
       expect(Array.isArray(entry.runtimes)).toBe(true);
       expect(entry.runtimes.length).toBeGreaterThan(0);
+      expect(["local", "ai-sdk", "native"]).toContain(entry.gateway);
     }
+  });
+
+  it("AI SDK embedding providers have gateway 'ai-sdk'", () => {
+    const aiSdkProviders = PROVIDER_REGISTRY.filter(
+      (p) => p.axis === "embedding" && ["openai", "cohere", "huggingface"].includes(p.id),
+    );
+    expect(aiSdkProviders).toHaveLength(3);
+    for (const provider of aiSdkProviders) {
+      expect(provider.gateway).toBe("ai-sdk");
+    }
+  });
+
+  it("local providers have gateway 'local'", () => {
+    const localProviders = PROVIDER_REGISTRY.filter(
+      (p) => p.gateway === "local",
+    );
+    // 9 persistence/vectorStore/documentStorage + 2 local embedding (hash, browser-webllm)
+    expect(localProviders).toHaveLength(11);
   });
 
   it("all embedding providers have models defined", () => {

@@ -8,6 +8,8 @@ export type InfrastructureAxis =
 
 export type RuntimeEnvironment = "browser" | "server" | "test";
 
+export type ProviderGateway = "local" | "ai-sdk" | "native";
+
 export interface ProviderRequirement {
   key: string;
   label: string;
@@ -26,6 +28,7 @@ export interface ProviderMetadata {
   description: string;
   axis: InfrastructureAxis;
   runtimes: RuntimeEnvironment[];
+  gateway: ProviderGateway;
   requirements: ProviderRequirement[];
   models?: EmbeddingModelSpec[];
 }
@@ -38,6 +41,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Volatile storage for testing",
     axis: "persistence",
     runtimes: ["browser", "server", "test"],
+    gateway: "local",
     requirements: [],
   },
   {
@@ -46,6 +50,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Browser-native persistent storage",
     axis: "persistence",
     runtimes: ["browser"],
+    gateway: "local",
     requirements: [],
   },
   {
@@ -54,6 +59,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Server-side file-based storage",
     axis: "persistence",
     runtimes: ["server"],
+    gateway: "local",
     requirements: [],
   },
 
@@ -64,6 +70,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Volatile vector store for testing",
     axis: "vectorStore",
     runtimes: ["browser", "server", "test"],
+    gateway: "local",
     requirements: [],
   },
   {
@@ -72,6 +79,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Browser-native vector storage",
     axis: "vectorStore",
     runtimes: ["browser"],
+    gateway: "local",
     requirements: [],
   },
   {
@@ -80,6 +88,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Server-side file-based vector storage",
     axis: "vectorStore",
     runtimes: ["server"],
+    gateway: "local",
     requirements: [],
   },
 
@@ -90,6 +99,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Volatile document storage for testing",
     axis: "documentStorage",
     runtimes: ["browser", "server", "test"],
+    gateway: "local",
     requirements: [],
   },
   {
@@ -98,6 +108,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Browser-native document storage",
     axis: "documentStorage",
     runtimes: ["browser"],
+    gateway: "local",
     requirements: [],
   },
   {
@@ -106,16 +117,18 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "Server-side filesystem storage",
     axis: "documentStorage",
     runtimes: ["server"],
+    gateway: "local",
     requirements: [],
   },
 
-  // ── Embedding ──────────────────────────────────────────────────────
+  // ── Embedding: Local ───────────────────────────────────────────────
   {
     id: "hash",
     name: "Hash Embedding",
     description: "Local hash-based embeddings (no API key needed)",
     axis: "embedding",
     runtimes: ["browser", "server", "test"],
+    gateway: "local",
     requirements: [],
     models: [
       { id: "hash-128", name: "Hash 128d", dimensions: 128, isDefault: true },
@@ -128,6 +141,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     description: "In-browser ML embeddings via WebLLM",
     axis: "embedding",
     runtimes: ["browser"],
+    gateway: "local",
     requirements: [],
     models: [
       {
@@ -138,12 +152,15 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
       },
     ],
   },
+
+  // ── Embedding: AI SDK (Vercel) ─────────────────────────────────────
   {
     id: "openai",
     name: "OpenAI",
-    description: "OpenAI text-embedding API",
+    description: "OpenAI embeddings via AI SDK (@ai-sdk/openai)",
     axis: "embedding",
     runtimes: ["browser", "server"],
+    gateway: "ai-sdk",
     requirements: [{ key: "OPENAI_API_KEY", label: "OpenAI API Key" }],
     models: [
       {
@@ -167,9 +184,10 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
   {
     id: "cohere",
     name: "Cohere",
-    description: "Cohere embed API",
+    description: "Cohere embeddings via AI SDK (@ai-sdk/cohere)",
     axis: "embedding",
     runtimes: ["browser", "server"],
+    gateway: "ai-sdk",
     requirements: [{ key: "COHERE_API_KEY", label: "Cohere API Key" }],
     models: [
       {
@@ -193,9 +211,10 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
   {
     id: "huggingface",
     name: "HuggingFace",
-    description: "HuggingFace Inference API embeddings",
+    description: "HuggingFace embeddings via AI SDK (@ai-sdk/huggingface)",
     axis: "embedding",
     runtimes: ["browser", "server"],
+    gateway: "ai-sdk",
     requirements: [
       { key: "HUGGINGFACE_API_KEY", label: "HuggingFace API Key" },
     ],

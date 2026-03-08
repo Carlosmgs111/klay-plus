@@ -30,6 +30,7 @@ export type {
   InfrastructureAxis,
   RuntimeEnvironment,
   EmbeddingModelSpec,
+  ProviderGateway,
 } from "./ProviderRequirements";
 export {
   PROVIDER_REGISTRY,

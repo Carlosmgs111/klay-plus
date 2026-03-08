@@ -91,6 +91,7 @@ Same pattern applies to `KnowledgeLifecyclePolicy` and `KnowledgeManagementPolic
 | Deployment targets | Browser + Node.js local (current) | Design supports future targets without model changes |
 | Local server embedding | Deferred (Ollama / Transformers.js) | Investigate later; model already supports it as a new provider entry |
 | Future adapters (Postgres, Qdrant, etc.) | Deferred | Only need a new `ProviderMetadata` entry + adapter implementation |
+| Provider gateway attribution | `gateway: ProviderGateway` field on `ProviderMetadata` | Distinguishes AI SDK (Vercel) meta-providers from local/native implementations; `"local"` \| `"ai-sdk"` \| `"native"` |
 
 ## Current Provider Registry
 
@@ -116,13 +117,13 @@ Same pattern applies to `KnowledgeLifecyclePolicy` and `KnowledgeManagementPolic
 | server | server | Filesystem (fs/promises) |
 
 ### Embedding
-| Provider | Runtimes | Models | API Key |
-|----------|----------|--------|---------|
-| hash | all | hash-128 (128d), hash-256 (256d) | No |
-| browser-webllm | browser | all-MiniLM-L6-v2 (384d) | No |
-| openai | browser, server | text-embedding-3-small (1536d), text-embedding-3-large (3072d), ada-002 (1536d) | OPENAI_API_KEY |
-| cohere | browser, server | embed-multilingual-v3 (1024d), embed-english-v3 (1024d), embed-multilingual-light-v3 (384d) | COHERE_API_KEY |
-| huggingface | browser, server | all-MiniLM-L6-v2 (384d), all-mpnet-base-v2 (768d) | HUGGINGFACE_API_KEY |
+| Provider | Gateway | Runtimes | Models | API Key |
+|----------|---------|----------|--------|---------|
+| hash | local | all | hash-128 (128d), hash-256 (256d) | No |
+| browser-webllm | local | browser | all-MiniLM-L6-v2 (384d) | No |
+| openai | ai-sdk | browser, server | text-embedding-3-small (1536d), text-embedding-3-large (3072d), ada-002 (1536d) | OPENAI_API_KEY |
+| cohere | ai-sdk | browser, server | embed-multilingual-v3 (1024d), embed-english-v3 (1024d), embed-multilingual-light-v3 (384d) | COHERE_API_KEY |
+| huggingface | ai-sdk | browser, server | all-MiniLM-L6-v2 (384d), all-mpnet-base-v2 (768d) | HUGGINGFACE_API_KEY |
 
 ## Files Changed
 
