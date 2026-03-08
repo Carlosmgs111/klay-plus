@@ -19,6 +19,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GetContextLineageInput,
+  GetContextLineageResult,
 } from "./dtos";
 
 export interface KnowledgeLifecyclePort {
@@ -57,4 +59,8 @@ export interface KnowledgeLifecyclePort {
   activateContext(
     input: ActivateContextInput,
   ): Promise<Result<KnowledgeLifecycleError, ActivateContextResult>>;
+
+  getContextLineage(
+    input: GetContextLineageInput,
+  ): Promise<Result<KnowledgeLifecycleError, GetContextLineageResult>>;
 }

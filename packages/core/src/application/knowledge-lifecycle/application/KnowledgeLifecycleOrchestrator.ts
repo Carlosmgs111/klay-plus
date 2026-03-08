@@ -20,6 +20,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GetContextLineageInput,
+  GetContextLineageResult,
 } from "../contracts/dtos";
 import type { Result } from "../../../shared/domain/Result";
 import type { KnowledgeLifecycleError } from "../domain/KnowledgeLifecycleError";
@@ -294,6 +296,32 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     } catch (error) {
       return ResultClass.fail(
         LifecycleError.fromStep(LifecycleStep.ActivateContext, error, []),
+      );
+    }
+  }
+
+  async getContextLineage(
+    input: GetContextLineageInput,
+  ): Promise<Result<KnowledgeLifecycleError, GetContextLineageResult>> {
+    try {
+      const result = await this._contextManagement.getLineage(input.contextId);
+
+      if (result.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.Link, result.error, []),
+        );
+      }
+
+      return ResultClass.ok({
+        contextId: result.value.contextId,
+        traces: result.value.traces.map(t => ({
+          ...t,
+          createdAt: t.createdAt.toISOString(),
+        })),
+      });
+    } catch (error) {
+      return ResultClass.fail(
+        LifecycleError.fromStep(LifecycleStep.Link, error, []),
       );
     }
   }

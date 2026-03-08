@@ -9,6 +9,7 @@ import type {
   ArchiveContextInput,
   DeprecateContextInput,
   ActivateContextInput,
+  GetContextLineageInput,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter";
 
@@ -66,6 +67,12 @@ export class KnowledgeLifecycleRESTAdapter {
   async activateContext(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as ActivateContextInput;
     const result = await this._lifecycle.activateContext(input);
+    return this._toResponse(result);
+  }
+
+  async getContextLineage(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as GetContextLineageInput;
+    const result = await this._lifecycle.getContextLineage(input);
     return this._toResponse(result);
   }
 

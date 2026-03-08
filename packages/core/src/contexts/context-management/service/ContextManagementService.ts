@@ -83,6 +83,27 @@ export class ContextManagementService {
   }
 
   /**
+   * Gets lineage traces for a given context.
+   * Returns empty traces array if no lineage exists (not an error).
+   */
+  async getLineage(contextId: string): Promise<Result<DomainError, { contextId: string; traces: Array<{ fromContextId: string; toContextId: string; relationship: string; createdAt: Date }> }>> {
+    const { repository } = this.ensureLineage();
+    const lineage = await repository.findByContextId(contextId);
+    if (!lineage) {
+      return Result.ok({ contextId, traces: [] });
+    }
+    return Result.ok({
+      contextId,
+      traces: lineage.traces.map(t => ({
+        fromContextId: t.fromContextId,
+        toContextId: t.toContextId,
+        relationship: t.relationship,
+        createdAt: t.createdAt,
+      })),
+    });
+  }
+
+  /**
    * Creates a new Context aggregate.
    */
   async createContext(params: {

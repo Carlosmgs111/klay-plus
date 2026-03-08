@@ -92,3 +92,17 @@ export interface ActivateContextResult {
   contextId: string;
   state: string;
 }
+
+export interface GetContextLineageInput {
+  contextId: string;
+}
+
+export interface GetContextLineageResult {
+  contextId: string;
+  traces: Array<{
+    fromContextId: string;
+    toContextId: string;
+    relationship: string;
+    createdAt: string;
+  }>;
+}

@@ -19,6 +19,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GetContextLineageInput,
+  GetContextLineageResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -87,6 +89,12 @@ export class ServerLifecycleService implements LifecycleService {
     input: ActivateContextInput,
   ): Promise<ServiceResult<ActivateContextResult>> {
     return this._post("/api/lifecycle/activate-context", input);
+  }
+
+  async getContextLineage(
+    input: GetContextLineageInput,
+  ): Promise<ServiceResult<GetContextLineageResult>> {
+    return this._post("/api/lifecycle/get-lineage", input);
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────
