@@ -3,6 +3,7 @@ import type { VectorReadStore } from "../domain/ports/VectorReadStore";
 import type { RankingStrategy } from "../domain/ports/RankingStrategy";
 import type { VectorEntry } from "../../../../platform/vector/VectorEntry";
 import type { SemanticQueryUseCases } from "../application";
+import type { ConfigStore } from "../../../../platform/config/ConfigStore";
 
 export interface VectorStoreConfig {
   dbPath?: string;
@@ -16,8 +17,10 @@ export interface SemanticQueryInfrastructurePolicy {
   embeddingDimensions?: number;
   embeddingProvider?: string;
   embeddingModel?: string;
+  vectorStoreProvider?: string;
   webLLMModelId?: string;
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
   [key: string]: unknown;
 }
 
@@ -146,9 +149,11 @@ export async function semanticQueryFactory(
     "../infrastructure/adapters/PassthroughRankingStrategy"
   );
 
+  const vectorProvider = policy.vectorStoreProvider ?? policy.provider;
+
   const [queryEmbedder, vectorSearch] = await Promise.all([
     queryEmbedderRegistry.resolve(embedderProvider).create(policy),
-    vectorReadStoreRegistry.resolve(policy.provider).create(policy),
+    vectorReadStoreRegistry.resolve(vectorProvider).create(policy),
   ]);
 
   const infra: ResolvedSemanticQueryInfra = {

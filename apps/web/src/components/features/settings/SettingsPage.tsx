@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -6,12 +6,46 @@ import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
+import { Input } from "../../shared/Input";
+import { LoadingButton } from "../../shared/LoadingButton";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import {
+  API_KEY_DEFINITIONS,
+  getProvidersForAxis,
+  getProfileRequirements,
+  getModelsForProvider,
+  getDefaultModel,
+} from "@klay/core/config";
+import type {
+  InfrastructureAxis,
+  InfrastructureProfile,
+  RuntimeEnvironment,
+} from "@klay/core/config";
 import type { SearchKnowledgeInput } from "@klay/core";
 
+const INFRA_AXES: { axis: InfrastructureAxis; label: string }[] = [
+  { axis: "persistence", label: "Persistence" },
+  { axis: "vectorStore", label: "Vector Store" },
+  { axis: "documentStorage", label: "Document Storage" },
+  { axis: "embedding", label: "Embedding" },
+];
+
+function runtimeFromMode(mode: string): RuntimeEnvironment {
+  return mode === "browser" ? "browser" : "server";
+}
+
 export function SettingsPage() {
-  const { mode, setMode, service, isInitializing } = useRuntimeMode();
+  const {
+    mode,
+    setMode,
+    service,
+    isInitializing,
+    reinitialize,
+    configStore,
+    infrastructureProfile,
+    setInfrastructureProfile,
+  } = useRuntimeMode();
   const { theme, setTheme } = useTheme();
   const { addToast } = useToast();
 
@@ -29,11 +63,94 @@ export function SettingsPage() {
     }
   };
 
+  const [apiKeyValues, setApiKeyValues] = useState<Record<string, string>>({});
+  const [isSavingKeys, setIsSavingKeys] = useState(false);
+  const [localProfile, setLocalProfile] = useState<InfrastructureProfile | null>(null);
+
+  useEffect(() => {
+    if (configStore) {
+      configStore.loadAll().then(setApiKeyValues);
+    }
+  }, [configStore]);
+
+  useEffect(() => {
+    if (infrastructureProfile) {
+      setLocalProfile({ ...infrastructureProfile });
+    }
+  }, [infrastructureProfile]);
+
+  const activeRequirements = localProfile
+    ? getProfileRequirements(localProfile)
+    : API_KEY_DEFINITIONS;
+
+  const runtime = runtimeFromMode(mode);
+
+  const handleProfileChange = (axis: InfrastructureAxis, value: string) => {
+    if (!localProfile) return;
+    const updated = { ...localProfile, [axis]: value };
+
+    // When embedding provider changes, auto-select default model + dimensions
+    if (axis === "embedding") {
+      const defaultModel = getDefaultModel(value);
+      if (defaultModel) {
+        updated.embeddingModel = defaultModel.id;
+        updated.embeddingDimensions = defaultModel.dimensions;
+      } else {
+        updated.embeddingModel = undefined;
+        updated.embeddingDimensions = undefined;
+      }
+    }
+
+    setLocalProfile(updated);
+  };
+
+  const handleModelChange = (modelId: string) => {
+    if (!localProfile) return;
+    const models = getModelsForProvider(localProfile.embedding);
+    const model = models.find((m) => m.id === modelId);
+    if (model) {
+      setLocalProfile({
+        ...localProfile,
+        embeddingModel: model.id,
+        embeddingDimensions: model.dimensions,
+      });
+    }
+  };
+
+  const handleSaveKeys = async () => {
+    if (!configStore) return;
+    setIsSavingKeys(true);
+    try {
+      // Save profile if changed
+      if (localProfile) {
+        await setInfrastructureProfile(localProfile);
+      }
+
+      // Save API key values
+      for (const req of activeRequirements) {
+        const value = apiKeyValues[req.key] ?? "";
+        if (value) {
+          await configStore.set(req.key, value);
+        } else {
+          await configStore.remove(req.key);
+        }
+      }
+      reinitialize();
+      addToast("Settings saved. Services reinitializing...", "success");
+    } finally {
+      setIsSavingKeys(false);
+    }
+  };
+
   const themeOptions = [
     { value: "light" as const, label: "Light", icon: "sun" as const },
     { value: "dark" as const, label: "Dark", icon: "moon" as const },
     { value: "system" as const, label: "System", icon: "settings" as const },
   ];
+
+  const embeddingModels = localProfile
+    ? getModelsForProvider(localProfile.embedding)
+    : [];
 
   return (
     <div className="space-y-6">
@@ -138,6 +255,132 @@ export function SettingsPage() {
                 Direct import + IndexedDB + WebLLM/Hash embeddings
               </p>
             </button>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Infrastructure Profile — visible in both modes */}
+      {localProfile && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Icon name="layers" className="text-tertiary" />
+              <h2 className="text-sm font-semibold text-primary tracking-heading">
+                Infrastructure
+              </h2>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="space-y-4">
+              <p className="text-xs text-tertiary">
+                Configure each infrastructure axis independently. Only providers compatible with the current runtime are shown.
+              </p>
+              {INFRA_AXES.map(({ axis, label }) => {
+                const providers = getProvidersForAxis(axis, runtime);
+                return (
+                  <div key={axis}>
+                    <label className="block text-xs font-medium text-secondary mb-1">
+                      {label}
+                    </label>
+                    <select
+                      value={localProfile[axis]}
+                      onChange={(e) => handleProfileChange(axis, e.target.value)}
+                      className="w-full rounded-lg border border-default bg-surface-2 px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none"
+                    >
+                      {providers.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {p.description}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+
+              {/* Embedding model selector */}
+              {embeddingModels.length > 0 && (
+                <div>
+                  <label className="block text-xs font-medium text-secondary mb-1">
+                    Embedding Model
+                  </label>
+                  <select
+                    value={localProfile.embeddingModel ?? ""}
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    className="w-full rounded-lg border border-default bg-surface-2 px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none"
+                  >
+                    {embeddingModels.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} — {m.dimensions}d
+                      </option>
+                    ))}
+                  </select>
+                  {localProfile.embeddingDimensions && (
+                    <p className="mt-1 text-xs text-tertiary">
+                      Dimensions: {localProfile.embeddingDimensions}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* API Keys */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Icon name="settings" className="text-tertiary" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">
+              API Keys
+            </h2>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <div className="space-y-4">
+            <p className="text-xs text-tertiary">
+              {activeRequirements.length > 0
+                ? "Configure API keys required by the current embedding provider. Keys are stored in IndexedDB and never sent to any server."
+                : "No API keys required for the current configuration."}
+            </p>
+            {activeRequirements.map((def) => {
+              const value = apiKeyValues[def.key] ?? "";
+              const isConfigured = value.length > 0;
+              return (
+                <div key={def.key} className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <Input
+                      type="password"
+                      label={def.label}
+                      placeholder={`Enter ${def.label}`}
+                      value={value}
+                      onChange={(e) =>
+                        setApiKeyValues((prev) => ({
+                          ...prev,
+                          [def.key]: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div
+                    className={`mb-2 w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                      isConfigured ? "bg-success" : "bg-surface-3"
+                    }`}
+                    title={isConfigured ? "Configured" : "Not configured"}
+                  />
+                </div>
+              );
+            })}
+            <LoadingButton
+              onClick={handleSaveKeys}
+              loading={isSavingKeys}
+              loadingText="Saving..."
+              variant="primary"
+              size="sm"
+            >
+              <Icon name="check" />
+              Save & Reinitialize
+            </LoadingButton>
           </div>
         </CardBody>
       </Card>

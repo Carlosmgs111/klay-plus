@@ -1,16 +1,25 @@
 import type { KnowledgeLifecyclePort } from "../contracts/KnowledgeLifecyclePort";
 import type { ResolvedLifecycleDependencies } from "../application/KnowledgeLifecycleOrchestrator";
+import type { ConfigStore } from "../../../platform/config/ConfigStore";
+import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
 
 export interface KnowledgeLifecyclePolicy {
   provider: string;
   dbPath?: string;
   dbName?: string;
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
+  infrastructure?: Partial<InfrastructureProfile>;
 }
 
 async function resolveLifecycleDependencies(
   policy: KnowledgeLifecyclePolicy,
 ): Promise<ResolvedLifecycleDependencies> {
+  const { resolveInfrastructureProfile } = await import(
+    "../../../platform/config/resolveInfrastructureProfile"
+  );
+  const profile = await resolveInfrastructureProfile(policy);
+
   const [
     { createContextManagementContext },
     { createSemanticProcessingService },
@@ -35,7 +44,7 @@ async function resolveLifecycleDependencies(
   );
 
   const { infra: lineageInfra } = await lineageFactory({
-    provider: policy.provider,
+    provider: profile.persistence,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
   });
@@ -48,17 +57,24 @@ async function resolveLifecycleDependencies(
   });
 
   const processing = await createSemanticProcessingService({
-    provider: policy.provider,
+    provider: profile.persistence,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
+    embeddingProvider: profile.embedding,
+    embeddingModel: profile.embeddingModel,
+    embeddingDimensions: profile.embeddingDimensions,
+    vectorStoreProvider: profile.vectorStore,
     configOverrides: policy.configOverrides,
+    configStore: policy.configStore,
   });
 
   const ingestion = await createSourceIngestionService({
-    provider: policy.provider,
+    provider: profile.persistence,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
+    documentStorageProvider: profile.documentStorage,
     configOverrides: policy.configOverrides,
+    configStore: policy.configStore,
   });
 
   // ── Source-knowledge context ──────────────────────────────────────

@@ -19,7 +19,9 @@ import { ConfigurationError } from "./ConfigurationError";
  * ```
  */
 export class NodeConfigProvider implements ConfigProvider {
-  constructor(private readonly env: NodeJS.ProcessEnv = process.env) {}
+  constructor(private readonly env: NodeJS.ProcessEnv = process.env) {
+    console.log(this.env);
+  }
 
   get(key: string): string | undefined {
     const value = this.env[key];

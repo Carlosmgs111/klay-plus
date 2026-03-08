@@ -28,6 +28,11 @@
       "types": "./src/application/knowledge-management/index.ts",
       "import": "./src/application/knowledge-management/index.ts",
       "default": "./src/application/knowledge-management/index.ts"
+    },
+    "./config": {
+      "types": "./src/platform/config/index.ts",
+      "import": "./src/platform/config/index.ts",
+      "default": "./src/platform/config/index.ts"
     }
   },
   "scripts": {

@@ -1,6 +1,8 @@
 import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort";
 import type { ResolvedPipelineDependencies } from "../application/KnowledgePipelineOrchestrator";
 import type { ManifestRepository } from "../contracts/ManifestRepository";
+import type { ConfigStore } from "../../../platform/config/ConfigStore";
+import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
 
 export interface KnowledgePipelinePolicy {
   provider: string;
@@ -11,11 +13,18 @@ export interface KnowledgePipelinePolicy {
   embeddingProvider?: string;
   embeddingModel?: string;
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
+  infrastructure?: Partial<InfrastructureProfile>;
 }
 
 export async function resolvePipelineDependencies(
   policy: KnowledgePipelinePolicy,
 ): Promise<ResolvedPipelineDependencies> {
+  const { resolveInfrastructureProfile } = await import(
+    "../../../platform/config/resolveInfrastructureProfile"
+  );
+  const profile = await resolveInfrastructureProfile(policy);
+
   const [
     { createSourceIngestionService },
     { createSemanticProcessingService },
@@ -26,20 +35,24 @@ export async function resolvePipelineDependencies(
 
   const [ingestion, processing] = await Promise.all([
     createSourceIngestionService({
-      provider: policy.provider,
+      provider: profile.persistence,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
+      documentStorageProvider: profile.documentStorage,
       configOverrides: policy.configOverrides,
+      configStore: policy.configStore,
     }),
     createSemanticProcessingService({
-      provider: policy.provider,
+      provider: profile.persistence,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
-      embeddingDimensions: policy.embeddingDimensions,
+      embeddingDimensions: profile.embeddingDimensions,
       defaultChunkingStrategy: policy.defaultChunkingStrategy,
-      embeddingProvider: policy.embeddingProvider,
-      embeddingModel: policy.embeddingModel,
+      embeddingProvider: profile.embedding,
+      embeddingModel: profile.embeddingModel,
+      vectorStoreProvider: profile.vectorStore,
       configOverrides: policy.configOverrides,
+      configStore: policy.configStore,
     }),
   ]);
 
@@ -48,7 +61,7 @@ export async function resolvePipelineDependencies(
     "../../../contexts/source-knowledge/composition/factory"
   );
 
-  const sourceKnowledgeInfra = await createSourceKnowledgeInfra(policy);
+  const sourceKnowledgeInfra = await createSourceKnowledgeInfra(policy, profile.persistence);
   const { service: sourceKnowledge } = createSourceKnowledgeContext(sourceKnowledgeInfra);
 
   // ── Context-management context ───────────────────────────────────
@@ -56,7 +69,7 @@ export async function resolvePipelineDependencies(
     "../../../contexts/context-management/composition/factory"
   );
 
-  const contextManagementInfra = await createContextManagementInfra(policy);
+  const contextManagementInfra = await createContextManagementInfra(policy, profile.persistence);
   const { service: contextManagement } = createContextManagementContext(contextManagementInfra);
 
   // ── Knowledge retrieval context ──────────────────────────────────
@@ -65,15 +78,17 @@ export async function resolvePipelineDependencies(
   );
 
   const retrieval = await createKnowledgeRetrievalService({
-    provider: policy.provider,
+    provider: profile.persistence,
     vectorStoreConfig: processing.vectorStoreConfig,
-    embeddingDimensions: policy.embeddingDimensions,
-    embeddingProvider: policy.embeddingProvider,
-    embeddingModel: policy.embeddingModel,
+    embeddingDimensions: profile.embeddingDimensions,
+    embeddingProvider: profile.embedding,
+    embeddingModel: profile.embeddingModel,
+    vectorStoreProvider: profile.vectorStore,
     configOverrides: policy.configOverrides,
+    configStore: policy.configStore,
   });
 
-  const manifestRepository = await createManifestRepository(policy);
+  const manifestRepository = await createManifestRepository(policy, profile.persistence);
 
   return {
     ingestion,
@@ -87,12 +102,13 @@ export async function resolvePipelineDependencies(
 
 async function createSourceKnowledgeInfra(
   policy: KnowledgePipelinePolicy,
+  persistenceProvider: string,
 ): Promise<import("../../../contexts/source-knowledge/composition/factory").SourceKnowledgeModules> {
   const { InMemoryEventPublisher } = await import(
     "../../../platform/eventing/InMemoryEventPublisher"
   );
 
-  if (policy.provider === "in-memory") {
+  if (persistenceProvider === "in-memory") {
     const { InMemorySourceKnowledgeRepository } = await import(
       "../../../contexts/source-knowledge/source/infrastructure/InMemorySourceKnowledgeRepository"
     );
@@ -114,6 +130,7 @@ async function createSourceKnowledgeInfra(
 
 async function createContextManagementInfra(
   policy: KnowledgePipelinePolicy,
+  persistenceProvider: string,
 ): Promise<import("../../../contexts/context-management/composition/factory").ContextManagementModules> {
   const { InMemoryEventPublisher } = await import(
     "../../../platform/eventing/InMemoryEventPublisher"
@@ -124,12 +141,12 @@ async function createContextManagementInfra(
     "../../../contexts/context-management/lineage/composition/factory"
   );
   const { infra: lineageInfra } = await lineageFactory({
-    provider: policy.provider,
+    provider: persistenceProvider,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
   });
 
-  if (policy.provider === "in-memory") {
+  if (persistenceProvider === "in-memory") {
     const { InMemoryContextRepository } = await import(
       "../../../contexts/context-management/context/infrastructure/InMemoryContextRepository"
     );
@@ -155,15 +172,16 @@ async function createContextManagementInfra(
 
 async function createManifestRepository(
   policy: KnowledgePipelinePolicy,
+  persistenceProvider: string,
 ): Promise<ManifestRepository> {
-  if (policy.provider === "in-memory") {
+  if (persistenceProvider === "in-memory") {
     const { InMemoryManifestRepository } = await import(
       "../infrastructure/InMemoryManifestRepository"
     );
     return new InMemoryManifestRepository();
   }
 
-  if (policy.provider === "browser") {
+  if (persistenceProvider === "browser") {
     const { IndexedDBManifestRepository } = await import(
       "../infrastructure/IndexedDBManifestRepository"
     );

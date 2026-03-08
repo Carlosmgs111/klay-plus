@@ -22,6 +22,7 @@ import type {
   GetManifestInput,
   GetManifestSuccess,
 } from "@klay/core";
+import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
 
 /**
  * BrowserPipelineService — runs the pipeline entirely in the browser.
@@ -32,6 +33,11 @@ import type {
 export class BrowserPipelineService implements PipelineService {
   private _adapterPromise: Promise<KnowledgePipelineUIAdapter> | null = null;
 
+  constructor(
+    private readonly configStore?: ConfigStore,
+    private readonly profile?: InfrastructureProfile,
+  ) {}
+
   private _getAdapter(): Promise<KnowledgePipelineUIAdapter> {
     if (!this._adapterPromise) {
       this._adapterPromise = this._initAdapter();
@@ -40,16 +46,20 @@ export class BrowserPipelineService implements PipelineService {
   }
 
   private async _initAdapter(): Promise<KnowledgePipelineUIAdapter> {
-    const [{ createKnowledgePipeline }, { KnowledgePipelineUIAdapter }] =
-      await Promise.all([
-        import("@klay/core"),
-        import("@klay/core/adapters/ui"),
-      ]);
+    const [
+      { createKnowledgePipeline },
+      { KnowledgePipelineUIAdapter },
+    ] = await Promise.all([
+      import("@klay/core"),
+      import("@klay/core/adapters/ui"),
+    ]);
 
     const pipeline = await createKnowledgePipeline({
       provider: "browser",
       dbName: "klay-dashboard",
       embeddingDimensions: 128,
+      ...(this.profile && { infrastructure: this.profile }),
+      ...(this.configStore && { configStore: this.configStore }),
     });
 
     // Seed default processing profile (ignore if already exists)

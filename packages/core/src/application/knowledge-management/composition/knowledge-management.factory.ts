@@ -1,5 +1,7 @@
 import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPort";
 import type { ResolvedManagementDependencies } from "../application/KnowledgeManagementOrchestrator";
+import type { ConfigStore } from "../../../platform/config/ConfigStore";
+import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
 
 export interface KnowledgeManagementPolicy {
   provider: string;
@@ -9,11 +11,18 @@ export interface KnowledgeManagementPolicy {
   embeddingProvider?: string;
   embeddingModel?: string;
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
+  infrastructure?: Partial<InfrastructureProfile>;
 }
 
 async function resolveManagementDependencies(
   policy: KnowledgeManagementPolicy,
 ): Promise<ResolvedManagementDependencies> {
+  const { resolveInfrastructureProfile } = await import(
+    "../../../platform/config/resolveInfrastructureProfile"
+  );
+  const profile = await resolveInfrastructureProfile(policy);
+
   const [
     { createSourceIngestionService },
     { createSemanticProcessingService },
@@ -24,19 +33,23 @@ async function resolveManagementDependencies(
 
   const [ingestion, processing] = await Promise.all([
     createSourceIngestionService({
-      provider: policy.provider,
+      provider: profile.persistence,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
+      documentStorageProvider: profile.documentStorage,
       configOverrides: policy.configOverrides,
+      configStore: policy.configStore,
     }),
     createSemanticProcessingService({
-      provider: policy.provider,
+      provider: profile.persistence,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
-      embeddingDimensions: policy.embeddingDimensions,
-      embeddingProvider: policy.embeddingProvider,
-      embeddingModel: policy.embeddingModel,
+      embeddingDimensions: profile.embeddingDimensions,
+      embeddingProvider: profile.embedding,
+      embeddingModel: profile.embeddingModel,
+      vectorStoreProvider: profile.vectorStore,
       configOverrides: policy.configOverrides,
+      configStore: policy.configStore,
     }),
   ]);
 

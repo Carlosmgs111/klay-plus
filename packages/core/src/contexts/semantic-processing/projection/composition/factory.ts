@@ -4,6 +4,7 @@ import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository";
 import type { ProcessingProfileMaterializer } from "./ProcessingProfileMaterializer";
 import type { ProjectionUseCases } from "../application";
+import type { ConfigStore } from "../../../../platform/config/ConfigStore";
 
 export interface ProjectionInfrastructurePolicy {
   provider: string;
@@ -13,7 +14,9 @@ export interface ProjectionInfrastructurePolicy {
   webLLMModelId?: string;
   embeddingProvider?: string;
   embeddingModel?: string;
+  vectorStoreProvider?: string;
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
   [key: string]: unknown;
 }
 
@@ -110,9 +113,11 @@ export async function projectionFactory(
     "./ProcessingProfileMaterializer"
   );
 
+  const vectorStoreProvider = policy.vectorStoreProvider ?? policy.provider;
+
   const [repository, vectorWriteStore, eventPublisher] = await Promise.all([
     repositoryRegistry.resolve(policy.provider).create(policy),
-    vectorWriteStoreRegistry.resolve(policy.provider).create(policy),
+    vectorWriteStoreRegistry.resolve(vectorStoreProvider).create(policy),
     eventPublisherRegistry.resolve(policy.provider).create(policy),
   ]);
 

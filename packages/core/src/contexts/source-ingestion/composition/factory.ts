@@ -7,6 +7,7 @@ import type { SourceInfrastructurePolicy } from "../source/composition/factory";
 import type { ExtractionInfrastructurePolicy } from "../extraction/composition/factory";
 import type { ResourceInfrastructurePolicy } from "../resource/composition/factory";
 import { resolveConfigProvider } from "../../../platform/config/resolveConfigProvider";
+import type { ConfigStore } from "../../../platform/config/ConfigStore";
 
 interface SourceOverrides {
   provider?: string;
@@ -32,12 +33,14 @@ export interface SourceIngestionServicePolicy {
   dbPath?: string;
   dbName?: string;
   uploadPath?: string;
+  documentStorageProvider?: string;
   overrides?: {
     source?: SourceOverrides;
     extraction?: ExtractionOverrides;
     resource?: ResourceOverrides;
   };
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
 }
 
 export interface ResolvedSourceIngestionModules {
@@ -76,7 +79,7 @@ export async function resolveSourceIngestionModules(
   };
 
   const resourcePolicy: ResourceInfrastructurePolicy = {
-    provider: policy.overrides?.resource?.provider ?? policy.provider,
+    provider: policy.overrides?.resource?.provider ?? policy.documentStorageProvider ?? policy.provider,
     dbPath: policy.overrides?.resource?.dbPath ??
             policy.dbPath ??
             config.getOrDefault("KLAY_DB_PATH", "./data"),

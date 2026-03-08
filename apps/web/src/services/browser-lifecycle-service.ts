@@ -30,6 +30,7 @@ import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
 } from "@klay/core/management";
+import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
 
 interface LifecycleAdapters {
   lifecycle: KnowledgeLifecycleUIAdapter;
@@ -44,6 +45,11 @@ interface LifecycleAdapters {
  */
 export class BrowserLifecycleService implements LifecycleService {
   private _adaptersPromise: Promise<LifecycleAdapters> | null = null;
+
+  constructor(
+    private readonly configStore?: ConfigStore,
+    private readonly profile?: InfrastructureProfile,
+  ) {}
 
   private _getAdapters(): Promise<LifecycleAdapters> {
     if (!this._adaptersPromise) {
@@ -65,6 +71,8 @@ export class BrowserLifecycleService implements LifecycleService {
       provider: "browser",
       dbName: "klay-dashboard",
       embeddingDimensions: 128,
+      ...(this.profile && { infrastructure: this.profile }),
+      ...(this.configStore && { configStore: this.configStore }),
     });
 
     return {

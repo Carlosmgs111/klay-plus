@@ -84,6 +84,24 @@ export class IndexedDBStore<T> {
     });
   }
 
+  async entries(): Promise<[string, T][]> {
+    const store = await this.tx("readonly");
+    return new Promise<[string, T][]>((resolve, reject) => {
+      const results: [string, T][] = [];
+      const req = store.openCursor();
+      req.onsuccess = () => {
+        const cursor = req.result;
+        if (cursor) {
+          results.push([cursor.key as string, cursor.value as T]);
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
   async clear(): Promise<void> {
     const store = await this.tx("readwrite");
     return new Promise<void>((resolve, reject) => {

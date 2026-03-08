@@ -87,19 +87,10 @@ export class ProcessingProfileMaterializer {
       "../infrastructure/strategies/AISdkEmbeddingStrategy"
     );
 
-    // Resolve config provider for API keys
-    let configProvider;
-    if (this.policy.configOverrides) {
-      const { InMemoryConfigProvider } = await import(
-        "../../../../platform/config/InMemoryConfigProvider"
-      );
-      configProvider = new InMemoryConfigProvider(this.policy.configOverrides);
-    } else {
-      const { NodeConfigProvider } = await import(
-        "../../../../platform/config/NodeConfigProvider"
-      );
-      configProvider = new NodeConfigProvider();
-    }
+    const { resolveConfigProvider } = await import(
+      "../../../../platform/config/resolveConfigProvider"
+    );
+    const configProvider = await resolveConfigProvider(this.policy);
 
     if (embeddingId.startsWith("openai-")) {
       const modelId = embeddingId.replace("openai-", "") || "text-embedding-3-small";

@@ -5,6 +5,7 @@ import type { VectorEntry } from "../../../platform/vector/VectorEntry";
 import type { ProjectionInfrastructurePolicy } from "../projection/composition/factory";
 import type { ProcessingProfileInfrastructurePolicy } from "../processing-profile/composition/factory";
 import { resolveConfigProvider } from "../../../platform/config/resolveConfigProvider";
+import type { ConfigStore } from "../../../platform/config/ConfigStore";
 
 export interface VectorStoreConfig {
   dbPath?: string;
@@ -37,11 +38,13 @@ export interface SemanticProcessingServicePolicy {
   embeddingProvider?: string;
   embeddingModel?: string;
   defaultChunkingStrategy?: string;
+  vectorStoreProvider?: string;
   overrides?: {
     projection?: ProjectionOverrides;
     processingProfile?: ProcessingProfileOverrides;
   };
   configOverrides?: Record<string, string>;
+  configStore?: ConfigStore;
 }
 
 export interface ResolvedSemanticProcessingModules {
@@ -90,7 +93,9 @@ export async function resolveSemanticProcessingModules(
       policy.overrides?.projection?.embeddingModel ??
       policy.embeddingModel,
 
+    vectorStoreProvider: policy.vectorStoreProvider,
     configOverrides: policy.configOverrides,
+    configStore: policy.configStore,
   };
 
   const projectionResult = await import(

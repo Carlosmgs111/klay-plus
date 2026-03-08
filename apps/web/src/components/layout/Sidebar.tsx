@@ -10,6 +10,7 @@ const NAV_ITEMS: {
 }[] = [
   { label: "Contexts", page: "contexts", href: "/contexts", icon: "brain" },
   { label: "Profiles", page: "profiles", href: "/profiles", icon: "sliders" },
+  { label: "Settings", page: "settings", href: "/settings", icon: "settings" },
 ];
 
 interface SidebarProps {
