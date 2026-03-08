@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
+import { OverlayPanel } from "../../shared/OverlayPanel";
 import { CreateProfileForm } from "./CreateProfileForm";
 import { ProfileList } from "./ProfileList";
 import { ProfileEditForm } from "./ProfileEditForm";
@@ -10,12 +11,12 @@ import type { ListProfilesResult } from "@klay/core";
 type ProfileEntry = ListProfilesResult["profiles"][number];
 
 export function ProfilesPage() {
-  const [showForm, setShowForm] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ProfileEntry | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleCreateSuccess = () => {
-    setShowForm(false);
+    setShowCreate(false);
     setRefreshKey((k) => k + 1);
   };
 
@@ -26,7 +27,7 @@ export function ProfilesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Create Profile */}
+      {/* Profile List */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -38,46 +39,12 @@ export function ProfilesPage() {
             </div>
             <Button
               className="text-lg flex items-center gap-2"
-              variant={showForm ? "ghost" : "secondary"}
-              onClick={() => setShowForm(!showForm)}
+              variant="secondary"
+              onClick={() => setShowCreate(true)}
             >
-              <Icon className="text-2xl" name={showForm ? "x" : "plus"} />
-              {showForm ? "Close" : "New Profile"}
+              <Icon className="text-2xl" name="plus" />
+              New Profile
             </Button>
-          </div>
-        </CardHeader>
-        {showForm && (
-          <CardBody>
-            <div className="animate-fade-in">
-              <CreateProfileForm onSuccess={handleCreateSuccess} />
-            </div>
-          </CardBody>
-        )}
-      </Card>
-
-      {/* Edit Profile (shown when editing) */}
-      {editingProfile && (
-        <Card>
-          <CardBody>
-            <div className="animate-fade-in">
-              <ProfileEditForm
-                profile={editingProfile}
-                onSuccess={handleEditSuccess}
-                onCancel={() => setEditingProfile(null)}
-              />
-            </div>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Profile List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Icon name="layers" className="text-tertiary" />
-            <h2 className="text-sm font-semibold text-primary tracking-heading">
-              All Profiles
-            </h2>
           </div>
         </CardHeader>
         <CardBody>
@@ -138,6 +105,27 @@ export function ProfilesPage() {
           </div>
         </CardBody>
       </Card>
+
+      {/* Create Profile Overlay */}
+      <OverlayPanel open={showCreate} setOpen={setShowCreate} icon="plus" title="New Profile">
+        <CreateProfileForm onSuccess={handleCreateSuccess} />
+      </OverlayPanel>
+
+      {/* Edit Profile Overlay */}
+      <OverlayPanel
+        open={editingProfile !== null}
+        setOpen={(v) => { if (!v) setEditingProfile(null); }}
+        icon="edit"
+        title="Edit Profile"
+      >
+        {editingProfile && (
+          <ProfileEditForm
+            profile={editingProfile}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setEditingProfile(null)}
+          />
+        )}
+      </OverlayPanel>
     </div>
   );
 }

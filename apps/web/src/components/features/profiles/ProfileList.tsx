@@ -6,8 +6,11 @@ import { DataTable } from "../../shared/DataTable";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
+import { Input } from "../../shared/Input";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
+import { LoadingButton } from "../../shared/LoadingButton";
 import type {
   ListProfilesResult,
   DeprecateProfileInput,
@@ -60,6 +63,11 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       execute(undefined as any);
     }
     setDeprecatingId(null);
+  };
+
+  const handleCloseDeprecate = () => {
+    setConfirmDeprecateId(null);
+    setDeprecateReason("");
   };
 
   const columns = [
@@ -147,49 +155,6 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       {error && <ErrorDisplay {...error} />}
       {deprecateError && <ErrorDisplay {...deprecateError} />}
 
-      {confirmDeprecateId && (
-        <div className="rounded-lg p-4 bg-surface-1 border border-default">
-          <p className="text-sm font-medium mb-2 text-primary">
-            Deprecate Profile
-          </p>
-          <p className="text-xs mb-3 text-tertiary">
-            This will mark the profile as deprecated. It can no longer be used for new processing.
-          </p>
-          <input
-            className="input mb-3"
-            placeholder="Reason for deprecation..."
-            value={deprecateReason}
-            onChange={(e) => setDeprecateReason(e.target.value)}
-          />
-          <div className="flex items-center gap-2">
-            <Button
-              variant="danger"
-              size="sm"
-              disabled={!deprecateReason.trim() || deprecatingId === confirmDeprecateId}
-              onClick={() => handleDeprecate(confirmDeprecateId)}
-            >
-              {deprecatingId === confirmDeprecateId ? (
-                <span className="flex items-center gap-2">
-                  <Spinner size="sm" /> Deprecating...
-                </span>
-              ) : (
-                "Confirm Deprecate"
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setConfirmDeprecateId(null);
-                setDeprecateReason("");
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-
       <DataTable
         columns={columns}
         rows={data?.profiles ?? []}
@@ -202,6 +167,43 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
           <Spinner size="sm" />
         </div>
       )}
+
+      {/* Deprecate Profile Overlay */}
+      <OverlayPanel
+        open={confirmDeprecateId !== null}
+        setOpen={(v) => { if (!v) handleCloseDeprecate(); }}
+        icon="alert-triangle"
+        iconColor="text-warning"
+        title="Deprecate Profile"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-secondary">
+            This will mark the profile as deprecated. It can no longer be used for new processing.
+          </p>
+          <Input
+            label="Reason for deprecation"
+            placeholder="Why is this profile being deprecated?"
+            value={deprecateReason}
+            onChange={(e) => setDeprecateReason(e.target.value)}
+          />
+          {deprecateError && <ErrorDisplay {...deprecateError} />}
+          <div className="flex items-center gap-2">
+            <LoadingButton
+              variant="danger"
+              size="sm"
+              loading={deprecatingId === confirmDeprecateId}
+              loadingText="Deprecating..."
+              disabled={!deprecateReason.trim()}
+              onClick={() => confirmDeprecateId && handleDeprecate(confirmDeprecateId)}
+            >
+              Confirm Deprecate
+            </LoadingButton>
+            <Button variant="ghost" size="sm" onClick={handleCloseDeprecate}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </OverlayPanel>
     </div>
   );
 }

@@ -5,8 +5,9 @@ import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Button } from "../../shared/Button";
 import { Input } from "../../shared/Input";
 import { Icon } from "../../shared/Icon";
-import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
+import { LoadingButton } from "../../shared/LoadingButton";
 import type { RollbackContextInput } from "@klay/core/lifecycle";
 
 interface RollbackActionProps {
@@ -44,54 +45,50 @@ export function RollbackAction({ contextId, currentVersion, onSuccess }: Rollbac
     return null;
   }
 
-  if (showForm) {
-    return (
-      <div className="space-y-3">
-        <Input
-          label={`Target Version (1 - ${currentVersion - 1})`}
-          type="number"
-          min={1}
-          max={currentVersion - 1}
-          value={targetVersion}
-          onChange={(e) => setTargetVersion(Number(e.target.value))}
-          required
-        />
-        <p className="text-xs text-tertiary">
-          Current version: {currentVersion}. Rollback is non-destructive (pointer move).
-        </p>
-        {error && <ErrorDisplay {...error} />}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="danger"
-            size="sm"
-            disabled={isLoading || targetVersion < 1 || targetVersion >= currentVersion}
-            onClick={handleRollback}
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-1">
-                <Spinner size="sm" /> Rolling back...
-              </span>
-            ) : (
-              "Rollback"
-            )}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      onClick={() => setShowForm(true)}
-    >
-      <span className="flex items-center gap-1">
-        <Icon name="undo" /> Rollback
-      </span>
-    </Button>
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => setShowForm(true)}
+      >
+        <span className="flex items-center gap-1">
+          <Icon name="undo" /> Rollback
+        </span>
+      </Button>
+
+      <OverlayPanel open={showForm} setOpen={setShowForm} icon="undo" title="Rollback Context">
+        <div className="space-y-4">
+          <Input
+            label={`Target Version (1 - ${currentVersion - 1})`}
+            type="number"
+            min={1}
+            max={currentVersion - 1}
+            value={targetVersion}
+            onChange={(e) => setTargetVersion(Number(e.target.value))}
+            required
+          />
+          <p className="text-xs text-tertiary">
+            Current version: {currentVersion}. Rollback is non-destructive (pointer move).
+          </p>
+          {error && <ErrorDisplay {...error} />}
+          <div className="flex items-center gap-2">
+            <LoadingButton
+              variant="danger"
+              size="sm"
+              loading={isLoading}
+              loadingText="Rolling back..."
+              disabled={targetVersion < 1 || targetVersion >= currentVersion}
+              onClick={handleRollback}
+            >
+              Rollback
+            </LoadingButton>
+            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </OverlayPanel>
+    </>
   );
 }

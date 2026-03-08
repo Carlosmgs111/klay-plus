@@ -57,7 +57,7 @@ export class BrowserPipelineService implements PipelineService {
       id: "default",
       name: "Default",
       chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash",
+      embeddingStrategyId: "hash-embedding",
     });
 
     return new KnowledgePipelineUIAdapter(pipeline);

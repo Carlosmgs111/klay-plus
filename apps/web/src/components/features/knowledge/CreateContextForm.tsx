@@ -3,11 +3,17 @@ import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Icon } from "../../shared/Icon";
-import { Spinner } from "../../shared/Spinner";
+import { Input } from "../../shared/Input";
+import { Textarea } from "../../shared/Textarea";
+import { Select } from "../../shared/Select";
+import { LoadingButton } from "../../shared/LoadingButton";
+import { FileDropZone } from "../../shared/FileDropZone";
+import { detectFileType, fileToBase64 } from "../../../utils/fileDetection";
 import type {
   CreateContextInput,
   CreateContextResult,
 } from "@klay/core/lifecycle";
+import type { IngestAndAddSourceInput } from "@klay/core/management";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,12 +41,23 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
   const [profileId, setProfileId] = useState("default");
   const [profiles, setProfiles] = useState<Array<{ id: string; name: string }>>([]);
 
+  // File upload state
+  const [file, setFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState("");
+
   const createAction = useCallback(
     (input: CreateContextInput) => lifecycleService!.createContext(input),
     [lifecycleService],
   );
 
-  const { error, isLoading, execute } = useServiceAction(createAction);
+  const ingestAction = useCallback(
+    (input: IngestAndAddSourceInput) => lifecycleService!.ingestAndAddSource(input),
+    [lifecycleService],
+  );
+
+  const { error: createError, execute: executeCreate } = useServiceAction(createAction);
+  const { error: ingestError, execute: executeIngest } = useServiceAction(ingestAction);
 
   // Load available processing profiles
   useEffect(() => {
@@ -53,10 +70,16 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
     });
   }, [service]);
 
+  // ─── Submit ─────────────────────────────────────────────────────────
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!lifecycleService) return;
 
+    setSubmitting(true);
+
+    // Step 1: Create context
+    setSubmitPhase("Creating context...");
     const now = new Date();
     const datePart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -73,85 +96,111 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
       createdBy: "dashboard-user",
     };
 
-    const result = await execute(input);
-    if (result) {
-      addToast(`Context "${contextName}" created`, "success");
-      onSuccess?.(result.contextId);
+    const contextResult = await executeCreate(input);
+    if (!contextResult) {
+      setSubmitting(false);
+      setSubmitPhase("");
+      return;
     }
+
+    // Step 2: Ingest source (if file selected)
+    if (file) {
+      setSubmitPhase("Ingesting source...");
+
+      const base64Content = await fileToBase64(file);
+      const detected = detectFileType(file.name);
+
+      const ingestInput: IngestAndAddSourceInput = {
+        contextId,
+        sourceId: crypto.randomUUID(),
+        sourceName: file.name,
+        uri: file.name,
+        sourceType: detected?.type ?? "PLAIN_TEXT",
+        extractionJobId: crypto.randomUUID(),
+        projectionId: crypto.randomUUID(),
+        projectionType: "EMBEDDING",
+        processingProfileId: profileId,
+        content: base64Content as unknown as ArrayBuffer,
+      };
+
+      const ingestResult = await executeIngest(ingestInput);
+      if (ingestResult) {
+        addToast(
+          `Context "${contextName}" created with source — ${ingestResult.chunksCount} chunks`,
+          "success",
+        );
+      } else {
+        // Context created but ingestion failed — still navigate to context
+        addToast(`Context "${contextName}" created (source ingestion failed)`, "warning");
+      }
+    } else {
+      addToast(`Context "${contextName}" created`, "success");
+    }
+
+    setSubmitting(false);
+    setSubmitPhase("");
+    onSuccess?.(contextResult.contextId);
   };
+
+  const error = createError || ingestError;
+
+  const profileOptions = profiles.length === 0
+    ? [{ value: "default", label: "default" }]
+    : profiles.map((p) => ({ value: p.id, label: p.name }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Name */}
-      <div>
-        <label htmlFor="ctx-name" className="text-xs font-medium text-secondary">
-          Name
-        </label>
-        <input
-          id="ctx-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Auto-generated if empty"
-          className="input mt-1"
-        />
-      </div>
+      <Input
+        label="Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Auto-generated if empty"
+        disabled={submitting}
+      />
 
       {/* Description */}
-      <div>
-        <label htmlFor="ctx-description" className="text-xs font-medium text-secondary">
-          Description
-        </label>
-        <textarea
-          id="ctx-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional"
-          rows={3}
-          className="input mt-1 resize-none"
+      <Textarea
+        label="Description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Optional"
+        rows={2}
+        disabled={submitting}
+      />
+
+      {/* Language + Profile row */}
+      <div className="grid grid-cols-2 gap-4">
+        <Select
+          label="Language"
+          options={LANGUAGE_OPTIONS}
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          disabled={submitting}
+        />
+        <Select
+          label="Processing Profile"
+          options={profileOptions}
+          value={profileId}
+          onChange={(e) => setProfileId(e.target.value)}
+          disabled={submitting}
         />
       </div>
 
-      {/* Language */}
+      {/* Initial Source (optional DnD) */}
       <div>
-        <label htmlFor="ctx-language" className="text-xs font-medium text-secondary">
-          Language
+        <label className="text-xs font-medium text-secondary">
+          Initial Source <span className="text-tertiary">(optional)</span>
         </label>
-        <select
-          id="ctx-language"
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          className="input mt-1"
-        >
-          {LANGUAGE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Processing Profile */}
-      <div>
-        <label htmlFor="ctx-profile" className="text-xs font-medium text-secondary">
-          Processing Profile
-        </label>
-        <select
-          id="ctx-profile"
-          value={profileId}
-          onChange={(e) => setProfileId(e.target.value)}
-          className="input mt-1"
-        >
-          {profiles.length === 0 ? (
-            <option value="default">default</option>
-          ) : (
-            profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))
-          )}
-        </select>
+        <div className="mt-1">
+          <FileDropZone
+            file={file}
+            onSelect={setFile}
+            onRemove={() => setFile(null)}
+            disabled={submitting}
+            height={180}
+          />
+        </div>
       </div>
 
       {/* Error Display */}
@@ -165,20 +214,15 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
       )}
 
       {/* Submit */}
-      <button
+      <LoadingButton
         type="submit"
-        disabled={isLoading || !lifecycleService}
-        className="btn-primary w-full"
+        loading={submitting}
+        loadingText={submitPhase}
+        disabled={!lifecycleService}
+        className="w-full"
       >
-        {isLoading ? (
-          <span className="flex items-center justify-center gap-2">
-            <Spinner size="sm" />
-            Creating...
-          </span>
-        ) : (
-          "Create Context"
-        )}
-      </button>
+        {file ? "Create Context & Add Source" : "Create Context"}
+      </LoadingButton>
     </form>
   );
 }

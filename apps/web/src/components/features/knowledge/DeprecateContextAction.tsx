@@ -2,20 +2,26 @@ import { useState, useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { useServiceAction } from "../../../hooks/usePipelineAction";
+import { useToggleAction } from "../../../hooks/useToggleAction";
+import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
-import { Spinner } from "../../shared/Spinner";
+import { Input } from "../../shared/Input";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
+import { LoadingButton } from "../../shared/LoadingButton";
 import type { DeprecateContextInput } from "@klay/core/lifecycle";
 
 interface DeprecateContextActionProps {
   contextId: string;
   onSuccess?: () => void;
+  open?: boolean;
+  setOpen?: (v: boolean) => void;
 }
 
-export function DeprecateContextAction({ contextId, onSuccess }: DeprecateContextActionProps) {
+export function DeprecateContextAction({ contextId, onSuccess, open, setOpen }: DeprecateContextActionProps) {
   const { lifecycleService } = useRuntimeMode();
   const { addToast } = useToast();
-  const [showConfirm, setShowConfirm] = useState(false);
+  const { open: isOpen, setOpen: setIsOpen } = useToggleAction(open, setOpen);
   const [reason, setReason] = useState("");
 
   const deprecateAction = useCallback(
@@ -32,62 +38,55 @@ export function DeprecateContextAction({ contextId, onSuccess }: DeprecateContex
     });
     if (result) {
       addToast(`Context deprecated`, "success");
-      setShowConfirm(false);
+      setIsOpen(false);
       setReason("");
       onSuccess?.();
     }
   };
 
-  if (showConfirm) {
-    return (
-      <div className="flex flex-col gap-2">
-        {error && <ErrorDisplay {...error} />}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason (optional)"
-            className="input text-xs py-1 px-2"
-          />
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={handleDeprecate}
-            className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors bg-warning text-white hover:opacity-90 whitespace-nowrap"
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-1">
-                <Spinner size="sm" /> Deprecating...
-              </span>
-            ) : (
-              "Confirm"
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowConfirm(false);
-              setReason("");
-            }}
-            className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors text-tertiary hover:bg-black/5 dark:hover:bg-white/5"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleClose = () => {
+    setIsOpen(false);
+    setReason("");
+  };
 
   return (
-    <button
-      type="button"
-      onClick={() => setShowConfirm(true)}
-      title="Deprecate context"
-      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors text-warning hover:bg-warning/10"
-    >
-      <Icon name="alert-triangle" className="text-sm" />
-      Deprecate
-    </button>
+    <>
+      {!setOpen && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          title="Deprecate context"
+          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors text-warning hover:bg-warning/10"
+        >
+          <Icon name="alert-triangle" className="text-sm" />
+          Deprecate
+        </button>
+      )}
+
+      <OverlayPanel open={isOpen} setOpen={handleClose} icon="alert-triangle" iconColor="text-warning" title="Deprecate Context">
+        <div className="space-y-4">
+          <Input
+            label="Reason (optional)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Why is this context being deprecated?"
+          />
+          {error && <ErrorDisplay {...error} />}
+          <div className="flex items-center gap-2">
+            <LoadingButton
+              size="sm"
+              loading={isLoading}
+              loadingText="Deprecating..."
+              onClick={handleDeprecate}
+            >
+              Confirm
+            </LoadingButton>
+            <Button variant="ghost" size="sm" onClick={handleClose}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </OverlayPanel>
+    </>
   );
 }

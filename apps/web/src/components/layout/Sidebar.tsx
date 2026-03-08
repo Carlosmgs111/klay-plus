@@ -2,13 +2,14 @@ import { Icon } from "../shared/Icon";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { IconName } from "../shared/Icon";
 
-const NAV_ITEMS: { label: string; page: string; href: string; icon: IconName }[] = [
-  { label: "Dashboard", page: "dashboard", href: "/dashboard", icon: "grid" },
-  { label: "Documents", page: "documents", href: "/documents", icon: "file-text" },
+const NAV_ITEMS: {
+  label: string;
+  page: string;
+  href: string;
+  icon: IconName;
+}[] = [
   { label: "Contexts", page: "contexts", href: "/contexts", icon: "brain" },
-  { label: "Search", page: "search", href: "/search", icon: "search" },
   { label: "Profiles", page: "profiles", href: "/profiles", icon: "sliders" },
-  { label: "Settings", page: "settings", href: "/settings", icon: "settings" },
 ];
 
 interface SidebarProps {
@@ -47,9 +48,7 @@ export function Sidebar({ activePage }: SidebarProps) {
 
       {/* Footer */}
       <div className="px-4 py-3 flex items-center justify-between border-t border-subtle">
-        <span className="text-xs text-tertiary">
-          klay+ v0.1
-        </span>
+        <span className="text-xs text-tertiary">klay+ v0.1</span>
         <button
           onClick={toggleTheme}
           className="p-1.5 rounded-lg text-tertiary hover:text-primary hover:bg-surface-3 transition-all duration-fast ease-out-expo"

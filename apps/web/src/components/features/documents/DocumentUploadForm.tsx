@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { usePipelineAction } from "../../../hooks/usePipelineAction";
@@ -7,41 +7,13 @@ import { Input } from "../../shared/Input";
 import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { Spinner } from "../../shared/Spinner";
+import { StatsGrid } from "../../shared/StatsGrid";
+import { FileDropZone } from "../../shared/FileDropZone";
+import { detectFileType, fileToBase64 } from "../../../utils/fileDetection";
 import type {
   ExecutePipelineInput,
   ExecutePipelineSuccess,
 } from "@klay/core";
-
-// ─── File Type Detection ──────────────────────────────────────────────────────
-
-const SUPPORTED_EXTENSIONS: Record<string, { type: string; label: string }> = {
-  pdf: { type: "PDF", label: "PDF Document" },
-  md: { type: "MARKDOWN", label: "Markdown" },
-  txt: { type: "PLAIN_TEXT", label: "Plain Text" },
-  csv: { type: "CSV", label: "CSV Spreadsheet" },
-  json: { type: "JSON", label: "JSON Data" },
-};
-
-const ACCEPT_STRING = Object.keys(SUPPORTED_EXTENSIONS)
-  .map((e) => `.${e}`)
-  .join(",");
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-
-function getFileExtension(name: string): string {
-  return name.split(".").pop()?.toLowerCase() ?? "";
-}
-
-function detectFileType(name: string) {
-  const ext = getFileExtension(name);
-  return SUPPORTED_EXTENSIONS[ext] ?? null;
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,17 +31,10 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [file, setFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
-  const [isDraggingOnPage, setIsDraggingOnPage] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [language, setLanguage] = useState("en");
   const [createdBy, setCreatedBy] = useState("dashboard-user");
   const [result, setResult] = useState<ExecutePipelineSuccess | null>(null);
-
-  const dragCounterRef = useRef(0);
-  const pageDragCounterRef = useRef(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const executePipeline = useCallback(
     (input: ExecutePipelineInput) => service!.execute(input),
@@ -78,103 +43,16 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
   const { error, execute } = usePipelineAction(executePipeline);
 
-  // ─── Page-level drag detection ────────────────────────────────────────
+  // ─── File Selection ─────────────────────────────────────────────────
 
-  useEffect(() => {
-    const onEnter = (e: DragEvent) => {
-      e.preventDefault();
-      pageDragCounterRef.current++;
-      if (pageDragCounterRef.current === 1) setIsDraggingOnPage(true);
-    };
-    const onLeave = () => {
-      pageDragCounterRef.current--;
-      if (pageDragCounterRef.current === 0) setIsDraggingOnPage(false);
-    };
-    const onDrop = (e: DragEvent) => {
-      e.preventDefault();
-      pageDragCounterRef.current = 0;
-      setIsDraggingOnPage(false);
-    };
-    const onOver = (e: DragEvent) => e.preventDefault();
-
-    document.addEventListener("dragenter", onEnter);
-    document.addEventListener("dragleave", onLeave);
-    document.addEventListener("drop", onDrop);
-    document.addEventListener("dragover", onOver);
-    return () => {
-      document.removeEventListener("dragenter", onEnter);
-      document.removeEventListener("dragleave", onLeave);
-      document.removeEventListener("drop", onDrop);
-      document.removeEventListener("dragover", onOver);
-    };
-  }, []);
-
-  // ─── File Validation ──────────────────────────────────────────────────
-
-  const validateFile = (f: File): string | null => {
-    if (f.size === 0) return "File is empty";
-    if (f.size > MAX_FILE_SIZE)
-      return `File exceeds ${formatFileSize(MAX_FILE_SIZE)} limit`;
-    if (!detectFileType(f.name)) {
-      const ext = getFileExtension(f.name);
-      return `Unsupported file type${ext ? `: .${ext}` : ""}. Use PDF, Markdown, TXT, CSV, or JSON.`;
-    }
-    return null;
-  };
-
-  const selectFile = (f: File) => {
-    setFileError(null);
-    const validationError = validateFile(f);
-    if (validationError) {
-      setFileError(validationError);
-      return;
-    }
+  const handleFileSelect = (f: File) => {
     setFile(f);
     setPhase("file-selected");
   };
 
-  const removeFile = () => {
+  const handleFileRemove = () => {
     setFile(null);
-    setFileError(null);
     setPhase("idle");
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  // ─── Drag & Drop ─────────────────────────────────────────────────────
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounterRef.current++;
-    if (dragCounterRef.current === 1) setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounterRef.current--;
-    if (dragCounterRef.current === 0) setIsDragOver(false);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounterRef.current = 0;
-    setIsDragOver(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) selectFile(dropped);
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) selectFile(selected);
-    // Reset input so same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // ─── Submit ───────────────────────────────────────────────────────────
@@ -184,13 +62,7 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
     setPhase("processing");
 
-    const buffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    const base64Content = btoa(binary);
+    const base64Content = await fileToBase64(file);
     const detected = detectFileType(file.name);
 
     const input: ExecutePipelineInput = {
@@ -222,11 +94,9 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
   const handleUploadAnother = () => {
     setFile(null);
-    setFileError(null);
     setResult(null);
     setPhase("idle");
     setShowAdvanced(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleTryAgain = () => {
@@ -266,33 +136,14 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 p-4 rounded-lg mb-6 bg-surface-1">
-
-          <div className="text-center">
-            <p className="text-lg font-semibold text-accent">
-              {result.chunksCount}
-            </p>
-            <p className="text-xs text-tertiary">
-              Chunks
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-semibold text-accent">
-              {result.dimensions}
-            </p>
-            <p className="text-xs text-tertiary">
-              Dimensions
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-semibold truncate text-accent">
-              {result.model}
-            </p>
-            <p className="text-xs text-tertiary">
-              Model
-            </p>
-          </div>
-        </div>
+        <StatsGrid
+          stats={[
+            { label: "Chunks", value: result.chunksCount },
+            { label: "Dimensions", value: result.dimensions },
+            { label: "Model", value: result.model, truncate: true },
+          ]}
+          className="mb-6"
+        />
 
         <Button
           variant="secondary"
@@ -307,132 +158,15 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
 
   // ─── Render: Main (idle / file-selected / error) ──────────────────────
 
-  const detected = file ? detectFileType(file.name) : null;
-  const hasFile = file && detected && (phase === "file-selected" || phase === "error");
-  const isDragging = isDraggingOnPage || isDragOver;
-
-  // Drop zone content: drag feedback takes priority over static content
-  const renderDropZoneContent = () => {
-    // ── State 1: hovering directly over the zone ──
-    if (isDragOver) {
-      return (
-        <div className="flex flex-col items-center gap-3" key="drop">
-          <Icon name="arrow-down" className="text-5xl text-accent animate-bounce-drop" />
-          <p className="text-base font-bold text-accent animate-scale-spring">
-            Drop here
-          </p>
-        </div>
-      );
-    }
-
-    // ── State 2: dragging on page, not yet over the zone ──
-    if (isDraggingOnPage) {
-      return (
-        <div className="flex flex-col items-center gap-3" key="drag">
-          <Icon name="cloud-fill" className="text-5xl text-accent animate-float" />
-          <p className="text-base font-bold text-accent animate-fade-in">
-            Drag here
-          </p>
-        </div>
-      );
-    }
-
-    // ── State 3: file already selected ──
-    if (hasFile) {
-      return (
-        <div className="flex flex-col items-center gap-3 animate-scale-spring" key="file">
-          <Icon name="file-text" className="text-4xl text-accent" />
-          <div className="text-center">
-            <p className="text-sm font-medium truncate max-w-[280px] text-primary">
-              {file.name}
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              <span className="badge-info text-xs">{detected.label}</span>
-              <span className="text-xs text-tertiary">
-                {formatFileSize(file.size)}
-              </span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              removeFile();
-            }}
-            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors text-tertiary hover:bg-black/5 dark:hover:bg-white/5"
-          >
-            <Icon name="x" className="text-xs" />
-            Remove
-          </button>
-          <p className="text-xs text-tertiary">
-            Drop another file to replace
-          </p>
-        </div>
-      );
-    }
-
-    // ── State 4: idle — default upload prompt ──
-    return (
-      <div className="flex flex-col items-center" key="idle">
-        <Icon name="cloud" className="text-4xl text-tertiary mb-3" />
-        <p className="text-sm font-medium text-primary">
-          Drag & drop your file here
-        </p>
-        <p className="text-xs mt-1 text-tertiary">
-          or{" "}
-          <span className="font-medium text-accent">browse files</span>
-        </p>
-        <p className="text-xs mt-3 text-tertiary">
-          PDF, Markdown, TXT, CSV, JSON — max 50MB
-        </p>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-4">
       {/* Drop Zone */}
-      <div
-        role="button"
-        tabIndex={0}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ")
-            fileInputRef.current?.click();
-        }}
-        className={`relative rounded-xl border-2 h-[200px] flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ease-out-expo ${
-          isDragOver
-            ? "border-solid border-accent bg-accent-muted animate-pulse-ring shadow-[0_0_0_4px_var(--accent-primary-glow),0_0_30px_var(--accent-primary-glow)]"
-            : isDragging
-              ? "border-dashed border-accent bg-accent-muted"
-              : hasFile
-                ? "border-solid border-accent bg-accent-muted"
-                : "border-dashed border-subtle bg-transparent"
-        }`}
-      >
-        {renderDropZoneContent()}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPT_STRING}
-          onChange={handleFileInput}
-          className="hidden"
-          aria-label="Upload file"
-        />
-      </div>
-
-      {/* Validation Error */}
-      {fileError && (
-        <div className="flex items-center gap-2 p-3 rounded-lg text-sm bg-danger-muted text-danger">
-
-          <Icon name="alert-circle" className="text-base flex-shrink-0" />
-          {fileError}
-        </div>
-      )}
+      <FileDropZone
+        file={file}
+        onSelect={handleFileSelect}
+        onRemove={handleFileRemove}
+        height={200}
+      />
 
       {/* Pipeline Error */}
       {phase === "error" && error && (

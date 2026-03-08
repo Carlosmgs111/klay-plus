@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { ProviderStack } from "./ProviderStack";
-// import { Sidebar } from "./Sidebar"; // Stand-by: sidebar disabled for simplified layout
+import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { ToastContainer } from "../shared/Toast";
 import { SkeletonPage } from "../shared/Skeleton";
@@ -40,7 +40,7 @@ const PAGE_TITLES: Record<string, string> = {
   search: "Semantic Search",
   profiles: "Processing Profiles",
   settings: "Settings",
-  units: "Contexts",
+  contexts: "Contexts",
 };
 
 const PAGE_COMPONENTS: Record<string, React.ComponentType> = {
@@ -49,7 +49,7 @@ const PAGE_COMPONENTS: Record<string, React.ComponentType> = {
   search: SearchPage,
   profiles: ProfilesPage,
   settings: SettingsPage,
-  units: UnitsIndexPage,
+  contexts: UnitsIndexPage,
 };
 
 interface DashboardShellProps {
@@ -63,9 +63,9 @@ export function DashboardShell({ activePage }: DashboardShellProps) {
   return (
     <ProviderStack>
       <div className="h-screen flex flex-row w-full">
-        {/* <Sidebar activePage={activePage} /> */}
+        <Sidebar activePage={activePage} />
         <div className="min-h-screen overflow-y-auto w-full">
-          <Header title={title} showLogo />
+          <Header title={title} />
           <main className="p-8 max-w-6xl mx-auto">
             {PageComponent ? (
               <Suspense fallback={<SkeletonPage />}>

@@ -3,6 +3,9 @@ import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { MetricCard } from "../../shared/MetricCard";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { PipelineSteps } from "../../shared/PipelineSteps";
+import { EmptyState } from "../../shared/EmptyState";
+import { PageErrorDisplay } from "../../shared/PageErrorDisplay";
 // STANDBY: Overlay and AddSourceUploadForm removed — add-source moved to Sources page
 // import { Overlay } from "../../shared/Overlay";
 // import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
@@ -56,30 +59,7 @@ export default function ContextDashboardPage() {
   }
 
   if (error) {
-    return (
-      <div
-        className="rounded-lg p-4 bg-danger-muted border border-danger"
-      >
-        <div className="flex items-start gap-3">
-          <Icon
-            name="alert-circle"
-            className="text-danger mt-0.5 flex-shrink-0"
-          />
-          <div>
-            <p
-              className="text-sm font-medium text-danger"
-            >
-              {error}
-            </p>
-            <p
-              className="text-xs mt-1 font-mono text-tertiary"
-            >
-              UNIT_FETCH_ERROR
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageErrorDisplay message={error} code="UNIT_FETCH_ERROR" />;
   }
 
   return (
@@ -143,23 +123,12 @@ export default function ContextDashboardPage() {
         </CardHeader>
         <CardBody>
           {sources.length === 0 ? (
-            <div className="text-center py-6">
-              <Icon
-                name="database"
-                className="mx-auto mb-2 text-2xl text-ghost"
-              />
-              <p
-                className="text-sm text-tertiary"
-              >
-                No sources added yet.
-              </p>
-              <a
-                href={`/contexts/${contextId}/sources`}
-                className="text-xs mt-1 inline-block text-accent hover:underline"
-              >
-                Go to Sources to add one
-              </a>
-            </div>
+            <EmptyState
+              icon="database"
+              title="No sources added yet."
+              link={{ label: "Go to Sources to add one", href: `/contexts/${contextId}/sources` }}
+              compact
+            />
           ) : (
             <div className="space-y-2">
               {sources.map((manifest) => (
@@ -201,11 +170,7 @@ export default function ContextDashboardPage() {
         </CardHeader>
         <CardBody>
           {recentActivity.length === 0 ? (
-            <p
-              className="text-sm text-center py-4 text-tertiary"
-            >
-              No activity recorded yet.
-            </p>
+            <EmptyState icon="clock" title="No activity recorded yet." compact />
           ) : (
             <div className="space-y-1">
               {recentActivity.map((manifest) => (
@@ -225,32 +190,11 @@ export default function ContextDashboardPage() {
                       <StatusBadge status={manifest.status} />
                     </div>
                     {manifest.completedSteps.length > 0 && (
-                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                        {manifest.completedSteps.map((step, idx) => (
-                          <span key={step} className="flex items-center gap-1">
-                            {idx > 0 && (
-                              <Icon
-                                name="chevron-right"
-                                className="text-ghost"
-                              />
-                            )}
-                            <span className="badge-complete text-xs">
-                              {step}
-                            </span>
-                          </span>
-                        ))}
-                        {manifest.failedStep && (
-                          <>
-                            <Icon
-                              name="chevron-right"
-                              className="text-ghost"
-                            />
-                            <span className="badge-failed text-xs">
-                              {manifest.failedStep}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      <PipelineSteps
+                        completedSteps={manifest.completedSteps}
+                        failedStep={manifest.failedStep}
+                        className="mt-1"
+                      />
                     )}
                     <p
                       className="text-xs mt-1 text-ghost"

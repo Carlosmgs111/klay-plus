@@ -2,23 +2,12 @@ import { useState, useCallback } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { usePipelineAction } from "../../../hooks/usePipelineAction";
-import { Button } from "../../shared/Button";
 import { Input } from "../../shared/Input";
 import { Select } from "../../shared/Select";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
-import { Spinner } from "../../shared/Spinner";
+import { LoadingButton } from "../../shared/LoadingButton";
+import { CHUNKING_STRATEGIES, EMBEDDING_STRATEGIES } from "../../../constants/processingStrategies";
 import type { CreateProcessingProfileInput } from "@klay/core";
-
-const CHUNKING_STRATEGIES = [
-  { value: "recursive", label: "Recursive" },
-  { value: "sentence", label: "Sentence" },
-  { value: "fixed-size", label: "Fixed Size" },
-];
-
-const EMBEDDING_STRATEGIES = [
-  { value: "hash", label: "Hash (no API)" },
-  { value: "openai", label: "OpenAI" },
-];
 
 interface CreateProfileFormProps {
   onSuccess?: () => void;
@@ -29,7 +18,7 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
   const { addToast } = useToast();
   const [name, setName] = useState("");
   const [chunkingStrategyId, setChunkingStrategyId] = useState("recursive");
-  const [embeddingStrategyId, setEmbeddingStrategyId] = useState("hash");
+  const [embeddingStrategyId, setEmbeddingStrategyId] = useState("hash-embedding");
 
   const createProfile = useCallback(
     (input: CreateProcessingProfileInput) => service!.createProcessingProfile(input),
@@ -82,15 +71,9 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
 
       {error && <ErrorDisplay {...error} />}
 
-      <Button type="submit" disabled={isLoading || !service}>
-        {isLoading ? (
-          <span className="flex items-center gap-2">
-            <Spinner size="sm" /> Creating...
-          </span>
-        ) : (
-          "Create Profile"
-        )}
-      </Button>
+      <LoadingButton type="submit" loading={isLoading} loadingText="Creating..." disabled={!service}>
+        Create Profile
+      </LoadingButton>
     </form>
   );
 }

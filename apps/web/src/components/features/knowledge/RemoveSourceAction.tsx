@@ -4,8 +4,9 @@ import { useToast } from "../../../contexts/ToastContext";
 import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
-import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
+import { LoadingButton } from "../../shared/LoadingButton";
 import type { RemoveSourceInput } from "@klay/core/lifecycle";
 
 interface RemoveSourceActionProps {
@@ -35,39 +36,39 @@ export function RemoveSourceAction({ contextId, sourceId, onSuccess }: RemoveSou
     }
   };
 
-  if (showConfirm) {
-    return (
-      <div className="flex items-center gap-2">
-        {error && <ErrorDisplay {...error} />}
-        <Button
-          variant="danger"
-          size="sm"
-          disabled={isLoading}
-          onClick={handleRemove}
-        >
-          {isLoading ? (
-            <span className="flex items-center gap-1">
-              <Spinner size="sm" /> Removing...
-            </span>
-          ) : (
-            "Confirm Remove"
-          )}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => setShowConfirm(false)}>
-          Cancel
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => setShowConfirm(true)}
-      title="Remove source"
-    >
-      <Icon name="trash" />
-    </Button>
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowConfirm(true)}
+        title="Remove source"
+      >
+        <Icon name="trash" />
+      </Button>
+
+      <OverlayPanel open={showConfirm} setOpen={setShowConfirm} icon="trash" iconColor="text-danger" title="Remove Source">
+        <div className="space-y-4">
+          <p className="text-sm text-secondary">
+            This will remove the source from the context and create a new version. This action cannot be easily undone.
+          </p>
+          {error && <ErrorDisplay {...error} />}
+          <div className="flex items-center gap-2">
+            <LoadingButton
+              variant="danger"
+              size="sm"
+              loading={isLoading}
+              loadingText="Removing..."
+              onClick={handleRemove}
+            >
+              Confirm Remove
+            </LoadingButton>
+            <Button variant="ghost" size="sm" onClick={() => setShowConfirm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </OverlayPanel>
+    </>
   );
 }

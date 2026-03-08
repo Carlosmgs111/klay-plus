@@ -2,9 +2,12 @@ import { useState, useMemo } from "react";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { StatusBadge } from "../../shared/StatusBadge";
+import { PipelineSteps } from "../../shared/PipelineSteps";
+import { EmptyState } from "../../shared/EmptyState";
+import { PageErrorDisplay } from "../../shared/PageErrorDisplay";
 import { Button } from "../../shared/Button";
 import { SkeletonLine } from "../../shared/Skeleton";
-import { Overlay } from "../../shared/Overlay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
 import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
 import { RemoveSourceAction } from "../knowledge/RemoveSourceAction";
 import { GenerateProjectionAction } from "../knowledge/GenerateProjectionAction";
@@ -134,24 +137,7 @@ export default function UnitSourcesPage() {
   }
 
   if (error) {
-    return (
-      <div className="rounded-lg p-4 bg-danger-muted border border-danger">
-        <div className="flex items-start gap-3">
-          <Icon
-            name="alert-circle"
-            className="text-danger mt-0.5 flex-shrink-0"
-          />
-          <div>
-            <p className="text-sm font-medium text-danger">
-              {error}
-            </p>
-            <p className="text-xs mt-1 font-mono text-tertiary">
-              SOURCES_FETCH_ERROR
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <PageErrorDisplay message={error} code="SOURCES_FETCH_ERROR" />;
   }
 
   return (
@@ -181,22 +167,14 @@ export default function UnitSourcesPage() {
 
       {/* Sources List */}
       {sources.length === 0 ? (
-        <Card>
-          <CardBody>
-            <div className="text-center py-8">
-              <Icon
-                name="database"
-                className="mx-auto mb-3 text-3xl text-ghost"
-              />
-              <p className="text-sm text-tertiary">
-                No sources associated with this unit.
-              </p>
-              <p className="text-xs mt-1 text-ghost">
-                Add a source to start building semantic knowledge.
-              </p>
-            </div>
-          </CardBody>
-        </Card>
+        <Card><CardBody>
+          <EmptyState
+            icon="database"
+            title="No sources associated with this unit."
+            description="Add a source to start building semantic knowledge."
+            compact
+          />
+        </CardBody></Card>
       ) : (
         <div className="space-y-3">
           {sources.map((manifest) => {
@@ -273,35 +251,7 @@ export default function UnitSourcesPage() {
                       {/* Pipeline Steps */}
                       {manifest.completedSteps.length > 0 && (
                         <div className="pt-2 mt-2 border-t border-subtle">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {manifest.completedSteps.map((step, idx) => (
-                              <div
-                                key={step}
-                                className="flex items-center gap-1"
-                              >
-                                {idx > 0 && (
-                                  <Icon
-                                    name="chevron-right"
-                                    className="text-ghost"
-                                  />
-                                )}
-                                <span className="badge-complete text-xs">
-                                  {step}
-                                </span>
-                              </div>
-                            ))}
-                            {manifest.failedStep && (
-                              <>
-                                <Icon
-                                  name="chevron-right"
-                                  className="text-ghost"
-                                />
-                                <span className="badge-failed text-xs">
-                                  {manifest.failedStep}
-                                </span>
-                              </>
-                            )}
-                          </div>
+                          <PipelineSteps completedSteps={manifest.completedSteps} failedStep={manifest.failedStep} />
                         </div>
                       )}
 
@@ -358,22 +308,7 @@ export default function UnitSourcesPage() {
                             {manifest.completedSteps.length > 0 && (
                               <div className="pt-2">
                                 <span className="text-tertiary text-xs">Pipeline: </span>
-                                <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                                  {manifest.completedSteps.map((step, idx) => (
-                                    <span key={step} className="flex items-center gap-1">
-                                      {idx > 0 && (
-                                        <Icon name="chevron-right" className="text-ghost" />
-                                      )}
-                                      <span className="badge-complete text-xs">{step}</span>
-                                    </span>
-                                  ))}
-                                  {manifest.failedStep && (
-                                    <>
-                                      <Icon name="chevron-right" className="text-ghost" />
-                                      <span className="badge-failed text-xs">{manifest.failedStep}</span>
-                                    </>
-                                  )}
-                                </div>
+                                <PipelineSteps completedSteps={manifest.completedSteps} failedStep={manifest.failedStep} className="mt-1" />
                               </div>
                             )}
                           </div>
@@ -490,23 +425,14 @@ export default function UnitSourcesPage() {
 
               {/* Version Timeline */}
               {versions.length === 0 ? (
-                <Card>
-                  <CardBody>
-                    <div className="text-center py-8">
-                      <Icon
-                        name="clock"
-                        className="mx-auto mb-3 text-3xl text-ghost"
-                      />
-                      <p className="text-sm text-tertiary">
-                        No version history available.
-                      </p>
-                      <p className="text-xs mt-1 text-ghost">
-                        Versions are created when sources are added, removed, or
-                        reprocessed.
-                      </p>
-                    </div>
-                  </CardBody>
-                </Card>
+                <Card><CardBody>
+                  <EmptyState
+                    icon="clock"
+                    title="No version history available."
+                    description="Versions are created when sources are added, removed, or reprocessed."
+                    compact
+                  />
+                </CardBody></Card>
               ) : (
                 <div className="relative">
                   {/* Timeline line */}
@@ -621,33 +547,14 @@ export default function UnitSourcesPage() {
       </div>
 
       {/* Add Source Overlay */}
-      <Overlay open={showAddSource} setOpen={setShowAddSource}>
-        <div className="h-full w-[420px] max-w-[90vw] flex flex-col bg-surface-2">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-subtle">
-            <div className="flex items-center gap-2">
-              <Icon name="folder-plus" className="text-accent" />
-              <h2 className="text-sm font-semibold text-primary tracking-heading">
-                Add Source
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAddSource(false)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            >
-              <Icon name="x" className="text-tertiary" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            <AddSourceUploadForm
-              contextId={contextId}
-              onSuccess={() => {
-                refresh();
-              }}
-            />
-          </div>
-        </div>
-      </Overlay>
+      <OverlayPanel open={showAddSource} setOpen={setShowAddSource} icon="folder-plus" title="Add Source">
+        <AddSourceUploadForm
+          contextId={contextId}
+          onSuccess={() => {
+            refresh();
+          }}
+        />
+      </OverlayPanel>
     </div>
   );
 }

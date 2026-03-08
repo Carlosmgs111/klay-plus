@@ -6,6 +6,10 @@ import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
+import { Input } from "../../shared/Input";
+import { Select } from "../../shared/Select";
+import { LoadingButton } from "../../shared/LoadingButton";
 import type {
   LinkContextsInput,
   UnlinkContextsInput,
@@ -117,6 +121,12 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
     }
   };
 
+  const handleCloseLinkForm = () => {
+    setShowLinkForm(false);
+    setTargetContextId("");
+    setRelationshipType("related");
+  };
+
   // ─── Unlink Action ──────────────────────────────────────────────────
 
   const unlinkAction = useCallback(
@@ -159,7 +169,7 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
           </div>
           <button
             type="button"
-            onClick={() => setShowLinkForm(!showLinkForm)}
+            onClick={() => setShowLinkForm(true)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors text-accent hover:bg-accent-muted"
           >
             <Icon name="plus" className="text-sm" />
@@ -169,78 +179,44 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
       </CardHeader>
 
       <CardBody>
-        {/* Link Form */}
-        {showLinkForm && (
-          <form onSubmit={handleLink} className="mb-4 space-y-3">
-            <div>
-              <label
-                htmlFor="target-context-id"
-                className="label"
-              >
-                Target Context ID
-              </label>
-              <input
-                id="target-context-id"
-                type="text"
-                value={targetContextId}
-                onChange={(e) => setTargetContextId(e.target.value)}
-                placeholder="Enter context ID..."
-                className="input"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="relationship-type"
-                className="label"
-              >
-                Relationship Type
-              </label>
-              <select
-                id="relationship-type"
-                value={relationshipType}
-                onChange={(e) => setRelationshipType(e.target.value)}
-                className="input"
-              >
-                {RELATIONSHIP_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Link Form Overlay */}
+        <OverlayPanel open={showLinkForm} setOpen={handleCloseLinkForm} icon="link" title="Link Context">
+          <form onSubmit={handleLink} className="space-y-4">
+            <Input
+              label="Target Context ID"
+              value={targetContextId}
+              onChange={(e) => setTargetContextId(e.target.value)}
+              placeholder="Enter context ID..."
+              required
+            />
+            <Select
+              label="Relationship Type"
+              options={RELATIONSHIP_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+              value={relationshipType}
+              onChange={(e) => setRelationshipType(e.target.value)}
+            />
 
             {linkError && <ErrorDisplay {...linkError} />}
 
             <div className="flex items-center gap-2">
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={linkLoading || !targetContextId.trim()}
-                className="btn-primary"
+                loading={linkLoading}
+                loadingText="Linking..."
+                disabled={!targetContextId.trim()}
               >
-                {linkLoading ? (
-                  <span className="flex items-center gap-1">
-                    <Spinner size="sm" /> Linking...
-                  </span>
-                ) : (
-                  "Link"
-                )}
-              </button>
+                Link
+              </LoadingButton>
               <button
                 type="button"
-                onClick={() => {
-                  setShowLinkForm(false);
-                  setTargetContextId("");
-                  setRelationshipType("related");
-                }}
+                onClick={handleCloseLinkForm}
                 className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors text-tertiary hover:bg-black/5 dark:hover:bg-white/5"
               >
                 Cancel
               </button>
             </div>
           </form>
-        )}
+        </OverlayPanel>
 
         {/* Loading State */}
         {lineageLoading && (

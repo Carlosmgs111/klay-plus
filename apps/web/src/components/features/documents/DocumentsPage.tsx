@@ -6,7 +6,7 @@ import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { SkeletonLine } from "../../shared/Skeleton";
-import { Overlay } from "../../shared/Overlay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
 import { DocumentUploadForm } from "./DocumentUploadForm";
 import { DocumentList } from "./DocumentList";
 import type { GetManifestInput } from "@klay/core";
@@ -70,39 +70,13 @@ export function DocumentsPage() {
       </Card>
 
       {/* Upload Overlay */}
-      <Overlay open={showOverlay} setOpen={setShowOverlay}>
-        <div
-          className="h-full w-[420px] max-w-[90vw] flex flex-col bg-surface-0 border-l"
-        >
-          {/* Overlay Header */}
-          <div
-            className="flex items-center justify-between px-6 py-4 border-b border-subtle"
-          >
-            <div className="flex items-center gap-2">
-              <Icon name="upload" className="text-accent" />
-              <h2 className="text-sm font-semibold text-primary tracking-heading">
-                Ingest Document
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowOverlay(false)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            >
-              <Icon name="x" className="text-tertiary" />
-            </button>
-          </div>
-
-          {/* Overlay Body */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <DocumentUploadForm
-              onSuccess={() => {
-                execute({});
-              }}
-            />
-          </div>
-        </div>
-      </Overlay>
+      <OverlayPanel open={showOverlay} setOpen={setShowOverlay} icon="upload" title="Ingest Document">
+        <DocumentUploadForm
+          onSuccess={() => {
+            execute({});
+          }}
+        />
+      </OverlayPanel>
 
       {error && <ErrorDisplay {...error} />}
 

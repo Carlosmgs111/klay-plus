@@ -15,6 +15,8 @@ interface ContextActionsMenuProps {
 
 export function ContextActionsMenu({ contextId }: ContextActionsMenuProps) {
   const [open, setOpen] = useState(false);
+  const [showArchiveOverlay, setShowArchiveOverlay] = useState(false);
+  const [showDeprecateOverlay, setShowDeprecateOverlay] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { manifests, refresh } = useKnowledgeContext();
   const overallStatus = getOverallStatus(manifests);
@@ -48,12 +50,30 @@ export function ContextActionsMenu({ contextId }: ContextActionsMenuProps) {
             <StatusBadge status={overallStatus} />
           </div>
           <div className="space-y-0.5">
-            <ArchiveContextAction contextId={contextId} onSuccess={refresh} />
-            <DeprecateContextAction contextId={contextId} onSuccess={refresh} />
+            <button
+              type="button"
+              onClick={() => { setShowArchiveOverlay(true); setOpen(false); }}
+              className="flex items-center gap-1 w-full px-2 py-1 rounded-md text-xs font-medium transition-colors text-tertiary hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <Icon name="archive" className="text-sm" />
+              Archive
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowDeprecateOverlay(true); setOpen(false); }}
+              className="flex items-center gap-1 w-full px-2 py-1 rounded-md text-xs font-medium transition-colors text-warning hover:bg-warning/10"
+            >
+              <Icon name="alert-triangle" className="text-sm" />
+              Deprecate
+            </button>
             <ActivateContextAction contextId={contextId} onSuccess={refresh} />
           </div>
         </div>
       )}
+
+      {/* Always mounted — portal-based overlays */}
+      <ArchiveContextAction contextId={contextId} onSuccess={refresh} open={showArchiveOverlay} setOpen={setShowArchiveOverlay} />
+      <DeprecateContextAction contextId={contextId} onSuccess={refresh} open={showDeprecateOverlay} setOpen={setShowDeprecateOverlay} />
     </div>
   );
 }

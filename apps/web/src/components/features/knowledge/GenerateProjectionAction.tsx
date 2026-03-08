@@ -4,8 +4,10 @@ import { useToast } from "../../../contexts/ToastContext";
 import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
-import { Spinner } from "../../shared/Spinner";
+import { Select } from "../../shared/Select";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
+import { LoadingButton } from "../../shared/LoadingButton";
 import type { GenerateProjectionInput } from "@klay/core/lifecycle";
 
 interface GenerateProjectionActionProps {
@@ -51,55 +53,44 @@ export function GenerateProjectionAction({ sourceId, onSuccess }: GenerateProjec
     }
   };
 
-  if (showForm) {
-    return (
-      <div className="space-y-2 pt-2 mt-2 border-t border-subtle">
-        <div className="flex items-center gap-2">
-          <select
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setShowForm(true)}
+        className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-surface-3"
+        title="Generate projection"
+      >
+        <Icon name="layers" className="text-tertiary" />
+      </button>
+
+      <OverlayPanel open={showForm} setOpen={setShowForm} icon="layers" title="Generate Projection">
+        <div className="space-y-4">
+          <Select
+            label="Processing Profile"
+            options={profiles.length === 0
+              ? [{ value: "default", label: "default" }]
+              : profiles.map((p) => ({ value: p.id, label: p.name }))}
             value={profileId}
             onChange={(e) => setProfileId(e.target.value)}
-            className="flex-1 text-xs px-2 py-1.5 rounded-md border border-default bg-surface-0 text-primary"
-          >
-            {profiles.length === 0 && (
-              <option value="default">default</option>
-            )}
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={isLoading}
-            onClick={handleGenerate}
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-1">
-                <Spinner size="sm" /> Generating...
-              </span>
-            ) : (
-              "Generate"
-            )}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
-            Cancel
-          </Button>
+          />
+          {error && <ErrorDisplay {...error} />}
+          <div className="flex items-center gap-2">
+            <LoadingButton
+              variant="primary"
+              size="sm"
+              loading={isLoading}
+              loadingText="Generating..."
+              onClick={handleGenerate}
+            >
+              Generate
+            </LoadingButton>
+            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
+          </div>
         </div>
-        {error && <ErrorDisplay {...error} />}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => setShowForm(true)}
-      className="flex items-center justify-center w-7 h-7 rounded-md transition-colors hover:bg-surface-3"
-      title="Generate projection"
-    >
-      <Icon name="layers" className="text-tertiary" />
-    </button>
+      </OverlayPanel>
+    </>
   );
 }

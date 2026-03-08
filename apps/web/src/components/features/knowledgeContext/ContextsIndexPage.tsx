@@ -13,7 +13,7 @@ import {
 import type { GetManifestInput, ContentManifestEntry } from "@klay/core";
 import ContextCard from "./ContextCard";
 import { CreateContextForm } from "../knowledge/CreateContextForm";
-import { Overlay } from "../../shared/Overlay";
+import { OverlayPanel } from "../../shared/OverlayPanel";
 
 export default function UnitsIndexPage() {
   const { service, isInitializing } = useRuntimeMode();
@@ -197,33 +197,14 @@ export default function UnitsIndexPage() {
       </Card>
 
       {/* Create Context Overlay */}
-      <Overlay open={showCreate} setOpen={setShowCreate}>
-        <div className="h-full w-[420px] max-w-[90vw] flex flex-col bg-surface-2">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-subtle">
-            <div className="flex items-center gap-2">
-              <Icon name="folder-plus" className="text-accent" />
-              <h2 className="text-sm font-semibold text-primary tracking-heading">
-                New Context
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowCreate(false)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            >
-              <Icon name="x" className="text-tertiary" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            <CreateContextForm
-              onSuccess={() => {
-                setShowCreate(false);
-                execute({});
-              }}
-            />
-          </div>
-        </div>
-      </Overlay>
+      <OverlayPanel open={showCreate} setOpen={setShowCreate} icon="folder-plus" title="New Context">
+        <CreateContextForm
+          onSuccess={() => {
+            setShowCreate(false);
+            execute({});
+          }}
+        />
+      </OverlayPanel>
     </div>
   );
 }
