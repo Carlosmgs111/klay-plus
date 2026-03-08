@@ -21,6 +21,8 @@ export type {
   ActivateContextResult,
   GetContextLineageInput,
   GetContextLineageResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "./contracts/dtos";
 
 export { KnowledgeLifecycleError } from "./domain/KnowledgeLifecycleError";

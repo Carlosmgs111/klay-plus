@@ -23,6 +23,8 @@ import type {
   ActivateContextResult,
   GetContextLineageInput,
   GetContextLineageResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -148,5 +150,12 @@ export class BrowserLifecycleService implements LifecycleService {
   ): Promise<ServiceResult<GetContextLineageResult>> {
     const { lifecycle } = await this._getAdapters();
     return lifecycle.getContextLineage(input) as Promise<ServiceResult<GetContextLineageResult>>;
+  }
+
+  async generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<ServiceResult<GenerateProjectionResult>> {
+    const { lifecycle } = await this._getAdapters();
+    return lifecycle.generateProjection(input) as Promise<ServiceResult<GenerateProjectionResult>>;
   }
 }

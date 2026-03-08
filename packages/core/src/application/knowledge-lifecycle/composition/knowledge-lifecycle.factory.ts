@@ -14,9 +14,13 @@ async function resolveLifecycleDependencies(
   const [
     { createContextManagementContext },
     { createSemanticProcessingService },
+    { createSourceIngestionService },
+    { createSourceKnowledgeContext },
   ] = await Promise.all([
     import("../../../contexts/context-management/composition/factory"),
     import("../../../contexts/semantic-processing/service"),
+    import("../../../contexts/source-ingestion/service"),
+    import("../../../contexts/source-knowledge/composition/factory"),
   ]);
 
   // ── Context-management infra ──────────────────────────────────────
@@ -50,7 +54,23 @@ async function resolveLifecycleDependencies(
     configOverrides: policy.configOverrides,
   });
 
-  return { contextManagement, processing };
+  const ingestion = await createSourceIngestionService({
+    provider: policy.provider,
+    dbPath: policy.dbPath,
+    dbName: policy.dbName,
+    configOverrides: policy.configOverrides,
+  });
+
+  // ── Source-knowledge context ──────────────────────────────────────
+  const { InMemorySourceKnowledgeRepository } = await import(
+    "../../../contexts/source-knowledge/source/infrastructure/InMemorySourceKnowledgeRepository"
+  );
+  const { service: sourceKnowledge } = createSourceKnowledgeContext({
+    sourceKnowledgeRepository: new InMemorySourceKnowledgeRepository(),
+    sourceKnowledgeEventPublisher: new InMemoryEventPublisher(),
+  });
+
+  return { contextManagement, processing, ingestion, sourceKnowledge };
 }
 
 export async function createKnowledgeLifecycle(

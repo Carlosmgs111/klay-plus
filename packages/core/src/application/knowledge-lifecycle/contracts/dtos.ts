@@ -106,3 +106,16 @@ export interface GetContextLineageResult {
     createdAt: string;
   }>;
 }
+
+export interface GenerateProjectionInput {
+  sourceId: string;
+  processingProfileId: string;
+  projectionId?: string;
+}
+
+export interface GenerateProjectionResult {
+  projectionId: string;
+  chunksCount: number;
+  dimensions: number;
+  model: string;
+}

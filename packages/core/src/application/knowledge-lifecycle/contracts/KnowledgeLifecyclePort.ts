@@ -21,6 +21,8 @@ import type {
   ActivateContextResult,
   GetContextLineageInput,
   GetContextLineageResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "./dtos";
 
 export interface KnowledgeLifecyclePort {
@@ -63,4 +65,8 @@ export interface KnowledgeLifecyclePort {
   getContextLineage(
     input: GetContextLineageInput,
   ): Promise<Result<KnowledgeLifecycleError, GetContextLineageResult>>;
+
+  generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<Result<KnowledgeLifecycleError, GenerateProjectionResult>>;
 }

@@ -7,6 +7,7 @@ import { SkeletonLine } from "../../shared/Skeleton";
 import { Overlay } from "../../shared/Overlay";
 import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
 import { RemoveSourceAction } from "../knowledge/RemoveSourceAction";
+import { GenerateProjectionAction } from "../knowledge/GenerateProjectionAction";
 import { ReprocessAction } from "../knowledge/ReprocessAction";
 import { RollbackAction } from "../knowledge/RollbackAction";
 import {
@@ -380,8 +381,12 @@ export default function UnitSourcesPage() {
                       </div>
                     </div>
 
-                    {/* Actions: Expand Toggle + Remove */}
+                    {/* Actions: Generate Projection + Expand Toggle + Remove */}
                     <div className="ml-3 flex-shrink-0 flex items-center gap-1">
+                      <GenerateProjectionAction
+                        sourceId={manifest.sourceId}
+                        onSuccess={handleActionSuccess}
+                      />
                       <button
                         type="button"
                         onClick={() => toggleExpand(manifest.sourceId)}

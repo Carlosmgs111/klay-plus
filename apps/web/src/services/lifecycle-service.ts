@@ -20,6 +20,8 @@ import type {
   ActivateContextResult,
   GetContextLineageInput,
   GetContextLineageResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -77,4 +79,8 @@ export interface LifecycleService {
   getContextLineage(
     input: GetContextLineageInput,
   ): Promise<ServiceResult<GetContextLineageResult>>;
+
+  generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<ServiceResult<GenerateProjectionResult>>;
 }

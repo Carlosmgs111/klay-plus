@@ -20,6 +20,8 @@ import type {
   ActivateContextResult,
   GetContextLineageInput,
   GetContextLineageResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { UIResult } from "./KnowledgePipelineUIAdapter";
 
@@ -73,6 +75,11 @@ export class KnowledgeLifecycleUIAdapter {
 
   async getContextLineage(input: GetContextLineageInput): Promise<UIResult<GetContextLineageResult>> {
     const result = await this._lifecycle.getContextLineage(input);
+    return this._unwrap(result);
+  }
+
+  async generateProjection(input: GenerateProjectionInput): Promise<UIResult<GenerateProjectionResult>> {
+    const result = await this._lifecycle.generateProjection(input);
     return this._unwrap(result);
   }
 

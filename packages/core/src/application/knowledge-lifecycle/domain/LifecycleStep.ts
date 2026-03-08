@@ -8,6 +8,7 @@ export const LifecycleStep = {
   ArchiveContext: "archive-context",
   DeprecateContext: "deprecate-context",
   ActivateContext: "activate-context",
+  GenerateProjection: "generate-projection",
 } as const;
 
 export type LifecycleStep =

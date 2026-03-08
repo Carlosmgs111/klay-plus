@@ -16,6 +16,7 @@ export {
   ExtractionCannotCompleteError,
   ExtractionCannotFailError,
   ExtractionFailedError,
+  ExtractionNotAvailableError,
   UnsupportedMimeTypeError,
   ContentHashingError,
   type ExtractionError,

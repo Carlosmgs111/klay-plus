@@ -21,6 +21,8 @@ import type {
   ActivateContextResult,
   GetContextLineageInput,
   GetContextLineageResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -95,6 +97,12 @@ export class ServerLifecycleService implements LifecycleService {
     input: GetContextLineageInput,
   ): Promise<ServiceResult<GetContextLineageResult>> {
     return this._post("/api/lifecycle/get-lineage", input);
+  }
+
+  async generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<ServiceResult<GenerateProjectionResult>> {
+    return this._post("/api/lifecycle/generate-projection", input);
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────

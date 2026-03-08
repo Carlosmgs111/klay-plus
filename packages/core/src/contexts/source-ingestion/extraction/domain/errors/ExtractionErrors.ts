@@ -65,6 +65,12 @@ export class UnsupportedMimeTypeError extends OperationError {
   }
 }
 
+export class ExtractionNotAvailableError extends OperationError {
+  constructor(sourceId: string) {
+    super("Get extracted text", `No completed extraction found for source ${sourceId}`, { sourceId });
+  }
+}
+
 export class ContentHashingError extends OperationError {
   constructor(reason: string) {
     super("Content hashing", reason);
@@ -79,5 +85,6 @@ export type ExtractionError =
   | ExtractionCannotCompleteError
   | ExtractionCannotFailError
   | ExtractionFailedError
+  | ExtractionNotAvailableError
   | UnsupportedMimeTypeError
   | ContentHashingError;
