@@ -1,6 +1,7 @@
 import type { ExtractionJobRepository } from "../domain/ExtractionJobRepository";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
 import type { ExtractionJob } from "../domain/ExtractionJob";
+import { ExtractionStatus } from "../domain/ExtractionStatus";
 
 export { ExecuteExtraction } from "./ExecuteExtraction";
 export type {
@@ -45,7 +46,7 @@ export class ExtractionUseCases {
     sourceId: string,
   ): Promise<ExtractionJob | null> {
     const jobs = await this._repository.findBySourceId(sourceId);
-    const completed = jobs.filter((job) => job.extractedText !== null);
+    const completed = jobs.filter((job) => job.status === ExtractionStatus.Completed && job.extractedText !== null);
 
     if (completed.length === 0) return null;
 

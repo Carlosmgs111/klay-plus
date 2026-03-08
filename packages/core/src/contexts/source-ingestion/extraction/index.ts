@@ -18,6 +18,7 @@ export {
   ExtractionCannotCompleteError,
   ExtractionCannotFailError,
   ExtractionFailedError,
+  ExtractionNotAvailableError,
   UnsupportedMimeTypeError,
   ContentHashingError,
 } from "./domain";

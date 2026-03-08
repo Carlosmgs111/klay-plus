@@ -1,4 +1,5 @@
 import type { ExtractionUseCases } from "../extraction/application";
+import { ExtractionNotAvailableError } from "../extraction/domain/errors";
 import type { SourceRepository } from "../source/domain/SourceRepository";
 import type { ResourceRepository } from "../resource/domain/ResourceRepository";
 import type { ResourceStorage } from "../resource/domain/ResourceStorage";
@@ -371,9 +372,7 @@ export class SourceIngestionService {
 
     if (!job || !job.extractedText) {
       return Result.fail(
-        new SourceNotFoundError(
-          `No extracted text found for source ${sourceId}`,
-        ),
+        new ExtractionNotAvailableError(sourceId),
       );
     }
 

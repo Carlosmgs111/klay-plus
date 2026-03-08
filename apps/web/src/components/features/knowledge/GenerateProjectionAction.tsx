@@ -24,7 +24,9 @@ export function GenerateProjectionAction({ sourceId, onSuccess }: GenerateProjec
     if (!showForm || !service) return;
     service.listProfiles().then((result) => {
       if (result.success && result.data) {
-        setProfiles(result.data.profiles ?? []);
+        const loaded = result.data.profiles ?? [];
+        setProfiles(loaded);
+        if (loaded.length > 0) setProfileId(loaded[0].id);
       }
     });
   }, [showForm, service]);

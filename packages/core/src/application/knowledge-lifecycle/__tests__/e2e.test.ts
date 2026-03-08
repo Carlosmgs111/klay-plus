@@ -310,6 +310,53 @@ describe("Knowledge Lifecycle Orchestrator -- E2E", () => {
     });
   });
 
+  describe("generateProjection", () => {
+    it("should generate a projection for an already-ingested source", async () => {
+      // Use the source from removeSource test (src-lc-rm-002 in ctx-lc-rm-001, still present after rm of src-lc-rm-001)
+      const result = await lifecycle.generateProjection({
+        sourceId: "src-lc-rm-002",
+        processingProfileId: profileId,
+        projectionId: "proj-gen-001",
+      });
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.projectionId).toBe("proj-gen-001");
+        expect(typeof result.value.chunksCount).toBe("number");
+        expect(result.value.chunksCount).toBeGreaterThan(0);
+        expect(typeof result.value.dimensions).toBe("number");
+        expect(typeof result.value.model).toBe("string");
+      }
+    });
+
+    it("should fail when source does not exist", async () => {
+      const result = await lifecycle.generateProjection({
+        sourceId: "non-existent-source",
+        processingProfileId: profileId,
+      });
+
+      expect(result.isFail()).toBe(true);
+      if (result.isFail()) {
+        expect(result.error).toBeInstanceOf(KnowledgeLifecycleError);
+        expect(result.error.step).toBe(LifecycleStep.GenerateProjection);
+        expect(result.error.code).toBe("LIFECYCLE_GENERATE_PROJECTION_FAILED");
+      }
+    });
+
+    it("should fail with invalid processing profile", async () => {
+      const result = await lifecycle.generateProjection({
+        sourceId: "src-lc-rm-002",
+        processingProfileId: "non-existent-profile",
+      });
+
+      expect(result.isFail()).toBe(true);
+      if (result.isFail()) {
+        expect(result.error).toBeInstanceOf(KnowledgeLifecycleError);
+        expect(result.error.step).toBe(LifecycleStep.GenerateProjection);
+      }
+    });
+  });
+
   describe("KnowledgeLifecycleError", () => {
     it("should extract info, handle unknown errors, and serialize to JSON", () => {
       const fromKnown = KnowledgeLifecycleError.fromStep(
