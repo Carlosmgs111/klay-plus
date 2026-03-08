@@ -21,6 +21,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -139,5 +141,12 @@ export class BrowserLifecycleService implements LifecycleService {
   ): Promise<ServiceResult<ActivateContextResult>> {
     const { lifecycle } = await this._getAdapters();
     return lifecycle.activateContext(input) as Promise<ServiceResult<ActivateContextResult>>;
+  }
+
+  async generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<ServiceResult<GenerateProjectionResult>> {
+    const { lifecycle } = await this._getAdapters();
+    return lifecycle.generateProjection(input) as Promise<ServiceResult<GenerateProjectionResult>>;
   }
 }

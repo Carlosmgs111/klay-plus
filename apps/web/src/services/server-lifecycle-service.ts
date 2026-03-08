@@ -19,6 +19,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -87,6 +89,12 @@ export class ServerLifecycleService implements LifecycleService {
     input: ActivateContextInput,
   ): Promise<ServiceResult<ActivateContextResult>> {
     return this._post("/api/lifecycle/activate-context", input);
+  }
+
+  async generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<ServiceResult<GenerateProjectionResult>> {
+    return this._post("/api/lifecycle/generate-projection", input);
   }
 
   // ─── Private ────────────────────────────────────────────────────────────────

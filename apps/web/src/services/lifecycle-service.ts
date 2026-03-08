@@ -18,6 +18,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "@klay/core/lifecycle";
 import type {
   IngestAndAddSourceInput,
@@ -71,4 +73,8 @@ export interface LifecycleService {
   activateContext(
     input: ActivateContextInput,
   ): Promise<ServiceResult<ActivateContextResult>>;
+
+  generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<ServiceResult<GenerateProjectionResult>>;
 }
