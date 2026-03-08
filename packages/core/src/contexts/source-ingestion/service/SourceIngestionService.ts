@@ -355,6 +355,31 @@ export class SourceIngestionService {
     return Result.ok(resource);
   }
 
+  async getExtractedText(
+    sourceId: string,
+  ): Promise<Result<DomainError, { text: string }>> {
+    const source = await this._sourceRepository.findById(
+      SourceId.create(sourceId),
+    );
+
+    if (!source) {
+      return Result.fail(new SourceNotFoundError(sourceId));
+    }
+
+    const job =
+      await this._extraction.getLatestCompletedBySourceId(sourceId);
+
+    if (!job || !job.extractedText) {
+      return Result.fail(
+        new SourceNotFoundError(
+          `No extracted text found for source ${sourceId}`,
+        ),
+      );
+    }
+
+    return Result.ok({ text: job.extractedText });
+  }
+
   // ── Composite workflows ────────────────────────────────────────────
 
   async ingestFile(params: {
