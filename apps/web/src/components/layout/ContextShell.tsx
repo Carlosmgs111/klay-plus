@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { ToastContainer } from "../shared/Toast";
 import { SkeletonPage } from "../shared/Skeleton";
 import { KnowledgeContextProvider } from "../../contexts/KnowledgeContextContext";
+import { ContextActionsMenu } from "../features/knowledge/ContextActionsMenu";
 
 const ContextDashboardPage = lazy(
   () => import("../features/knowledgeContext/ContextDashboardPage")
@@ -12,9 +13,10 @@ const ContextDashboardPage = lazy(
 const ContextSourcesPage = lazy(
   () => import("../features/knowledgeContext/ContextSourcesPage")
 );
-const ContextVersionsPage = lazy(
-  () => import("../features/knowledgeContext/ContextVersionsPage")
-);
+// STANDBY: Versions page absorbed into Sources — kept for potential future restoration
+// const ContextVersionsPage = lazy(
+//   () => import("../features/knowledgeContext/ContextVersionsPage")
+// );
 const ContextProjectionsPage = lazy(
   () => import("../features/knowledgeContext/ContextProjectionsPage")
 );
@@ -25,7 +27,8 @@ const ContextSearchPage = lazy(
 const PAGE_COMPONENTS: Record<string, React.ComponentType> = {
   dashboard: ContextDashboardPage,
   sources: ContextSourcesPage,
-  versions: ContextVersionsPage,
+  // STANDBY: versions route now redirects to sources
+  // versions: ContextVersionsPage,
   projections: ContextProjectionsPage,
   search: ContextSearchPage,
 };
@@ -53,6 +56,7 @@ export function ContextShell({ contextId, activePage }: ContextShellProps) {
                 { label: "Contexts", href: "/contexts" },
                 { label: truncatedId },
               ]}
+              actions={<ContextActionsMenu contextId={contextId} />}
             />
             <main className="p-8 max-w-6xl mx-auto">
               {PageComponent ? (

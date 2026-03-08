@@ -3,9 +3,10 @@ import { useTheme } from "../../contexts/ThemeContext";
 import type { IconName } from "../shared/Icon";
 
 const UNIT_NAV_ITEMS: { label: string; page: string; icon: IconName }[] = [
-  { label: "Dashboard", page: "dashboard", icon: "layout-dashboard" },
+  { label: "Overview", page: "dashboard", icon: "layout-dashboard" },
   { label: "Sources", page: "sources", icon: "database" },
-  { label: "Versions", page: "versions", icon: "clock" },
+  // STANDBY: Versions absorbed into Sources page — kept for potential future restoration
+  // { label: "Versions", page: "versions", icon: "clock" },
   { label: "Projections", page: "projections", icon: "layers" },
   { label: "Search", page: "search", icon: "search" },
 ];

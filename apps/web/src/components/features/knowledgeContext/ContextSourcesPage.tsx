@@ -8,14 +8,108 @@ import { Overlay } from "../../shared/Overlay";
 import { AddSourceUploadForm } from "../knowledge/AddSourceUploadForm";
 import { RemoveSourceAction } from "../knowledge/RemoveSourceAction";
 import { ReprocessAction } from "../knowledge/ReprocessAction";
-import { useKnowledgeContext, getUnitSources } from "../../../contexts/KnowledgeContextContext";
+import { RollbackAction } from "../knowledge/RollbackAction";
+import {
+  useKnowledgeContext,
+  getUnitSources,
+  getCurrentVersion,
+} from "../../../contexts/KnowledgeContextContext";
+
+// --- Version history types (absorbed from ContextVersionsPage) ---
+
+interface VersionGroup {
+  versionNumber: number;
+  date: string;
+  sources: Array<{
+    sourceId: string;
+    contentHash?: string;
+    projectionId: string;
+    status: string;
+    chunksCount?: number;
+    model?: string;
+  }>;
+  status: string;
+}
+
+type DiffTag = "added" | "unchanged";
+
+interface SourceWithDiff {
+  sourceId: string;
+  contentHash?: string;
+  projectionId: string;
+  status: string;
+  chunksCount?: number;
+  model?: string;
+  diff: DiffTag;
+}
+
+// --- Component ---
 
 export default function UnitSourcesPage() {
   const { contextId, manifests, loading, error, refresh } = useKnowledgeContext();
   const [showAddSource, setShowAddSource] = useState(false);
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   const sources = useMemo(() => getUnitSources(manifests), [manifests]);
+  const currentVersion = useMemo(() => getCurrentVersion(manifests), [manifests]);
+
+  // --- Version history computation ---
+
+  const versions = useMemo<VersionGroup[]>(() => {
+    if (manifests.length === 0) return [];
+
+    const sorted = [...manifests].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    const versionMap = new Map<number, VersionGroup>();
+    sorted.forEach((m, idx) => {
+      const versionNumber = idx + 1;
+      versionMap.set(versionNumber, {
+        versionNumber,
+        date: m.createdAt,
+        sources: [
+          {
+            sourceId: m.sourceId,
+            contentHash: m.contentHash,
+            projectionId: m.projectionId,
+            status: m.status,
+            chunksCount: m.chunksCount,
+            model: m.model,
+          },
+        ],
+        status: m.status,
+      });
+    });
+
+    return Array.from(versionMap.values()).reverse();
+  }, [manifests]);
+
+  const versionDiffs = useMemo<Map<number, SourceWithDiff[]>>(() => {
+    const diffMap = new Map<number, SourceWithDiff[]>();
+    const chronological = [...versions].reverse();
+    const cumulativeSources = new Set<string>();
+
+    for (const version of chronological) {
+      const currentSourceIds = new Set(version.sources.map((s) => s.sourceId));
+      const sourcesWithDiff: SourceWithDiff[] = version.sources.map((s) => ({
+        ...s,
+        diff: cumulativeSources.has(s.sourceId) ? "unchanged" : "added",
+      }));
+
+      for (const sid of currentSourceIds) {
+        cumulativeSources.add(sid);
+      }
+
+      diffMap.set(version.versionNumber, sourcesWithDiff);
+    }
+
+    return diffMap;
+  }, [versions]);
+
+  const estimatedCurrentVersion = manifests.length;
 
   const handleActionSuccess = () => {
     refresh();
@@ -312,6 +406,214 @@ export default function UnitSourcesPage() {
           })}
         </div>
       )}
+
+      {/* Version History — collapsible section */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowVersionHistory((prev) => !prev)}
+          className="flex items-center gap-2 w-full text-left py-2 group"
+        >
+          <Icon
+            name={showVersionHistory ? "chevron-down" : "chevron-right"}
+            className="text-tertiary transition-transform"
+          />
+          <Icon name="clock" className="text-tertiary" />
+          <h3 className="text-sm font-semibold text-primary tracking-heading">
+            Version History ({versions.length})
+          </h3>
+        </button>
+
+        <div
+          className="grid transition-[grid-template-rows,opacity] duration-fast ease-out-expo"
+          style={{
+            gridTemplateRows: showVersionHistory ? "1fr" : "0fr",
+            opacity: showVersionHistory ? 1 : 0,
+          }}
+        >
+          <div className="overflow-hidden">
+            <div className="pt-4 space-y-4">
+              {/* Rollback Action */}
+              <div className="flex justify-end">
+                <RollbackAction
+                  contextId={contextId}
+                  currentVersion={estimatedCurrentVersion}
+                  onSuccess={handleActionSuccess}
+                />
+              </div>
+
+              {/* Current Version Info */}
+              {currentVersion && (
+                <div className="p-4 rounded-lg bg-surface-0 border border-subtle">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-tertiary tracking-caps">
+                        CURRENT VERSION
+                      </p>
+                      <p className="font-mono mt-1 text-lg text-primary">
+                        {estimatedCurrentVersion}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-tertiary tracking-caps">
+                        TOTAL SOURCES
+                      </p>
+                      <p className="font-mono mt-1 text-lg text-primary">
+                        {sources.length}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-tertiary tracking-caps">
+                        LAST UPDATED
+                      </p>
+                      <p className="mt-1 text-sm text-primary">
+                        {new Date(currentVersion.createdAt).toLocaleDateString(
+                          undefined,
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Version Timeline */}
+              {versions.length === 0 ? (
+                <Card>
+                  <CardBody>
+                    <div className="text-center py-8">
+                      <Icon
+                        name="clock"
+                        className="mx-auto mb-3 text-3xl text-ghost"
+                      />
+                      <p className="text-sm text-tertiary">
+                        No version history available.
+                      </p>
+                      <p className="text-xs mt-1 text-ghost">
+                        Versions are created when sources are added, removed, or
+                        reprocessed.
+                      </p>
+                    </div>
+                  </CardBody>
+                </Card>
+              ) : (
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-4 top-0 bottom-0 w-px bg-[var(--border-subtle)]" />
+
+                  <div className="space-y-4">
+                    {versions.map((version) => {
+                      const isCurrent =
+                        version.versionNumber === estimatedCurrentVersion;
+                      const sourcesWithDiff =
+                        versionDiffs.get(version.versionNumber) ?? [];
+
+                      return (
+                        <div key={version.versionNumber} className="relative pl-10">
+                          {/* Timeline dot */}
+                          <div
+                            className={`absolute left-2.5 top-4 w-3 h-3 rounded-full border-2 transition-all
+                              ${isCurrent
+                                ? "bg-accent border-accent shadow-[0_0_0_3px_var(--accent-primary-glow)]"
+                                : "bg-surface-2 border-subtle"
+                              }`}
+                          />
+
+                          <Card
+                            className={
+                              isCurrent
+                                ? "border-accent shadow-sm"
+                                : ""
+                            }
+                          >
+                            <CardBody>
+                              <div className="space-y-3">
+                                {/* Version Header */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold font-mono text-primary">
+                                      v{version.versionNumber}
+                                    </span>
+                                    {isCurrent && (
+                                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[var(--accent-primary-glow)] text-accent">
+                                        Current
+                                      </span>
+                                    )}
+                                    <StatusBadge
+                                      status={version.status as any}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-ghost">
+                                    {new Date(version.date).toLocaleString()}
+                                  </span>
+                                </div>
+
+                                {/* Sources Snapshot with Diffs */}
+                                <div>
+                                  <p className="text-xs font-medium mb-2 text-tertiary tracking-caps">
+                                    SOURCES IN THIS VERSION
+                                  </p>
+                                  <div className="space-y-2">
+                                    {sourcesWithDiff.map((source) => (
+                                      <div
+                                        key={source.sourceId}
+                                        className={`p-2 rounded border ${
+                                          source.diff === "added"
+                                            ? "bg-success-muted/30 border-success/30"
+                                            : "bg-surface-0 border-subtle"
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-2 text-xs">
+                                          {/* Diff badge */}
+                                          {source.diff === "added" && (
+                                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-success-muted text-success">
+                                              + New
+                                            </span>
+                                          )}
+                                          <span className="font-mono text-accent">
+                                            {source.sourceId.length > 16
+                                              ? `${source.sourceId.slice(0, 16)}...`
+                                              : source.sourceId}
+                                          </span>
+                                          {source.contentHash && (
+                                            <span className="font-mono text-ghost">
+                                              #{source.contentHash.slice(0, 8)}
+                                            </span>
+                                          )}
+                                          {source.chunksCount != null && (
+                                            <span className="text-tertiary">
+                                              {source.chunksCount} chunks
+                                            </span>
+                                          )}
+                                          {source.model && (
+                                            <span className="text-tertiary">
+                                              {source.model}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardBody>
+                          </Card>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Add Source Overlay */}
       <Overlay open={showAddSource} setOpen={setShowAddSource}>

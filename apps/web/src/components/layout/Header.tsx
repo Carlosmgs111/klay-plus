@@ -11,9 +11,10 @@ interface HeaderProps {
   title: string;
   breadcrumbs?: BreadcrumbItem[];
   showLogo?: boolean;
+  actions?: React.ReactNode;
 }
 
-export function Header({ title, breadcrumbs, showLogo }: HeaderProps) {
+export function Header({ title, breadcrumbs, showLogo, actions }: HeaderProps) {
   const { mode, setMode, isInitializing } = useRuntimeMode();
   const { resolved, toggleTheme } = useTheme();
 
@@ -59,6 +60,8 @@ export function Header({ title, breadcrumbs, showLogo }: HeaderProps) {
 
       {/* Right: Controls */}
       <div className="flex items-center gap-2">
+        {actions}
+
         {isInitializing && (
           <span className="text-xs animate-pulse mr-2">Initializing...</span>
         )}

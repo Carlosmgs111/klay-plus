@@ -1,9 +1,5 @@
 ---
-import DashboardLayout from "../../../layouts/DashboardLayout.astro";
-import { ContextShell } from "../../../components/layout/ContextShell";
+// STANDBY: Versions page absorbed into Sources page — this route now redirects
 const { id } = Astro.params;
+return Astro.redirect(`/contexts/${id}/sources`);
 ---
-
-<DashboardLayout title="Context Versions">
-  <ContextShell client:load contextId={id!} activePage="versions" />
-</DashboardLayout>

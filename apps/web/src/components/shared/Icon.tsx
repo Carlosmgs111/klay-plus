@@ -42,12 +42,13 @@ const ICON_PATHS: Record<string, string> = {
   undo: "bx bx-undo",
   "folder-plus": "bx bxs-folder-plus",
   "arrow-left": "bx bxs-left-arrow-alt",
-  database: "bx bxs-data",
+  database: "bx bxs-book-library",
   clock: "bx bxs-time",
   "layout-dashboard": "bx bxs-layout",
   archive: "bx bxs-archive",
   "alert-triangle": "bx bxs-error",
   copy: "bx bx-copy",
+  "dots-vertical": "bx bx-dots-vertical-rounded",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "ref"> {
