@@ -96,12 +96,20 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         if (mode === "server") {
+          // Resolve a default profile for server so the UI can show infra settings
+          if (!profileRef.current) {
+            const { resolveInfrastructureProfile } = await import("@klay/core/config");
+            const profile = await resolveInfrastructureProfile({ provider: "server" });
+            profileRef.current = profile;
+          }
+
           const [{ ServerPipelineService }, { ServerLifecycleService }] =
             await Promise.all([
               import("../services/server-pipeline-service"),
               import("../services/server-lifecycle-service"),
             ]);
           if (!cancelled) {
+            setInfrastructureProfileState(profileRef.current);
             setService(new ServerPipelineService());
             setLifecycleService(new ServerLifecycleService());
             setConfigStore(null);
