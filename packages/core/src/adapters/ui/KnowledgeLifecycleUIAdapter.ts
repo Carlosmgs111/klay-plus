@@ -18,6 +18,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "../../application/knowledge-lifecycle/contracts/dtos";
 import type { UIResult } from "./KnowledgePipelineUIAdapter";
 
@@ -66,6 +68,11 @@ export class KnowledgeLifecycleUIAdapter {
 
   async activateContext(input: ActivateContextInput): Promise<UIResult<ActivateContextResult>> {
     const result = await this._lifecycle.activateContext(input);
+    return this._unwrap(result);
+  }
+
+  async generateProjection(input: GenerateProjectionInput): Promise<UIResult<GenerateProjectionResult>> {
+    const result = await this._lifecycle.generateProjection(input);
     return this._unwrap(result);
   }
 

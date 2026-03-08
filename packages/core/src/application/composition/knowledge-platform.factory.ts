@@ -42,6 +42,8 @@ export async function createKnowledgePlatform(
   const lifecycle = new KnowledgeLifecycleOrchestrator({
     contextManagement: deps.contextManagement,
     processing: deps.processing,
+    ingestion: deps.ingestion,
+    sourceKnowledge: deps.sourceKnowledge,
   });
 
   return { pipeline, management, lifecycle };

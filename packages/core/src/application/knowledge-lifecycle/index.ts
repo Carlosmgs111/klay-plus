@@ -19,6 +19,8 @@ export type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "./contracts/dtos";
 
 export { KnowledgeLifecycleError } from "./domain/KnowledgeLifecycleError";

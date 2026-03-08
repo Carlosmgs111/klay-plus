@@ -1,5 +1,7 @@
 import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
+import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
+import type { SourceKnowledgeService } from "../../../contexts/source-knowledge/service/SourceKnowledgeService";
 import type { KnowledgeLifecyclePort } from "../contracts/KnowledgeLifecyclePort";
 import type {
   RemoveSourceInput,
@@ -20,6 +22,8 @@ import type {
   DeprecateContextResult,
   ActivateContextInput,
   ActivateContextResult,
+  GenerateProjectionInput,
+  GenerateProjectionResult,
 } from "../contracts/dtos";
 import type { Result } from "../../../shared/domain/Result";
 import type { KnowledgeLifecycleError } from "../domain/KnowledgeLifecycleError";
@@ -30,15 +34,21 @@ import { Result as ResultClass } from "../../../shared/domain/Result";
 export interface ResolvedLifecycleDependencies {
   contextManagement: ContextManagementService;
   processing: SemanticProcessingService;
+  ingestion: SourceIngestionService;
+  sourceKnowledge: SourceKnowledgeService;
 }
 
 export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
   private readonly _contextManagement: ContextManagementService;
   private readonly _processing: SemanticProcessingService;
+  private readonly _ingestion: SourceIngestionService;
+  private readonly _sourceKnowledge: SourceKnowledgeService;
 
   constructor(deps: ResolvedLifecycleDependencies) {
     this._contextManagement = deps.contextManagement;
     this._processing = deps.processing;
+    this._ingestion = deps.ingestion;
+    this._sourceKnowledge = deps.sourceKnowledge;
   }
 
   async removeSource(
@@ -294,6 +304,60 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
     } catch (error) {
       return ResultClass.fail(
         LifecycleError.fromStep(LifecycleStep.ActivateContext, error, []),
+      );
+    }
+  }
+
+  async generateProjection(
+    input: GenerateProjectionInput,
+  ): Promise<Result<KnowledgeLifecycleError, GenerateProjectionResult>> {
+    try {
+      const projectionId = input.projectionId ?? `proj-${crypto.randomUUID()}`;
+
+      // 1. Get extracted text from source
+      const textResult = await this._ingestion.getExtractedText(input.sourceId);
+      if (textResult.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.GenerateProjection, textResult.error, []),
+        );
+      }
+
+      // 2. Process content (chunking + embedding)
+      const processResult = await this._processing.processContent({
+        projectionId,
+        sourceId: input.sourceId,
+        content: textResult.value.text,
+        type: "EMBEDDING",
+        processingProfileId: input.processingProfileId,
+      });
+      if (processResult.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.GenerateProjection, processResult.error, ["get-text"]),
+        );
+      }
+
+      // 3. Register projection in source knowledge hub
+      const registerResult = await this._sourceKnowledge.registerProjection({
+        sourceId: input.sourceId,
+        projectionId,
+        profileId: input.processingProfileId,
+        status: "COMPLETED",
+      });
+      if (registerResult.isFail()) {
+        return ResultClass.fail(
+          LifecycleError.fromStep(LifecycleStep.GenerateProjection, registerResult.error, ["get-text", "process"]),
+        );
+      }
+
+      return ResultClass.ok({
+        projectionId,
+        chunksCount: processResult.value.chunksCount,
+        dimensions: processResult.value.dimensions,
+        model: processResult.value.model,
+      });
+    } catch (error) {
+      return ResultClass.fail(
+        LifecycleError.fromStep(LifecycleStep.GenerateProjection, error, []),
       );
     }
   }
