@@ -57,6 +57,12 @@ export class NeDBStore<T> {
     return docs.map((doc: any) => doc._value as T);
   }
 
+  async entries(): Promise<[string, T][]> {
+    const db = await this.ensureDB();
+    const docs = await db.find({});
+    return docs.map((doc: any) => [doc._key as string, doc._value as T]);
+  }
+
   async find(predicate: (value: T) => boolean): Promise<T[]> {
     const all = await this.getAll();
     return all.filter(predicate);
