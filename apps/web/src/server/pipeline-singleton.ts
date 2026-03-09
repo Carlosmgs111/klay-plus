@@ -4,6 +4,7 @@ import {
   KnowledgeLifecycleRESTAdapter,
 } from "@klay/core/adapters/rest";
 import { createKnowledgePlatform } from "@klay/core";
+import type { ConfigStore } from "@klay/core/config";
 
 interface ServerAdapters {
   pipeline: KnowledgePipelineRESTAdapter;
@@ -12,11 +13,22 @@ interface ServerAdapters {
 }
 
 let _adaptersPromise: Promise<ServerAdapters> | null = null;
+let _configStore: ConfigStore | null = null;
+
+const DB_PATH = process.env.KLAY_DB_PATH ?? "./data";
 
 /**
- * Returns the singleton server adapters (pipeline, management, lifecycle).
- * Creates the full platform once, seeds a default processing profile, and reuses it.
+ * Returns the server-side ConfigStore (NeDB-backed).
+ * Lazily created on first access; reused across all routes.
  */
+export async function getConfigStore(): Promise<ConfigStore> {
+  if (!_configStore) {
+    const { NeDBConfigStore } = await import("@klay/core/config");
+    _configStore = new NeDBConfigStore(DB_PATH);
+  }
+  return _configStore;
+}
+
 function _getAdapters(): Promise<ServerAdapters> {
   if (!_adaptersPromise) {
     _adaptersPromise = _createAdapters();
@@ -25,21 +37,20 @@ function _getAdapters(): Promise<ServerAdapters> {
 }
 
 async function _createAdapters(): Promise<ServerAdapters> {
+  const configStore = await getConfigStore();
+
   const platform = await createKnowledgePlatform({
     provider: "server",
-    dbPath: process.env.KLAY_DB_PATH ?? "./data",
-    embeddingDimensions: Number(process.env.KLAY_EMBEDDING_DIMENSIONS) || 128,
-    embeddingProvider: process.env.KLAY_EMBEDDING_PROVIDER ?? "hash",
-    embeddingModel: process.env.KLAY_EMBEDDING_MODEL,
+    dbPath: DB_PATH,
+    configStore,
     defaultChunkingStrategy: process.env.KLAY_CHUNKING_STRATEGY ?? "recursive",
   });
 
-  // Seed default processing profile (ignore if already exists)
   await platform.pipeline.createProcessingProfile({
     id: "default",
     name: "Default",
     chunkingStrategyId: "recursive",
-    embeddingStrategyId: "hash",
+    embeddingStrategyId: "hash-embedding",
   });
 
   return {
@@ -50,25 +61,23 @@ async function _createAdapters(): Promise<ServerAdapters> {
 }
 
 /**
- * Returns the singleton KnowledgePipelineRESTAdapter for server-side API routes.
- * Backward-compatible — existing routes continue to use this.
+ * Invalidate the singleton so it re-creates with fresh ConfigStore values.
+ * Called after config changes (API key updates, profile changes).
  */
+export function invalidateAdapters(): void {
+  _adaptersPromise = null;
+}
+
 export async function getServerAdapter(): Promise<KnowledgePipelineRESTAdapter> {
   const adapters = await _getAdapters();
   return adapters.pipeline;
 }
 
-/**
- * Returns the singleton KnowledgeManagementRESTAdapter for server-side API routes.
- */
 export async function getManagementAdapter(): Promise<KnowledgeManagementRESTAdapter> {
   const adapters = await _getAdapters();
   return adapters.management;
 }
 
-/**
- * Returns the singleton KnowledgeLifecycleRESTAdapter for server-side API routes.
- */
 export async function getLifecycleAdapter(): Promise<KnowledgeLifecycleRESTAdapter> {
   const adapters = await _getAdapters();
   return adapters.lifecycle;
