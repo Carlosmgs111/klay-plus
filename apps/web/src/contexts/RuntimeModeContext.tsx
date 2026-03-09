@@ -80,11 +80,14 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as RuntimeMode | null;
     if (stored && stored !== "server") {
+      profileRef.current = null; // Reset so profile resolves for the stored mode
       setModeState(stored);
     }
   }, []);
 
   const setMode = (newMode: RuntimeMode) => {
+    // Reset cached profile so it re-resolves for the new runtime
+    profileRef.current = null;
     setModeState(newMode);
     localStorage.setItem(STORAGE_KEY, newMode);
   };
