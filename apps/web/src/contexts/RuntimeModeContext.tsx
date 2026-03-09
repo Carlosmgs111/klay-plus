@@ -86,8 +86,9 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setMode = (newMode: RuntimeMode) => {
-    // Reset cached profile so it re-resolves for the new runtime
+    // Reset cached profile and config store so they re-resolve for the new runtime
     profileRef.current = null;
+    configStoreRef.current = null;
     setModeState(newMode);
     localStorage.setItem(STORAGE_KEY, newMode);
   };
@@ -99,10 +100,21 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         if (mode === "server") {
-          // Resolve a default profile for server so the UI can show infra settings
+          // Create or reuse server config service (proxies to /api/config)
+          let store = configStoreRef.current;
+          if (!store) {
+            const { ServerConfigService } = await import("../services/server-config-service");
+            store = new ServerConfigService();
+            configStoreRef.current = store;
+          }
+
+          // Resolve infrastructure profile from server-side ConfigStore
           if (!profileRef.current) {
             const { resolveInfrastructureProfile } = await import("@klay/core/config");
-            const profile = await resolveInfrastructureProfile({ provider: "server" });
+            const profile = await resolveInfrastructureProfile({
+              provider: "server",
+              configStore: store,
+            });
             profileRef.current = profile;
           }
 
@@ -112,10 +124,10 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
               import("../services/server-lifecycle-service"),
             ]);
           if (!cancelled) {
+            setConfigStore(store);
             setInfrastructureProfileState(profileRef.current);
             setService(new ServerPipelineService());
             setLifecycleService(new ServerLifecycleService());
-            setConfigStore(null);
           }
         } else {
           // Create or reuse ConfigStore
