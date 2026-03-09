@@ -1,14 +1,61 @@
+import { getProvidersForAxis, getModelsForProvider, PROVIDER_REGISTRY } from "@klay/core/config";
+import type { RuntimeEnvironment, ProviderRequirement } from "@klay/core/config";
+
 export const CHUNKING_STRATEGIES = [
   { value: "recursive", label: "Recursive — paragraphs, then sentences" },
   { value: "sentence", label: "Sentence — sentence boundaries" },
   { value: "fixed-size", label: "Fixed Size — fixed character count" },
 ];
 
-export const EMBEDDING_STRATEGIES = [
-  { value: "hash-embedding", label: "Hash — local, no API key" },
-  { value: "web-llm-embedding", label: "WebLLM — browser, local (WebGPU)" },
-  { value: "openai-text-embedding-3-small", label: "OpenAI — text-embedding-3-small" },
-  { value: "openai-text-embedding-3-large", label: "OpenAI — text-embedding-3-large" },
-  { value: "cohere-embed-multilingual-v3.0", label: "Cohere — embed-multilingual-v3.0" },
-  { value: "huggingface-sentence-transformers/all-MiniLM-L6-v2", label: "HuggingFace — all-MiniLM-L6-v2" },
-];
+export function getEmbeddingStrategyOptions(runtime?: RuntimeEnvironment) {
+  const providers = getProvidersForAxis("embedding", runtime);
+  const options: { value: string; label: string }[] = [];
+
+  for (const provider of providers) {
+    const models = getModelsForProvider(provider.id);
+
+    if (models.length === 0) {
+      options.push({
+        value: `${provider.id}-embedding`,
+        label: `${provider.name} — ${provider.description}`,
+      });
+      continue;
+    }
+
+    for (const model of models) {
+      // hash/webllm → keep existing IDs for backward compat
+      const value = provider.id === "hash"
+        ? "hash-embedding"
+        : provider.id === "browser-webllm"
+          ? "web-llm-embedding"
+          : `${provider.id}-${model.id}`;
+
+      options.push({
+        value,
+        label: `${provider.name} — ${model.name} (${model.dimensions}d)`,
+      });
+
+      // For hash/webllm, only emit one option
+      if (provider.id === "hash" || provider.id === "browser-webllm") break;
+    }
+  }
+
+  return options;
+}
+
+/**
+ * Given an embedding strategy ID (e.g. "openai-text-embedding-3-small"),
+ * returns the API key requirements for the underlying provider.
+ */
+export function getRequirementsForStrategy(strategyId: string): ProviderRequirement[] {
+  const embeddingProviders = PROVIDER_REGISTRY.filter((p) => p.axis === "embedding");
+  for (const provider of embeddingProviders) {
+    if (strategyId.startsWith(provider.id)) {
+      return provider.requirements;
+    }
+  }
+  return [];
+}
+
+/** @deprecated Use getEmbeddingStrategyOptions(runtime) for runtime-filtered options */
+export const EMBEDDING_STRATEGIES = getEmbeddingStrategyOptions();

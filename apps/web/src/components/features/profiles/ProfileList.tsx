@@ -77,6 +77,9 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       render: (row: ProfileEntry) => (
         <span className="font-medium text-sm text-primary">
           {row.name}
+          {row.id === "default" && (
+            <span className="ml-2 text-xs font-normal text-tertiary">(Default)</span>
+          )}
         </span>
       ),
     },

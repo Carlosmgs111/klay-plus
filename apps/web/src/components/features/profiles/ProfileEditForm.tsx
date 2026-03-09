@@ -1,14 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Button } from "../../shared/Button";
 import { Input } from "../../shared/Input";
 import { Select } from "../../shared/Select";
+import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { LoadingButton } from "../../shared/LoadingButton";
-import { CHUNKING_STRATEGIES, EMBEDDING_STRATEGIES } from "../../../constants/processingStrategies";
+import { CHUNKING_STRATEGIES, getEmbeddingStrategyOptions, getRequirementsForStrategy } from "../../../constants/processingStrategies";
 import type { UpdateProfileInput, ListProfilesResult } from "@klay/core";
+import type { RuntimeEnvironment } from "@klay/core/config";
 
 type ProfileEntry = ListProfilesResult["profiles"][number];
 
@@ -19,11 +21,28 @@ interface ProfileEditFormProps {
 }
 
 export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFormProps) {
-  const { service } = useRuntimeMode();
+  const { service, mode, configStore } = useRuntimeMode();
   const { addToast } = useToast();
+  const runtime: RuntimeEnvironment = mode === "browser" ? "browser" : "server";
+  const embeddingStrategies = useMemo(() => getEmbeddingStrategyOptions(runtime), [runtime]);
   const [name, setName] = useState(profile.name);
   const [chunkingStrategyId, setChunkingStrategyId] = useState(profile.chunkingStrategyId);
   const [embeddingStrategyId, setEmbeddingStrategyId] = useState(profile.embeddingStrategyId);
+  const [missingKeys, setMissingKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    const requirements = getRequirementsForStrategy(embeddingStrategyId);
+    if (requirements.length === 0 || !configStore) {
+      setMissingKeys([]);
+      return;
+    }
+    Promise.all(
+      requirements.map(async (req) => {
+        const has = await configStore.has(req.key);
+        return has ? null : req.label;
+      }),
+    ).then((results) => setMissingKeys(results.filter((r): r is string => r !== null)));
+  }, [embeddingStrategyId, configStore]);
 
   const updateAction = useCallback(
     (input: UpdateProfileInput) => service!.updateProfile(input),
@@ -68,11 +87,18 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
         />
         <Select
           label="Embedding Strategy"
-          options={EMBEDDING_STRATEGIES}
+          options={embeddingStrategies}
           value={embeddingStrategyId}
           onChange={(e) => setEmbeddingStrategyId(e.target.value)}
         />
       </div>
+
+      {missingKeys.length > 0 && (
+        <p className="flex items-center gap-1.5 text-xs text-warning">
+          <Icon name="alert-triangle" />
+          Missing API key{missingKeys.length > 1 ? "s" : ""}: {missingKeys.join(", ")}. Configure in Settings before using this strategy.
+        </p>
+      )}
 
       <p className="text-xs font-mono text-tertiary">
         ID: {profile.id} | Version: {profile.version}
