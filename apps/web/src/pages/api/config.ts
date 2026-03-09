@@ -5,12 +5,19 @@ import { getConfigStore, invalidateAdapters } from "../../server/pipeline-single
  * GET /api/config — Load all config key-value pairs.
  */
 export const GET: APIRoute = async () => {
-  const store = await getConfigStore();
-  const all = await store.loadAll();
-  return new Response(JSON.stringify(all), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  try {
+    const store = await getConfigStore();
+    const all = await store.loadAll();
+    return new Response(JSON.stringify(all), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
 /**
@@ -18,28 +25,43 @@ export const GET: APIRoute = async () => {
  * Body: { entries: Record<string, string>, reinitialize?: boolean }
  */
 export const PUT: APIRoute = async ({ request }) => {
-  const { entries, reinitialize = false } = (await request.json()) as {
-    entries: Record<string, string>;
-    reinitialize?: boolean;
-  };
+  try {
+    const body = await request.json();
+    const { entries, reinitialize = false } = body as {
+      entries?: Record<string, string>;
+      reinitialize?: boolean;
+    };
 
-  const store = await getConfigStore();
-  for (const [key, value] of Object.entries(entries)) {
-    if (value) {
-      await store.set(key, value);
-    } else {
-      await store.remove(key);
+    if (!entries || typeof entries !== "object") {
+      return new Response(JSON.stringify({ error: "Missing 'entries' object" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-  }
 
-  if (reinitialize) {
-    invalidateAdapters();
-  }
+    const store = await getConfigStore();
+    for (const [key, value] of Object.entries(entries)) {
+      if (value) {
+        await store.set(key, value);
+      } else {
+        await store.remove(key);
+      }
+    }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+    if (reinitialize) {
+      invalidateAdapters();
+    }
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
 /**
@@ -47,11 +69,27 @@ export const PUT: APIRoute = async ({ request }) => {
  * Body: { key: string }
  */
 export const DELETE: APIRoute = async ({ request }) => {
-  const { key } = (await request.json()) as { key: string };
-  const store = await getConfigStore();
-  await store.remove(key);
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  try {
+    const body = await request.json();
+    const { key } = body as { key?: string };
+
+    if (!key) {
+      return new Response(JSON.stringify({ error: "Missing 'key' field" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const store = await getConfigStore();
+    await store.remove(key);
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };

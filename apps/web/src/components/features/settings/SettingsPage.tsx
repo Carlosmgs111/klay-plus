@@ -10,6 +10,7 @@ import { Input } from "../../shared/Input";
 import { LoadingButton } from "../../shared/LoadingButton";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
+import type { BatchConfigStore } from "../../../services/server-config-service";
 import {
   getProvidersForAxis,
   getProfileRequirements,
@@ -22,6 +23,11 @@ import type {
   RuntimeEnvironment,
 } from "@klay/core/config";
 import type { SearchKnowledgeInput } from "@klay/core";
+import type { ConfigStore } from "@klay/core/config";
+
+function isBatchConfigStore(store: ConfigStore): store is BatchConfigStore {
+  return "saveAndReinitialize" in store;
+}
 
 const INFRA_AXES: { axis: InfrastructureAxis; label: string }[] = [
   { axis: "persistence", label: "Persistence" },
@@ -120,9 +126,9 @@ export function SettingsPage() {
         entries[req.key] = apiKeyValues[req.key] ?? "";
       }
 
-      if (isServerMode && "saveAndReinitialize" in configStore) {
+      if (isServerMode && isBatchConfigStore(configStore)) {
         // Server mode: batch save + reinitialize pipeline in one call
-        await (configStore as any).saveAndReinitialize(entries);
+        await configStore.saveAndReinitialize(entries);
       } else {
         // Browser mode: save individually to ConfigStore
         for (const [key, value] of Object.entries(entries)) {
@@ -136,6 +142,8 @@ export function SettingsPage() {
 
       reinitialize();
       addToast("Settings saved. Services reinitializing...", "success");
+    } catch (err) {
+      addToast(`Failed to save settings: ${err instanceof Error ? err.message : String(err)}`, "error");
     } finally {
       setIsSavingKeys(false);
     }
