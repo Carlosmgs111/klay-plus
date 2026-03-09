@@ -103,7 +103,7 @@ export class ProcessingProfileMaterializer {
     if (embeddingId.startsWith("cohere-")) {
       const modelId = embeddingId.replace("cohere-", "") || "embed-multilingual-v3.0";
       const apiKey = configProvider.require("COHERE_API_KEY");
-      const { createCohere } = await import("@ai-sdk/cohere");
+      const { createCohere } = await import(/* @vite-ignore */ "@ai-sdk/cohere");
       const cohere = createCohere({ apiKey });
       return new AISdkEmbeddingStrategy(cohere.textEmbeddingModel(modelId), `cohere-${modelId}`);
     }
@@ -111,7 +111,7 @@ export class ProcessingProfileMaterializer {
     if (embeddingId.startsWith("huggingface-")) {
       const modelId = embeddingId.replace("huggingface-", "") || "sentence-transformers/all-MiniLM-L6-v2";
       const apiKey = configProvider.require("HUGGINGFACE_API_KEY");
-      const { createHuggingFace } = await import("@ai-sdk/huggingface");
+      const { createHuggingFace } = await import(/* @vite-ignore */ "@ai-sdk/huggingface");
       const hf = createHuggingFace({ apiKey });
       return new AISdkEmbeddingStrategy(hf.textEmbeddingModel(modelId), `huggingface-${modelId}`);
     }

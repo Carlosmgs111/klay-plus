@@ -123,7 +123,7 @@ export async function semanticQueryFactory(
       create: async (p) => {
         const apiKey = config.require("COHERE_API_KEY");
         const modelId = ((p as SemanticQueryInfrastructurePolicy).embeddingModel as string) ?? "embed-multilingual-v3.0";
-        const { createCohere } = await import("@ai-sdk/cohere");
+        const { createCohere } = await import(/* @vite-ignore */ "@ai-sdk/cohere");
         const { AISdkQueryEmbedder } = await import(
           "../infrastructure/adapters/AISdkQueryEmbedder"
         );
@@ -135,7 +135,7 @@ export async function semanticQueryFactory(
       create: async (p) => {
         const apiKey = config.require("HUGGINGFACE_API_KEY");
         const modelId = ((p as SemanticQueryInfrastructurePolicy).embeddingModel as string) ?? "sentence-transformers/all-MiniLM-L6-v2";
-        const { createHuggingFace } = await import("@ai-sdk/huggingface");
+        const { createHuggingFace } = await import(/* @vite-ignore */ "@ai-sdk/huggingface");
         const { AISdkQueryEmbedder } = await import(
           "../infrastructure/adapters/AISdkQueryEmbedder"
         );
