@@ -11,6 +11,10 @@ export class IndexedDBConfigStore implements ConfigStore {
     this.store = new IndexedDBStore<string>(dbName, "config");
   }
 
+  async get(key: string): Promise<string | undefined> {
+    return this.store.get(key);
+  }
+
   async set(key: string, value: string): Promise<void> {
     await this.store.put(key, value);
   }

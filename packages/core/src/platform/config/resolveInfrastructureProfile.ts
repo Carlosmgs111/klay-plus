@@ -72,10 +72,7 @@ async function loadProfileFromStore(
   store: ConfigStore,
 ): Promise<Partial<InfrastructureProfile> | null> {
   try {
-    const has = await store.has(INFRA_PROFILE_KEY);
-    if (!has) return null;
-    const all = await store.loadAll();
-    const raw = all[INFRA_PROFILE_KEY];
+    const raw = await store.get(INFRA_PROFILE_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as Partial<InfrastructureProfile>;
   } catch {

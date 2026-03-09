@@ -10,6 +10,10 @@ export class InMemoryConfigStore implements ConfigStore {
     this.store = new Map(Object.entries(initial));
   }
 
+  async get(key: string): Promise<string | undefined> {
+    return this.store.get(key);
+  }
+
   async set(key: string, value: string): Promise<void> {
     this.store.set(key, value);
   }
