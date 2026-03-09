@@ -11,7 +11,6 @@ import { LoadingButton } from "../../shared/LoadingButton";
 import { Spinner } from "../../shared/Spinner";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import {
-  API_KEY_DEFINITIONS,
   getProvidersForAxis,
   getProfileRequirements,
   getModelsForProvider,
@@ -79,9 +78,11 @@ export function SettingsPage() {
     }
   }, [infrastructureProfile]);
 
+  const isServerMode = mode === "server";
+
   const activeRequirements = localProfile
     ? getProfileRequirements(localProfile)
-    : API_KEY_DEFINITIONS;
+    : [];
 
   const runtime = runtimeFromMode(mode);
 
@@ -104,19 +105,6 @@ export function SettingsPage() {
     setLocalProfile(updated);
   };
 
-  const handleModelChange = (modelId: string) => {
-    if (!localProfile) return;
-    const models = getModelsForProvider(localProfile.embedding);
-    const model = models.find((m) => m.id === modelId);
-    if (model) {
-      setLocalProfile({
-        ...localProfile,
-        embeddingModel: model.id,
-        embeddingDimensions: model.dimensions,
-      });
-    }
-  };
-
   const handleSaveKeys = async () => {
     if (!configStore) return;
     setIsSavingKeys(true);
@@ -126,15 +114,26 @@ export function SettingsPage() {
         await setInfrastructureProfile(localProfile);
       }
 
-      // Save API key values
+      // Build entries map from active requirements
+      const entries: Record<string, string> = {};
       for (const req of activeRequirements) {
-        const value = apiKeyValues[req.key] ?? "";
-        if (value) {
-          await configStore.set(req.key, value);
-        } else {
-          await configStore.remove(req.key);
+        entries[req.key] = apiKeyValues[req.key] ?? "";
+      }
+
+      if (isServerMode && "saveAndReinitialize" in configStore) {
+        // Server mode: batch save + reinitialize pipeline in one call
+        await (configStore as any).saveAndReinitialize(entries);
+      } else {
+        // Browser mode: save individually to ConfigStore
+        for (const [key, value] of Object.entries(entries)) {
+          if (value) {
+            await configStore.set(key, value);
+          } else {
+            await configStore.remove(key);
+          }
         }
       }
+
       reinitialize();
       addToast("Settings saved. Services reinitializing...", "success");
     } finally {
@@ -297,28 +296,23 @@ export function SettingsPage() {
                 );
               })}
 
-              {/* Embedding model selector */}
+              {/* Embedding model info (read-only) */}
               {embeddingModels.length > 0 && (
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-1">
-                    Embedding Model
-                  </label>
-                  <select
-                    value={localProfile.embeddingModel ?? ""}
-                    onChange={(e) => handleModelChange(e.target.value)}
-                    className="w-full rounded-lg border border-default bg-surface-2 px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none"
-                  >
+                <div className="mt-2 p-3 rounded-lg bg-surface-1 border border-subtle">
+                  <p className="text-xs font-medium text-secondary mb-2">
+                    Available models:
+                  </p>
+                  <ul className="space-y-1">
                     {embeddingModels.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} — {m.dimensions}d
-                      </option>
+                      <li key={m.id} className="text-xs text-tertiary flex justify-between">
+                        <span>{m.name}</span>
+                        <span className="font-mono">{m.dimensions}d</span>
+                      </li>
                     ))}
-                  </select>
-                  {localProfile.embeddingDimensions && (
-                    <p className="mt-1 text-xs text-tertiary">
-                      Dimensions: {localProfile.embeddingDimensions}
-                    </p>
-                  )}
+                  </ul>
+                  <p className="text-xs text-tertiary mt-2 italic">
+                    Select specific model when creating a Processing Profile.
+                  </p>
                 </div>
               )}
             </div>
@@ -340,7 +334,9 @@ export function SettingsPage() {
           <div className="space-y-4">
             <p className="text-xs text-tertiary">
               {activeRequirements.length > 0
-                ? "Configure API keys required by the current embedding provider. Keys are stored in IndexedDB and never sent to any server."
+                ? isServerMode
+                  ? "Configure API keys required by the current infrastructure profile. Keys are persisted on the server."
+                  : "Configure API keys required by the current infrastructure profile. Keys are stored locally in IndexedDB."
                 : "No API keys required for the current configuration."}
             </p>
             {activeRequirements.map((def) => {
