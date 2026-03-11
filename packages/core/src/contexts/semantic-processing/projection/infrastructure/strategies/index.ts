@@ -16,3 +16,5 @@ export { ChunkerFactory } from "./ChunkerFactory";
 export { HashEmbeddingStrategy } from "./HashEmbeddingStrategy";
 export { WebLLMEmbeddingStrategy } from "./WebLLMEmbeddingStrategy";
 export { AISdkEmbeddingStrategy } from "./AISdkEmbeddingStrategy";
+export { NoOpPreparationStrategy } from "./NoOpPreparationStrategy";
+export { BasicPreparationStrategy } from "./BasicPreparationStrategy";
