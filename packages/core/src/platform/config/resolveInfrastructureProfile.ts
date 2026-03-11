@@ -1,6 +1,10 @@
 import type { InfrastructureProfile } from "./InfrastructureProfile";
-import { DEFAULT_PROFILES } from "./InfrastructureProfile";
+import type { PersistenceConfig } from "./PersistenceConfig";
+import type { VectorStoreConfig } from "./VectorStoreConfig";
+import type { EmbeddingConfig } from "./EmbeddingConfig";
+import type { DocumentStorageConfig } from "./DocumentStorageConfig";
 import type { ConfigStore } from "./ConfigStore";
+import { PRESET_PROFILES } from "./presets";
 
 export const INFRA_PROFILE_KEY = "__INFRA_PROFILE__";
 
@@ -18,10 +22,29 @@ interface ProfileResolutionPolicy {
 }
 
 /**
+ * Deep-merge helper that handles typed config objects.
+ * Only overwrites defined fields from the source.
+ */
+function mergeProfile(
+  base: InfrastructureProfile,
+  partial: Partial<InfrastructureProfile>,
+): InfrastructureProfile {
+  return {
+    id: partial.id ?? base.id,
+    name: partial.name ?? base.name,
+    persistence: partial.persistence ?? base.persistence,
+    vectorStore: partial.vectorStore ?? base.vectorStore,
+    embedding: partial.embedding ?? base.embedding,
+    documentStorage: partial.documentStorage ?? base.documentStorage,
+    ...(partial.llm || base.llm ? { llm: partial.llm ?? base.llm } : {}),
+  };
+}
+
+/**
  * Resolve a full InfrastructureProfile from a policy.
  *
- * Priority (broadest → most specific):
- * 1. Expand legacy `provider` string via DEFAULT_PROFILES
+ * Priority (broadest -> most specific):
+ * 1. Expand legacy `provider` string via PRESET_PROFILES
  * 2. Layer persisted profile from ConfigStore (`__INFRA_PROFILE__` key)
  * 3. Layer legacy `embeddingProvider` / `embeddingModel` / `embeddingDimensions`
  * 4. Layer explicit `infrastructure` overrides (highest priority)
@@ -29,43 +52,39 @@ interface ProfileResolutionPolicy {
 export async function resolveInfrastructureProfile(
   policy: ProfileResolutionPolicy,
 ): Promise<InfrastructureProfile> {
-  // 1. Base from provider
-  const base: InfrastructureProfile = DEFAULT_PROFILES[policy.provider]
-    ? { ...DEFAULT_PROFILES[policy.provider] }
-    : { ...DEFAULT_PROFILES["in-memory"] };
+  // 1. Base from provider preset
+  const preset = PRESET_PROFILES[policy.provider] ?? PRESET_PROFILES["in-memory"];
+  let result: InfrastructureProfile = { ...preset };
 
   // 2. Layer persisted profile from ConfigStore
   if (policy.configStore) {
     const persisted = await loadProfileFromStore(policy.configStore);
     if (persisted) {
-      Object.assign(base, persisted);
+      result = mergeProfile(result, persisted);
     }
   }
 
   // 3. Layer legacy embedding fields
-  if (policy.embeddingProvider) {
-    base.embedding = policy.embeddingProvider;
-  }
-  if (policy.embeddingModel) {
-    base.embeddingModel = policy.embeddingModel;
-  }
-  if (policy.embeddingDimensions !== undefined) {
-    base.embeddingDimensions = policy.embeddingDimensions;
+  if (policy.embeddingProvider || policy.embeddingModel || policy.embeddingDimensions !== undefined) {
+    const currentEmbed = { ...result.embedding } as Record<string, unknown>;
+    if (policy.embeddingProvider) {
+      currentEmbed.type = policy.embeddingProvider;
+    }
+    if (policy.embeddingModel) {
+      currentEmbed.model = policy.embeddingModel;
+    }
+    if (policy.embeddingDimensions !== undefined) {
+      currentEmbed.dimensions = policy.embeddingDimensions;
+    }
+    result.embedding = currentEmbed as EmbeddingConfig;
   }
 
   // 4. Layer explicit infrastructure overrides (highest priority)
   if (policy.infrastructure) {
-    const infra = policy.infrastructure;
-    if (infra.persistence) base.persistence = infra.persistence;
-    if (infra.vectorStore) base.vectorStore = infra.vectorStore;
-    if (infra.documentStorage) base.documentStorage = infra.documentStorage;
-    if (infra.embedding) base.embedding = infra.embedding;
-    if (infra.embeddingModel) base.embeddingModel = infra.embeddingModel;
-    if (infra.embeddingDimensions !== undefined)
-      base.embeddingDimensions = infra.embeddingDimensions;
+    result = mergeProfile(result, policy.infrastructure);
   }
 
-  return base;
+  return result;
 }
 
 async function loadProfileFromStore(

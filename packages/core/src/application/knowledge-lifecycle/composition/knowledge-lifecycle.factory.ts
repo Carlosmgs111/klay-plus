@@ -43,8 +43,24 @@ async function resolveLifecycleDependencies(
     "../../../contexts/context-management/lineage/composition/factory"
   );
 
+  // Map typed configs to legacy registry-key strings
+  const {
+    persistenceToProvider,
+    vectorStoreToProvider,
+    documentStorageToProvider,
+    getEmbeddingDimensions: _getDims,
+    getEmbeddingModel: _getModel,
+  } = await import("../../../platform/config/profileHelpers");
+
+  const persistenceProvider = persistenceToProvider(profile.persistence);
+  const embeddingProvider = profile.embedding.type;
+  const vectorStoreProvider = vectorStoreToProvider(profile.vectorStore);
+  const documentStorageProvider = documentStorageToProvider(profile.documentStorage);
+  const embeddingDimensions = _getDims(profile);
+  const embeddingModel = _getModel(profile);
+
   const { infra: lineageInfra } = await lineageFactory({
-    provider: profile.persistence,
+    provider: persistenceProvider,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
   });
@@ -57,22 +73,22 @@ async function resolveLifecycleDependencies(
   });
 
   const processing = await createSemanticProcessingService({
-    provider: profile.persistence,
+    provider: persistenceProvider,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
-    embeddingProvider: profile.embedding,
-    embeddingModel: profile.embeddingModel,
-    embeddingDimensions: profile.embeddingDimensions,
-    vectorStoreProvider: profile.vectorStore,
+    embeddingProvider,
+    embeddingModel,
+    embeddingDimensions,
+    vectorStoreProvider,
     configOverrides: policy.configOverrides,
     configStore: policy.configStore,
   });
 
   const ingestion = await createSourceIngestionService({
-    provider: profile.persistence,
+    provider: persistenceProvider,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
-    documentStorageProvider: profile.documentStorage,
+    documentStorageProvider,
     configOverrides: policy.configOverrides,
     configStore: policy.configStore,
   });

@@ -31,23 +31,39 @@ async function resolveManagementDependencies(
     import("../../../contexts/semantic-processing/service"),
   ]);
 
+  // Map typed configs to legacy registry-key strings
+  const {
+    persistenceToProvider,
+    vectorStoreToProvider,
+    documentStorageToProvider,
+    getEmbeddingDimensions: _getDims,
+    getEmbeddingModel: _getModel,
+  } = await import("../../../platform/config/profileHelpers");
+
+  const persistenceProvider = persistenceToProvider(profile.persistence);
+  const embeddingProvider = profile.embedding.type;
+  const vectorStoreProvider = vectorStoreToProvider(profile.vectorStore);
+  const documentStorageProvider = documentStorageToProvider(profile.documentStorage);
+  const embeddingDimensions = _getDims(profile);
+  const embeddingModel = _getModel(profile);
+
   const [ingestion, processing] = await Promise.all([
     createSourceIngestionService({
-      provider: profile.persistence,
+      provider: persistenceProvider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
-      documentStorageProvider: profile.documentStorage,
+      documentStorageProvider,
       configOverrides: policy.configOverrides,
       configStore: policy.configStore,
     }),
     createSemanticProcessingService({
-      provider: profile.persistence,
+      provider: persistenceProvider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
-      embeddingDimensions: profile.embeddingDimensions,
-      embeddingProvider: profile.embedding,
-      embeddingModel: profile.embeddingModel,
-      vectorStoreProvider: profile.vectorStore,
+      embeddingDimensions,
+      embeddingProvider,
+      embeddingModel,
+      vectorStoreProvider,
       configOverrides: policy.configOverrides,
       configStore: policy.configStore,
     }),

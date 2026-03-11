@@ -1,31 +1,21 @@
+import type { PersistenceConfig } from "./PersistenceConfig";
+import type { VectorStoreConfig } from "./VectorStoreConfig";
+import type { EmbeddingConfig } from "./EmbeddingConfig";
+import type { DocumentStorageConfig } from "./DocumentStorageConfig";
+import type { LLMConfig } from "./LLMConfig";
+
 export interface InfrastructureProfile {
-  persistence: string;
-  vectorStore: string;
-  documentStorage: string;
-  embedding: string;
-  embeddingModel?: string;
-  embeddingDimensions?: number;
+  id: string;
+  name: string;
+  persistence: PersistenceConfig;
+  vectorStore: VectorStoreConfig;
+  embedding: EmbeddingConfig;
+  documentStorage: DocumentStorageConfig;
+  llm?: LLMConfig;
 }
 
-export const DEFAULT_PROFILES: Record<string, InfrastructureProfile> = {
-  "in-memory": {
-    persistence: "in-memory",
-    vectorStore: "in-memory",
-    documentStorage: "in-memory",
-    embedding: "hash",
-    embeddingDimensions: 128,
-  },
-  browser: {
-    persistence: "browser",
-    vectorStore: "browser",
-    documentStorage: "browser",
-    embedding: "hash",
-    embeddingDimensions: 128,
-  },
-  server: {
-    persistence: "server",
-    vectorStore: "server",
-    documentStorage: "server",
-    embedding: "hash",
-  },
-};
+/**
+ * @deprecated Use `PRESET_PROFILES` from `./presets` instead.
+ * Kept for backward compatibility during migration.
+ */
+export { PRESET_PROFILES as DEFAULT_PROFILES } from "./presets";

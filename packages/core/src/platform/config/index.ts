@@ -3,8 +3,6 @@ export { ConfigurationError } from "./ConfigurationError";
 
 export type { ConfigStore } from "./ConfigStore";
 export { InMemoryConfigStore } from "./InMemoryConfigStore";
-export { IndexedDBConfigStore } from "./IndexedDBConfigStore";
-export { NeDBConfigStore } from "./NeDBConfigStore";
 
 export { AstroConfigProvider } from "./AstroConfigProvider";
 export { NodeConfigProvider } from "./NodeConfigProvider";
@@ -14,7 +12,22 @@ export { resolveConfigProvider } from "./resolveConfigProvider";
 export type { ConfigResolutionPolicy } from "./resolveConfigProvider";
 
 export type { InfrastructureProfile } from "./InfrastructureProfile";
+export type { PersistenceConfig } from "./PersistenceConfig";
+export type { VectorStoreConfig } from "./VectorStoreConfig";
+export type { EmbeddingConfig, EmbeddingFingerprint } from "./EmbeddingConfig";
+export type { DocumentStorageConfig } from "./DocumentStorageConfig";
+export type { LLMConfig } from "./LLMConfig";
+export type { NetworkConnection } from "./ConnectionConfig";
 export { DEFAULT_PROFILES } from "./InfrastructureProfile";
+export { PRESET_PROFILES } from "./presets";
+
+export {
+  persistenceToProvider,
+  vectorStoreToProvider,
+  documentStorageToProvider,
+  getEmbeddingDimensions,
+  getEmbeddingModel,
+} from "./profileHelpers";
 
 export {
   resolveInfrastructureProfile,

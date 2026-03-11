@@ -286,8 +286,13 @@ export function getProfileRequirements(
   const result: ProviderRequirement[] = [];
 
   for (const axis of axes) {
-    const providerId = profile[axis];
-    if (!providerId) continue;
+    const config = profile[axis];
+    if (!config) continue;
+
+    // Typed config: extract the `type` discriminant as provider ID
+    const providerId = typeof config === "object" && "type" in config
+      ? (config as { type: string }).type
+      : String(config);
 
     const meta = PROVIDER_REGISTRY.find(
       (p) => p.axis === axis && p.id === providerId,

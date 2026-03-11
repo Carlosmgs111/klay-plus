@@ -94,20 +94,33 @@ export function SettingsPage() {
 
   const handleProfileChange = (axis: InfrastructureAxis, value: string) => {
     if (!localProfile) return;
-    const updated = { ...localProfile, [axis]: value };
 
-    // When embedding provider changes, auto-select default model + dimensions
-    if (axis === "embedding") {
+    // Build a typed config object from the selected provider ID
+    let axisConfig: any;
+    if (axis === "persistence") {
+      axisConfig = { type: value };
+    } else if (axis === "vectorStore") {
+      // Preserve dimensions from current config
+      const currentDims = "dimensions" in localProfile.vectorStore
+        ? (localProfile.vectorStore as any).dimensions
+        : 128;
+      axisConfig = { type: value, dimensions: currentDims };
+    } else if (axis === "embedding") {
       const defaultModel = getDefaultModel(value);
       if (defaultModel) {
-        updated.embeddingModel = defaultModel.id;
-        updated.embeddingDimensions = defaultModel.dimensions;
+        axisConfig = { type: value, model: defaultModel.id, dimensions: defaultModel.dimensions };
       } else {
-        updated.embeddingModel = undefined;
-        updated.embeddingDimensions = undefined;
+        axisConfig = { type: value };
       }
+    } else if (axis === "documentStorage") {
+      axisConfig = value === "local"
+        ? { type: value, basePath: "./data/uploads" }
+        : { type: value };
+    } else {
+      axisConfig = { type: value };
     }
 
+    const updated = { ...localProfile, [axis]: axisConfig };
     setLocalProfile(updated);
   };
 
@@ -156,7 +169,7 @@ export function SettingsPage() {
   ];
 
   const embeddingModels = localProfile
-    ? getModelsForProvider(localProfile.embedding)
+    ? getModelsForProvider(localProfile.embedding.type)
     : [];
 
   return (
@@ -290,7 +303,7 @@ export function SettingsPage() {
                       {label}
                     </label>
                     <select
-                      value={localProfile[axis]}
+                      value={(localProfile[axis] as { type: string }).type}
                       onChange={(e) => handleProfileChange(axis, e.target.value)}
                       className="w-full rounded-lg border border-default bg-surface-2 px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none"
                     >

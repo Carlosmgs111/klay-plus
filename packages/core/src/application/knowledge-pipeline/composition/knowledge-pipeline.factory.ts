@@ -33,24 +33,40 @@ export async function resolvePipelineDependencies(
     import("../../../contexts/semantic-processing/service"),
   ]);
 
+  // Map typed configs to legacy registry-key strings
+  const {
+    persistenceToProvider,
+    vectorStoreToProvider,
+    documentStorageToProvider,
+    getEmbeddingDimensions: _getDims,
+    getEmbeddingModel: _getModel,
+  } = await import("../../../platform/config/profileHelpers");
+
+  const persistenceProvider = persistenceToProvider(profile.persistence);
+  const embeddingProvider = profile.embedding.type;
+  const vectorStoreProvider = vectorStoreToProvider(profile.vectorStore);
+  const documentStorageProvider = documentStorageToProvider(profile.documentStorage);
+  const embeddingDimensions = _getDims(profile);
+  const embeddingModel = _getModel(profile);
+
   const [ingestion, processing] = await Promise.all([
     createSourceIngestionService({
-      provider: profile.persistence,
+      provider: persistenceProvider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
-      documentStorageProvider: profile.documentStorage,
+      documentStorageProvider,
       configOverrides: policy.configOverrides,
       configStore: policy.configStore,
     }),
     createSemanticProcessingService({
-      provider: profile.persistence,
+      provider: persistenceProvider,
       dbPath: policy.dbPath,
       dbName: policy.dbName,
-      embeddingDimensions: profile.embeddingDimensions,
+      embeddingDimensions,
       defaultChunkingStrategy: policy.defaultChunkingStrategy,
-      embeddingProvider: profile.embedding,
-      embeddingModel: profile.embeddingModel,
-      vectorStoreProvider: profile.vectorStore,
+      embeddingProvider,
+      embeddingModel,
+      vectorStoreProvider,
       configOverrides: policy.configOverrides,
       configStore: policy.configStore,
     }),
@@ -61,7 +77,7 @@ export async function resolvePipelineDependencies(
     "../../../contexts/source-knowledge/composition/factory"
   );
 
-  const sourceKnowledgeInfra = await createSourceKnowledgeInfra(policy, profile.persistence);
+  const sourceKnowledgeInfra = await createSourceKnowledgeInfra(policy, persistenceProvider);
   const { service: sourceKnowledge } = createSourceKnowledgeContext(sourceKnowledgeInfra);
 
   // ── Context-management context ───────────────────────────────────
@@ -69,7 +85,7 @@ export async function resolvePipelineDependencies(
     "../../../contexts/context-management/composition/factory"
   );
 
-  const contextManagementInfra = await createContextManagementInfra(policy, profile.persistence);
+  const contextManagementInfra = await createContextManagementInfra(policy, persistenceProvider);
   const { service: contextManagement } = createContextManagementContext(contextManagementInfra);
 
   // ── Knowledge retrieval context ──────────────────────────────────
@@ -78,17 +94,17 @@ export async function resolvePipelineDependencies(
   );
 
   const retrieval = await createKnowledgeRetrievalService({
-    provider: profile.persistence,
+    provider: persistenceProvider,
     vectorStoreConfig: processing.vectorStoreConfig,
-    embeddingDimensions: profile.embeddingDimensions,
-    embeddingProvider: profile.embedding,
-    embeddingModel: profile.embeddingModel,
-    vectorStoreProvider: profile.vectorStore,
+    embeddingDimensions,
+    embeddingProvider,
+    embeddingModel,
+    vectorStoreProvider,
     configOverrides: policy.configOverrides,
     configStore: policy.configStore,
   });
 
-  const manifestRepository = await createManifestRepository(policy, profile.persistence);
+  const manifestRepository = await createManifestRepository(policy, persistenceProvider);
 
   return {
     ingestion,
