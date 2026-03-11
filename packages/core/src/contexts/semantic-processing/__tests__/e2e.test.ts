@@ -33,9 +33,9 @@ describe("Semantic Processing Context E2E", () => {
     const createProfileResult = await service.createProcessingProfile({
       id: profileId,
       name: "Default Test Profile",
-      chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash-embedding",
-      configuration: { embeddingDimensions: 128 },
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
 
     expect(createProfileResult.isOk()).toBe(true);
@@ -146,8 +146,9 @@ There are three main types of machine learning:
     const createResult = await service.createProcessingProfile({
       id: profileId,
       name: "Lifecycle Test Profile",
-      chunkingStrategyId: "sentence",
-      embeddingStrategyId: "hash-embedding",
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "sentence", config: {} },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
     expect(createResult.isOk()).toBe(true);
 
@@ -155,7 +156,7 @@ There are three main types of machine learning:
     const updateResult = await service.updateProcessingProfile({
       id: profileId,
       name: "Updated Lifecycle Profile",
-      chunkingStrategyId: "fixed-size",
+      fragmentation: { strategyId: "fixed-size", config: {} },
     });
     expect(updateResult.isOk()).toBe(true);
     if (updateResult.isOk()) {
@@ -183,8 +184,9 @@ There are three main types of machine learning:
     const duplicateResult = await service.createProcessingProfile({
       id: profileId,
       name: "Duplicate Profile",
-      chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash-embedding",
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
     expect(duplicateResult.isFail()).toBe(true);
   });
@@ -200,24 +202,27 @@ There are three main types of machine learning:
     await service.createProcessingProfile({
       id: id1,
       name: "Profile A",
-      chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash-embedding",
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
 
     const id2 = crypto.randomUUID();
     await service.createProcessingProfile({
       id: id2,
       name: "Profile B",
-      chunkingStrategyId: "sentence",
-      embeddingStrategyId: "hash-embedding",
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "sentence", config: {} },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
 
     const id3 = crypto.randomUUID();
     await service.createProcessingProfile({
       id: id3,
       name: "Profile C",
-      chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash-embedding",
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
 
     // Deprecate profile A

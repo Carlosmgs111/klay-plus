@@ -51,9 +51,9 @@ describe("Knowledge Management Orchestrator — E2E", () => {
     const profileResult = await pipeline.createProcessingProfile({
       id: profileId,
       name: "Management Test Profile",
-      chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash-embedding",
-      configuration: { embeddingDimensions: 128 },
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
     expect(profileResult.isOk()).toBe(true);
   });

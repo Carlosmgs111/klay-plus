@@ -58,8 +58,9 @@ async function _createAdapters(): Promise<ServerAdapters> {
   await platform.pipeline.createProcessingProfile({
     id: "default",
     name: "Default",
-    chunkingStrategyId: "recursive",
-    embeddingStrategyId: "hash-embedding",
+    preparation: { strategyId: "basic", config: {} },
+    fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+    projection: { strategyId: "hash-embedding", config: {} },
   });
 
   return {

@@ -47,9 +47,9 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
     const profileResult = await pipeline.createProcessingProfile({
       id: profileId,
       name: "Test Profile",
-      chunkingStrategyId: "recursive",
-      embeddingStrategyId: "hash-embedding",
-      configuration: { embeddingDimensions: 128 },
+      preparation: { strategyId: "basic", config: {} },
+      fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+      projection: { strategyId: "hash-embedding", config: {} },
     });
     expect(profileResult.isOk()).toBe(true);
   });
@@ -503,9 +503,9 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
       const result = await pipeline.createProcessingProfile({
         id: "profile-custom-001",
         name: "Custom Profile",
-        chunkingStrategyId: "sentence",
-        embeddingStrategyId: "hash-embedding",
-        configuration: { embeddingDimensions: 256 },
+        preparation: { strategyId: "basic", config: {} },
+        fragmentation: { strategyId: "sentence", config: {} },
+        projection: { strategyId: "hash-embedding", config: {} },
       });
 
       expect(result.isOk()).toBe(true);
@@ -519,8 +519,9 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
       const result = await pipeline.createProcessingProfile({
         id: profileId,
         name: "Duplicate",
-        chunkingStrategyId: "recursive",
-        embeddingStrategyId: "hash-embedding",
+        preparation: { strategyId: "basic", config: {} },
+        fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
+        projection: { strategyId: "hash-embedding", config: {} },
       });
 
       expect(result.isFail()).toBe(true);
@@ -535,7 +536,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
         const profile = result.value.profiles.find((p) => p.id === "profile-custom-001");
         expect(profile).toBeDefined();
         expect(profile!.name).toBe("Custom Profile");
-        expect(profile!.chunkingStrategyId).toBe("sentence");
+        expect(profile!.fragmentation.strategyId).toBe("sentence");
         expect(profile!.status).toBe("ACTIVE");
         expect(profile!.createdAt).toBeTruthy();
       }
@@ -545,7 +546,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
       const result = await pipeline.updateProfile({
         id: "profile-custom-001",
         name: "Updated Custom Profile",
-        chunkingStrategyId: "recursive",
+        fragmentation: { strategyId: "recursive", config: { strategy: "recursive" } },
       });
 
       expect(result.isOk()).toBe(true);
