@@ -116,9 +116,9 @@ export interface CatalogDocumentSuccess {
 export interface CreateProcessingProfileInput {
   id: string;
   name: string;
-  chunkingStrategyId: string;
-  embeddingStrategyId: string;
-  configuration?: Record<string, unknown>;
+  preparation: { strategyId: string; config: Record<string, unknown> };
+  fragmentation: { strategyId: string; config: Record<string, unknown> };
+  projection: { strategyId: string; config: Record<string, unknown> };
 }
 
 export interface CreateProcessingProfileSuccess {
@@ -150,9 +150,9 @@ export interface ListProfilesResult {
     id: string;
     name: string;
     version: number;
-    chunkingStrategyId: string;
-    embeddingStrategyId: string;
-    configuration: Record<string, unknown>;
+    preparation: { strategyId: string; config: Record<string, unknown> };
+    fragmentation: { strategyId: string; config: Record<string, unknown> };
+    projection: { strategyId: string; config: Record<string, unknown> };
     status: string;
     createdAt: string;
   }>;
@@ -161,9 +161,9 @@ export interface ListProfilesResult {
 export interface UpdateProfileInput {
   id: string;
   name?: string;
-  chunkingStrategyId?: string;
-  embeddingStrategyId?: string;
-  configuration?: Record<string, unknown>;
+  preparation?: { strategyId: string; config: Record<string, unknown> };
+  fragmentation?: { strategyId: string; config: Record<string, unknown> };
+  projection?: { strategyId: string; config: Record<string, unknown> };
 }
 
 export interface UpdateProfileResult {
