@@ -66,8 +66,8 @@ export default function UnitProjectionsPage() {
     for (const p of profiles) {
       // Use the embedding strategy as the key since model in manifests
       // corresponds to the embedding model/strategy used
-      if (p.embeddingStrategyId) {
-        map.set(p.embeddingStrategyId, p.name);
+      if (p.projection?.strategyId) {
+        map.set(p.projection.strategyId, p.name);
       }
     }
     return map;

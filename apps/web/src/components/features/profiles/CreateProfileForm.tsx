@@ -7,7 +7,7 @@ import { Select } from "../../shared/Select";
 import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { LoadingButton } from "../../shared/LoadingButton";
-import { CHUNKING_STRATEGIES, getEmbeddingStrategyOptions, getRequirementsForStrategy } from "../../../constants/processingStrategies";
+import { FRAGMENTATION_STRATEGIES, getEmbeddingStrategyOptions, getRequirementsForStrategy } from "../../../constants/processingStrategies";
 import type { CreateProcessingProfileInput } from "@klay/core";
 import type { RuntimeEnvironment } from "@klay/core/config";
 
@@ -21,12 +21,12 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
   const runtime: RuntimeEnvironment = mode === "browser" ? "browser" : "server";
   const embeddingStrategies = useMemo(() => getEmbeddingStrategyOptions(runtime), [runtime]);
   const [name, setName] = useState("");
-  const [chunkingStrategyId, setChunkingStrategyId] = useState("recursive");
-  const [embeddingStrategyId, setEmbeddingStrategyId] = useState("hash-embedding");
+  const [fragmentationStrategyId, setFragmentationStrategyId] = useState("recursive");
+  const [projectionStrategyId, setProjectionStrategyId] = useState("hash-embedding");
   const [missingKeys, setMissingKeys] = useState<string[]>([]);
 
   useEffect(() => {
-    const requirements = getRequirementsForStrategy(embeddingStrategyId);
+    const requirements = getRequirementsForStrategy(projectionStrategyId);
     if (requirements.length === 0 || !configStore) {
       setMissingKeys([]);
       return;
@@ -37,7 +37,7 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
         return has ? null : req.label;
       }),
     ).then((results) => setMissingKeys(results.filter((r): r is string => r !== null)));
-  }, [embeddingStrategyId, configStore]);
+  }, [projectionStrategyId, configStore]);
 
   const createProfile = useCallback(
     (input: CreateProcessingProfileInput) => service!.createProcessingProfile(input),
@@ -50,11 +50,21 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
     e.preventDefault();
     if (!service) return;
 
+    const fragmentationStrategy = FRAGMENTATION_STRATEGIES.find((s) => s.value === fragmentationStrategyId);
+    const projectionStrategy = embeddingStrategies.find((s) => s.value === projectionStrategyId);
+
     const result = await execute({
       id: crypto.randomUUID(),
       name,
-      chunkingStrategyId,
-      embeddingStrategyId,
+      preparation: { strategyId: "none", config: {} },
+      fragmentation: {
+        strategyId: fragmentationStrategyId,
+        config: fragmentationStrategy ? { ...fragmentationStrategy.defaultConfig } : { strategy: fragmentationStrategyId },
+      },
+      projection: {
+        strategyId: projectionStrategyId,
+        config: projectionStrategy?.defaultConfig ? { ...projectionStrategy.defaultConfig } : {},
+      },
     });
 
     if (result) {
@@ -75,16 +85,16 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
       />
       <div className="grid grid-cols-2 gap-4">
         <Select
-          label="Chunking Strategy"
-          options={CHUNKING_STRATEGIES}
-          value={chunkingStrategyId}
-          onChange={(e) => setChunkingStrategyId(e.target.value)}
+          label="Fragmentation Strategy"
+          options={FRAGMENTATION_STRATEGIES}
+          value={fragmentationStrategyId}
+          onChange={(e) => setFragmentationStrategyId(e.target.value)}
         />
         <Select
           label="Embedding Strategy"
           options={embeddingStrategies}
-          value={embeddingStrategyId}
-          onChange={(e) => setEmbeddingStrategyId(e.target.value)}
+          value={projectionStrategyId}
+          onChange={(e) => setProjectionStrategyId(e.target.value)}
         />
       </div>
 

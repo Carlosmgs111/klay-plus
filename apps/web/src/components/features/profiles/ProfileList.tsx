@@ -84,20 +84,20 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       ),
     },
     {
-      key: "chunkingStrategyId",
-      header: "Chunking",
+      key: "fragmentation",
+      header: "Fragmentation",
       render: (row: ProfileEntry) => (
         <span className="text-xs font-mono text-secondary">
-          {row.chunkingStrategyId}
+          {row.fragmentation.strategyId}
         </span>
       ),
     },
     {
-      key: "embeddingStrategyId",
+      key: "projection",
       header: "Embedding",
       render: (row: ProfileEntry) => (
         <span className="text-xs font-mono text-secondary">
-          {row.embeddingStrategyId}
+          {row.projection.strategyId}
         </span>
       ),
     },

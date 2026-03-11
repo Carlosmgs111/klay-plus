@@ -8,7 +8,7 @@ import { Select } from "../../shared/Select";
 import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { LoadingButton } from "../../shared/LoadingButton";
-import { CHUNKING_STRATEGIES, getEmbeddingStrategyOptions, getRequirementsForStrategy } from "../../../constants/processingStrategies";
+import { FRAGMENTATION_STRATEGIES, getEmbeddingStrategyOptions, getRequirementsForStrategy } from "../../../constants/processingStrategies";
 import type { UpdateProfileInput, ListProfilesResult } from "@klay/core";
 import type { RuntimeEnvironment } from "@klay/core/config";
 
@@ -26,8 +26,8 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
   const runtime: RuntimeEnvironment = mode === "browser" ? "browser" : "server";
   const embeddingStrategies = useMemo(() => getEmbeddingStrategyOptions(runtime), [runtime]);
   const [name, setName] = useState(profile.name);
-  const [chunkingStrategyId, setChunkingStrategyId] = useState(profile.chunkingStrategyId);
-  const [embeddingStrategyId, setEmbeddingStrategyId] = useState(profile.embeddingStrategyId);
+  const [chunkingStrategyId, setChunkingStrategyId] = useState(profile.fragmentation.strategyId);
+  const [embeddingStrategyId, setEmbeddingStrategyId] = useState(profile.projection.strategyId);
   const [missingKeys, setMissingKeys] = useState<string[]>([]);
 
   useEffect(() => {
@@ -44,6 +44,9 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
     ).then((results) => setMissingKeys(results.filter((r): r is string => r !== null)));
   }, [embeddingStrategyId, configStore]);
 
+  // Note: chunkingStrategyId/embeddingStrategyId are local aliases for
+  // fragmentation.strategyId and projection.strategyId respectively.
+
   const updateAction = useCallback(
     (input: UpdateProfileInput) => service!.updateProfile(input),
     [service],
@@ -58,8 +61,12 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
     const input: UpdateProfileInput = {
       id: profile.id,
       ...(name !== profile.name && { name }),
-      ...(chunkingStrategyId !== profile.chunkingStrategyId && { chunkingStrategyId }),
-      ...(embeddingStrategyId !== profile.embeddingStrategyId && { embeddingStrategyId }),
+      ...(chunkingStrategyId !== profile.fragmentation.strategyId && {
+        fragmentation: { strategyId: chunkingStrategyId, config: profile.fragmentation.config },
+      }),
+      ...(embeddingStrategyId !== profile.projection.strategyId && {
+        projection: { strategyId: embeddingStrategyId, config: profile.projection.config },
+      }),
     };
 
     const result = await execute(input);
@@ -80,8 +87,8 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
       />
       <div className="grid grid-cols-2 gap-4">
         <Select
-          label="Chunking Strategy"
-          options={CHUNKING_STRATEGIES}
+          label="Fragmentation Strategy"
+          options={FRAGMENTATION_STRATEGIES}
           value={chunkingStrategyId}
           onChange={(e) => setChunkingStrategyId(e.target.value)}
         />
