@@ -1,17 +1,17 @@
 import { BaseChunker } from "./BaseChunker";
 
 export class RecursiveChunker extends BaseChunker {
-  readonly strategyId = "recursive-chunker";
+  readonly strategyId = "recursive";
   readonly version = 1;
 
   private readonly separators = ["\n\n", "\n", ". ", " "];
 
   constructor(
-    private readonly maxChunkSize: number = 1000,
+    private readonly chunkSize: number = 1000,
     private readonly overlap: number = 100,
   ) {
     super();
-    if (maxChunkSize <= 0) throw new Error("maxChunkSize must be positive");
+    if (chunkSize <= 0) throw new Error("chunkSize must be positive");
     if (overlap < 0) throw new Error("overlap must be non-negative");
   }
 
@@ -20,14 +20,14 @@ export class RecursiveChunker extends BaseChunker {
   }
 
   private recursiveSplit(text: string, separatorIndex: number): string[] {
-    if (text.length <= this.maxChunkSize) return [text];
+    if (text.length <= this.chunkSize) return [text];
 
     if (separatorIndex >= this.separators.length) {
       const chunks: string[] = [];
-      const step = this.maxChunkSize - this.overlap;
+      const step = this.chunkSize - this.overlap;
       for (let i = 0; i < text.length; i += step) {
-        chunks.push(text.slice(i, i + this.maxChunkSize));
-        if (i + this.maxChunkSize >= text.length) break;
+        chunks.push(text.slice(i, i + this.chunkSize));
+        if (i + this.chunkSize >= text.length) break;
       }
       return chunks;
     }
@@ -44,7 +44,7 @@ export class RecursiveChunker extends BaseChunker {
 
     for (const part of parts) {
       const candidate = current ? current + separator + part : part;
-      if (candidate.length > this.maxChunkSize && current.length > 0) {
+      if (candidate.length > this.chunkSize && current.length > 0) {
         chunks.push(current);
         current = part;
       } else {
@@ -54,7 +54,7 @@ export class RecursiveChunker extends BaseChunker {
     if (current) chunks.push(current);
 
     return chunks.flatMap((chunk) =>
-      chunk.length > this.maxChunkSize
+      chunk.length > this.chunkSize
         ? this.recursiveSplit(chunk, separatorIndex + 1)
         : [chunk],
     );

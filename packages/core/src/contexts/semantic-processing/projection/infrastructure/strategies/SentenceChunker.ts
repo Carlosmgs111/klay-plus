@@ -1,7 +1,7 @@
 import { BaseChunker } from "./BaseChunker";
 
 export class SentenceChunker extends BaseChunker {
-  readonly strategyId = "sentence-chunker";
+  readonly strategyId = "sentence";
   readonly version = 1;
 
   constructor(

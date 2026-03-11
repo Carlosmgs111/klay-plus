@@ -1,7 +1,7 @@
 import { BaseChunker } from "./BaseChunker";
 
 export class FixedSizeChunker extends BaseChunker {
-  readonly strategyId = "fixed-size-chunker";
+  readonly strategyId = "fixed-size";
   readonly version = 1;
 
   constructor(
