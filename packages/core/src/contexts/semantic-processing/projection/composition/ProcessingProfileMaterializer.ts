@@ -1,12 +1,23 @@
 import type { ProcessingProfile } from "../../processing-profile/domain/ProcessingProfile";
+import type { PreparationLayer } from "../../processing-profile/domain/value-objects/PreparationLayer";
+import type { FragmentationLayer, FragmentationConfig } from "../../processing-profile/domain/value-objects/FragmentationLayer";
+import type { ProjectionLayer } from "../../processing-profile/domain/value-objects/ProjectionLayer";
+import type { PreparationStrategy } from "../domain/ports/PreparationStrategy";
 import type { EmbeddingStrategy } from "../domain/ports/EmbeddingStrategy";
 import type { ChunkingStrategy } from "../domain/ports/ChunkingStrategy";
 import type { ProjectionInfrastructurePolicy } from "./factory";
+
+import { NoOpPreparationStrategy } from "../infrastructure/strategies/NoOpPreparationStrategy";
+import { BasicPreparationStrategy } from "../infrastructure/strategies/BasicPreparationStrategy";
+import { RecursiveChunker } from "../infrastructure/strategies/RecursiveChunker";
+import { SentenceChunker } from "../infrastructure/strategies/SentenceChunker";
+import { FixedSizeChunker } from "../infrastructure/strategies/FixedSizeChunker";
 
 /**
  * Materialized strategies resolved from a ProcessingProfile.
  */
 export interface MaterializedStrategies {
+  preparationStrategy: PreparationStrategy;
   embeddingStrategy: EmbeddingStrategy;
   chunkingStrategy: ChunkingStrategy;
 }
@@ -32,26 +43,33 @@ export class ProcessingProfileMaterializer {
   ) {}
 
   /**
-   * Materializes a ProcessingProfile into concrete EmbeddingStrategy + ChunkingStrategy.
+   * Materializes a ProcessingProfile into concrete strategies for all 3 layers:
+   * Preparation, Fragmentation (chunking), and Projection (embedding).
    */
   async materialize(profile: ProcessingProfile): Promise<MaterializedStrategies> {
-    const [embeddingStrategy, chunkingStrategy] = await Promise.all([
-      this.resolveEmbeddingStrategy(profile),
-      this.resolveChunkingStrategy(profile),
-    ]);
+    const preparationStrategy = this.resolvePreparationStrategy(profile.preparation);
+    const embeddingStrategy = await this.resolveEmbeddingStrategy(profile.projection);
+    const chunkingStrategy = this.resolveChunkingStrategy(profile.fragmentation);
+    return { preparationStrategy, embeddingStrategy, chunkingStrategy };
+  }
 
-    return { embeddingStrategy, chunkingStrategy };
+  private resolvePreparationStrategy(layer: PreparationLayer): PreparationStrategy {
+    if (layer.strategyId === "none") {
+      return new NoOpPreparationStrategy();
+    }
+    return new BasicPreparationStrategy(
+      layer.config as { normalizeWhitespace: boolean; normalizeEncoding: boolean; trimContent: boolean },
+    );
   }
 
   private async resolveEmbeddingStrategy(
-    profile: ProcessingProfile,
+    layer: ProjectionLayer,
   ): Promise<EmbeddingStrategy> {
-    const embeddingId = profile.embeddingStrategyId;
-    const config = profile.configuration;
+    const embeddingId = layer.strategyId;
 
     // Check if it's an AI SDK provider
     if (this.isAIProvider(embeddingId)) {
-      return this.resolveAIEmbeddingStrategy(embeddingId, config);
+      return this.resolveAIEmbeddingStrategy(embeddingId);
     }
 
     // WebLLM
@@ -59,7 +77,7 @@ export class ProcessingProfileMaterializer {
       const { WebLLMEmbeddingStrategy } = await import(
         "../infrastructure/strategies/WebLLMEmbeddingStrategy"
       );
-      const modelId = (config.webLLMModelId as string) ?? this.policy.webLLMModelId;
+      const modelId = this.policy.webLLMModelId;
       const strategy = new WebLLMEmbeddingStrategy(modelId);
       await strategy.initialize();
       return strategy;
@@ -69,7 +87,7 @@ export class ProcessingProfileMaterializer {
     const { HashEmbeddingStrategy } = await import(
       "../infrastructure/strategies/HashEmbeddingStrategy"
     );
-    const dimensions = (config.embeddingDimensions as number)
+    const dimensions = layer.config.dimensions
       ?? this.policy.embeddingDimensions
       ?? 128;
     return new HashEmbeddingStrategy(dimensions);
@@ -81,7 +99,6 @@ export class ProcessingProfileMaterializer {
 
   private async resolveAIEmbeddingStrategy(
     embeddingId: string,
-    config: Readonly<Record<string, unknown>>,
   ): Promise<EmbeddingStrategy> {
     const { AISdkEmbeddingStrategy } = await import(
       "../infrastructure/strategies/AISdkEmbeddingStrategy"
@@ -119,14 +136,17 @@ export class ProcessingProfileMaterializer {
     throw new Error(`Unknown AI embedding provider in strategyId: ${embeddingId}`);
   }
 
-  private async resolveChunkingStrategy(
-    profile: ProcessingProfile,
-  ): Promise<ChunkingStrategy> {
-    // Register default chunking strategies (side-effect import)
-    await import("../infrastructure/strategies");
-    const { ChunkerFactory } = await import(
-      "../infrastructure/strategies/ChunkerFactory"
-    );
-    return ChunkerFactory.create(profile.chunkingStrategyId);
+  private resolveChunkingStrategy(layer: FragmentationLayer): ChunkingStrategy {
+    const config: FragmentationConfig = layer.config;
+    switch (config.strategy) {
+      case "recursive":
+        return new RecursiveChunker(config.chunkSize, config.overlap);
+      case "sentence":
+        return new SentenceChunker(config.maxChunkSize, config.minChunkSize);
+      case "fixed-size":
+        return new FixedSizeChunker(config.chunkSize, config.overlap);
+      default:
+        throw new Error(`Unknown fragmentation strategy: ${(config as any).strategy}`);
+    }
   }
 }
