@@ -211,9 +211,9 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     const result = await this._processing.createProcessingProfile({
       id: input.id,
       name: input.name,
-      chunkingStrategyId: input.chunkingStrategyId,
-      embeddingStrategyId: input.embeddingStrategyId,
-      configuration: input.configuration,
+      preparation: input.preparation,
+      fragmentation: input.fragmentation,
+      projection: input.projection,
     });
 
     if (result.isFail()) {
@@ -236,9 +236,9 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
           id: p.id.value,
           name: p.name,
           version: p.version,
-          chunkingStrategyId: p.chunkingStrategyId,
-          embeddingStrategyId: p.embeddingStrategyId,
-          configuration: { ...p.configuration },
+          preparation: p.preparation.toDTO(),
+          fragmentation: p.fragmentation.toDTO(),
+          projection: p.projection.toDTO(),
           status: p.status,
           createdAt: p.createdAt.toISOString(),
         })),
@@ -256,9 +256,9 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     const result = await this._processing.updateProcessingProfile({
       id: input.id,
       name: input.name,
-      chunkingStrategyId: input.chunkingStrategyId,
-      embeddingStrategyId: input.embeddingStrategyId,
-      configuration: input.configuration,
+      preparation: input.preparation,
+      fragmentation: input.fragmentation,
+      projection: input.projection,
     });
 
     if (result.isFail()) {
