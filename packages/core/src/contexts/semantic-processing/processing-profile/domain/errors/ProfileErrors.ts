@@ -12,15 +12,21 @@ export class ProfileNameRequiredError extends ValidationError {
   }
 }
 
-export class ProfileChunkingStrategyRequiredError extends ValidationError {
+export class PreparationStrategyRequiredError extends ValidationError {
   constructor() {
-    super("ProcessingProfile", "chunkingStrategyId", "is required");
+    super("ProcessingProfile", "preparation", "Preparation layer is required");
   }
 }
 
-export class ProfileEmbeddingStrategyRequiredError extends ValidationError {
+export class FragmentationStrategyRequiredError extends ValidationError {
   constructor() {
-    super("ProcessingProfile", "embeddingStrategyId", "is required");
+    super("ProcessingProfile", "fragmentation", "Fragmentation layer is required");
+  }
+}
+
+export class ProjectionStrategyRequiredError extends ValidationError {
+  constructor() {
+    super("ProcessingProfile", "projection", "Projection layer is required");
   }
 }
 
@@ -50,8 +56,9 @@ export class ProfileAlreadyDeprecatedError extends InvalidStateError {
 
 export type ProfileError =
   | ProfileNameRequiredError
-  | ProfileChunkingStrategyRequiredError
-  | ProfileEmbeddingStrategyRequiredError
+  | PreparationStrategyRequiredError
+  | FragmentationStrategyRequiredError
+  | ProjectionStrategyRequiredError
   | ProfileAlreadyExistsError
   | ProfileNotFoundError
   | ProfileDeprecatedError

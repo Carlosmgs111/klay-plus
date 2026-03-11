@@ -21,8 +21,9 @@ export {
   ProfileUpdated,
   ProfileDeprecated,
   ProfileNameRequiredError,
-  ProfileChunkingStrategyRequiredError,
-  ProfileEmbeddingStrategyRequiredError,
+  PreparationStrategyRequiredError,
+  FragmentationStrategyRequiredError,
+  ProjectionStrategyRequiredError,
   ProfileAlreadyExistsError,
   ProfileNotFoundError,
   ProfileDeprecatedError,
@@ -33,6 +34,8 @@ export type {
   ProcessingProfileRepository,
   ProfileError,
 } from "./domain";
+
+export * from "./domain/value-objects";
 
 export {
   processingProfileFactory,

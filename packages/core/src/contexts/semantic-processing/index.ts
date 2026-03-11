@@ -77,12 +77,17 @@ export {
   ProfileDeprecated,
   // Domain Errors
   ProfileNameRequiredError,
-  ProfileChunkingStrategyRequiredError,
-  ProfileEmbeddingStrategyRequiredError,
+  PreparationStrategyRequiredError,
+  FragmentationStrategyRequiredError,
+  ProjectionStrategyRequiredError,
   ProfileAlreadyExistsError,
   ProfileNotFoundError,
   ProfileDeprecatedError,
   ProfileAlreadyDeprecatedError,
+  // Value Objects
+  PreparationLayer,
+  FragmentationLayer,
+  ProjectionLayer,
 } from "./processing-profile";
 
 export type {
@@ -91,6 +96,12 @@ export type {
   ProcessingProfileInfrastructurePolicy,
   ResolvedProcessingProfileInfra,
   ProcessingProfileFactoryResult,
+  FragmentationConfig,
+  RecursiveConfig,
+  SentenceConfig,
+  FixedSizeConfig,
+  FragmentationStrategyId,
+  ProjectionConfig,
 } from "./processing-profile";
 
 // Service (Context-Level)

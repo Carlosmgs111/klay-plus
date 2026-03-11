@@ -9,8 +9,9 @@ export { ProfileDeprecated } from "./events/ProfileDeprecated";
 
 export {
   ProfileNameRequiredError,
-  ProfileChunkingStrategyRequiredError,
-  ProfileEmbeddingStrategyRequiredError,
+  PreparationStrategyRequiredError,
+  FragmentationStrategyRequiredError,
+  ProjectionStrategyRequiredError,
   ProfileAlreadyExistsError,
   ProfileNotFoundError,
   ProfileDeprecatedError,

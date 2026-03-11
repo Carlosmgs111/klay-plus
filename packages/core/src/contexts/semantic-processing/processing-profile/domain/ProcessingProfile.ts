@@ -4,6 +4,15 @@ import { ProfileStatus } from "./ProfileStatus";
 import { ProfileCreated } from "./events/ProfileCreated";
 import { ProfileUpdated } from "./events/ProfileUpdated";
 import { ProfileDeprecated } from "./events/ProfileDeprecated";
+import { PreparationLayer, FragmentationLayer, ProjectionLayer } from "./value-objects";
+import {
+  ProfileNameRequiredError,
+  PreparationStrategyRequiredError,
+  FragmentationStrategyRequiredError,
+  ProjectionStrategyRequiredError,
+  ProfileDeprecatedError,
+  ProfileAlreadyDeprecatedError,
+} from "./errors";
 
 /**
  * ProcessingProfile — Aggregate Root
@@ -19,16 +28,16 @@ import { ProfileDeprecated } from "./events/ProfileDeprecated";
  * - Emits domain events (ProfileCreated, ProfileUpdated, ProfileDeprecated)
  * - Does NOT instantiate concrete strategies — only declares intent
  *
- * The chunkingStrategyId and embeddingStrategyId are declarative identifiers
- * (e.g., "recursive", "hash-embedding") that the composition layer materializes
- * into concrete implementations at runtime.
+ * The three layers (Preparation, Fragmentation, Projection) are Value Objects
+ * that declare which strategies and configuration to use. The composition layer
+ * materializes them into concrete implementations at runtime.
  */
 export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
   private _name: string;
   private _version: number;
-  private _chunkingStrategyId: string;
-  private _embeddingStrategyId: string;
-  private _configuration: Readonly<Record<string, unknown>>;
+  private _preparation: PreparationLayer;
+  private _fragmentation: FragmentationLayer;
+  private _projection: ProjectionLayer;
   private _status: ProfileStatus;
   private _createdAt: Date;
 
@@ -36,18 +45,18 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
     id: ProcessingProfileId,
     name: string,
     version: number,
-    chunkingStrategyId: string,
-    embeddingStrategyId: string,
-    configuration: Record<string, unknown>,
+    preparation: PreparationLayer,
+    fragmentation: FragmentationLayer,
+    projection: ProjectionLayer,
     status: ProfileStatus,
     createdAt: Date,
   ) {
     super(id);
     this._name = name;
     this._version = version;
-    this._chunkingStrategyId = chunkingStrategyId;
-    this._embeddingStrategyId = embeddingStrategyId;
-    this._configuration = Object.freeze({ ...configuration });
+    this._preparation = preparation;
+    this._fragmentation = fragmentation;
+    this._projection = projection;
     this._status = status;
     this._createdAt = createdAt;
   }
@@ -60,16 +69,16 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
     return this._version;
   }
 
-  get chunkingStrategyId(): string {
-    return this._chunkingStrategyId;
+  get preparation(): PreparationLayer {
+    return this._preparation;
   }
 
-  get embeddingStrategyId(): string {
-    return this._embeddingStrategyId;
+  get fragmentation(): FragmentationLayer {
+    return this._fragmentation;
   }
 
-  get configuration(): Readonly<Record<string, unknown>> {
-    return this._configuration;
+  get projection(): ProjectionLayer {
+    return this._projection;
   }
 
   get status(): ProfileStatus {
@@ -95,27 +104,30 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
   static create(params: {
     id: ProcessingProfileId;
     name: string;
-    chunkingStrategyId: string;
-    embeddingStrategyId: string;
-    configuration?: Record<string, unknown>;
+    preparation: PreparationLayer;
+    fragmentation: FragmentationLayer;
+    projection: ProjectionLayer;
   }): ProcessingProfile {
     if (!params.name || params.name.trim() === "") {
-      throw new Error("ProcessingProfile name is required");
+      throw new ProfileNameRequiredError();
     }
-    if (!params.chunkingStrategyId || params.chunkingStrategyId.trim() === "") {
-      throw new Error("ProcessingProfile chunkingStrategyId is required");
+    if (!params.preparation) {
+      throw new PreparationStrategyRequiredError();
     }
-    if (!params.embeddingStrategyId || params.embeddingStrategyId.trim() === "") {
-      throw new Error("ProcessingProfile embeddingStrategyId is required");
+    if (!params.fragmentation) {
+      throw new FragmentationStrategyRequiredError();
+    }
+    if (!params.projection) {
+      throw new ProjectionStrategyRequiredError();
     }
 
     const profile = new ProcessingProfile(
       params.id,
       params.name.trim(),
       1,
-      params.chunkingStrategyId,
-      params.embeddingStrategyId,
-      params.configuration ?? {},
+      params.preparation,
+      params.fragmentation,
+      params.projection,
       ProfileStatus.Active,
       new Date(),
     );
@@ -127,8 +139,9 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
       aggregateId: params.id.value,
       payload: {
         name: profile._name,
-        chunkingStrategyId: profile._chunkingStrategyId,
-        embeddingStrategyId: profile._embeddingStrategyId,
+        preparation: profile._preparation.toDTO(),
+        fragmentation: profile._fragmentation.toDTO(),
+        projection: profile._projection.toDTO(),
         version: profile._version,
       },
     });
@@ -139,25 +152,25 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
   /**
    * Reconstitutes a profile from persistence. No events, no validation.
    */
-  static reconstitute(
-    id: ProcessingProfileId,
-    name: string,
-    version: number,
-    chunkingStrategyId: string,
-    embeddingStrategyId: string,
-    configuration: Record<string, unknown>,
-    status: ProfileStatus,
-    createdAt: Date,
-  ): ProcessingProfile {
+  static reconstitute(params: {
+    id: ProcessingProfileId;
+    name: string;
+    version: number;
+    preparation: PreparationLayer;
+    fragmentation: FragmentationLayer;
+    projection: ProjectionLayer;
+    status: ProfileStatus;
+    createdAt: Date;
+  }): ProcessingProfile {
     return new ProcessingProfile(
-      id,
-      name,
-      version,
-      chunkingStrategyId,
-      embeddingStrategyId,
-      configuration,
-      status,
-      createdAt,
+      params.id,
+      params.name,
+      params.version,
+      params.preparation,
+      params.fragmentation,
+      params.projection,
+      params.status,
+      params.createdAt,
     );
   }
 
@@ -165,46 +178,40 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
    * Updates the profile's strategy configuration.
    * Increments version, protecting the previous version's reproducibility.
    *
-   * @throws Error if profile is DEPRECATED
+   * @throws ProfileDeprecatedError if profile is DEPRECATED
    */
   update(params: {
     name?: string;
-    chunkingStrategyId?: string;
-    embeddingStrategyId?: string;
-    configuration?: Record<string, unknown>;
+    preparation?: PreparationLayer;
+    fragmentation?: FragmentationLayer;
+    projection?: ProjectionLayer;
   }): void {
     if (this._status === ProfileStatus.Deprecated) {
-      throw new Error(`Cannot modify deprecated profile: ${this.id.value}`);
+      throw new ProfileDeprecatedError(this.id.value);
     }
 
     const hasChanges =
       (params.name !== undefined && params.name !== this._name) ||
-      (params.chunkingStrategyId !== undefined && params.chunkingStrategyId !== this._chunkingStrategyId) ||
-      (params.embeddingStrategyId !== undefined && params.embeddingStrategyId !== this._embeddingStrategyId) ||
-      params.configuration !== undefined;
+      params.preparation !== undefined ||
+      params.fragmentation !== undefined ||
+      params.projection !== undefined;
 
     if (!hasChanges) return;
 
     if (params.name !== undefined) {
       if (!params.name || params.name.trim() === "") {
-        throw new Error("ProcessingProfile name cannot be empty");
+        throw new ProfileNameRequiredError();
       }
       this._name = params.name.trim();
     }
-    if (params.chunkingStrategyId !== undefined) {
-      if (!params.chunkingStrategyId || params.chunkingStrategyId.trim() === "") {
-        throw new Error("ProcessingProfile chunkingStrategyId cannot be empty");
-      }
-      this._chunkingStrategyId = params.chunkingStrategyId;
+    if (params.preparation !== undefined) {
+      this._preparation = params.preparation;
     }
-    if (params.embeddingStrategyId !== undefined) {
-      if (!params.embeddingStrategyId || params.embeddingStrategyId.trim() === "") {
-        throw new Error("ProcessingProfile embeddingStrategyId cannot be empty");
-      }
-      this._embeddingStrategyId = params.embeddingStrategyId;
+    if (params.fragmentation !== undefined) {
+      this._fragmentation = params.fragmentation;
     }
-    if (params.configuration !== undefined) {
-      this._configuration = Object.freeze({ ...params.configuration });
+    if (params.projection !== undefined) {
+      this._projection = params.projection;
     }
 
     this._version += 1;
@@ -216,8 +223,9 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
       aggregateId: this.id.value,
       payload: {
         name: this._name,
-        chunkingStrategyId: this._chunkingStrategyId,
-        embeddingStrategyId: this._embeddingStrategyId,
+        preparation: this._preparation.toDTO(),
+        fragmentation: this._fragmentation.toDTO(),
+        projection: this._projection.toDTO(),
         version: this._version,
       },
     });
@@ -226,11 +234,11 @@ export class ProcessingProfile extends AggregateRoot<ProcessingProfileId> {
   /**
    * Deprecates the profile. Irreversible transition.
    *
-   * @throws Error if already DEPRECATED
+   * @throws ProfileAlreadyDeprecatedError if already DEPRECATED
    */
   deprecate(reason: string): void {
     if (this._status === ProfileStatus.Deprecated) {
-      throw new Error(`Profile is already deprecated: ${this.id.value}`);
+      throw new ProfileAlreadyDeprecatedError(this.id.value);
     }
 
     this._status = ProfileStatus.Deprecated;

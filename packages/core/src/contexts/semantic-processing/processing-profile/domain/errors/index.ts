@@ -1,7 +1,8 @@
 export {
   ProfileNameRequiredError,
-  ProfileChunkingStrategyRequiredError,
-  ProfileEmbeddingStrategyRequiredError,
+  PreparationStrategyRequiredError,
+  FragmentationStrategyRequiredError,
+  ProjectionStrategyRequiredError,
   ProfileAlreadyExistsError,
   ProfileNotFoundError,
   ProfileDeprecatedError,
