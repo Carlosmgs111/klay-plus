@@ -5,6 +5,7 @@ import {
 } from "@klay/core/adapters/rest";
 import { createKnowledgePlatform } from "@klay/core";
 import type { ConfigStore } from "@klay/core/config";
+import { InMemorySecretStore } from "@klay/core/secrets";
 
 interface ServerAdapters {
   pipeline: KnowledgePipelineRESTAdapter;
@@ -23,7 +24,7 @@ const DB_PATH = process.env.KLAY_DB_PATH ?? "./data";
  */
 export async function getConfigStore(): Promise<ConfigStore> {
   if (!_configStore) {
-    const { NeDBConfigStore } = await import("@klay/core/config");
+    const { NeDBConfigStore } = await import("@klay/core/config/nedb");
     _configStore = new NeDBConfigStore(DB_PATH);
   }
   return _configStore;
@@ -39,10 +40,18 @@ function _getAdapters(): Promise<ServerAdapters> {
 async function _createAdapters(): Promise<ServerAdapters> {
   const configStore = await getConfigStore();
 
+  // Create SecretStore and seed from env vars for immediate use
+  const secretStore = new InMemorySecretStore();
+  for (const key of ["OPENAI_API_KEY", "COHERE_API_KEY", "HUGGINGFACE_API_KEY"]) {
+    const val = process.env[key] ?? import.meta.env[key];
+    if (val) await secretStore.set(key, val, { category: "api-key" });
+  }
+
   const platform = await createKnowledgePlatform({
     provider: "server",
     dbPath: DB_PATH,
     configStore,
+    secretStore,
     defaultChunkingStrategy: process.env.KLAY_CHUNKING_STRATEGY ?? "recursive",
   });
 

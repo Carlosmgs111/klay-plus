@@ -11,6 +11,7 @@ import type { RuntimeMode } from "../services/types";
 import type { PipelineService } from "../services/pipeline-service";
 import type { LifecycleService } from "../services/lifecycle-service";
 import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
+import type { SecretStore } from "@klay/core/secrets";
 
 interface RuntimeModeContextValue {
   mode: RuntimeMode;
@@ -20,6 +21,7 @@ interface RuntimeModeContextValue {
   isInitializing: boolean;
   reinitialize: () => void;
   configStore: ConfigStore | null;
+  secretStore: SecretStore | null;
   infrastructureProfile: InfrastructureProfile | null;
   setInfrastructureProfile: (profile: InfrastructureProfile) => void;
 }
@@ -48,13 +50,16 @@ async function migrateLocalStorageKeys(store: ConfigStore): Promise<void> {
 }
 
 export function RuntimeModeProvider({ children }: { children: ReactNode }) {
-  // Always start as "server" to match SSR. Real mode read in useEffect.
-  const [mode, setModeState] = useState<RuntimeMode>("server");
+  // Default to "browser" — safe for client-side rendering (no CJS modules).
+  // Stored mode is read from localStorage before initialization begins.
+  const [mode, setModeState] = useState<RuntimeMode>("browser");
+  const [modeResolved, setModeResolved] = useState(false);
   const [service, setService] = useState<PipelineService | null>(null);
   const [lifecycleService, setLifecycleService] = useState<LifecycleService | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [reinitKey, setReinitKey] = useState(0);
   const [configStore, setConfigStore] = useState<ConfigStore | null>(null);
+  const [secretStore, setSecretStore] = useState<SecretStore | null>(null);
   const [infrastructureProfile, setInfrastructureProfileState] =
     useState<InfrastructureProfile | null>(null);
   const configStoreRef = useRef<ConfigStore | null>(null);
@@ -76,13 +81,14 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Read stored mode after mount to avoid hydration mismatch
+  // Read stored mode after mount — must complete before initialization starts
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as RuntimeMode | null;
-    if (stored && stored !== "server") {
-      profileRef.current = null; // Reset so profile resolves for the stored mode
+    if (stored) {
+      profileRef.current = null;
       setModeState(stored);
     }
+    setModeResolved(true);
   }, []);
 
   const setMode = (newMode: RuntimeMode) => {
@@ -94,6 +100,8 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!modeResolved) return;
+
     let cancelled = false;
     setIsInitializing(true);
 
@@ -107,6 +115,11 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
             store = new ServerConfigService();
             configStoreRef.current = store;
           }
+
+          // Create InMemorySecretStore for browser-side server mode
+          // (server-side SecretStore lives in pipeline-singleton.ts)
+          const { InMemorySecretStore } = await import("@klay/core/secrets");
+          const secrets = new InMemorySecretStore();
 
           // Resolve infrastructure profile from server-side ConfigStore
           if (!profileRef.current) {
@@ -125,6 +138,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
             ]);
           if (!cancelled) {
             setConfigStore(store);
+            setSecretStore(secrets);
             setInfrastructureProfileState(profileRef.current);
             setService(new ServerPipelineService());
             setLifecycleService(new ServerLifecycleService());
@@ -133,11 +147,16 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
           // Create or reuse ConfigStore
           let store = configStoreRef.current;
           if (!store) {
-            const { IndexedDBConfigStore } = await import("@klay/core/config");
+            const { IndexedDBConfigStore } = await import("@klay/core/config/browser");
             store = new IndexedDBConfigStore();
             await migrateLocalStorageKeys(store);
             configStoreRef.current = store;
           }
+
+          // Create InMemorySecretStore for browser mode
+          // (will switch to IndexedDBSecretStore when encryption is implemented)
+          const { InMemorySecretStore } = await import("@klay/core/secrets");
+          const secrets = new InMemorySecretStore();
 
           // Resolve infrastructure profile from persisted state
           let profile = profileRef.current;
@@ -157,6 +176,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
             ]);
           if (!cancelled) {
             setConfigStore(store);
+            setSecretStore(secrets);
             setInfrastructureProfileState(profile);
             setService(new BrowserPipelineService(store, profile));
             setLifecycleService(new BrowserLifecycleService(store, profile));
@@ -172,10 +192,10 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, reinitKey]);
+  }, [mode, reinitKey, modeResolved]);
 
   return (
-    <RuntimeModeContext.Provider value={{ mode, setMode, service, lifecycleService, isInitializing, reinitialize, configStore, infrastructureProfile, setInfrastructureProfile }}>
+    <RuntimeModeContext.Provider value={{ mode, setMode, service, lifecycleService, isInitializing, reinitialize, configStore, secretStore, infrastructureProfile, setInfrastructureProfile }}>
       {children}
     </RuntimeModeContext.Provider>
   );
