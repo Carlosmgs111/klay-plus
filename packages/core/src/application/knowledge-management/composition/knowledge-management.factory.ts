@@ -2,6 +2,7 @@ import type { KnowledgeManagementPort } from "../contracts/KnowledgeManagementPo
 import type { ResolvedManagementDependencies } from "../application/KnowledgeManagementOrchestrator";
 import type { ConfigStore } from "../../../platform/config/ConfigStore";
 import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
+import type { SecretStore } from "../../../platform/secrets/SecretStore";
 
 export interface KnowledgeManagementPolicy {
   provider: string;
@@ -12,6 +13,7 @@ export interface KnowledgeManagementPolicy {
   embeddingModel?: string;
   configOverrides?: Record<string, string>;
   configStore?: ConfigStore;
+  secretStore?: SecretStore;
   infrastructure?: Partial<InfrastructureProfile>;
 }
 

@@ -2,6 +2,7 @@ import type { KnowledgeLifecyclePort } from "../contracts/KnowledgeLifecyclePort
 import type { ResolvedLifecycleDependencies } from "../application/KnowledgeLifecycleOrchestrator";
 import type { ConfigStore } from "../../../platform/config/ConfigStore";
 import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
+import type { SecretStore } from "../../../platform/secrets/SecretStore";
 
 export interface KnowledgeLifecyclePolicy {
   provider: string;
@@ -9,6 +10,7 @@ export interface KnowledgeLifecyclePolicy {
   dbName?: string;
   configOverrides?: Record<string, string>;
   configStore?: ConfigStore;
+  secretStore?: SecretStore;
   infrastructure?: Partial<InfrastructureProfile>;
 }
 

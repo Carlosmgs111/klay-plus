@@ -3,6 +3,7 @@ import type { ResolvedPipelineDependencies } from "../application/KnowledgePipel
 import type { ManifestRepository } from "../contracts/ManifestRepository";
 import type { ConfigStore } from "../../../platform/config/ConfigStore";
 import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
+import type { SecretStore } from "../../../platform/secrets/SecretStore";
 
 export interface KnowledgePipelinePolicy {
   provider: string;
@@ -14,6 +15,7 @@ export interface KnowledgePipelinePolicy {
   embeddingModel?: string;
   configOverrides?: Record<string, string>;
   configStore?: ConfigStore;
+  secretStore?: SecretStore;
   infrastructure?: Partial<InfrastructureProfile>;
 }
 
