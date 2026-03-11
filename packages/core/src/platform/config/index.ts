@@ -12,14 +12,22 @@ export { resolveConfigProvider } from "./resolveConfigProvider";
 export type { ConfigResolutionPolicy } from "./resolveConfigProvider";
 
 export type { InfrastructureProfile } from "./InfrastructureProfile";
-export type { PersistenceConfig } from "./PersistenceConfig";
-export type { VectorStoreConfig } from "./VectorStoreConfig";
+export type { ConnectionConfig, LocalConnection, NetworkConnection, EmbeddedConnection } from "./ConnectionConfig";
+export type { PersistenceConfig, PoolConfig } from "./PersistenceConfig";
+export type { VectorStoreConfig, DistanceMetric } from "./VectorStoreConfig";
 export type { EmbeddingConfig, EmbeddingFingerprint } from "./EmbeddingConfig";
 export type { DocumentStorageConfig } from "./DocumentStorageConfig";
 export type { LLMConfig } from "./LLMConfig";
-export type { NetworkConnection } from "./ConnectionConfig";
 export { DEFAULT_PROFILES } from "./InfrastructureProfile";
 export { PRESET_PROFILES } from "./presets";
+
+// Validation
+export { validateProfile } from "./validation";
+export type { ValidationError } from "./validation";
+
+// defineConfig
+export { defineConfig } from "./defineConfig";
+export type { KlayConfig, KlayProfileConfig } from "./defineConfig";
 
 export {
   persistenceToProvider,
