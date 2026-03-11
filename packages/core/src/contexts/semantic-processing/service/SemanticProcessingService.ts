@@ -6,11 +6,13 @@ import type { ResolvedSemanticProcessingModules, VectorStoreConfig } from "../co
 import { ProcessingProfile } from "../processing-profile/domain/ProcessingProfile";
 import { ProcessingProfileId } from "../processing-profile/domain/ProcessingProfileId";
 import { ProfileStatus } from "../processing-profile/domain/ProfileStatus";
+import { PreparationLayer, FragmentationLayer, ProjectionLayer } from "../processing-profile/domain/value-objects";
 import {
   ProfileAlreadyExistsError,
   ProfileNameRequiredError,
-  ProfileChunkingStrategyRequiredError,
-  ProfileEmbeddingStrategyRequiredError,
+  PreparationStrategyRequiredError,
+  FragmentationStrategyRequiredError,
+  ProjectionStrategyRequiredError,
   ProfileNotFoundError,
   ProfileDeprecatedError,
   ProfileAlreadyDeprecatedError,
@@ -75,18 +77,21 @@ export class SemanticProcessingService {
   async createProcessingProfile(params: {
     id: string;
     name: string;
-    chunkingStrategyId: string;
-    embeddingStrategyId: string;
-    configuration?: Record<string, unknown>;
+    preparation: { strategyId: string; config: Record<string, unknown> };
+    fragmentation: { strategyId: string; config: Record<string, unknown> };
+    projection: { strategyId: string; config: Record<string, unknown> };
   }): Promise<Result<DomainError, CreateProfileSuccess>> {
     if (!params.name || params.name.trim() === "") {
       return Result.fail(new ProfileNameRequiredError());
     }
-    if (!params.chunkingStrategyId || params.chunkingStrategyId.trim() === "") {
-      return Result.fail(new ProfileChunkingStrategyRequiredError());
+    if (!params.preparation?.strategyId) {
+      return Result.fail(new PreparationStrategyRequiredError());
     }
-    if (!params.embeddingStrategyId || params.embeddingStrategyId.trim() === "") {
-      return Result.fail(new ProfileEmbeddingStrategyRequiredError());
+    if (!params.fragmentation?.strategyId) {
+      return Result.fail(new FragmentationStrategyRequiredError());
+    }
+    if (!params.projection?.strategyId) {
+      return Result.fail(new ProjectionStrategyRequiredError());
     }
 
     const profileId = ProcessingProfileId.create(params.id);
@@ -95,12 +100,16 @@ export class SemanticProcessingService {
       return Result.fail(new ProfileAlreadyExistsError(params.id));
     }
 
+    const preparation = PreparationLayer.create(params.preparation.strategyId, params.preparation.config);
+    const fragmentation = FragmentationLayer.create(params.fragmentation.strategyId, params.fragmentation.config);
+    const projection = ProjectionLayer.create(params.projection.strategyId, params.projection.config);
+
     const profile = ProcessingProfile.create({
       id: profileId,
       name: params.name,
-      chunkingStrategyId: params.chunkingStrategyId,
-      embeddingStrategyId: params.embeddingStrategyId,
-      configuration: params.configuration,
+      preparation,
+      fragmentation,
+      projection,
     });
 
     await this._profileRepository.save(profile);
@@ -115,9 +124,9 @@ export class SemanticProcessingService {
   async updateProcessingProfile(params: {
     id: string;
     name?: string;
-    chunkingStrategyId?: string;
-    embeddingStrategyId?: string;
-    configuration?: Record<string, unknown>;
+    preparation?: { strategyId: string; config: Record<string, unknown> };
+    fragmentation?: { strategyId: string; config: Record<string, unknown> };
+    projection?: { strategyId: string; config: Record<string, unknown> };
   }): Promise<Result<DomainError, UpdateProfileSuccess>> {
     const profileId = ProcessingProfileId.create(params.id);
     const profile = await this._profileRepository.findById(profileId);
@@ -130,11 +139,21 @@ export class SemanticProcessingService {
       return Result.fail(new ProfileDeprecatedError(params.id));
     }
 
+    const preparation = params.preparation
+      ? PreparationLayer.create(params.preparation.strategyId, params.preparation.config)
+      : undefined;
+    const fragmentation = params.fragmentation
+      ? FragmentationLayer.create(params.fragmentation.strategyId, params.fragmentation.config)
+      : undefined;
+    const projection = params.projection
+      ? ProjectionLayer.create(params.projection.strategyId, params.projection.config)
+      : undefined;
+
     profile.update({
       name: params.name,
-      chunkingStrategyId: params.chunkingStrategyId,
-      embeddingStrategyId: params.embeddingStrategyId,
-      configuration: params.configuration,
+      preparation,
+      fragmentation,
+      projection,
     });
 
     await this._profileRepository.save(profile);
