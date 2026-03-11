@@ -65,7 +65,7 @@ export class GenerateProjection {
       );
     }
 
-    const { embeddingStrategy, chunkingStrategy } =
+    const { embeddingStrategy, chunkingStrategy, preparationStrategy } =
       await this.materializer.materialize(profile);
 
     const projectionId = ProjectionId.create(command.projectionId);
@@ -80,7 +80,10 @@ export class GenerateProjection {
     projection.markProcessing();
 
     try {
-      const chunks = chunkingStrategy.chunk(command.content);
+      // Prepare content
+      const prepared = await preparationStrategy.prepare(command.content);
+
+      const chunks = chunkingStrategy.chunk(prepared);
       const chunkContents = chunks.map((c) => c.content);
 
       const embeddings = await embeddingStrategy.embedBatch(chunkContents);
@@ -147,9 +150,10 @@ export class GenerateProjection {
     }
   }
 
-  private determineErrorPhase(error: unknown): "chunking" | "embedding" | "storage" {
+  private determineErrorPhase(error: unknown): "preparation" | "chunking" | "embedding" | "storage" {
     const message = error instanceof Error ? error.message.toLowerCase() : "";
 
+    if (message.includes("prepar")) return "preparation";
     if (message.includes("chunk")) return "chunking";
     if (message.includes("embed") || message.includes("vector")) return "embedding";
     if (message.includes("store") || message.includes("database")) return "storage";

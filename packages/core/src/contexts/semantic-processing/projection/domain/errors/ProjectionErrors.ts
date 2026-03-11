@@ -91,7 +91,7 @@ export class ProjectionProcessingError extends OperationError {
   constructor(
     sourceId: string,
     reason: string,
-    public readonly phase: "chunking" | "embedding" | "storage",
+    public readonly phase: "preparation" | "chunking" | "embedding" | "storage",
     public readonly originalError?: Error,
   ) {
     super("Projection processing", reason, { sourceId, phase });
