@@ -84,10 +84,19 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       ),
     },
     {
+      key: "preparation",
+      header: "Preparation",
+      render: (row: ProfileEntry) => (
+        <span className="inline-flex items-center rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-mono text-secondary">
+          {row.preparation?.strategyId ?? "none"}
+        </span>
+      ),
+    },
+    {
       key: "fragmentation",
       header: "Fragmentation",
       render: (row: ProfileEntry) => (
-        <span className="text-xs font-mono text-secondary">
+        <span className="inline-flex items-center rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-mono text-secondary">
           {row.fragmentation.strategyId}
         </span>
       ),
@@ -96,7 +105,7 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
       key: "projection",
       header: "Embedding",
       render: (row: ProfileEntry) => (
-        <span className="text-xs font-mono text-secondary">
+        <span className="inline-flex items-center rounded-full bg-secondary/40 px-2 py-0.5 text-xs font-mono text-secondary">
           {row.projection.strategyId}
         </span>
       ),
