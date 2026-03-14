@@ -47,7 +47,7 @@ export async function semanticQueryFactory(
       ? policy.embeddingProvider
       : "hash";
 
-  const { resolveConfigProvider } = await import("../../../../platform/config/resolveConfigProvider");
+  const { resolveConfigProvider } = await import("../../../../platform/config/ConfigProvider");
   const config = await resolveConfigProvider(policy);
 
   const vectorReadStoreRegistry = new ProviderRegistryBuilder<VectorReadStore>()

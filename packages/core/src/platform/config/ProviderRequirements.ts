@@ -22,6 +22,40 @@ export interface EmbeddingModelSpec {
   isDefault?: boolean;
 }
 
+// ── Provider Field Schema ─────────────────────────────────────────────
+
+export type FieldInputType = "text" | "number" | "select" | "boolean";
+
+/**
+ * Declarative specification for a provider-specific configuration field.
+ * The UI renders forms automatically from these specs — no hardcoded
+ * switch/case per provider needed.
+ *
+ * To add a new provider:
+ *  1. Add the type to the corresponding *Config union (e.g. PersistenceConfig)
+ *  2. Add an entry to PROVIDER_REGISTRY with fields/requirements/models
+ *  3. Implement the adapter in the platform layer
+ *  4. UI renders the form automatically — zero frontend changes needed
+ */
+export interface ProviderFieldSpec {
+  /** Property name in the axis config object (e.g. "path", "basePath").
+   *  Supports dot notation for nested objects (e.g. "connection.host"). */
+  key: string;
+  label: string;
+  inputType: FieldInputType;
+  placeholder?: string;
+  required?: boolean;
+  defaultValue?: unknown;
+  /** For `inputType: "select"` */
+  options?: { value: string; label: string }[];
+  /** Small hint text below the field */
+  helpText?: string;
+  /** Display-only field (e.g. dimensions synced from embedding) */
+  readOnly?: boolean;
+}
+
+// ── Provider Metadata ─────────────────────────────────────────────────
+
 export interface ProviderMetadata {
   id: string;
   name: string;
@@ -29,9 +63,40 @@ export interface ProviderMetadata {
   axis: InfrastructureAxis;
   runtimes: RuntimeEnvironment[];
   gateway: ProviderGateway;
+  /** Secrets / API keys this provider needs (stored in SecretStore) */
   requirements: ProviderRequirement[];
+  /** Embedding model catalog (embedding axis only) */
   models?: EmbeddingModelSpec[];
+  /** Declarative field specs — UI renders forms from these automatically */
+  fields?: ProviderFieldSpec[];
 }
+
+// ── Shared field definitions ──────────────────────────────────────────
+
+const DISTANCE_METRIC_OPTIONS = [
+  { value: "cosine", label: "Cosine" },
+  { value: "euclidean", label: "Euclidean" },
+  { value: "dotProduct", label: "Dot Product" },
+];
+
+const vectorStoreCommonFields: ProviderFieldSpec[] = [
+  {
+    key: "dimensions",
+    label: "Dimensions",
+    inputType: "number",
+    readOnly: true,
+    helpText: "Synced from embedding model",
+  },
+  {
+    key: "distanceMetric",
+    label: "Distance Metric",
+    inputType: "select",
+    defaultValue: "cosine",
+    options: DISTANCE_METRIC_OPTIONS,
+  },
+];
+
+// ── Registry (only implemented providers) ─────────────────────────────
 
 export const PROVIDER_REGISTRY: ProviderMetadata[] = [
   // ── Persistence ────────────────────────────────────────────────────
@@ -45,22 +110,28 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     requirements: [],
   },
   {
-    id: "browser",
+    id: "indexeddb",
     name: "IndexedDB",
     description: "Browser-native persistent storage",
     axis: "persistence",
     runtimes: ["browser"],
     gateway: "local",
     requirements: [],
+    fields: [
+      { key: "databaseName", label: "Database Name", inputType: "text", placeholder: "klay-db" },
+    ],
   },
   {
-    id: "server",
+    id: "nedb",
     name: "NeDB",
     description: "Server-side file-based storage",
     axis: "persistence",
     runtimes: ["server"],
     gateway: "local",
     requirements: [],
+    fields: [
+      { key: "path", label: "Database Path", inputType: "text", placeholder: "./data/db" },
+    ],
   },
 
   // ── Vector Store ───────────────────────────────────────────────────
@@ -72,24 +143,33 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     runtimes: ["browser", "server", "test"],
     gateway: "local",
     requirements: [],
+    fields: [...vectorStoreCommonFields],
   },
   {
-    id: "browser",
+    id: "indexeddb",
     name: "IndexedDB",
     description: "Browser-native vector storage",
     axis: "vectorStore",
     runtimes: ["browser"],
     gateway: "local",
     requirements: [],
+    fields: [
+      ...vectorStoreCommonFields,
+      { key: "databaseName", label: "Database Name", inputType: "text", placeholder: "klay-vectors" },
+    ],
   },
   {
-    id: "server",
+    id: "nedb",
     name: "NeDB",
     description: "Server-side file-based vector storage",
     axis: "vectorStore",
     runtimes: ["server"],
     gateway: "local",
     requirements: [],
+    fields: [
+      ...vectorStoreCommonFields,
+      { key: "path", label: "Storage Path", inputType: "text", placeholder: "./data/vectors" },
+    ],
   },
 
   // ── Document Storage ───────────────────────────────────────────────
@@ -112,13 +192,16 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     requirements: [],
   },
   {
-    id: "server",
+    id: "local",
     name: "Filesystem",
     description: "Server-side filesystem storage",
     axis: "documentStorage",
     runtimes: ["server"],
     gateway: "local",
     requirements: [],
+    fields: [
+      { key: "basePath", label: "Base Path", inputType: "text", required: true, defaultValue: "./data/uploads" },
+    ],
   },
 
   // ── Embedding: Local ───────────────────────────────────────────────
@@ -136,7 +219,7 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
     ],
   },
   {
-    id: "browser-webllm",
+    id: "webllm",
     name: "WebLLM",
     description: "In-browser ML embeddings via WebLLM",
     axis: "embedding",
@@ -179,6 +262,9 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
         name: "Ada 002 (legacy)",
         dimensions: 1536,
       },
+    ],
+    fields: [
+      { key: "baseUrl", label: "Base URL", inputType: "text", placeholder: "https://api.openai.com/v1", helpText: "Override for proxies or compatible APIs" },
     ],
   },
   {
@@ -231,8 +317,13 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
         dimensions: 768,
       },
     ],
+    fields: [
+      { key: "endpointUrl", label: "Endpoint URL", inputType: "text", helpText: "Custom Inference Endpoints URL" },
+    ],
   },
 ];
+
+// ── Query helpers ─────────────────────────────────────────────────────
 
 /**
  * Get providers available for an axis, optionally filtered by runtime.
@@ -245,6 +336,18 @@ export function getProvidersForAxis(
     (p) =>
       p.axis === axis &&
       (!runtime || p.runtimes.includes(runtime)),
+  );
+}
+
+/**
+ * Find a single provider by axis + id.
+ */
+export function getProvider(
+  axis: InfrastructureAxis,
+  providerId: string,
+): ProviderMetadata | undefined {
+  return PROVIDER_REGISTRY.find(
+    (p) => p.axis === axis && p.id === providerId,
   );
 }
 
@@ -273,6 +376,9 @@ export function getModelsForProvider(
   return provider?.models ?? [];
 }
 
+/**
+ * Collect all secret requirements across the entire profile.
+ */
 export function getProfileRequirements(
   profile: Partial<InfrastructureProfile>,
 ): ProviderRequirement[] {
@@ -289,7 +395,6 @@ export function getProfileRequirements(
     const config = profile[axis];
     if (!config) continue;
 
-    // Typed config: extract the `type` discriminant as provider ID
     const providerId = typeof config === "object" && "type" in config
       ? (config as { type: string }).type
       : String(config);

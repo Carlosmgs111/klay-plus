@@ -29,8 +29,6 @@ export { InMemoryContextRepository } from "./context/infrastructure/InMemoryCont
 export {
   KnowledgeLineage,
   LineageId,
-  Transformation,
-  TransformationType,
   Trace,
 } from "./lineage/domain";
 

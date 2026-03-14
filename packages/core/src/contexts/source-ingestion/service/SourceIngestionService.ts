@@ -381,31 +381,20 @@ export class SourceIngestionService {
 
   // ── Composite workflows ────────────────────────────────────────────
 
-  async ingestFile(params: {
+  private async _executeIngestionWorkflow(params: {
     resourceId: string;
     sourceId: string;
     sourceName: string;
     sourceType: SourceType;
     extractionJobId: string;
-    file: { buffer: ArrayBuffer; originalName: string; mimeType: string };
-  }): Promise<Result<DomainError, IngestFileSuccess>> {
-    // 1. Store resource
-    const storeResult = await this.storeResource({
-      id: params.resourceId,
-      buffer: params.file.buffer,
-      originalName: params.file.originalName,
-      mimeType: params.file.mimeType,
-    });
-
-    if (storeResult.isFail()) {
-      return Result.fail(storeResult.error);
-    }
-
-    // 2. Register source with storage URI
+    uri: string;
+    content?: ArrayBuffer;
+  }): Promise<Result<DomainError, Omit<IngestFileSuccess, 'storageUri'>>> {
+    // 1. Register source
     const registerResult = await this.registerSource({
       id: params.sourceId,
       name: params.sourceName,
-      uri: storeResult.value.storageUri,
+      uri: params.uri,
       type: params.sourceType,
     });
 
@@ -413,21 +402,21 @@ export class SourceIngestionService {
       return Result.fail(registerResult.error);
     }
 
-    // 3. Execute extraction
+    // 2. Execute extraction
     const mimeType = SOURCE_TYPE_TO_MIME[params.sourceType];
     const extractionResult = await this._extraction.executeExtraction.execute({
       jobId: params.extractionJobId,
       sourceId: params.sourceId,
-      uri: storeResult.value.storageUri,
+      uri: params.uri,
       mimeType,
-      content: params.file.buffer,
+      content: params.content,
     });
 
     if (extractionResult.isFail()) {
       return Result.fail(extractionResult.error);
     }
 
-    // 4. Update source with content hash
+    // 3. Update source with content hash
     const sourceId = SourceId.create(params.sourceId);
     const source = await this._sourceRepository.findById(sourceId);
     if (source) {
@@ -443,9 +432,49 @@ export class SourceIngestionService {
       sourceId: params.sourceId,
       jobId: params.extractionJobId,
       contentHash: extractionResult.value.contentHash,
-      storageUri: storeResult.value.storageUri,
       extractedText: extractionResult.value.extractedText,
       metadata: extractionResult.value.metadata,
+    });
+  }
+
+  async ingestFile(params: {
+    resourceId: string;
+    sourceId: string;
+    sourceName: string;
+    sourceType: SourceType;
+    extractionJobId: string;
+    file: { buffer: ArrayBuffer; originalName: string; mimeType: string };
+  }): Promise<Result<DomainError, IngestFileSuccess>> {
+    // Step 0: Store resource
+    const storeResult = await this.storeResource({
+      id: params.resourceId,
+      buffer: params.file.buffer,
+      originalName: params.file.originalName,
+      mimeType: params.file.mimeType,
+    });
+
+    if (storeResult.isFail()) {
+      return Result.fail(storeResult.error);
+    }
+
+    // Steps 1-3: Register source, extract, update
+    const workflowResult = await this._executeIngestionWorkflow({
+      resourceId: params.resourceId,
+      sourceId: params.sourceId,
+      sourceName: params.sourceName,
+      sourceType: params.sourceType,
+      extractionJobId: params.extractionJobId,
+      uri: storeResult.value.storageUri,
+      content: params.file.buffer,
+    });
+
+    if (workflowResult.isFail()) {
+      return Result.fail(workflowResult.error);
+    }
+
+    return Result.ok({
+      ...workflowResult.value,
+      storageUri: storeResult.value.storageUri,
     });
   }
 
@@ -459,7 +488,7 @@ export class SourceIngestionService {
     mimeType: string;
     size?: number;
   }): Promise<Result<DomainError, IngestFileSuccess>> {
-    // 1. Register external resource
+    // Step 0: Register external resource
     const externalResult = await this.registerExternalResource({
       id: params.resourceId,
       name: params.sourceName,
@@ -472,50 +501,23 @@ export class SourceIngestionService {
       return Result.fail(externalResult.error);
     }
 
-    // 2. Register source with external URI
-    const registerResult = await this.registerSource({
-      id: params.sourceId,
-      name: params.sourceName,
-      uri: params.uri,
-      type: params.sourceType,
-    });
-
-    if (registerResult.isFail()) {
-      return Result.fail(registerResult.error);
-    }
-
-    // 3. Execute extraction
-    const extractionMime = SOURCE_TYPE_TO_MIME[params.sourceType];
-    const extractionResult = await this._extraction.executeExtraction.execute({
-      jobId: params.extractionJobId,
+    // Steps 1-3: Register source, extract, update
+    const workflowResult = await this._executeIngestionWorkflow({
+      resourceId: params.resourceId,
       sourceId: params.sourceId,
+      sourceName: params.sourceName,
+      sourceType: params.sourceType,
+      extractionJobId: params.extractionJobId,
       uri: params.uri,
-      mimeType: extractionMime,
     });
 
-    if (extractionResult.isFail()) {
-      return Result.fail(extractionResult.error);
-    }
-
-    // 4. Update source with content hash
-    const sourceId = SourceId.create(params.sourceId);
-    const source = await this._sourceRepository.findById(sourceId);
-    if (source) {
-      const changed = source.recordExtraction(extractionResult.value.contentHash);
-      if (changed) {
-        await this._sourceRepository.save(source);
-        await this._sourceEventPublisher.publishAll(source.clearEvents());
-      }
+    if (workflowResult.isFail()) {
+      return Result.fail(workflowResult.error);
     }
 
     return Result.ok({
-      resourceId: params.resourceId,
-      sourceId: params.sourceId,
-      jobId: params.extractionJobId,
-      contentHash: extractionResult.value.contentHash,
+      ...workflowResult.value,
       storageUri: params.uri,
-      extractedText: extractionResult.value.extractedText,
-      metadata: extractionResult.value.metadata,
     });
   }
 

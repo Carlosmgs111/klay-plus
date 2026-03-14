@@ -71,8 +71,4 @@ export class ContextVersion extends ValueObject<ContextVersionProps> {
       createdAt,
     });
   }
-
-  hasSource(sourceId: string): boolean {
-    return this.props.sourceIds.includes(sourceId);
-  }
 }

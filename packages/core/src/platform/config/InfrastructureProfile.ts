@@ -1,8 +1,44 @@
-import type { PersistenceConfig } from "./PersistenceConfig";
-import type { VectorStoreConfig } from "./VectorStoreConfig";
-import type { EmbeddingConfig } from "./EmbeddingConfig";
-import type { DocumentStorageConfig } from "./DocumentStorageConfig";
-import type { LLMConfig } from "./LLMConfig";
+// ── Persistence ──────────────────────────────────────────────────────
+
+export type PersistenceConfig =
+  | { type: "in-memory" }
+  | { type: "indexeddb"; databaseName?: string }
+  | { type: "nedb"; path?: string };
+
+// ── Vector Store ─────────────────────────────────────────────────────
+
+export type DistanceMetric = "cosine" | "euclidean" | "dotProduct";
+
+export type VectorStoreConfig =
+  | { type: "in-memory"; dimensions: number; distanceMetric?: DistanceMetric }
+  | { type: "indexeddb"; dimensions: number; databaseName?: string; distanceMetric?: DistanceMetric }
+  | { type: "nedb"; dimensions: number; path?: string; distanceMetric?: DistanceMetric };
+
+// ── Embedding ────────────────────────────────────────────────────────
+
+export type EmbeddingConfig =
+  | { type: "hash"; dimensions?: number }
+  | { type: "webllm"; model?: string }
+  | { type: "openai"; authRef: string; model: string; dimensions?: number; baseUrl?: string }
+  | { type: "cohere"; authRef: string; model: string; dimensions?: number }
+  | { type: "huggingface"; authRef: string; model: string; endpointUrl?: string };
+
+/** Fingerprint stored with each knowledge context to detect embedding incompatibilities */
+export interface EmbeddingFingerprint {
+  provider: string;
+  model: string;
+  dimensions: number;
+  baseUrl?: string;
+}
+
+// ── Document Storage ─────────────────────────────────────────────────
+
+export type DocumentStorageConfig =
+  | { type: "in-memory" }
+  | { type: "local"; basePath: string }
+  | { type: "browser" };
+
+// ── Infrastructure Profile ───────────────────────────────────────────
 
 export interface InfrastructureProfile {
   id: string;
@@ -11,11 +47,51 @@ export interface InfrastructureProfile {
   vectorStore: VectorStoreConfig;
   embedding: EmbeddingConfig;
   documentStorage: DocumentStorageConfig;
-  llm?: LLMConfig;
 }
 
-/**
- * @deprecated Use `PRESET_PROFILES` from `./presets` instead.
- * Kept for backward compatibility during migration.
- */
-export { PRESET_PROFILES as DEFAULT_PROFILES } from "./presets";
+// ── Preset Profiles ──────────────────────────────────────────────────
+
+export const PRESET_PROFILES: Record<string, InfrastructureProfile> = {
+  "in-memory": {
+    id: "in-memory",
+    name: "In-Memory (Testing)",
+    persistence: { type: "in-memory" },
+    vectorStore: { type: "in-memory", dimensions: 128 },
+    embedding: { type: "hash", dimensions: 128 },
+    documentStorage: { type: "in-memory" },
+  },
+  browser: {
+    id: "browser",
+    name: "Browser",
+    persistence: { type: "indexeddb" },
+    vectorStore: { type: "indexeddb", dimensions: 384 },
+    embedding: { type: "webllm", model: "Xenova/all-MiniLM-L6-v2" },
+    documentStorage: { type: "browser" },
+  },
+  server: {
+    id: "server",
+    name: "Server (NeDB)",
+    persistence: { type: "nedb" },
+    vectorStore: { type: "nedb", dimensions: 128 },
+    embedding: { type: "hash", dimensions: 128 },
+    documentStorage: { type: "local", basePath: "./data/uploads" },
+  },
+};
+
+// ── defineConfig ─────────────────────────────────────────────────────
+
+export interface KlayProfileConfig {
+  persistence: PersistenceConfig;
+  vectorStore: VectorStoreConfig;
+  embedding: EmbeddingConfig;
+  documentStorage: DocumentStorageConfig;
+}
+
+export interface KlayConfig {
+  profiles: Record<string, KlayProfileConfig>;
+}
+
+/** Type-safe config helper for klay.config.ts files */
+export function defineConfig(config: KlayConfig): KlayConfig {
+  return config;
+}

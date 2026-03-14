@@ -10,26 +10,8 @@ import type {
   DeprecateProfileInput,
   GetManifestInput,
 } from "../../application/knowledge-pipeline/contracts/dtos";
-
-/**
- * Framework-agnostic request representation.
- * Adapters for specific frameworks (Express, Hono, Astro, etc.)
- * can convert their native request to this shape.
- */
-export interface RESTRequest {
-  body: unknown;
-  params?: Record<string, string>;
-  query?: Record<string, string>;
-}
-
-/**
- * Framework-agnostic response representation.
- */
-export interface RESTResponse {
-  status: number;
-  body: unknown;
-  headers?: Record<string, string>;
-}
+import { toRESTResponse } from "../shared/resultTransformers";
+import type { RESTRequest, RESTResponse } from "../shared/resultTransformers";
 
 /**
  * KnowledgePipelineRESTAdapter — Primary Adapter for REST consumers.
@@ -49,54 +31,54 @@ export class KnowledgePipelineRESTAdapter {
   async execute(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as ExecutePipelineInput;
     const result = await this._pipeline.execute(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async ingestDocument(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as IngestDocumentInput;
     const result = await this._pipeline.ingestDocument(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async processDocument(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as ProcessDocumentInput;
     const result = await this._pipeline.processDocument(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async catalogDocument(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as CatalogDocumentInput;
     const result = await this._pipeline.catalogDocument(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async searchKnowledge(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as SearchKnowledgeInput;
     const result = await this._pipeline.searchKnowledge(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async createProcessingProfile(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as CreateProcessingProfileInput;
     const result = await this._pipeline.createProcessingProfile(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async listProfiles(_req: RESTRequest): Promise<RESTResponse> {
     const result = await this._pipeline.listProfiles();
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async updateProfile(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as UpdateProfileInput;
     const result = await this._pipeline.updateProfile(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async deprecateProfile(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as DeprecateProfileInput;
     const result = await this._pipeline.deprecateProfile(input);
-    return this._toResponse(result);
+    return toRESTResponse(result);
   }
 
   async getManifest(req: RESTRequest): Promise<RESTResponse> {
@@ -107,31 +89,6 @@ export class KnowledgePipelineRESTAdapter {
       contextId: req.query?.contextId ?? (req.body as any)?.contextId,
     };
     const result = await this._pipeline.getManifest(input);
-    return this._toResponse(result);
-  }
-
-  private _toResponse<T>(result: { isOk(): boolean; value: T; error: any }): RESTResponse {
-    if (result.isOk()) {
-      return {
-        status: 200,
-        body: { success: true, data: result.value },
-        headers: { "Content-Type": "application/json" },
-      };
-    }
-
-    const error = result.error;
-    return {
-      status: 422,
-      body: {
-        success: false,
-        error: {
-          message: error.message ?? "Unknown error",
-          code: error.code ?? "UNKNOWN",
-          step: error.step,
-          completedSteps: error.completedSteps,
-        },
-      },
-      headers: { "Content-Type": "application/json" },
-    };
+    return toRESTResponse(result);
   }
 }

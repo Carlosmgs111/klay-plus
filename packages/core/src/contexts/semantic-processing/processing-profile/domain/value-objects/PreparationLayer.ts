@@ -1,3 +1,5 @@
+import { ProcessingLayer, type LayerDTO } from "./ProcessingLayer";
+
 const VALID_STRATEGY_IDS = ["none", "basic"] as const;
 type PreparationStrategyId = (typeof VALID_STRATEGY_IDS)[number];
 
@@ -9,29 +11,15 @@ interface BasicPreparationConfig {
 
 type PreparationConfig = BasicPreparationConfig | Record<string, never>;
 
-interface PreparationLayerDTO {
-  strategyId: string;
-  config: Record<string, unknown>;
-}
-
 const BASIC_DEFAULTS: BasicPreparationConfig = {
   normalizeWhitespace: true,
   normalizeEncoding: true,
   trimContent: true,
 };
 
-export class PreparationLayer {
-  private constructor(
-    private readonly _strategyId: PreparationStrategyId,
-    private readonly _config: Readonly<PreparationConfig>,
-  ) {}
-
-  get strategyId(): PreparationStrategyId {
-    return this._strategyId;
-  }
-
-  get config(): Readonly<PreparationConfig> {
-    return this._config;
+export class PreparationLayer extends ProcessingLayer<PreparationStrategyId, PreparationConfig> {
+  private constructor(strategyId: PreparationStrategyId, config: Readonly<PreparationConfig>) {
+    super(strategyId, config);
   }
 
   static create(strategyId: string, config: Record<string, unknown>): PreparationLayer {
@@ -51,14 +39,7 @@ export class PreparationLayer {
     return new PreparationLayer(strategyId as PreparationStrategyId, resolvedConfig);
   }
 
-  static fromDTO(dto: PreparationLayerDTO): PreparationLayer {
+  static fromDTO(dto: LayerDTO): PreparationLayer {
     return PreparationLayer.create(dto.strategyId, dto.config);
-  }
-
-  toDTO(): PreparationLayerDTO {
-    return {
-      strategyId: this._strategyId,
-      config: { ...this._config },
-    };
   }
 }

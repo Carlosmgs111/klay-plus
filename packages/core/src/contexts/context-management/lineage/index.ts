@@ -1,8 +1,6 @@
 export {
   KnowledgeLineage,
   LineageId,
-  Transformation,
-  TransformationType,
   Trace,
 } from "./domain";
 

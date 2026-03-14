@@ -54,10 +54,6 @@ export {
   ExecuteExtraction,
   extractionFactory,
   UnsupportedMimeTypeError,
-  // Content Extractors
-  TextContentExtractor,
-  BrowserPdfContentExtractor,
-  ServerPdfContentExtractor,
 } from "./extraction";
 
 export type {

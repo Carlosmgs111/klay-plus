@@ -1,6 +1,7 @@
 import type { KnowledgeManagementPort } from "../../application/knowledge-management/contracts/KnowledgeManagementPort";
 import type { IngestAndAddSourceInput } from "../../application/knowledge-management/contracts/dtos";
-import type { RESTRequest, RESTResponse } from "./KnowledgePipelineRESTAdapter";
+import { toRESTResponse } from "../shared/resultTransformers";
+import type { RESTRequest, RESTResponse } from "../shared/resultTransformers";
 
 /**
  * KnowledgeManagementRESTAdapter — Primary Adapter for REST consumers.
@@ -19,31 +20,6 @@ export class KnowledgeManagementRESTAdapter {
   async ingestAndAddSource(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as IngestAndAddSourceInput;
     const result = await this._management.ingestAndAddSource(input);
-    return this._toResponse(result);
-  }
-
-  private _toResponse<T>(result: { isOk(): boolean; value: T; error: any }): RESTResponse {
-    if (result.isOk()) {
-      return {
-        status: 200,
-        body: { success: true, data: result.value },
-        headers: { "Content-Type": "application/json" },
-      };
-    }
-
-    const error = result.error;
-    return {
-      status: 422,
-      body: {
-        success: false,
-        error: {
-          message: error.message ?? "Unknown error",
-          code: error.code ?? "UNKNOWN",
-          step: error.step,
-          completedSteps: error.completedSteps,
-        },
-      },
-      headers: { "Content-Type": "application/json" },
-    };
+    return toRESTResponse(result);
   }
 }

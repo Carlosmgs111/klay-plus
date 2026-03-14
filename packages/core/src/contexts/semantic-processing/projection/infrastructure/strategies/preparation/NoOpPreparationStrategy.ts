@@ -1,4 +1,4 @@
-import type { PreparationStrategy } from "../../domain/ports/PreparationStrategy";
+import type { PreparationStrategy } from "../../../domain/ports/PreparationStrategy";
 
 export class NoOpPreparationStrategy implements PreparationStrategy {
   readonly strategyId = "none";

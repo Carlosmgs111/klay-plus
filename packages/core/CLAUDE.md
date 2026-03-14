@@ -5,7 +5,7 @@ Semantic Knowledge Platform core library. 4 bounded contexts, dual runtime (Serv
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 155 tests (vitest), 153 pass + 2 skipped
+pnpm --filter @klay/core test    # 366 tests (vitest)
 ```
 
 ## Structure
@@ -28,6 +28,9 @@ src/
 | `./adapters/ui` | 3 UI adapters (Pipeline, Management, Lifecycle) |
 | `./lifecycle` | KnowledgeLifecyclePort + DTOs + factory |
 | `./management` | KnowledgeManagementPort + DTOs + factory |
+| `./config` | Infrastructure config types, profiles, resolution, validation |
+| `./config/nedb` | NeDBConfigStore (server-side config persistence) |
+| `./config/browser` | IndexedDBConfigStore (browser-side config persistence) |
 
 ## Key Files
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { validateProfile } from "../validation";
+import { validateProfile } from "../profileResolution";
 import type { InfrastructureProfile } from "../InfrastructureProfile";
-import { PRESET_PROFILES } from "../presets";
+import { PRESET_PROFILES } from "../InfrastructureProfile";
 
 describe("validateProfile", () => {
   it("accepts valid preset profiles", () => {

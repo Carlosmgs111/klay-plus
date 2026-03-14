@@ -6,13 +6,6 @@ export {
   RetrievalItem,
   ExecuteSemanticQuery,
   SemanticQueryUseCases,
-  HashQueryEmbedder,
-  WebLLMQueryEmbedder,
-  AISdkQueryEmbedder,
-  InMemoryVectorReadStore,
-  NeDBVectorReadStore,
-  IndexedDBVectorReadStore,
-  PassthroughRankingStrategy,
   semanticQueryFactory,
 } from "./semantic-query";
 

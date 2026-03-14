@@ -1,17 +1,16 @@
 import type { ProcessingProfile } from "../../processing-profile/domain/ProcessingProfile";
 import type { PreparationLayer } from "../../processing-profile/domain/value-objects/PreparationLayer";
 import type { FragmentationLayer, FragmentationConfig } from "../../processing-profile/domain/value-objects/FragmentationLayer";
-import type { ProjectionLayer } from "../../processing-profile/domain/value-objects/ProjectionLayer";
 import type { PreparationStrategy } from "../domain/ports/PreparationStrategy";
 import type { EmbeddingStrategy } from "../domain/ports/EmbeddingStrategy";
 import type { ChunkingStrategy } from "../domain/ports/ChunkingStrategy";
-import type { ProjectionInfrastructurePolicy } from "./factory";
+import type { EmbeddingStrategyResolver } from "./EmbeddingStrategyResolver";
 
-import { NoOpPreparationStrategy } from "../infrastructure/strategies/NoOpPreparationStrategy";
-import { BasicPreparationStrategy } from "../infrastructure/strategies/BasicPreparationStrategy";
-import { RecursiveChunker } from "../infrastructure/strategies/RecursiveChunker";
-import { SentenceChunker } from "../infrastructure/strategies/SentenceChunker";
-import { FixedSizeChunker } from "../infrastructure/strategies/FixedSizeChunker";
+import { NoOpPreparationStrategy } from "../infrastructure/strategies/preparation/NoOpPreparationStrategy";
+import { BasicPreparationStrategy } from "../infrastructure/strategies/preparation/BasicPreparationStrategy";
+import { RecursiveChunker } from "../infrastructure/strategies/chunking/RecursiveChunker";
+import { SentenceChunker } from "../infrastructure/strategies/chunking/SentenceChunker";
+import { FixedSizeChunker } from "../infrastructure/strategies/chunking/FixedSizeChunker";
 
 /**
  * Materialized strategies resolved from a ProcessingProfile.
@@ -28,18 +27,14 @@ export interface MaterializedStrategies {
  * Translates a declarative ProcessingProfile (domain) into concrete
  * strategy implementations (infrastructure).
  *
- * This lives in composition/ because:
- * - It instantiates concrete infrastructure classes
- * - It knows about specific embedding providers and chunker implementations
- * - The domain only declares intent (strategyId strings)
- * - This component resolves that intent into runnable code
- *
- * The policy is needed for infrastructure-specific configuration
- * (API keys, dimensions, etc.) that cannot live in the domain profile.
+ * Coordinates the 3 layers:
+ * - Preparation: resolved inline (simple mapping)
+ * - Fragmentation (chunking): resolved inline (simple mapping)
+ * - Projection (embedding): delegated to EmbeddingStrategyResolver
  */
 export class ProcessingProfileMaterializer {
   constructor(
-    private readonly policy: ProjectionInfrastructurePolicy,
+    private readonly embeddingResolver: EmbeddingStrategyResolver,
   ) {}
 
   /**
@@ -48,7 +43,7 @@ export class ProcessingProfileMaterializer {
    */
   async materialize(profile: ProcessingProfile): Promise<MaterializedStrategies> {
     const preparationStrategy = this.resolvePreparationStrategy(profile.preparation);
-    const embeddingStrategy = await this.resolveEmbeddingStrategy(profile.projection);
+    const embeddingStrategy = await this.embeddingResolver.resolve(profile.projection);
     const chunkingStrategy = this.resolveChunkingStrategy(profile.fragmentation);
     return { preparationStrategy, embeddingStrategy, chunkingStrategy };
   }
@@ -60,80 +55,6 @@ export class ProcessingProfileMaterializer {
     return new BasicPreparationStrategy(
       layer.config as { normalizeWhitespace: boolean; normalizeEncoding: boolean; trimContent: boolean },
     );
-  }
-
-  private async resolveEmbeddingStrategy(
-    layer: ProjectionLayer,
-  ): Promise<EmbeddingStrategy> {
-    const embeddingId = layer.strategyId;
-
-    // Check if it's an AI SDK provider
-    if (this.isAIProvider(embeddingId)) {
-      return this.resolveAIEmbeddingStrategy(embeddingId);
-    }
-
-    // WebLLM
-    if (embeddingId === "web-llm-embedding") {
-      const { WebLLMEmbeddingStrategy } = await import(
-        "../infrastructure/strategies/WebLLMEmbeddingStrategy"
-      );
-      const modelId = this.policy.webLLMModelId;
-      const strategy = new WebLLMEmbeddingStrategy(modelId);
-      await strategy.initialize();
-      return strategy;
-    }
-
-    // Default: hash embedding
-    const { HashEmbeddingStrategy } = await import(
-      "../infrastructure/strategies/HashEmbeddingStrategy"
-    );
-    const dimensions = layer.config.dimensions
-      ?? this.policy.embeddingDimensions
-      ?? 128;
-    return new HashEmbeddingStrategy(dimensions);
-  }
-
-  private isAIProvider(id: string): boolean {
-    return id.startsWith("openai-") || id.startsWith("cohere-") || id.startsWith("huggingface-");
-  }
-
-  private async resolveAIEmbeddingStrategy(
-    embeddingId: string,
-  ): Promise<EmbeddingStrategy> {
-    const { AISdkEmbeddingStrategy } = await import(
-      "../infrastructure/strategies/AISdkEmbeddingStrategy"
-    );
-
-    const { resolveConfigProvider } = await import(
-      "../../../../platform/config/resolveConfigProvider"
-    );
-    const configProvider = await resolveConfigProvider(this.policy);
-
-    if (embeddingId.startsWith("openai-")) {
-      const modelId = embeddingId.replace("openai-", "") || "text-embedding-3-small";
-      const apiKey = configProvider.require("OPENAI_API_KEY");
-      const { createOpenAI } = await import("@ai-sdk/openai");
-      const openai = createOpenAI({ apiKey });
-      return new AISdkEmbeddingStrategy(openai.embedding(modelId), `openai-${modelId}`);
-    }
-
-    if (embeddingId.startsWith("cohere-")) {
-      const modelId = embeddingId.replace("cohere-", "") || "embed-multilingual-v3.0";
-      const apiKey = configProvider.require("COHERE_API_KEY");
-      const { createCohere } = await import(/* @vite-ignore */ "@ai-sdk/cohere");
-      const cohere = createCohere({ apiKey });
-      return new AISdkEmbeddingStrategy(cohere.textEmbeddingModel(modelId), `cohere-${modelId}`);
-    }
-
-    if (embeddingId.startsWith("huggingface-")) {
-      const modelId = embeddingId.replace("huggingface-", "") || "sentence-transformers/all-MiniLM-L6-v2";
-      const apiKey = configProvider.require("HUGGINGFACE_API_KEY");
-      const { createHuggingFace } = await import(/* @vite-ignore */ "@ai-sdk/huggingface");
-      const hf = createHuggingFace({ apiKey });
-      return new AISdkEmbeddingStrategy(hf.textEmbeddingModel(modelId), `huggingface-${modelId}`);
-    }
-
-    throw new Error(`Unknown AI embedding provider in strategyId: ${embeddingId}`);
   }
 
   private resolveChunkingStrategy(layer: FragmentationLayer): ChunkingStrategy {

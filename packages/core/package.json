@@ -35,14 +35,14 @@
       "default": "./src/platform/config/index.ts"
     },
     "./config/nedb": {
-      "types": "./src/platform/config/NeDBConfigStore.ts",
-      "import": "./src/platform/config/NeDBConfigStore.ts",
-      "default": "./src/platform/config/NeDBConfigStore.ts"
+      "types": "./src/platform/config/ConfigStore.ts",
+      "import": "./src/platform/config/ConfigStore.ts",
+      "default": "./src/platform/config/ConfigStore.ts"
     },
     "./config/browser": {
-      "types": "./src/platform/config/IndexedDBConfigStore.ts",
-      "import": "./src/platform/config/IndexedDBConfigStore.ts",
-      "default": "./src/platform/config/IndexedDBConfigStore.ts"
+      "types": "./src/platform/config/ConfigStore.ts",
+      "import": "./src/platform/config/ConfigStore.ts",
+      "default": "./src/platform/config/ConfigStore.ts"
     },
     "./secrets": {
       "types": "./src/platform/secrets/index.ts",

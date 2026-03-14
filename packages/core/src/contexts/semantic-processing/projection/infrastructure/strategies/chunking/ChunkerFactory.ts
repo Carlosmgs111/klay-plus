@@ -1,4 +1,4 @@
-import type { ChunkingStrategy } from "../../domain/ports/ChunkingStrategy";
+import type { ChunkingStrategy } from "../../../domain/ports/ChunkingStrategy";
 
 export class ChunkerFactory {
   private static strategies = new Map<string, () => ChunkingStrategy>();

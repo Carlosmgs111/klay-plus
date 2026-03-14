@@ -11,42 +11,59 @@ interface SearchBarProps {
 
 const STATUS_OPTIONS = ["complete", "partial", "failed"] as const;
 
+interface SearchFilters {
+  topK: number;
+  minScore: number;
+  statusFilters: string[];
+  contextFilter: string;
+  sourceFilter: string;
+}
+
+const DEFAULT_FILTERS: SearchFilters = {
+  topK: 5,
+  minScore: 0,
+  statusFilters: [],
+  contextFilter: "",
+  sourceFilter: "",
+};
+
 export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarProps) {
   const [query, setQuery] = useState("");
-  const [topK, setTopK] = useState(5);
-  const [minScore, setMinScore] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [contextFilter, setContextFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState("");
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
 
-  const activeFilterCount = [
-    topK !== 5,
-    minScore !== 0,
-    statusFilters.length > 0,
-    !hideContextFilter && contextFilter.trim() !== "",
-    sourceFilter.trim() !== "",
-  ].filter(Boolean).length;
+  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
 
   const toggleStatus = (status: string) => {
-    setStatusFilters((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status],
-    );
+    setFilters((prev) => ({
+      ...prev,
+      statusFilters: prev.statusFilters.includes(status)
+        ? prev.statusFilters.filter((s) => s !== status)
+        : [...prev.statusFilters, status],
+    }));
   };
+
+  const activeFilterCount = [
+    filters.topK !== 5,
+    filters.minScore !== 0,
+    filters.statusFilters.length > 0,
+    !hideContextFilter && filters.contextFilter.trim() !== "",
+    filters.sourceFilter.trim() !== "",
+  ].filter(Boolean).length;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
-    const filters: Record<string, unknown> = {};
-    if (statusFilters.length > 0) filters.status = statusFilters;
-    if (!hideContextFilter && contextFilter.trim()) filters.contextId = contextFilter.trim();
-    if (sourceFilter.trim()) filters.sourceId = sourceFilter.trim();
+    const apiFilters: Record<string, unknown> = {};
+    if (filters.statusFilters.length > 0) apiFilters.status = filters.statusFilters;
+    if (!hideContextFilter && filters.contextFilter.trim()) apiFilters.contextId = filters.contextFilter.trim();
+    if (filters.sourceFilter.trim()) apiFilters.sourceId = filters.sourceFilter.trim();
 
-    const hasFilters = Object.keys(filters).length > 0;
-    onSearch(query.trim(), topK, minScore, hasFilters ? filters : undefined);
+    const hasFilters = Object.keys(apiFilters).length > 0;
+    onSearch(query.trim(), filters.topK, filters.minScore, hasFilters ? apiFilters : undefined);
   };
 
   return (
@@ -115,8 +132,8 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
                 type="number"
                 min={1}
                 max={20}
-                value={topK}
-                onChange={(e) => setTopK(Number(e.target.value))}
+                value={filters.topK}
+                onChange={(e) => updateFilter("topK", Number(e.target.value))}
                 className="input w-16 text-xs py-1"
               />
             </div>
@@ -129,12 +146,12 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
                 min={0}
                 max={1}
                 step={0.01}
-                value={minScore}
-                onChange={(e) => setMinScore(Number(e.target.value))}
+                value={filters.minScore}
+                onChange={(e) => updateFilter("minScore", Number(e.target.value))}
                 className="flex-1 accent-[var(--color-accent)]"
               />
               <span className="text-xs font-mono text-secondary w-8 text-right">
-                {minScore.toFixed(2)}
+                {filters.minScore.toFixed(2)}
               </span>
             </div>
           </div>
@@ -144,7 +161,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
             <label className="text-xs text-tertiary tracking-caps">Status:</label>
             <div className="flex gap-1.5">
               {STATUS_OPTIONS.map((status) => {
-                const isActive = statusFilters.includes(status);
+                const isActive = filters.statusFilters.includes(status);
                 const badgeClass = isActive
                   ? status === "complete"
                     ? "bg-success-muted text-success"
@@ -176,8 +193,8 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
                 <label className="text-xs text-tertiary tracking-caps">Context ID:</label>
                 <input
                   type="text"
-                  value={contextFilter}
-                  onChange={(e) => setContextFilter(e.target.value)}
+                  value={filters.contextFilter}
+                  onChange={(e) => updateFilter("contextFilter", e.target.value)}
                   placeholder="Filter by context..."
                   className="input text-xs py-1 w-48 font-mono"
                 />
@@ -187,8 +204,8 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
               <label className="text-xs text-tertiary tracking-caps">Source ID:</label>
               <input
                 type="text"
-                value={sourceFilter}
-                onChange={(e) => setSourceFilter(e.target.value)}
+                value={filters.sourceFilter}
+                onChange={(e) => updateFilter("sourceFilter", e.target.value)}
                 placeholder="Filter by source..."
                 className="input text-xs py-1 w-48 font-mono"
               />

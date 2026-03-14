@@ -31,4 +31,6 @@ export type { ManagementStep as ManagementStepType } from "./domain/ManagementSt
 
 export { createKnowledgeManagement } from "./composition/knowledge-management.factory";
 
+export type { OrchestratorPolicy } from "../composition/OrchestratorPolicy";
+/** @deprecated Use `OrchestratorPolicy` instead. */
 export type { KnowledgeManagementPolicy } from "./composition/knowledge-management.factory";

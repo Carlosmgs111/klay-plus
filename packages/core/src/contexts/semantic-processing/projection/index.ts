@@ -47,21 +47,7 @@ export type {
 } from "./application";
 
 export {
-  BaseChunker,
-  FixedSizeChunker,
-  SentenceChunker,
-  RecursiveChunker,
-  ChunkerFactory,
-  HashEmbeddingStrategy,
-  WebLLMEmbeddingStrategy,
-  AISdkEmbeddingStrategy,
-} from "./infrastructure/strategies";
-
-export { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
-
-export {
   projectionFactory,
-  ProcessingProfileMaterializer,
 } from "./composition";
 export type {
   ProjectionInfrastructurePolicy,

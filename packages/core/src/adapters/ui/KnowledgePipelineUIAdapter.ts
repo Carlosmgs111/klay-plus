@@ -20,22 +20,8 @@ import type {
   GetManifestInput,
   GetManifestSuccess,
 } from "../../application/knowledge-pipeline/contracts/dtos";
-
-/**
- * Generic result type for UI consumption.
- * Unwraps the Result<E, T> pattern into a simpler success/error shape.
- */
-export type UIResult<T> =
-  | { success: true; data: T }
-  | {
-      success: false;
-      error: {
-        message: string;
-        code: string;
-        step?: string;
-        completedSteps?: string[];
-      };
-    };
+import { unwrapResult } from "../shared/resultTransformers";
+import type { UIResult } from "../shared/resultTransformers";
 
 /**
  * KnowledgePipelineUIAdapter — Primary Adapter for UI consumers.
@@ -52,68 +38,51 @@ export class KnowledgePipelineUIAdapter {
 
   async execute(input: ExecutePipelineInput): Promise<UIResult<ExecutePipelineSuccess>> {
     const result = await this._pipeline.execute(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async ingestDocument(input: IngestDocumentInput): Promise<UIResult<IngestDocumentSuccess>> {
     const result = await this._pipeline.ingestDocument(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async processDocument(input: ProcessDocumentInput): Promise<UIResult<ProcessDocumentSuccess>> {
     const result = await this._pipeline.processDocument(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async catalogDocument(input: CatalogDocumentInput): Promise<UIResult<CatalogDocumentSuccess>> {
     const result = await this._pipeline.catalogDocument(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async searchKnowledge(input: SearchKnowledgeInput): Promise<UIResult<SearchKnowledgeSuccess>> {
     const result = await this._pipeline.searchKnowledge(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async createProcessingProfile(input: CreateProcessingProfileInput): Promise<UIResult<CreateProcessingProfileSuccess>> {
     const result = await this._pipeline.createProcessingProfile(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async listProfiles(): Promise<UIResult<ListProfilesResult>> {
     const result = await this._pipeline.listProfiles();
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async updateProfile(input: UpdateProfileInput): Promise<UIResult<UpdateProfileResult>> {
     const result = await this._pipeline.updateProfile(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async deprecateProfile(input: DeprecateProfileInput): Promise<UIResult<DeprecateProfileResult>> {
     const result = await this._pipeline.deprecateProfile(input);
-    return this._unwrap(result);
+    return unwrapResult(result);
   }
 
   async getManifest(input: GetManifestInput): Promise<UIResult<GetManifestSuccess>> {
     const result = await this._pipeline.getManifest(input);
-    return this._unwrap(result);
-  }
-
-  private _unwrap<T>(result: { isOk(): boolean; value: T; error: any }): UIResult<T> {
-    if (result.isOk()) {
-      return { success: true, data: result.value };
-    }
-
-    const error = result.error;
-    return {
-      success: false,
-      error: {
-        message: error.message ?? "Unknown error",
-        code: error.code ?? "UNKNOWN",
-        step: error.step,
-        completedSteps: error.completedSteps,
-      },
-    };
+    return unwrapResult(result);
   }
 }

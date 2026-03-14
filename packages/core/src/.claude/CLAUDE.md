@@ -3,7 +3,7 @@
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 155 tests (vitest), 153 pass + 2 skipped
+pnpm --filter @klay/core test    # 366 tests (vitest)
 ```
 
 ## Conventions
@@ -13,7 +13,7 @@ pnpm --filter @klay/core test    # 155 tests (vitest), 153 pass + 2 skipped
 - Triple repo: InMemory (test), NeDB (server), IndexedDB (browser)
 - Composition lives in `context/composition/`, never inside `service/`
 - Services are the public API of each bounded context
-- 2 test files (source-ingestion e2e, config) use non-vitest format — report as failures but aren't real failures
+- 1 test file (ConnectionConfig.test.ts) has a single skipped placeholder test
 
 ## Vision
 
@@ -74,7 +74,12 @@ Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
 
 ## Platform (`platform/`)
 
-- **Config**: `ConfigProvider`, `NodeConfigProvider`, `AstroConfigProvider`, `InMemoryConfigProvider`
+- **Config** (5 files):
+  - `ConfigProvider.ts` — ConfigProvider interface, BaseConfigProvider, NodeConfigProvider, InMemoryConfigProvider, resolveConfigProvider
+  - `ConfigStore.ts` — ConfigStore interface, InMemoryConfigStore, IndexedDBConfigStore, NeDBConfigStore
+  - `InfrastructureProfile.ts` — Type unions (Persistence, VectorStore, Embedding, DocumentStorage), InfrastructureProfile, PRESET_PROFILES, defineConfig
+  - `profileResolution.ts` — resolveInfrastructureProfile, saveProfileToStore, validation, profile helpers
+  - `ProviderRequirements.ts` — PROVIDER_REGISTRY, declarative field specs for auto-generated UI forms
 - **Persistence**: `IndexedDBStore`, `NeDBStore`, repository helpers
 - **Eventing**: `InMemoryEventPublisher`
 - **Vector**: `InMemoryVectorWriteStore`, `hashVector`, `VectorEntry` serialization

@@ -1,4 +1,4 @@
-import type { PreparationStrategy } from "../../domain/ports/PreparationStrategy";
+import type { PreparationStrategy } from "../../../domain/ports/PreparationStrategy";
 
 interface BasicPreparationConfig {
   normalizeWhitespace: boolean;

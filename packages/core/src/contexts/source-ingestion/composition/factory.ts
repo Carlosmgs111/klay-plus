@@ -6,7 +6,7 @@ import type { EventPublisher } from "../../../shared/domain/EventPublisher";
 import type { SourceInfrastructurePolicy } from "../source/composition/factory";
 import type { ExtractionInfrastructurePolicy } from "../extraction/composition/factory";
 import type { ResourceInfrastructurePolicy } from "../resource/composition/factory";
-import { resolveConfigProvider } from "../../../platform/config/resolveConfigProvider";
+import { resolveConfigProvider } from "../../../platform/config/ConfigProvider";
 import type { ConfigStore } from "../../../platform/config/ConfigStore";
 
 interface SourceOverrides {

@@ -14,9 +14,6 @@ export {
   ExtractionJobNotFoundError,
   ExtractionSourceIdRequiredError,
   ExtractionInvalidStateError,
-  ExtractionCannotStartError,
-  ExtractionCannotCompleteError,
-  ExtractionCannotFailError,
   ExtractionFailedError,
   ExtractionNotAvailableError,
   UnsupportedMimeTypeError,
@@ -39,12 +36,6 @@ export type {
   ExecuteExtractionResult,
   ExtractorMap,
 } from "./application";
-
-export {
-  TextContentExtractor,
-  BrowserPdfContentExtractor,
-  ServerPdfContentExtractor,
-} from "./infrastructure/adapters";
 
 export { extractionFactory } from "./composition";
 export type {

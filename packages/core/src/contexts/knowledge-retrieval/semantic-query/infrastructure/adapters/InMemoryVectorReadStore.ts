@@ -1,38 +1,17 @@
-import type { VectorReadStore, SearchHit } from "../../domain/ports/VectorReadStore";
+import { BaseVectorReadStore } from "./BaseVectorReadStore";
 import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
-import { cosineSimilarity } from "../../../../../platform/vector/hashVector";
 
 /**
  * In-memory VectorReadStore implementation.
  * Receives a shared Map<string, VectorEntry> from the write side
  * to read vectors without cross-context coupling.
  */
-export class InMemoryVectorReadStore implements VectorReadStore {
-  constructor(private readonly entries: Map<string, VectorEntry>) {}
+export class InMemoryVectorReadStore extends BaseVectorReadStore {
+  constructor(private readonly entries: Map<string, VectorEntry>) {
+    super();
+  }
 
-  async search(
-    queryVector: number[],
-    topK: number,
-    filter?: Record<string, unknown>,
-  ): Promise<SearchHit[]> {
-    let candidates = [...this.entries.values()];
-
-    if (filter) {
-      candidates = candidates.filter((entry) =>
-        Object.entries(filter).every(
-          ([key, value]) => entry.metadata[key] === value,
-        ),
-      );
-    }
-
-    const scored: SearchHit[] = candidates.map((entry) => ({
-      id: entry.id,
-      sourceId: entry.sourceId,
-      content: entry.content,
-      score: cosineSimilarity(queryVector, entry.vector),
-      metadata: entry.metadata,
-    }));
-
-    return scored.sort((a, b) => b.score - a.score).slice(0, topK);
+  protected async loadEntries(): Promise<VectorEntry[]> {
+    return [...this.entries.values()];
   }
 }

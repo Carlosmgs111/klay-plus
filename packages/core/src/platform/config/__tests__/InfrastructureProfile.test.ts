@@ -1,19 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { InMemoryConfigStore } from "../InMemoryConfigStore";
+import { InMemoryConfigStore } from "../ConfigStore";
 import {
   resolveInfrastructureProfile,
   saveProfileToStore,
   INFRA_PROFILE_KEY,
-} from "../resolveInfrastructureProfile";
+} from "../profileResolution";
 import type { InfrastructureProfile } from "../InfrastructureProfile";
-import { DEFAULT_PROFILES } from "../InfrastructureProfile";
-import { PRESET_PROFILES } from "../presets";
+import { PRESET_PROFILES } from "../InfrastructureProfile";
 
 describe("PRESET_PROFILES", () => {
-  it("DEFAULT_PROFILES is an alias for PRESET_PROFILES", () => {
-    expect(DEFAULT_PROFILES).toBe(PRESET_PROFILES);
-  });
-
   it("in-memory preset has correct typed shape", () => {
     const p = PRESET_PROFILES["in-memory"];
     expect(p.id).toBe("in-memory");

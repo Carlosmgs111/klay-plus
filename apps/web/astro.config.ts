@@ -12,15 +12,15 @@ export default defineConfig({
       // Bundle @klay/core (source .ts files need transpilation)
       noExternal: ["@klay/core"],
       // Server-only / optional providers — keep external (resolved at runtime or tree-shaken)
-      external: ["nedb-promises", "@ai-sdk/cohere", "@ai-sdk/huggingface"],
+      external: ["nedb-promises", "pdf-extraction", "@ai-sdk/cohere", "@ai-sdk/huggingface"],
     },
     optimizeDeps: {
       include: ["pdfjs-dist"],
-      exclude: ["nedb-promises"],
+      exclude: ["nedb-promises", "pdf-extraction", "@ai-sdk/cohere", "@ai-sdk/huggingface"],
     },
     build: {
       rollupOptions: {
-        external: ["nedb-promises", "@ai-sdk/cohere", "@ai-sdk/huggingface"],
+        external: ["nedb-promises", "pdf-extraction", "@ai-sdk/cohere", "@ai-sdk/huggingface"],
       },
     },
   },

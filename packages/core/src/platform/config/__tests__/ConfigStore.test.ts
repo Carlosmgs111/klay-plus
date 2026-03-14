@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { InMemoryConfigStore } from "../InMemoryConfigStore";
-import { resolveConfigProvider } from "../resolveConfigProvider";
+import { InMemoryConfigStore } from "../ConfigStore";
+import { resolveConfigProvider } from "../ConfigProvider";
 
 describe("InMemoryConfigStore", () => {
   it("starts empty by default", async () => {
@@ -108,13 +108,13 @@ describe("resolveConfigProvider with configStore", () => {
 
 describe("NeDBConfigStore", () => {
   it("starts empty", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore(); // in-memory (no filename)
     expect(await store.loadAll()).toEqual({});
   });
 
   it("set and loadAll round-trips", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore();
     await store.set("OPENAI_API_KEY", "sk-test");
     await store.set("COHERE_API_KEY", "co-test");
@@ -125,20 +125,20 @@ describe("NeDBConfigStore", () => {
   });
 
   it("get returns value for existing key", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore();
     await store.set("KEY", "value");
     expect(await store.get("KEY")).toBe("value");
   });
 
   it("get returns undefined for missing key", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore();
     expect(await store.get("MISSING")).toBeUndefined();
   });
 
   it("remove deletes a key", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore();
     await store.set("A", "1");
     await store.set("B", "2");
@@ -147,7 +147,7 @@ describe("NeDBConfigStore", () => {
   });
 
   it("has returns true for existing keys", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore();
     await store.set("X", "y");
     expect(await store.has("X")).toBe(true);
@@ -155,7 +155,7 @@ describe("NeDBConfigStore", () => {
   });
 
   it("set overwrites existing value", async () => {
-    const { NeDBConfigStore } = await import("../NeDBConfigStore");
+    const { NeDBConfigStore } = await import("../ConfigStore");
     const store = new NeDBConfigStore();
     await store.set("K", "old");
     await store.set("K", "new");

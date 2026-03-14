@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { defineConfig } from "../defineConfig";
+import { defineConfig } from "../InfrastructureProfile";
 
 describe("defineConfig", () => {
   it("returns the config object as-is (type helper)", () => {

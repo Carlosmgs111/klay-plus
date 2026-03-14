@@ -24,24 +24,6 @@ export class ExtractionInvalidStateError extends InvalidStateError {
   }
 }
 
-export class ExtractionCannotStartError extends ExtractionInvalidStateError {
-  constructor(currentStatus: ExtractionStatus) {
-    super(currentStatus, "start");
-  }
-}
-
-export class ExtractionCannotCompleteError extends ExtractionInvalidStateError {
-  constructor(currentStatus: ExtractionStatus) {
-    super(currentStatus, "complete");
-  }
-}
-
-export class ExtractionCannotFailError extends ExtractionInvalidStateError {
-  constructor(currentStatus: ExtractionStatus) {
-    super(currentStatus, "fail");
-  }
-}
-
 export class ExtractionFailedError extends OperationError {
   constructor(
     sourceId: string,
@@ -81,9 +63,6 @@ export type ExtractionError =
   | ExtractionJobNotFoundError
   | ExtractionSourceIdRequiredError
   | ExtractionInvalidStateError
-  | ExtractionCannotStartError
-  | ExtractionCannotCompleteError
-  | ExtractionCannotFailError
   | ExtractionFailedError
   | ExtractionNotAvailableError
   | UnsupportedMimeTypeError

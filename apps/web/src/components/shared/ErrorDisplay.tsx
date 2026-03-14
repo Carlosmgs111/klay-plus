@@ -2,7 +2,7 @@ import { Icon } from "./Icon";
 
 interface ErrorDisplayProps {
   message: string;
-  code: string;
+  code?: string;
   step?: string;
   completedSteps?: string[];
 }
@@ -19,7 +19,7 @@ export function ErrorDisplay({
         <Icon name="alert-circle" className="text-danger mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-danger">{message}</p>
-          <p className="text-xs mt-1 font-mono text-tertiary">{code}</p>
+          {code && <p className="text-xs mt-1 font-mono text-tertiary">{code}</p>}
           {step && (
             <p className="text-xs mt-1 text-tertiary">
               Failed at step: <span className="font-medium text-secondary">{step}</span>

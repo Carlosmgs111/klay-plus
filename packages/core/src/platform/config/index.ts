@@ -1,51 +1,44 @@
+// ── ConfigProvider ────────────────────────────────────────────────────
 export type { ConfigProvider } from "./ConfigProvider";
-export { ConfigurationError } from "./ConfigurationError";
+export { ConfigurationError, NodeConfigProvider, InMemoryConfigProvider } from "./ConfigProvider";
+export { resolveConfigProvider } from "./ConfigProvider";
+export type { ConfigResolutionPolicy } from "./ConfigProvider";
 
+// ── ConfigStore ──────────────────────────────────────────────────────
 export type { ConfigStore } from "./ConfigStore";
-export { InMemoryConfigStore } from "./InMemoryConfigStore";
+export { InMemoryConfigStore, IndexedDBConfigStore, NeDBConfigStore } from "./ConfigStore";
 
-export { AstroConfigProvider } from "./AstroConfigProvider";
-export { NodeConfigProvider } from "./NodeConfigProvider";
-export { InMemoryConfigProvider } from "./InMemoryConfigProvider";
+// ── Infrastructure Profile + Types ───────────────────────────────────
+export type {
+  InfrastructureProfile,
+  PersistenceConfig,
+  VectorStoreConfig, DistanceMetric,
+  EmbeddingConfig, EmbeddingFingerprint,
+  DocumentStorageConfig,
+  KlayConfig, KlayProfileConfig,
+} from "./InfrastructureProfile";
+export { PRESET_PROFILES, defineConfig } from "./InfrastructureProfile";
 
-export { resolveConfigProvider } from "./resolveConfigProvider";
-export type { ConfigResolutionPolicy } from "./resolveConfigProvider";
-
-export type { InfrastructureProfile } from "./InfrastructureProfile";
-export type { ConnectionConfig, LocalConnection, NetworkConnection, EmbeddedConnection } from "./ConnectionConfig";
-export type { PersistenceConfig, PoolConfig } from "./PersistenceConfig";
-export type { VectorStoreConfig, DistanceMetric } from "./VectorStoreConfig";
-export type { EmbeddingConfig, EmbeddingFingerprint } from "./EmbeddingConfig";
-export type { DocumentStorageConfig } from "./DocumentStorageConfig";
-export type { LLMConfig } from "./LLMConfig";
-export { DEFAULT_PROFILES } from "./InfrastructureProfile";
-export { PRESET_PROFILES } from "./presets";
-
-// Validation
-export { validateProfile } from "./validation";
-export type { ValidationError } from "./validation";
-
-// defineConfig
-export { defineConfig } from "./defineConfig";
-export type { KlayConfig, KlayProfileConfig } from "./defineConfig";
-
+// ── Profile Resolution + Validation ──────────────────────────────────
 export {
+  resolveInfrastructureProfile,
+  saveProfileToStore,
+  INFRA_PROFILE_KEY,
   persistenceToProvider,
   vectorStoreToProvider,
   documentStorageToProvider,
   getEmbeddingDimensions,
   getEmbeddingModel,
-} from "./profileHelpers";
+  validateProfile,
+} from "./profileResolution";
+export type { ValidationError } from "./profileResolution";
 
-export {
-  resolveInfrastructureProfile,
-  saveProfileToStore,
-  INFRA_PROFILE_KEY,
-} from "./resolveInfrastructureProfile";
-
+// ── Provider Registry ────────────────────────────────────────────────
 export type {
   ProviderMetadata,
   ProviderRequirement,
+  ProviderFieldSpec,
+  FieldInputType,
   InfrastructureAxis,
   RuntimeEnvironment,
   EmbeddingModelSpec,
@@ -54,6 +47,7 @@ export type {
 export {
   PROVIDER_REGISTRY,
   getProvidersForAxis,
+  getProvider,
   getProfileRequirements,
   getDefaultModel,
   getModelsForProvider,

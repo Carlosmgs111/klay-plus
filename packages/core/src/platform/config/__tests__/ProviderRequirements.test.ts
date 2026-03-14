@@ -4,6 +4,7 @@ import {
   getProfileRequirements,
   getDefaultModel,
   getModelsForProvider,
+  getProvider,
   PROVIDER_REGISTRY,
 } from "../ProviderRequirements";
 
@@ -12,7 +13,7 @@ describe("getProvidersForAxis", () => {
     const providers = getProvidersForAxis("persistence");
     expect(providers).toHaveLength(3);
     expect(providers.map((p) => p.id)).toEqual(
-      expect.arrayContaining(["in-memory", "browser", "server"]),
+      expect.arrayContaining(["in-memory", "indexeddb", "nedb"]),
     );
   });
 
@@ -32,7 +33,7 @@ describe("getProvidersForAxis", () => {
     expect(providers.map((p) => p.id)).toEqual(
       expect.arrayContaining([
         "hash",
-        "browser-webllm",
+        "webllm",
         "openai",
         "cohere",
         "huggingface",
@@ -44,35 +45,53 @@ describe("getProvidersForAxis", () => {
     const providers = getProvidersForAxis("persistence", "browser");
     const ids = providers.map((p) => p.id);
     expect(ids).toContain("in-memory");
-    expect(ids).toContain("browser");
-    expect(ids).not.toContain("server");
+    expect(ids).toContain("indexeddb");
+    expect(ids).not.toContain("nedb");
   });
 
   it("filters by server runtime — persistence", () => {
     const providers = getProvidersForAxis("persistence", "server");
     const ids = providers.map((p) => p.id);
     expect(ids).toContain("in-memory");
-    expect(ids).toContain("server");
-    expect(ids).not.toContain("browser");
+    expect(ids).toContain("nedb");
+    expect(ids).not.toContain("indexeddb");
   });
 
   it("filters by browser runtime — embedding excludes server-only", () => {
     const providers = getProvidersForAxis("embedding", "browser");
     const ids = providers.map((p) => p.id);
     expect(ids).toContain("hash");
-    expect(ids).toContain("browser-webllm");
+    expect(ids).toContain("webllm");
     expect(ids).toContain("openai");
-    // cohere and huggingface are browser+server
     expect(ids).toContain("cohere");
     expect(ids).toContain("huggingface");
   });
 
-  it("filters by server runtime — embedding excludes browser-webllm", () => {
+  it("filters by server runtime — embedding excludes webllm", () => {
     const providers = getProvidersForAxis("embedding", "server");
     const ids = providers.map((p) => p.id);
     expect(ids).toContain("hash");
-    expect(ids).not.toContain("browser-webllm");
+    expect(ids).not.toContain("webllm");
     expect(ids).toContain("openai");
+  });
+});
+
+describe("getProvider", () => {
+  it("finds a provider by axis + id", () => {
+    const provider = getProvider("persistence", "nedb");
+    expect(provider).toBeDefined();
+    expect(provider!.name).toBe("NeDB");
+  });
+
+  it("returns undefined for unknown id", () => {
+    expect(getProvider("persistence", "nonexistent")).toBeUndefined();
+  });
+
+  it("returns provider with fields when defined", () => {
+    const provider = getProvider("persistence", "nedb");
+    expect(provider!.fields).toBeDefined();
+    expect(provider!.fields!.length).toBeGreaterThan(0);
+    expect(provider!.fields![0].key).toBe("path");
   });
 });
 
@@ -157,20 +176,20 @@ describe("getProfileRequirements", () => {
     expect(reqs).toEqual([]);
   });
 
-  it("returns empty array for browser-webllm embedding", () => {
-    const reqs = getProfileRequirements({ embedding: "browser-webllm" });
+  it("returns empty array for webllm embedding", () => {
+    const reqs = getProfileRequirements({ embedding: "webllm" });
     expect(reqs).toEqual([]);
   });
 
   it("returns empty array for persistence-only profile", () => {
-    const reqs = getProfileRequirements({ persistence: "browser" });
+    const reqs = getProfileRequirements({ persistence: "indexeddb" });
     expect(reqs).toEqual([]);
   });
 
   it("deduplicates requirements across axes", () => {
     const reqs = getProfileRequirements({
-      persistence: "browser",
-      vectorStore: "browser",
+      persistence: "indexeddb",
+      vectorStore: "indexeddb",
       embedding: "openai",
     });
     expect(reqs.filter((r) => r.key === "OPENAI_API_KEY")).toHaveLength(1);
@@ -209,7 +228,7 @@ describe("PROVIDER_REGISTRY", () => {
     const localProviders = PROVIDER_REGISTRY.filter(
       (p) => p.gateway === "local",
     );
-    // 9 persistence/vectorStore/documentStorage + 2 local embedding (hash, browser-webllm)
+    // 3 persistence + 3 vectorStore + 3 documentStorage + 2 embedding (hash, webllm)
     expect(localProviders).toHaveLength(11);
   });
 
@@ -220,9 +239,33 @@ describe("PROVIDER_REGISTRY", () => {
     for (const provider of embeddingProviders) {
       expect(provider.models).toBeDefined();
       expect(provider.models!.length).toBeGreaterThan(0);
-      // Each provider should have exactly one default model
       const defaults = provider.models!.filter((m) => m.isDefault);
       expect(defaults).toHaveLength(1);
+    }
+  });
+
+  it("providers with fields have valid field specs", () => {
+    const withFields = PROVIDER_REGISTRY.filter((p) => p.fields && p.fields.length > 0);
+    expect(withFields.length).toBeGreaterThan(0);
+    for (const provider of withFields) {
+      for (const field of provider.fields!) {
+        expect(field.key).toBeTruthy();
+        expect(field.label).toBeTruthy();
+        expect(["text", "number", "select", "boolean"]).toContain(field.inputType);
+        if (field.inputType === "select") {
+          expect(field.options).toBeDefined();
+          expect(field.options!.length).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  it("all provider IDs are unique within their axis", () => {
+    const axes = ["persistence", "vectorStore", "documentStorage", "embedding"] as const;
+    for (const axis of axes) {
+      const providers = PROVIDER_REGISTRY.filter((p) => p.axis === axis);
+      const ids = providers.map((p) => p.id);
+      expect(new Set(ids).size).toBe(ids.length);
     }
   });
 });

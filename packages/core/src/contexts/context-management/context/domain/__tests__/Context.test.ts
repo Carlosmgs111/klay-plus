@@ -152,11 +152,6 @@ describe("ContextVersion", () => {
     expect(v.createdAt).toEqual(date);
   });
 
-  it("should check hasSource correctly", () => {
-    const v = ContextVersion.initial(["src-1", "src-2"]);
-    expect(v.hasSource("src-1")).toBe(true);
-    expect(v.hasSource("src-3")).toBe(false);
-  });
 });
 
 // ──────────────────────────────────────────────

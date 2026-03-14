@@ -1,7 +1,7 @@
 import type {
   EmbeddingStrategy,
   EmbeddingResult,
-} from "../../domain/ports/EmbeddingStrategy";
+} from "../../../domain/ports/EmbeddingStrategy";
 
 /**
  * Browser-side embedding strategy using @mlc-ai/web-llm.

@@ -31,14 +31,20 @@ const RuntimeModeContext = createContext<RuntimeModeContextValue | null>(null);
 const STORAGE_KEY = "klay-runtime-mode";
 const LEGACY_API_KEYS_KEY = "klay-api-keys";
 
-/**
- * One-time migration: read API keys from localStorage and write to IndexedDBConfigStore.
- */
+// ─── Init helpers ────────────────────────────────────────────────────────────
+
+interface InitResult {
+  configStore: ConfigStore;
+  secretStore: SecretStore;
+  profile: InfrastructureProfile;
+  pipelineService: PipelineService;
+  lifecycleService: LifecycleService;
+}
+
 async function migrateLocalStorageKeys(store: ConfigStore): Promise<void> {
   try {
     const raw = localStorage.getItem(LEGACY_API_KEYS_KEY);
     if (!raw) return;
-
     const keys = JSON.parse(raw) as Record<string, string>;
     for (const [k, v] of Object.entries(keys)) {
       if (v) await store.set(k, v);
@@ -49,9 +55,76 @@ async function migrateLocalStorageKeys(store: ConfigStore): Promise<void> {
   }
 }
 
+async function initServerMode(
+  cachedStore: ConfigStore | null,
+  cachedProfile: InfrastructureProfile | null,
+): Promise<InitResult> {
+  let store = cachedStore;
+  if (!store) {
+    const { ServerConfigService } = await import("../services/server-config-service");
+    store = new ServerConfigService();
+  }
+
+  const { InMemorySecretStore } = await import("@klay/core/secrets");
+  const secretStore = new InMemorySecretStore();
+
+  let profile = cachedProfile;
+  if (!profile) {
+    const { resolveInfrastructureProfile } = await import("@klay/core/config");
+    profile = await resolveInfrastructureProfile({ provider: "server", configStore: store });
+  }
+
+  const [{ ServerPipelineService }, { ServerLifecycleService }] = await Promise.all([
+    import("../services/server-pipeline-service"),
+    import("../services/server-lifecycle-service"),
+  ]);
+
+  return {
+    configStore: store,
+    secretStore,
+    profile,
+    pipelineService: new ServerPipelineService(),
+    lifecycleService: new ServerLifecycleService(),
+  };
+}
+
+async function initBrowserMode(
+  cachedStore: ConfigStore | null,
+  cachedProfile: InfrastructureProfile | null,
+): Promise<InitResult> {
+  let store = cachedStore;
+  if (!store) {
+    const { IndexedDBConfigStore } = await import("@klay/core/config/browser");
+    store = new IndexedDBConfigStore();
+    await migrateLocalStorageKeys(store);
+  }
+
+  const { InMemorySecretStore } = await import("@klay/core/secrets");
+  const secretStore = new InMemorySecretStore();
+
+  let profile = cachedProfile;
+  if (!profile) {
+    const { resolveInfrastructureProfile } = await import("@klay/core/config");
+    profile = await resolveInfrastructureProfile({ provider: "browser", configStore: store });
+  }
+
+  const [{ BrowserPipelineService }, { BrowserLifecycleService }] = await Promise.all([
+    import("../services/browser-pipeline-service"),
+    import("../services/browser-lifecycle-service"),
+  ]);
+
+  return {
+    configStore: store,
+    secretStore,
+    profile,
+    pipelineService: new BrowserPipelineService(store, profile),
+    lifecycleService: new BrowserLifecycleService(store, profile),
+  };
+}
+
+// ─── Provider ────────────────────────────────────────────────────────────────
+
 export function RuntimeModeProvider({ children }: { children: ReactNode }) {
-  // Default to "browser" — safe for client-side rendering (no CJS modules).
-  // Stored mode is read from localStorage before initialization begins.
   const [mode, setModeState] = useState<RuntimeMode>("browser");
   const [modeResolved, setModeResolved] = useState(false);
   const [service, setService] = useState<PipelineService | null>(null);
@@ -81,7 +154,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Read stored mode after mount — must complete before initialization starts
+  // Read stored mode after mount
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as RuntimeMode | null;
     if (stored) {
@@ -92,106 +165,42 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setMode = (newMode: RuntimeMode) => {
-    // Reset cached profile and config store so they re-resolve for the new runtime
     profileRef.current = null;
     configStoreRef.current = null;
     setModeState(newMode);
     localStorage.setItem(STORAGE_KEY, newMode);
   };
 
+  // Initialize services when mode changes
   useEffect(() => {
     if (!modeResolved) return;
 
     let cancelled = false;
     setIsInitializing(true);
 
-    (async () => {
-      try {
-        if (mode === "server") {
-          // Create or reuse server config service (proxies to /api/config)
-          let store = configStoreRef.current;
-          if (!store) {
-            const { ServerConfigService } = await import("../services/server-config-service");
-            store = new ServerConfigService();
-            configStoreRef.current = store;
-          }
+    const init = mode === "server"
+      ? initServerMode(configStoreRef.current, profileRef.current)
+      : initBrowserMode(configStoreRef.current, profileRef.current);
 
-          // Create InMemorySecretStore for browser-side server mode
-          // (server-side SecretStore lives in pipeline-singleton.ts)
-          const { InMemorySecretStore } = await import("@klay/core/secrets");
-          const secrets = new InMemorySecretStore();
-
-          // Resolve infrastructure profile from server-side ConfigStore
-          if (!profileRef.current) {
-            const { resolveInfrastructureProfile } = await import("@klay/core/config");
-            const profile = await resolveInfrastructureProfile({
-              provider: "server",
-              configStore: store,
-            });
-            profileRef.current = profile;
-          }
-
-          const [{ ServerPipelineService }, { ServerLifecycleService }] =
-            await Promise.all([
-              import("../services/server-pipeline-service"),
-              import("../services/server-lifecycle-service"),
-            ]);
-          if (!cancelled) {
-            setConfigStore(store);
-            setSecretStore(secrets);
-            setInfrastructureProfileState(profileRef.current);
-            setService(new ServerPipelineService());
-            setLifecycleService(new ServerLifecycleService());
-          }
-        } else {
-          // Create or reuse ConfigStore
-          let store = configStoreRef.current;
-          if (!store) {
-            const { IndexedDBConfigStore } = await import("@klay/core/config/browser");
-            store = new IndexedDBConfigStore();
-            await migrateLocalStorageKeys(store);
-            configStoreRef.current = store;
-          }
-
-          // Create InMemorySecretStore for browser mode
-          // (will switch to IndexedDBSecretStore when encryption is implemented)
-          const { InMemorySecretStore } = await import("@klay/core/secrets");
-          const secrets = new InMemorySecretStore();
-
-          // Resolve infrastructure profile from persisted state
-          let profile = profileRef.current;
-          if (!profile) {
-            const { resolveInfrastructureProfile } = await import("@klay/core/config");
-            profile = await resolveInfrastructureProfile({
-              provider: "browser",
-              configStore: store,
-            });
-            profileRef.current = profile;
-          }
-
-          const [{ BrowserPipelineService }, { BrowserLifecycleService }] =
-            await Promise.all([
-              import("../services/browser-pipeline-service"),
-              import("../services/browser-lifecycle-service"),
-            ]);
-          if (!cancelled) {
-            setConfigStore(store);
-            setSecretStore(secrets);
-            setInfrastructureProfileState(profile);
-            setService(new BrowserPipelineService(store, profile));
-            setLifecycleService(new BrowserLifecycleService(store, profile));
-          }
-        }
-      } catch (err) {
+    init
+      .then((result) => {
+        if (cancelled) return;
+        configStoreRef.current = result.configStore;
+        profileRef.current = result.profile;
+        setConfigStore(result.configStore);
+        setSecretStore(result.secretStore);
+        setInfrastructureProfileState(result.profile);
+        setService(result.pipelineService);
+        setLifecycleService(result.lifecycleService);
+      })
+      .catch((err) => {
         console.error("Failed to initialize services:", err);
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setIsInitializing(false);
-      }
-    })();
+      });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [mode, reinitKey, modeResolved]);
 
   return (
@@ -200,6 +209,8 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     </RuntimeModeContext.Provider>
   );
 }
+
+// ─── Hooks ───────────────────────────────────────────────────────────────────
 
 export function useRuntimeMode(): RuntimeModeContextValue {
   const ctx = useContext(RuntimeModeContext);

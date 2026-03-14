@@ -1,7 +1,7 @@
 import type { KnowledgePipelinePort } from "../knowledge-pipeline/contracts/KnowledgePipelinePort";
 import type { KnowledgeManagementPort } from "../knowledge-management/contracts/KnowledgeManagementPort";
 import type { KnowledgeLifecyclePort } from "../knowledge-lifecycle/contracts/KnowledgeLifecyclePort";
-import type { KnowledgePipelinePolicy } from "../knowledge-pipeline/composition/knowledge-pipeline.factory";
+import type { OrchestratorPolicy } from "./OrchestratorPolicy";
 
 export interface KnowledgePlatform {
   pipeline: KnowledgePipelinePort;
@@ -10,26 +10,26 @@ export interface KnowledgePlatform {
 }
 
 export async function createKnowledgePlatform(
-  policy: KnowledgePipelinePolicy,
+  policy: OrchestratorPolicy,
 ): Promise<KnowledgePlatform> {
+  // Resolve shared services once — all 3 orchestrators share the same instances
   const { resolvePipelineDependencies } = await import(
     "../knowledge-pipeline/composition/knowledge-pipeline.factory"
   );
-  const { KnowledgePipelineOrchestrator } = await import(
-    "../knowledge-pipeline/application/KnowledgePipelineOrchestrator"
-  );
-  const { KnowledgeManagementOrchestrator } = await import(
-    "../knowledge-management/application/KnowledgeManagementOrchestrator"
-  );
-  const { KnowledgeLifecycleOrchestrator } = await import(
-    "../knowledge-lifecycle/application/KnowledgeLifecycleOrchestrator"
-  );
+  const [
+    { KnowledgePipelineOrchestrator },
+    { KnowledgeManagementOrchestrator },
+    { KnowledgeLifecycleOrchestrator },
+  ] = await Promise.all([
+    import("../knowledge-pipeline/application/KnowledgePipelineOrchestrator"),
+    import("../knowledge-management/application/KnowledgeManagementOrchestrator"),
+    import("../knowledge-lifecycle/application/KnowledgeLifecycleOrchestrator"),
+  ]);
 
   const deps = await resolvePipelineDependencies(policy);
 
   const pipeline = new KnowledgePipelineOrchestrator(deps);
 
-  // ── Management uses new services from pipeline deps ──
   const management = new KnowledgeManagementOrchestrator({
     ingestion: deps.ingestion,
     sourceKnowledge: deps.sourceKnowledge,
@@ -38,7 +38,6 @@ export async function createKnowledgePlatform(
     manifestRepository: deps.manifestRepository,
   });
 
-  // ── Lifecycle uses ContextManagementService (same instance as pipeline/management) ──
   const lifecycle = new KnowledgeLifecycleOrchestrator({
     contextManagement: deps.contextManagement,
     processing: deps.processing,

@@ -112,6 +112,9 @@ export async function projectionFactory(
   const { ProcessingProfileMaterializer } = await import(
     "./ProcessingProfileMaterializer"
   );
+  const { EmbeddingStrategyResolver } = await import(
+    "./EmbeddingStrategyResolver"
+  );
 
   const vectorStoreProvider = policy.vectorStoreProvider ?? policy.provider;
 
@@ -121,7 +124,8 @@ export async function projectionFactory(
     eventPublisherRegistry.resolve(policy.provider).create(policy),
   ]);
 
-  const materializer = new ProcessingProfileMaterializer(policy);
+  const embeddingResolver = new EmbeddingStrategyResolver(policy);
+  const materializer = new ProcessingProfileMaterializer(embeddingResolver);
 
   const infra: ResolvedProjectionInfra = {
     repository,

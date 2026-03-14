@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { EmbeddingConfig, EmbeddingFingerprint } from "../EmbeddingConfig";
+import type { EmbeddingConfig, EmbeddingFingerprint } from "../InfrastructureProfile";
 
 describe("EmbeddingConfig", () => {
   it("models hash embedding", () => {
@@ -25,23 +25,17 @@ describe("EmbeddingConfig", () => {
     }
   });
 
-  it("models Ollama embedding (no authRef)", () => {
-    const cfg: EmbeddingConfig = { type: "ollama", model: "nomic-embed-text", baseUrl: "http://localhost:11434" };
-    if (cfg.type === "ollama") {
-      expect(cfg.baseUrl).toBe("http://localhost:11434");
+  it("models Cohere embedding", () => {
+    const cfg: EmbeddingConfig = { type: "cohere", authRef: "COHERE_KEY", model: "embed-multilingual-v3.0" };
+    if (cfg.type === "cohere") {
+      expect(cfg.model).toBe("embed-multilingual-v3.0");
     }
   });
 
-  it("models Azure OpenAI embedding", () => {
-    const cfg: EmbeddingConfig = {
-      type: "azure-openai",
-      authRef: "AZURE_API_KEY",
-      model: "text-embedding-3-small",
-      deploymentName: "embeddings-prod",
-      apiVersion: "2024-10-21",
-    };
-    if (cfg.type === "azure-openai") {
-      expect(cfg.deploymentName).toBe("embeddings-prod");
+  it("models HuggingFace embedding", () => {
+    const cfg: EmbeddingConfig = { type: "huggingface", authRef: "HF_KEY", model: "sentence-transformers/all-MiniLM-L6-v2" };
+    if (cfg.type === "huggingface") {
+      expect(cfg.model).toBe("sentence-transformers/all-MiniLM-L6-v2");
     }
   });
 });

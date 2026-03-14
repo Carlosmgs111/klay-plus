@@ -1,103 +1,27 @@
 import type { KnowledgePipelinePort } from "../contracts/KnowledgePipelinePort";
 import type { ResolvedPipelineDependencies } from "../application/KnowledgePipelineOrchestrator";
 import type { ManifestRepository } from "../contracts/ManifestRepository";
-import type { ConfigStore } from "../../../platform/config/ConfigStore";
-import type { InfrastructureProfile } from "../../../platform/config/InfrastructureProfile";
-import type { SecretStore } from "../../../platform/secrets/SecretStore";
-
-export interface KnowledgePipelinePolicy {
-  provider: string;
-  dbPath?: string;
-  dbName?: string;
-  embeddingDimensions?: number;
-  defaultChunkingStrategy?: string;
-  embeddingProvider?: string;
-  embeddingModel?: string;
-  configOverrides?: Record<string, string>;
-  configStore?: ConfigStore;
-  secretStore?: SecretStore;
-  infrastructure?: Partial<InfrastructureProfile>;
-}
+import type { OrchestratorPolicy } from "../../composition/OrchestratorPolicy";
 
 export async function resolvePipelineDependencies(
-  policy: KnowledgePipelinePolicy,
+  policy: OrchestratorPolicy,
 ): Promise<ResolvedPipelineDependencies> {
-  const { resolveInfrastructureProfile } = await import(
-    "../../../platform/config/resolveInfrastructureProfile"
-  );
-  const profile = await resolveInfrastructureProfile(policy);
-
-  const [
-    { createSourceIngestionService },
-    { createSemanticProcessingService },
-  ] = await Promise.all([
-    import("../../../contexts/source-ingestion/service"),
-    import("../../../contexts/semantic-processing/service"),
-  ]);
-
-  // Map typed configs to legacy registry-key strings
-  const {
-    persistenceToProvider,
-    vectorStoreToProvider,
-    documentStorageToProvider,
-    getEmbeddingDimensions: _getDims,
-    getEmbeddingModel: _getModel,
-  } = await import("../../../platform/config/profileHelpers");
-
-  const persistenceProvider = persistenceToProvider(profile.persistence);
-  const embeddingProvider = profile.embedding.type;
-  const vectorStoreProvider = vectorStoreToProvider(profile.vectorStore);
-  const documentStorageProvider = documentStorageToProvider(profile.documentStorage);
-  const embeddingDimensions = _getDims(profile);
-  const embeddingModel = _getModel(profile);
-
-  const [ingestion, processing] = await Promise.all([
-    createSourceIngestionService({
-      provider: persistenceProvider,
-      dbPath: policy.dbPath,
-      dbName: policy.dbName,
-      documentStorageProvider,
-      configOverrides: policy.configOverrides,
-      configStore: policy.configStore,
-    }),
-    createSemanticProcessingService({
-      provider: persistenceProvider,
-      dbPath: policy.dbPath,
-      dbName: policy.dbName,
-      embeddingDimensions,
-      defaultChunkingStrategy: policy.defaultChunkingStrategy,
-      embeddingProvider,
-      embeddingModel,
-      vectorStoreProvider,
-      configOverrides: policy.configOverrides,
-      configStore: policy.configStore,
-    }),
-  ]);
-
-  // ── Source-knowledge context ──────────────────────────────────────
-  const { createSourceKnowledgeContext } = await import(
-    "../../../contexts/source-knowledge/composition/factory"
+  const { resolvePlatformDependencies } = await import(
+    "../../composition/resolvePlatformDependencies"
   );
 
-  const sourceKnowledgeInfra = await createSourceKnowledgeInfra(policy, persistenceProvider);
-  const { service: sourceKnowledge } = createSourceKnowledgeContext(sourceKnowledgeInfra);
+  const platform = await resolvePlatformDependencies(policy);
+  const { persistenceProvider, embeddingProvider, vectorStoreProvider, embeddingDimensions, embeddingModel } =
+    platform.resolved;
 
-  // ── Context-management context ───────────────────────────────────
-  const { createContextManagementContext } = await import(
-    "../../../contexts/context-management/composition/factory"
-  );
-
-  const contextManagementInfra = await createContextManagementInfra(policy, persistenceProvider);
-  const { service: contextManagement } = createContextManagementContext(contextManagementInfra);
-
-  // ── Knowledge retrieval context ──────────────────────────────────
+  // ── Knowledge retrieval context (pipeline-specific) ───────────────
   const { createKnowledgeRetrievalService } = await import(
     "../../../contexts/knowledge-retrieval/service"
   );
 
   const retrieval = await createKnowledgeRetrievalService({
     provider: persistenceProvider,
-    vectorStoreConfig: processing.vectorStoreConfig,
+    vectorStoreConfig: platform.processing.vectorStoreConfig,
     embeddingDimensions,
     embeddingProvider,
     embeddingModel,
@@ -106,90 +30,21 @@ export async function resolvePipelineDependencies(
     configStore: policy.configStore,
   });
 
+  // ── Manifest repository (pipeline-specific) ───────────────────────
   const manifestRepository = await createManifestRepository(policy, persistenceProvider);
 
   return {
-    ingestion,
-    processing,
-    sourceKnowledge,
-    contextManagement,
+    ingestion: platform.ingestion,
+    processing: platform.processing,
+    sourceKnowledge: platform.sourceKnowledge,
+    contextManagement: platform.contextManagement,
     retrieval,
     manifestRepository,
   };
 }
 
-async function createSourceKnowledgeInfra(
-  policy: KnowledgePipelinePolicy,
-  persistenceProvider: string,
-): Promise<import("../../../contexts/source-knowledge/composition/factory").SourceKnowledgeModules> {
-  const { InMemoryEventPublisher } = await import(
-    "../../../platform/eventing/InMemoryEventPublisher"
-  );
-
-  if (persistenceProvider === "in-memory") {
-    const { InMemorySourceKnowledgeRepository } = await import(
-      "../../../contexts/source-knowledge/source/infrastructure/InMemorySourceKnowledgeRepository"
-    );
-    return {
-      sourceKnowledgeRepository: new InMemorySourceKnowledgeRepository(),
-      sourceKnowledgeEventPublisher: new InMemoryEventPublisher(),
-    };
-  }
-
-  // TODO: NeDB implementation for server — for now fall back to in-memory
-  const { InMemorySourceKnowledgeRepository } = await import(
-    "../../../contexts/source-knowledge/source/infrastructure/InMemorySourceKnowledgeRepository"
-  );
-  return {
-    sourceKnowledgeRepository: new InMemorySourceKnowledgeRepository(),
-    sourceKnowledgeEventPublisher: new InMemoryEventPublisher(),
-  };
-}
-
-async function createContextManagementInfra(
-  policy: KnowledgePipelinePolicy,
-  persistenceProvider: string,
-): Promise<import("../../../contexts/context-management/composition/factory").ContextManagementModules> {
-  const { InMemoryEventPublisher } = await import(
-    "../../../platform/eventing/InMemoryEventPublisher"
-  );
-
-  // ── Lineage infra ─────────────────────────────────────────────────
-  const { lineageFactory } = await import(
-    "../../../contexts/context-management/lineage/composition/factory"
-  );
-  const { infra: lineageInfra } = await lineageFactory({
-    provider: persistenceProvider,
-    dbPath: policy.dbPath,
-    dbName: policy.dbName,
-  });
-
-  if (persistenceProvider === "in-memory") {
-    const { InMemoryContextRepository } = await import(
-      "../../../contexts/context-management/context/infrastructure/InMemoryContextRepository"
-    );
-    return {
-      contextRepository: new InMemoryContextRepository(),
-      contextEventPublisher: new InMemoryEventPublisher(),
-      lineageRepository: lineageInfra.repository,
-      lineageEventPublisher: lineageInfra.eventPublisher,
-    };
-  }
-
-  // TODO: NeDB implementation for server — for now fall back to in-memory
-  const { InMemoryContextRepository } = await import(
-    "../../../contexts/context-management/context/infrastructure/InMemoryContextRepository"
-  );
-  return {
-    contextRepository: new InMemoryContextRepository(),
-    contextEventPublisher: new InMemoryEventPublisher(),
-    lineageRepository: lineageInfra.repository,
-    lineageEventPublisher: lineageInfra.eventPublisher,
-  };
-}
-
 async function createManifestRepository(
-  policy: KnowledgePipelinePolicy,
+  policy: OrchestratorPolicy,
   persistenceProvider: string,
 ): Promise<ManifestRepository> {
   if (persistenceProvider === "in-memory") {
@@ -214,7 +69,7 @@ async function createManifestRepository(
 }
 
 export async function createKnowledgePipeline(
-  policy: KnowledgePipelinePolicy,
+  policy: OrchestratorPolicy,
 ): Promise<KnowledgePipelinePort> {
   const { KnowledgePipelineOrchestrator } = await import(
     "../application/KnowledgePipelineOrchestrator"

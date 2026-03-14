@@ -588,7 +588,7 @@ Expone operaciones del contexto.                Punto de entrada unico.
 ## Port                                         ## Port
 
 `SourceRepository`                              `SourceRepository` — save, findById,
-                                                delete, findByType, exists
+                                                delete, findByUri, exists
 
                                                 ## Implementaciones de Persistencia
 

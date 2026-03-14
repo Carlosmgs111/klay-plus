@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Icon } from "../../shared/Icon";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { ArchiveContextAction } from "./ArchiveContextAction";
 import { DeprecateContextAction } from "./DeprecateContextAction";
 import { ActivateContextAction } from "./ActivateContextAction";
+import { useClickOutside } from "../../../hooks/useClickOutside";
 import {
   useKnowledgeContext,
   getOverallStatus,
@@ -21,16 +22,7 @@ export function ContextActionsMenu({ contextId }: ContextActionsMenuProps) {
   const { manifests, refresh } = useKnowledgeContext();
   const overallStatus = getOverallStatus(manifests);
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  useClickOutside(menuRef, useCallback(() => setOpen(false), []), open);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -71,7 +63,6 @@ export function ContextActionsMenu({ contextId }: ContextActionsMenuProps) {
         </div>
       )}
 
-      {/* Always mounted — portal-based overlays */}
       <ArchiveContextAction contextId={contextId} onSuccess={refresh} open={showArchiveOverlay} setOpen={setShowArchiveOverlay} />
       <DeprecateContextAction contextId={contextId} onSuccess={refresh} open={showDeprecateOverlay} setOpen={setShowDeprecateOverlay} />
     </div>

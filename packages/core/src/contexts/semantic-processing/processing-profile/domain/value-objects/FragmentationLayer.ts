@@ -1,3 +1,5 @@
+import { ProcessingLayer, type LayerDTO } from "./ProcessingLayer";
+
 const VALID_STRATEGY_IDS = ["recursive", "sentence", "fixed-size"] as const;
 export type FragmentationStrategyId = (typeof VALID_STRATEGY_IDS)[number];
 
@@ -21,11 +23,6 @@ export interface FixedSizeConfig {
 
 export type FragmentationConfig = RecursiveConfig | SentenceConfig | FixedSizeConfig;
 
-interface FragmentationLayerDTO {
-  strategyId: string;
-  config: Record<string, unknown>;
-}
-
 const RECURSIVE_DEFAULTS: Omit<RecursiveConfig, "strategy"> = {
   chunkSize: 1000,
   overlap: 100,
@@ -41,18 +38,9 @@ const FIXED_SIZE_DEFAULTS: Omit<FixedSizeConfig, "strategy"> = {
   overlap: 50,
 };
 
-export class FragmentationLayer {
-  private constructor(
-    private readonly _strategyId: FragmentationStrategyId,
-    private readonly _config: Readonly<FragmentationConfig>,
-  ) {}
-
-  get strategyId(): FragmentationStrategyId {
-    return this._strategyId;
-  }
-
-  get config(): Readonly<FragmentationConfig> {
-    return this._config;
+export class FragmentationLayer extends ProcessingLayer<FragmentationStrategyId, FragmentationConfig> {
+  private constructor(strategyId: FragmentationStrategyId, config: Readonly<FragmentationConfig>) {
+    super(strategyId, config);
   }
 
   static create(strategyId: string, input: Record<string, unknown>): FragmentationLayer {
@@ -67,15 +55,8 @@ export class FragmentationLayer {
     return new FragmentationLayer(sid, Object.freeze(resolvedConfig));
   }
 
-  static fromDTO(dto: FragmentationLayerDTO): FragmentationLayer {
+  static fromDTO(dto: LayerDTO): FragmentationLayer {
     return FragmentationLayer.create(dto.strategyId, dto.config);
-  }
-
-  toDTO(): FragmentationLayerDTO {
-    return {
-      strategyId: this._strategyId,
-      config: { ...this._config },
-    };
   }
 
   private static _resolveConfig(

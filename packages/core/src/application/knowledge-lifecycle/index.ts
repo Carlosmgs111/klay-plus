@@ -31,4 +31,6 @@ export type { LifecycleStep as LifecycleStepType } from "./domain/LifecycleStep"
 
 export { createKnowledgeLifecycle } from "./composition/knowledge-lifecycle.factory";
 
+export type { OrchestratorPolicy } from "../composition/OrchestratorPolicy";
+/** @deprecated Use `OrchestratorPolicy` instead. */
 export type { KnowledgeLifecyclePolicy } from "./composition/knowledge-lifecycle.factory";

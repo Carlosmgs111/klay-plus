@@ -41,7 +41,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
     const store = await getConfigStore();
     for (const [key, value] of Object.entries(entries)) {
-      if (value) {
+      if (value !== undefined && value !== "") {
         await store.set(key, value);
       } else {
         await store.remove(key);

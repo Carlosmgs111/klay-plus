@@ -8,7 +8,7 @@ import { Textarea } from "../../shared/Textarea";
 import { Select } from "../../shared/Select";
 import { LoadingButton } from "../../shared/LoadingButton";
 import { FileDropZone } from "../../shared/FileDropZone";
-import { detectFileType, fileToBase64 } from "../../../utils/fileDetection";
+import { detectFileType } from "../../../utils/fileDetection";
 import type {
   CreateContextInput,
   CreateContextResult,
@@ -107,7 +107,7 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
     if (file) {
       setSubmitPhase("Ingesting source...");
 
-      const base64Content = await fileToBase64(file);
+      const fileBuffer = await file.arrayBuffer();
       const detected = detectFileType(file.name);
 
       const ingestInput: IngestAndAddSourceInput = {
@@ -120,7 +120,7 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
         projectionId: crypto.randomUUID(),
         projectionType: "EMBEDDING",
         processingProfileId: profileId,
-        content: base64Content as unknown as ArrayBuffer,
+        content: fileBuffer,
       };
 
       const ingestResult = await executeIngest(ingestInput);

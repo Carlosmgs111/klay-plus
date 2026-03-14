@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { NoOpPreparationStrategy } from "../infrastructure/strategies/NoOpPreparationStrategy";
-import { BasicPreparationStrategy } from "../infrastructure/strategies/BasicPreparationStrategy";
+import { NoOpPreparationStrategy } from "../infrastructure/strategies/preparation/NoOpPreparationStrategy";
+import { BasicPreparationStrategy } from "../infrastructure/strategies/preparation/BasicPreparationStrategy";
 
 describe("NoOpPreparationStrategy", () => {
   it("returns content unchanged", async () => {

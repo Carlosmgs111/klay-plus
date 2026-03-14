@@ -1,11 +1,8 @@
+import { ProcessingLayer, type LayerDTO } from "./ProcessingLayer";
+
 export interface ProjectionConfig {
   dimensions: number;
   batchSize: number;
-}
-
-interface ProjectionLayerDTO {
-  strategyId: string;
-  config: Record<string, unknown>;
 }
 
 const PROJECTION_DEFAULTS: ProjectionConfig = {
@@ -13,18 +10,9 @@ const PROJECTION_DEFAULTS: ProjectionConfig = {
   batchSize: 100,
 };
 
-export class ProjectionLayer {
-  private constructor(
-    private readonly _strategyId: string,
-    private readonly _config: Readonly<ProjectionConfig>,
-  ) {}
-
-  get strategyId(): string {
-    return this._strategyId;
-  }
-
-  get config(): Readonly<ProjectionConfig> {
-    return this._config;
+export class ProjectionLayer extends ProcessingLayer<string, ProjectionConfig> {
+  private constructor(strategyId: string, config: Readonly<ProjectionConfig>) {
+    super(strategyId, config);
   }
 
   static create(strategyId: string, input: Record<string, unknown>): ProjectionLayer {
@@ -47,14 +35,7 @@ export class ProjectionLayer {
     return new ProjectionLayer(strategyId, resolvedConfig);
   }
 
-  static fromDTO(dto: ProjectionLayerDTO): ProjectionLayer {
+  static fromDTO(dto: LayerDTO): ProjectionLayer {
     return ProjectionLayer.create(dto.strategyId, dto.config);
-  }
-
-  toDTO(): ProjectionLayerDTO {
-    return {
-      strategyId: this._strategyId,
-      config: { ...this._config },
-    };
   }
 }

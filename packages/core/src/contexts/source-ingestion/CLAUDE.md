@@ -53,7 +53,7 @@ Representa una referencia logica a una fuente de contenido externo. **No almacen
 
 **Use Cases**: `RegisterSource`, `UpdateSource`
 
-**Port**: `SourceRepository` — `save`, `findById`, `delete`, `findByType`, `findByUri`, `exists`
+**Port**: `SourceRepository` — `save`, `findById`, `delete`, `findByUri`, `exists`
 
 **Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
 

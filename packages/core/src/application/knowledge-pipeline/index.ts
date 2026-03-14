@@ -49,6 +49,8 @@ export type { ContentManifestEntry } from "./domain/ContentManifest";
 
 export { createKnowledgePipeline } from "./composition/knowledge-pipeline.factory";
 
+export type { OrchestratorPolicy } from "../composition/OrchestratorPolicy";
+/** @deprecated Use `OrchestratorPolicy` instead. */
 export type { KnowledgePipelinePolicy } from "./composition/knowledge-pipeline.factory";
 
 export { createKnowledgePlatform } from "../composition/knowledge-platform.factory";

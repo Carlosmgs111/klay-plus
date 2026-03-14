@@ -20,8 +20,6 @@ export {
   ProjectionUseCases,
   GenerateProjection,
   projectionFactory,
-  // Materializer
-  ProcessingProfileMaterializer,
   // Domain Errors
   ProjectionNotFoundError,
   ProjectionAlreadyExistsError,
@@ -36,16 +34,6 @@ export {
   EmbeddingFailedError,
   VectorStoreFailedError,
   ProjectionProcessingError,
-  // Infrastructure
-  BaseChunker,
-  FixedSizeChunker,
-  SentenceChunker,
-  RecursiveChunker,
-  ChunkerFactory,
-  HashEmbeddingStrategy,
-  WebLLMEmbeddingStrategy,
-  AISdkEmbeddingStrategy,
-  InMemoryVectorWriteStore,
 } from "./projection";
 
 export type {
