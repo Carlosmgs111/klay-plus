@@ -40,6 +40,8 @@ export type {
   DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
+  IngestAndAddSourceInput,
+  IngestAndAddSourceSuccess,
 } from "./contracts/dtos";
 
 export { KnowledgePipelineError } from "./domain/KnowledgePipelineError";

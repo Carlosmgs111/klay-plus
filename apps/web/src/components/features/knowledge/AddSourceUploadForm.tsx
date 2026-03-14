@@ -5,7 +5,7 @@ import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Input } from "../../shared/Input";
 import { FileProcessingForm } from "../../shared/FileProcessingForm";
 import { detectFileType } from "../../../utils/fileDetection";
-import type { IngestAndAddSourceInput, IngestAndAddSourceSuccess } from "@klay/core/management";
+import type { IngestAndAddSourceInput, IngestAndAddSourceSuccess } from "@klay/core";
 
 interface AddSourceUploadFormProps {
   contextId: string;

@@ -3,7 +3,7 @@
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 366 tests (vitest)
+pnpm --filter @klay/core test    # 309 tests (vitest)
 ```
 
 ## Conventions
@@ -22,9 +22,9 @@ Plataforma de gestion de conocimiento semantico: transforma contenido (archivos,
 ## Architecture
 
 ```
-adapters/       REST + UI adapters (entry points for consumers)
-application/    Orchestration layer (coordinates bounded contexts)
-contexts/       5 Bounded Contexts (domain core)
+adapters/       REST + UI adapters (2 sets: Pipeline, Lifecycle)
+application/    Orchestration layer (2 orchestrators: Pipeline, Lifecycle)
+contexts/       4 Bounded Contexts (domain core)
 platform/       Shared infra (config, persistence, eventing, vectors)
 shared/         DDD building blocks (AggregateRoot, Result, ValueObject)
 ```
@@ -36,38 +36,31 @@ Each context has its own `CLAUDE.md` with full entity/port/event specs.
 | Context | Subdominio | Service | Modules |
 |---------|-----------|---------|---------|
 | `source-ingestion/` | Adquisicion + extraccion de texto | `SourceIngestionService` | source, resource, extraction |
-| `source-knowledge/` | Per-source projection hub + versioning | `SourceKnowledgeService` | source-knowledge |
 | `context-management/` | Context grouping + lineage | `ContextManagementService` | context, lineage |
 | `semantic-processing/` | Chunking + embeddings + vector store | `SemanticProcessingService` | projection, processing-profile |
 | `knowledge-retrieval/` | Busqueda semantica (read side) | `KnowledgeRetrievalService` | semantic-query |
 
-**Cross-context wiring**: Semantic Processing escribe al vector store; Knowledge Retrieval lee del mismo store. El wiring ocurre en el PipelineComposer. Ambos deben usar el mismo modelo de embeddings.
+**Cross-context wiring**: Semantic Processing escribe al vector store; Knowledge Retrieval lee del mismo store. El wiring ocurre en el PipelineComposer. Ambos deben usar el mismo modelo de embeddings. `sourceKnowledgeId` is auto-derived as `sk-{sourceId}` when not provided.
 
 ## Application Layer
 
 ### Knowledge Pipeline Orchestrator (`application/knowledge-pipeline/`)
-Coordina los 4 contextos para **construccion inicial**. Gestiona `ContentManifest` (tracker cross-context: resourceId, sourceId, extractionJobId, contextId, projectionId).
+Coordina los 4 contextos para **construccion inicial** y **adicion de fuentes**. Gestiona `ContentManifest` (tracker cross-context: resourceId, sourceId, extractionJobId, contextId, projectionId). Absorbed the former Knowledge Management orchestrator.
 
-Operaciones: `execute` (pipeline completo), `ingestDocument`, `processDocument`, `catalogDocument`, `searchKnowledge`, `createProcessingProfile`, `getManifest`
-
-### Knowledge Management Orchestrator (`application/knowledge-management/`)
-Flujos multi-step sobre unidades existentes. Operaciones atomicas se llaman directamente en el service.
-
-Operaciones: `ingestAndAddSource` (Ingestion → AddSource → Processing)
+Operaciones: `execute` (pipeline completo), `ingestAndAddSource` (ingest + add to existing context), `ingestDocument`, `processDocument`, `catalogDocument`, `searchKnowledge`, `createProcessingProfile`, `getManifest`
 
 ### Knowledge Lifecycle Orchestrator (`application/knowledge-lifecycle/`)
 Operaciones atomicas de ciclo de vida sobre unidades semanticas existentes. Coordina knowledge + processing contexts.
 
 Operaciones: `removeSource`, `reprocessContext`, `rollbackContext`, `linkContexts`, `unlinkContexts`
 
-**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` — retorna `{ pipeline, management, lifecycle }`
+**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` — retorna `{ pipeline, management: pipeline, lifecycle }` (`management` is a deprecated alias for `pipeline`)
 
 ## Data Flow
 
 ```
 Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
-  → [Context Management] → Context grouping + lineage
-  → [Source Knowledge] → SourceKnowledge hub + version con snapshot
+  → [Context Management] → Context grouping + lineage + addSource
   → [Semantic Processing] → Chunking + Embedding + Vector storage
   → [Knowledge Retrieval] → Semantic query + Ranking → RetrievalResult
 ```

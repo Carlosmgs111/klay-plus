@@ -28,7 +28,7 @@ import type {
 import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "@klay/core/management";
+} from "@klay/core";
 
 /**
  * ServerLifecycleService — delegates to /api/lifecycle/* routes via fetch.

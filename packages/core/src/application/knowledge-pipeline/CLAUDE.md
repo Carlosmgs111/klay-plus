@@ -2,7 +2,7 @@
 
 ## Rol
 
-**No es un bounded context** — es la capa de orquestacion que coordina los 4 bounded contexts via sus services. Expone un API unificado (`KnowledgePipelinePort`) para consumidores externos (UI, REST, CLI).
+**No es un bounded context** — es la capa de orquestacion que coordina los 4 bounded contexts via sus services. Expone un API unificado (`KnowledgePipelinePort`) para consumidores externos (UI, REST, CLI). This orchestrator also absorbed the former Knowledge Management orchestrator; `ingestAndAddSource` now lives here.
 
 ## Port: `KnowledgePipelinePort`
 
@@ -12,7 +12,8 @@ Punto de entrada unico. Primary port en el sentido hexagonal: los adaptadores (U
 
 | Operacion | Descripcion | Contextos coordinados |
 |-----------|-------------|----------------------|
-| `execute` | Pipeline completo: Ingest → CreateUnit → AddSource → Process | Ingestion, Knowledge, Processing |
+| `execute` | Pipeline completo: Ingest → Process → (optional) AddToContext → Manifest | Ingestion, Context Management, Processing |
+| `ingestAndAddSource` | Ingest + process + add to existing context | Ingestion, Context Management, Processing |
 | `ingestDocument` | Registra source + extrae texto | Ingestion |
 | `processDocument` | Chunking + embeddings + vector storage | Processing |
 | `catalogDocument` | Crea context + lineage | Context Management |
@@ -20,7 +21,7 @@ Punto de entrada unico. Primary port en el sentido hexagonal: los adaptadores (U
 | `createProcessingProfile` | Crea perfil de procesamiento | Processing |
 | `getManifest` | Consulta trazabilidad cross-context | ManifestRepository |
 
-> **Nota**: Las operaciones de lifecycle (addSource, removeSource, reprocessUnit, rollbackUnit, addProjection, linkUnits) fueron extraidas al modulo `knowledge-management/`. Ver `application/knowledge-management/CLAUDE.md`.
+> **Nota**: Lifecycle operations (removeSource, reprocessContext, rollbackContext, linkContexts, unlinkContexts) live in the Knowledge Lifecycle orchestrator (`application/knowledge-lifecycle/`).
 
 Todos los metodos retornan `Result<KnowledgePipelineError, Success>` para error handling funcional con tracking de pipeline steps.
 
@@ -38,10 +39,10 @@ Implementa `KnowledgePipelinePort`. Recibe los 4 services + `ManifestRepository`
 
 | Use Case | Services usados |
 |----------|---------------|
-| `ExecuteFullPipeline` | Ingestion, Processing, Knowledge, ManifestRepository |
+| `ExecuteFullPipeline` | Ingestion, Context Management, Processing, ManifestRepository |
 | `IngestDocument` | Ingestion |
 | `ProcessDocument` | Processing |
-| `CatalogDocument` | Knowledge |
+| `CatalogDocument` | Context Management |
 | `SearchKnowledge` | Retrieval |
 | `GetManifest` | ManifestRepository |
 | `RecordManifest` | ManifestRepository |
@@ -93,8 +94,7 @@ Contratos de datos puros en `contracts/dtos.ts`. Sin logica de dominio, sin depe
 | `SearchKnowledgeInput/Success` | Busqueda semantica |
 | `CreateProcessingProfileInput/Success` | Crear perfil de procesamiento |
 | `GetManifestInput/Success` | Consultar trazabilidad |
-
-> **Nota**: Los DTOs de lifecycle (AddSource, RemoveSource, etc.) se re-exportan desde `knowledge-management/` para backward compat.
+| `IngestAndAddSourceInput/Success` | Ingest + add to existing context |
 
 ## Port de Persistencia
 
@@ -113,10 +113,16 @@ La factory del pipeline vive en `composition/knowledge-pipeline.factory.ts`:
 
 ```
 createKnowledgePipeline(policy)
-├── Resuelve los 4 services de bounded contexts (via sus composition/factory.ts)
+├── Resuelve los 4 bounded context services (via sus composition/factory.ts)
 ├── Crea ManifestRepository segun policy
 ├── Wiring cross-context: vector store compartido entre Processing y Retrieval
 └── Retorna KnowledgePipelinePort (no la implementacion)
+
+createKnowledgePlatform(policy)
+├── Calls resolvePipelineDependencies(policy) once (shared instances)
+├── Creates KnowledgePipelineOrchestrator + KnowledgeLifecycleOrchestrator
+└── Returns { pipeline, management: pipeline, lifecycle }
+    (management is a deprecated alias for pipeline)
 ```
 
 ## Flujo End-to-End (`execute`)
@@ -128,17 +134,14 @@ Input (sourceId, uri, type, profileId, ...)
 [1. Ingestion] → registra source + extrae texto → contentHash, extractedText
     |
     v
-[2. Cataloging] → crea Context (name, description) + registra lineage → contextId
+[2. Processing] → chunking + embedding + vector storage → projectionId
     |
     v
-[3. AddSource] → agrega fuente a la unidad → version 1 con snapshot
+[3. (optional) AddToContext] → crea Context + addSource → contextId
     |
     v
-[4. Processing] → chunking + embedding + vector storage → projectionId
+[4. Manifest] → registra ContentManifest con todos los IDs
     |
     v
-[5. Manifest] → registra ContentManifest con todos los IDs
-    |
-    v
-Result<Error, { sourceId, unitId, projectionId, contentHash, ... }>
+Result<Error, { sourceId, projectionId, contentHash, ... }>
 ```

@@ -24,17 +24,14 @@ export class ContextSource extends ValueObject<ContextSourceProps> {
     return this.props.addedAt;
   }
 
-  static create(sourceId: string, sourceKnowledgeId: string): ContextSource {
+  static create(sourceId: string, sourceKnowledgeId?: string): ContextSource {
     if (!sourceId || sourceId.trim().length === 0) {
       throw new Error("ContextSource sourceId is required");
-    }
-    if (!sourceKnowledgeId || sourceKnowledgeId.trim().length === 0) {
-      throw new Error("ContextSource sourceKnowledgeId is required");
     }
 
     return new ContextSource({
       sourceId,
-      sourceKnowledgeId,
+      sourceKnowledgeId: sourceKnowledgeId || `sk-${sourceId}`,
       addedAt: new Date(),
     });
   }

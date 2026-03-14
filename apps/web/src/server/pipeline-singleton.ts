@@ -1,6 +1,5 @@
 import {
   KnowledgePipelineRESTAdapter,
-  KnowledgeManagementRESTAdapter,
   KnowledgeLifecycleRESTAdapter,
 } from "@klay/core/adapters/rest";
 import { createKnowledgePlatform } from "@klay/core";
@@ -9,7 +8,6 @@ import { InMemorySecretStore } from "@klay/core/secrets";
 
 interface ServerAdapters {
   pipeline: KnowledgePipelineRESTAdapter;
-  management: KnowledgeManagementRESTAdapter;
   lifecycle: KnowledgeLifecycleRESTAdapter;
 }
 
@@ -65,7 +63,6 @@ async function _createAdapters(): Promise<ServerAdapters> {
 
   return {
     pipeline: new KnowledgePipelineRESTAdapter(platform.pipeline),
-    management: new KnowledgeManagementRESTAdapter(platform.management),
     lifecycle: new KnowledgeLifecycleRESTAdapter(platform.lifecycle),
   };
 }
@@ -83,9 +80,9 @@ export async function getServerAdapter(): Promise<KnowledgePipelineRESTAdapter> 
   return adapters.pipeline;
 }
 
-export async function getManagementAdapter(): Promise<KnowledgeManagementRESTAdapter> {
-  const adapters = await _getAdapters();
-  return adapters.management;
+/** @deprecated Use getServerAdapter().ingestAndAddSource() instead */
+export async function getManagementAdapter(): Promise<KnowledgePipelineRESTAdapter> {
+  return getServerAdapter();
 }
 
 export async function getLifecycleAdapter(): Promise<KnowledgeLifecycleRESTAdapter> {

@@ -23,15 +23,6 @@ export class ContextNotFoundError extends NotFoundError {
   }
 }
 
-export class ProfileNotSatisfiedError extends DomainError {
-  constructor(contextId: string, sourceId: string) {
-    super(
-      "Source does not satisfy context's required profile",
-      "PROFILE_NOT_SATISFIED",
-      { contextId, sourceId },
-    );
-  }
-}
 
 export class LineageOperationError extends OperationError {
   constructor(operation: string, reason: string) {
@@ -139,14 +130,12 @@ export class ContextManagementService {
 
   /**
    * Adds a source to a context.
-   * The caller (orchestrator) is responsible for verifying profile satisfaction
-   * and passing profileSatisfied=true. This preserves bounded context isolation.
+   * The caller (orchestrator) ensures processing has completed before calling this.
    */
   async addSourceToContext(params: {
     contextId: string;
     sourceId: string;
-    sourceKnowledgeId: string;
-    profileSatisfied: boolean;
+    sourceKnowledgeId?: string;
   }): Promise<Result<DomainError, Context>> {
     const context = await this._repository.findById(
       ContextId.create(params.contextId),
@@ -155,15 +144,10 @@ export class ContextManagementService {
       return Result.fail(new ContextNotFoundError(params.contextId));
     }
 
-    if (!params.profileSatisfied) {
-      return Result.fail(
-        new ProfileNotSatisfiedError(params.contextId, params.sourceId),
-      );
-    }
-
+    const sourceKnowledgeId = params.sourceKnowledgeId ?? `sk-${params.sourceId}`;
     const source = ContextSource.create(
       params.sourceId,
-      params.sourceKnowledgeId,
+      sourceKnowledgeId,
     );
     context.addSource(source);
 

@@ -1,6 +1,5 @@
 import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { SourceKnowledgeService } from "../../../contexts/source-knowledge/service/SourceKnowledgeService";
 import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
 import type { KnowledgeRetrievalService } from "../../../contexts/knowledge-retrieval/service/KnowledgeRetrievalService";
 import type { ManifestRepository } from "../contracts/ManifestRepository";
@@ -25,6 +24,8 @@ import type {
   DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
+  IngestAndAddSourceInput,
+  IngestAndAddSourceSuccess,
 } from "../contracts/dtos";
 import type { SourceType } from "../../../contexts/source-ingestion/source/domain/SourceType";
 import type { ProjectionType } from "../../../contexts/semantic-processing/projection/domain/ProjectionType";
@@ -39,7 +40,6 @@ const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
 export interface ResolvedPipelineDependencies {
   ingestion: SourceIngestionService;
   processing: SemanticProcessingService;
-  sourceKnowledge: SourceKnowledgeService;
   contextManagement: ContextManagementService;
   retrieval: KnowledgeRetrievalService;
   manifestRepository: ManifestRepository;
@@ -48,7 +48,6 @@ export interface ResolvedPipelineDependencies {
 export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   private readonly _ingestion: SourceIngestionService;
   private readonly _processing: SemanticProcessingService;
-  private readonly _sourceKnowledge: SourceKnowledgeService;
   private readonly _contextManagement: ContextManagementService;
   private readonly _retrieval: KnowledgeRetrievalService;
   private readonly _manifestRepository: ManifestRepository;
@@ -57,7 +56,6 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
   constructor(deps: ResolvedPipelineDependencies) {
     this._ingestion = deps.ingestion;
     this._processing = deps.processing;
-    this._sourceKnowledge = deps.sourceKnowledge;
     this._contextManagement = deps.contextManagement;
     this._retrieval = deps.retrieval;
     this._manifestRepository = deps.manifestRepository;
@@ -65,7 +63,6 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     this._executeFullPipeline = new ExecuteFullPipeline(
       deps.ingestion,
       deps.processing,
-      deps.sourceKnowledge,
       deps.contextManagement,
       deps.manifestRepository,
     );
@@ -75,6 +72,112 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
     input: ExecutePipelineInput,
   ): Promise<Result<KnowledgePipelineError, ExecutePipelineSuccess>> {
     return this._executeFullPipeline.execute(input);
+  }
+
+  async ingestAndAddSource(
+    input: IngestAndAddSourceInput,
+  ): Promise<Result<KnowledgePipelineError, IngestAndAddSourceSuccess>> {
+    const completedSteps: PipelineStep[] = [];
+    const sourceKnowledgeId = `sk-${input.sourceId}`;
+
+    // Verify context exists
+    const context = await this._contextManagement.getContext(input.contextId);
+    if (!context) {
+      return Result.fail(
+        PipelineError.fromStep(
+          PipelineStep.Cataloging,
+          { message: `Context ${input.contextId} not found`, code: "CONTEXT_NOT_FOUND" },
+          completedSteps,
+        ),
+      );
+    }
+
+    // Step 1: Ingest source
+    const ingestionResult = await this._ingestion.ingestAndExtract({
+      sourceId: input.sourceId,
+      sourceName: input.sourceName,
+      uri: input.uri,
+      type: input.sourceType as SourceType,
+      extractionJobId: input.extractionJobId,
+      content: input.content,
+    });
+
+    if (ingestionResult.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Ingestion, ingestionResult.error, completedSteps),
+      );
+    }
+
+    completedSteps.push(PipelineStep.Ingestion);
+
+    // Step 2: Process content
+    const processingResult = await this._processing.processContent({
+      projectionId: input.projectionId,
+      sourceId: input.sourceId,
+      content: ingestionResult.value.extractedText,
+      type: (input.projectionType ?? DEFAULT_PROJECTION_TYPE) as ProjectionType,
+      processingProfileId: input.processingProfileId,
+    });
+
+    if (processingResult.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Processing, processingResult.error, completedSteps),
+      );
+    }
+
+    completedSteps.push(PipelineStep.Processing);
+
+    // Step 3: Add source to context
+    const addResult = await this._contextManagement.addSourceToContext({
+      contextId: input.contextId,
+      sourceId: input.sourceId,
+      sourceKnowledgeId,
+    });
+
+    if (addResult.isFail()) {
+      return Result.fail(
+        PipelineError.fromStep(PipelineStep.Cataloging, addResult.error, completedSteps),
+      );
+    }
+
+    // Best-effort manifest recording
+    if (this._manifestRepository) {
+      try {
+        await this._manifestRepository.save({
+          id: crypto.randomUUID(),
+          resourceId: input.resourceId ?? input.sourceId,
+          sourceId: input.sourceId,
+          extractionJobId: input.extractionJobId,
+          sourceKnowledgeId,
+          projectionId: processingResult.value.projectionId,
+          contextId: input.contextId,
+          status: "complete",
+          completedSteps: [...completedSteps],
+          contentHash: ingestionResult.value.contentHash,
+          extractedTextLength: ingestionResult.value.extractedText.length,
+          chunksCount: processingResult.value.chunksCount,
+          dimensions: processingResult.value.dimensions,
+          model: processingResult.value.model,
+          createdAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+        });
+      } catch {
+        // Best-effort: manifest recording should not fail the operation
+      }
+    }
+
+    return Result.ok({
+      sourceId: input.sourceId,
+      sourceKnowledgeId,
+      contextId: input.contextId,
+      projectionId: processingResult.value.projectionId,
+      contentHash: ingestionResult.value.contentHash,
+      extractedTextLength: ingestionResult.value.extractedText.length,
+      chunksCount: processingResult.value.chunksCount,
+      dimensions: processingResult.value.dimensions,
+      model: processingResult.value.model,
+      resourceId: input.resourceId,
+    });
   }
 
   async ingestDocument(
@@ -126,14 +229,6 @@ export class KnowledgePipelineOrchestrator implements KnowledgePipelinePort {
           PipelineError.fromStep(PipelineStep.Processing, result.error, []),
         );
       }
-
-      // Register projection in source-knowledge hub (best-effort)
-      await this._sourceKnowledge.registerProjection({
-        sourceId: input.sourceId,
-        projectionId: result.value.projectionId,
-        profileId: input.processingProfileId,
-        status: "COMPLETED",
-      });
 
       return Result.ok({
         projectionId: result.value.projectionId,

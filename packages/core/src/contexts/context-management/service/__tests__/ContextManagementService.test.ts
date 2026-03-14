@@ -83,7 +83,7 @@ describe("ContextManagementService", () => {
   // ── addSourceToContext ──────────────────────────────────────────
 
   describe("addSourceToContext", () => {
-    it("adds source when profileSatisfied=true", async () => {
+    it("adds source to context", async () => {
       await service.createContext({
         id: "ctx-1",
         name: "My Context",
@@ -99,7 +99,6 @@ describe("ContextManagementService", () => {
         contextId: "ctx-1",
         sourceId: "src-1",
         sourceKnowledgeId: "sk-1",
-        profileSatisfied: true,
       });
 
       expect(result.isOk()).toBe(true);
@@ -116,7 +115,7 @@ describe("ContextManagementService", () => {
       expect(eventTypes).toContain(ContextSourceAdded.EVENT_TYPE);
     });
 
-    it("rejects when profileSatisfied=false", async () => {
+    it("derives sourceKnowledgeId from sourceId when not provided", async () => {
       await service.createContext({
         id: "ctx-1",
         name: "My Context",
@@ -129,28 +128,18 @@ describe("ContextManagementService", () => {
       const result = await service.addSourceToContext({
         contextId: "ctx-1",
         sourceId: "src-1",
-        sourceKnowledgeId: "sk-1",
-        profileSatisfied: false,
       });
 
-      expect(result.isFail()).toBe(true);
-      if (result.isFail()) {
-        expect(result.error.message).toContain(
-          "Source does not satisfy context's required profile",
-        );
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.allSources[0].sourceKnowledgeId).toBe("sk-src-1");
       }
-
-      // Verify context was NOT modified
-      const ctx = await repository.findById(ContextId.create("ctx-1"));
-      expect(ctx!.allSources).toHaveLength(0);
     });
 
     it("returns NotFoundError for non-existent context", async () => {
       const result = await service.addSourceToContext({
         contextId: "non-existent",
         sourceId: "src-1",
-        sourceKnowledgeId: "sk-1",
-        profileSatisfied: true,
       });
 
       expect(result.isFail()).toBe(true);
@@ -177,13 +166,11 @@ describe("ContextManagementService", () => {
         contextId: "ctx-1",
         sourceId: "src-1",
         sourceKnowledgeId: "sk-1",
-        profileSatisfied: true,
       });
       await service.addSourceToContext({
         contextId: "ctx-1",
         sourceId: "src-2",
         sourceKnowledgeId: "sk-2",
-        profileSatisfied: true,
       });
 
       eventPublisher.publishedEvents.length = 0;
@@ -222,13 +209,11 @@ describe("ContextManagementService", () => {
         contextId: "ctx-1",
         sourceId: "src-1",
         sourceKnowledgeId: "sk-1",
-        profileSatisfied: true,
       });
       await service.addSourceToContext({
         contextId: "ctx-1",
         sourceId: "src-2",
         sourceKnowledgeId: "sk-2",
-        profileSatisfied: true,
       });
 
       // Currently at v2 with [src-1, src-2]

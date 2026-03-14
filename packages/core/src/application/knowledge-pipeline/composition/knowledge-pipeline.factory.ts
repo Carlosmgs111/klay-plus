@@ -36,7 +36,6 @@ export async function resolvePipelineDependencies(
   return {
     ingestion: platform.ingestion,
     processing: platform.processing,
-    sourceKnowledge: platform.sourceKnowledge,
     contextManagement: platform.contextManagement,
     retrieval,
     manifestRepository,

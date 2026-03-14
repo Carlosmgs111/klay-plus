@@ -6,7 +6,6 @@
  * and architectural boundaries.
  *
  * Updated for the new domain model:
- * - SourceKnowledge (source-knowledge context) manages per-source projection hubs
  * - Context (context-management context) manages source grouping + lineage
  * - SemanticProjection uses sourceId-primary
  */
@@ -57,7 +56,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
   // 1. Full Pipeline: execute()
 
   describe("Full Pipeline — execute()", () => {
-    it("should execute the complete pipeline: ingest -> create source-knowledge -> process -> register projection", async () => {
+    it("should execute the complete pipeline: ingest -> process", async () => {
       const tmpFile = path.join(FIXTURES_DIR, "ddd-overview.txt");
 
       const result = await pipeline.execute({
@@ -242,7 +241,7 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
   // 4. Error Tracking: Step + CompletedSteps
 
   describe("Error Tracking", () => {
-    it("should track completed steps when source-knowledge creation fails (duplicate source)", async () => {
+    it("should successfully process a second document with different sourceId", async () => {
       const esFile = path.join(FIXTURES_DIR, "event-sourcing.txt");
 
       // Create a temp copy of the same file with a unique path
@@ -391,7 +390,6 @@ describe("Knowledge Pipeline Orchestrator — E2E", () => {
           expect(manifest.sourceId).toBe(sourceId);
           expect(manifest.status).toBe("complete");
           expect(manifest.completedSteps).toContain("ingestion");
-          expect(manifest.completedSteps).toContain("cataloging");
           expect(manifest.completedSteps).toContain("processing");
           expect(manifest.contentHash).toBeTruthy();
           expect(manifest.extractedTextLength).toBeGreaterThan(0);

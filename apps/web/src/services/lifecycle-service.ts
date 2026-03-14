@@ -26,14 +26,14 @@ import type {
 import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "@klay/core/management";
+} from "@klay/core";
 
 /**
  * LifecycleService — runtime-agnostic interface for lifecycle operations.
  *
  * Implemented by:
  * - ServerLifecycleService (fetches /api/lifecycle/* routes)
- * - BrowserLifecycleService (calls KnowledgeLifecycleUIAdapter + KnowledgeManagementUIAdapter directly)
+ * - BrowserLifecycleService (calls KnowledgeLifecycleUIAdapter + KnowledgePipelineUIAdapter directly)
  */
 export interface LifecycleService {
   removeSource(

@@ -1,7 +1,6 @@
 import type { ContextManagementService } from "../../../contexts/context-management/service/ContextManagementService";
 import type { SemanticProcessingService } from "../../../contexts/semantic-processing/service/SemanticProcessingService";
 import type { SourceIngestionService } from "../../../contexts/source-ingestion/service/SourceIngestionService";
-import type { SourceKnowledgeService } from "../../../contexts/source-knowledge/service/SourceKnowledgeService";
 import type { KnowledgeLifecyclePort } from "../contracts/KnowledgeLifecyclePort";
 import type {
   RemoveSourceInput,
@@ -37,20 +36,17 @@ export interface ResolvedLifecycleDependencies {
   contextManagement: ContextManagementService;
   processing: SemanticProcessingService;
   ingestion: SourceIngestionService;
-  sourceKnowledge: SourceKnowledgeService;
 }
 
 export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
   private readonly _contextManagement: ContextManagementService;
   private readonly _processing: SemanticProcessingService;
   private readonly _ingestion: SourceIngestionService;
-  private readonly _sourceKnowledge: SourceKnowledgeService;
 
   constructor(deps: ResolvedLifecycleDependencies) {
     this._contextManagement = deps.contextManagement;
     this._processing = deps.processing;
     this._ingestion = deps.ingestion;
-    this._sourceKnowledge = deps.sourceKnowledge;
   }
 
   async removeSource(
@@ -361,19 +357,6 @@ export class KnowledgeLifecycleOrchestrator implements KnowledgeLifecyclePort {
       if (processResult.isFail()) {
         return ResultClass.fail(
           LifecycleError.fromStep(LifecycleStep.GenerateProjection, processResult.error, ["get-text"]),
-        );
-      }
-
-      // 3. Register projection in source knowledge hub
-      const registerResult = await this._sourceKnowledge.registerProjection({
-        sourceId: input.sourceId,
-        projectionId,
-        profileId: input.processingProfileId,
-        status: "COMPLETED",
-      });
-      if (registerResult.isFail()) {
-        return ResultClass.fail(
-          LifecycleError.fromStep(LifecycleStep.GenerateProjection, registerResult.error, ["get-text", "process"]),
         );
       }
 

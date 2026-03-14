@@ -25,9 +25,9 @@
       "default": "./src/application/knowledge-lifecycle/index.ts"
     },
     "./management": {
-      "types": "./src/application/knowledge-management/index.ts",
-      "import": "./src/application/knowledge-management/index.ts",
-      "default": "./src/application/knowledge-management/index.ts"
+      "types": "./src/application/knowledge-pipeline/index.ts",
+      "import": "./src/application/knowledge-pipeline/index.ts",
+      "default": "./src/application/knowledge-pipeline/index.ts"
     },
     "./config": {
       "types": "./src/platform/config/index.ts",
@@ -60,7 +60,6 @@
     "test:source-ingestion": "vitest run src/contexts/source-ingestion/__tests__/e2e.test.ts",
     "test:semantic-processing": "vitest run src/contexts/semantic-processing/__tests__/e2e.test.ts",
     "test:context-management": "vitest run src/contexts/context-management/__tests__/e2e.test.ts",
-    "test:source-knowledge": "vitest run src/contexts/source-knowledge/__tests__/e2e.test.ts",
     "test:knowledge-retrieval": "vitest run src/contexts/knowledge-retrieval/__tests__/e2e.test.ts",
     "test:orchestrator": "vitest run src/application/knowledge-pipeline/__tests__/e2e.test.ts",
     "test:integration:pdf": "node src/tests/integration/run-with-pdf.mjs",

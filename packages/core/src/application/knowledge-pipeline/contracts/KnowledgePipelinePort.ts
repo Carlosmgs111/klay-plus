@@ -20,6 +20,8 @@ import type {
   DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
+  IngestAndAddSourceInput,
+  IngestAndAddSourceSuccess,
 } from "./dtos";
 
 /**
@@ -35,8 +37,17 @@ import type {
  */
 export interface KnowledgePipelinePort {
   /**
+   * Ingests a source, processes content, and adds it to an existing context.
+   * Simplified flow: Ingest -> Process -> AddToContext.
+   * Returns error if the context does not exist.
+   */
+  ingestAndAddSource(
+    input: IngestAndAddSourceInput,
+  ): Promise<Result<KnowledgePipelineError, IngestAndAddSourceSuccess>>;
+
+  /**
    * Executes the full knowledge pipeline:
-   * Ingest -> CreateSourceKnowledge -> Process -> RegisterProjection -> (optional) AddToContext
+   * Ingest -> Process -> (optional) AddToContext
    * This is the main entry point for end-to-end document processing.
    */
   execute(

@@ -10,7 +10,7 @@ Monorepo (pnpm workspaces) que transforma documentos en conocimiento buscable se
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test         # 364 tests (vitest)
+pnpm --filter @klay/core test         # 309 tests (vitest)
 pnpm --filter @klay/web dev           # Astro dev server
 pnpm --filter @klay/web build         # Production build
 ```

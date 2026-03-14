@@ -13,7 +13,7 @@ import type {
   CreateContextInput,
   CreateContextResult,
 } from "@klay/core/lifecycle";
-import type { IngestAndAddSourceInput } from "@klay/core/management";
+import type { IngestAndAddSourceInput } from "@klay/core";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

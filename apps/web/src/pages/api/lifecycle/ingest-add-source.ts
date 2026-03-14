@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
-import { getManagementAdapter } from "../../../server/pipeline-singleton";
+import { getServerAdapter } from "../../../server/pipeline-singleton";
 
 export const POST: APIRoute = async ({ request }) => {
-  const adapter = await getManagementAdapter();
+  const adapter = await getServerAdapter();
   const body = await request.json();
 
   // Decode base64-encoded content back to ArrayBuffer for extractors

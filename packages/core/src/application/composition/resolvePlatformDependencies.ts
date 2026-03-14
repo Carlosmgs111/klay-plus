@@ -1,19 +1,17 @@
 import type { SourceIngestionService } from "../../contexts/source-ingestion/service/SourceIngestionService";
 import type { SemanticProcessingService } from "../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { SourceKnowledgeService } from "../../contexts/source-knowledge/service/SourceKnowledgeService";
 import type { ContextManagementService } from "../../contexts/context-management/service/ContextManagementService";
 import type { OrchestratorPolicy } from "./OrchestratorPolicy";
 
 /**
  * Shared platform dependencies resolved by all orchestrator factories.
  *
- * Contains the 4 core bounded-context services that every orchestrator
+ * Contains the 3 core bounded-context services that every orchestrator
  * needs, plus the resolved provider strings for factory-specific wiring.
  */
 export interface PlatformDependencies {
   ingestion: SourceIngestionService;
   processing: SemanticProcessingService;
-  sourceKnowledge: SourceKnowledgeService;
   contextManagement: ContextManagementService;
 
   /** Resolved provider strings — exposed for factory-specific infra (e.g. ManifestRepository, Retrieval). */
@@ -34,8 +32,7 @@ export interface PlatformDependencies {
  * 2. Typed config → legacy provider string conversion
  * 3. SourceIngestionService creation
  * 4. SemanticProcessingService creation
- * 5. SourceKnowledgeContext creation (with InMemory infra)
- * 6. ContextManagementContext creation (with lineage wiring)
+ * 5. ContextManagementContext creation (with lineage wiring)
  *
  * Individual orchestrator factories call this once and then wire any
  * additional factory-specific dependencies (e.g. KnowledgeRetrieval,
@@ -96,28 +93,15 @@ export async function resolvePlatformDependencies(
     }),
   ]);
 
-  // ── 4. Source-knowledge context ───────────────────────────────────
-  const { createSourceKnowledgeContext } = await import(
-    "../../contexts/source-knowledge/composition/factory"
-  );
-  const { InMemorySourceKnowledgeRepository } = await import(
-    "../../contexts/source-knowledge/source/infrastructure/InMemorySourceKnowledgeRepository"
-  );
-  const { InMemoryEventPublisher } = await import(
-    "../../platform/eventing/InMemoryEventPublisher"
-  );
-
-  const { service: sourceKnowledge } = createSourceKnowledgeContext({
-    sourceKnowledgeRepository: new InMemorySourceKnowledgeRepository(),
-    sourceKnowledgeEventPublisher: new InMemoryEventPublisher(),
-  });
-
-  // ── 5. Context-management context (with lineage wiring) ──────────
+  // ── 4. Context-management context (with lineage wiring) ──────────
   const { createContextManagementContext } = await import(
     "../../contexts/context-management/composition/factory"
   );
   const { InMemoryContextRepository } = await import(
     "../../contexts/context-management/context/infrastructure/InMemoryContextRepository"
+  );
+  const { InMemoryEventPublisher } = await import(
+    "../../platform/eventing/InMemoryEventPublisher"
   );
   const { lineageFactory } = await import(
     "../../contexts/context-management/lineage/composition/factory"
@@ -139,7 +123,6 @@ export async function resolvePlatformDependencies(
   return {
     ingestion,
     processing,
-    sourceKnowledge,
     contextManagement,
     resolved: {
       persistenceProvider,

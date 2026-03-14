@@ -9,6 +9,7 @@ import type {
   UpdateProfileInput,
   DeprecateProfileInput,
   GetManifestInput,
+  IngestAndAddSourceInput,
 } from "../../application/knowledge-pipeline/contracts/dtos";
 import { toRESTResponse } from "../shared/resultTransformers";
 import type { RESTRequest, RESTResponse } from "../shared/resultTransformers";
@@ -27,6 +28,12 @@ import type { RESTRequest, RESTResponse } from "../shared/resultTransformers";
  */
 export class KnowledgePipelineRESTAdapter {
   constructor(private readonly _pipeline: KnowledgePipelinePort) {}
+
+  async ingestAndAddSource(req: RESTRequest): Promise<RESTResponse> {
+    const input = req.body as IngestAndAddSourceInput;
+    const result = await this._pipeline.ingestAndAddSource(input);
+    return toRESTResponse(result);
+  }
 
   async execute(req: RESTRequest): Promise<RESTResponse> {
     const input = req.body as ExecutePipelineInput;

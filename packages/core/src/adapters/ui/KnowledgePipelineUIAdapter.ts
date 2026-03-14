@@ -19,6 +19,8 @@ import type {
   DeprecateProfileResult,
   GetManifestInput,
   GetManifestSuccess,
+  IngestAndAddSourceInput,
+  IngestAndAddSourceSuccess,
 } from "../../application/knowledge-pipeline/contracts/dtos";
 import { unwrapResult } from "../shared/resultTransformers";
 import type { UIResult } from "../shared/resultTransformers";
@@ -35,6 +37,11 @@ import type { UIResult } from "../shared/resultTransformers";
  */
 export class KnowledgePipelineUIAdapter {
   constructor(private readonly _pipeline: KnowledgePipelinePort) {}
+
+  async ingestAndAddSource(input: IngestAndAddSourceInput): Promise<UIResult<IngestAndAddSourceSuccess>> {
+    const result = await this._pipeline.ingestAndAddSource(input);
+    return unwrapResult(result);
+  }
 
   async execute(input: ExecutePipelineInput): Promise<UIResult<ExecutePipelineSuccess>> {
     const result = await this._pipeline.execute(input);

@@ -6,7 +6,6 @@
  *
  * Updated for the new domain model:
  * - Context (context-management) manages source grouping + lineage
- * - SourceKnowledge (source-knowledge) manages per-source projection hubs
  * - ContextManagementService replaces SemanticKnowledgeService
  * - linkContexts/unlinkContexts use lineage sub-domain within context-management
  */
@@ -17,7 +16,7 @@ import { fileURLToPath } from "url";
 
 import { createKnowledgePlatform } from "../../composition/knowledge-platform.factory";
 import type { KnowledgePipelinePort } from "../../knowledge-pipeline/contracts/KnowledgePipelinePort";
-import type { KnowledgeManagementPort } from "../../knowledge-management/contracts/KnowledgeManagementPort";
+import type { KnowledgePipelinePort } from "../../knowledge-pipeline/contracts/KnowledgePipelinePort";
 import type { KnowledgeLifecyclePort } from "../contracts/KnowledgeLifecyclePort";
 import { KnowledgeLifecycleError } from "../domain/KnowledgeLifecycleError";
 import { LifecycleStep } from "../domain/LifecycleStep";
@@ -28,7 +27,7 @@ const FIXTURES_DIR = path.resolve(__dirname, "../../../tests/integration/fixture
 
 describe("Knowledge Lifecycle Orchestrator -- E2E", () => {
   let pipeline: KnowledgePipelinePort;
-  let management: KnowledgeManagementPort;
+  let management: KnowledgePipelinePort;
   let lifecycle: KnowledgeLifecyclePort;
   let profileId: string;
 

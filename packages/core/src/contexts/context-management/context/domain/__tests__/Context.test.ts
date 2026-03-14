@@ -101,8 +101,14 @@ describe("ContextSource", () => {
     expect(() => ContextSource.create("", "sk-1")).toThrow("sourceId is required");
   });
 
-  it("should throw on empty sourceKnowledgeId", () => {
-    expect(() => ContextSource.create("src-1", "")).toThrow("sourceKnowledgeId is required");
+  it("should derive sourceKnowledgeId from sourceId when empty", () => {
+    const source = ContextSource.create("src-1", "");
+    expect(source.sourceKnowledgeId).toBe("sk-src-1");
+  });
+
+  it("should derive sourceKnowledgeId when not provided", () => {
+    const source = ContextSource.create("src-1");
+    expect(source.sourceKnowledgeId).toBe("sk-src-1");
   });
 
   it("should reconstitute with all fields", () => {

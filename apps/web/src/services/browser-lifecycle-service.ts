@@ -1,7 +1,6 @@
 import type { LifecycleService } from "./lifecycle-service";
 import type { ServiceResult } from "./types";
-import type { KnowledgeLifecycleUIAdapter } from "@klay/core/adapters/ui";
-import type { KnowledgeManagementUIAdapter } from "@klay/core/adapters/ui";
+import type { KnowledgeLifecycleUIAdapter, KnowledgePipelineUIAdapter } from "@klay/core/adapters/ui";
 import type {
   RemoveSourceInput,
   RemoveSourceResult,
@@ -29,12 +28,12 @@ import type {
 import type {
   IngestAndAddSourceInput,
   IngestAndAddSourceSuccess,
-} from "@klay/core/management";
+} from "@klay/core";
 import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
 
 interface LifecycleAdapters {
   lifecycle: KnowledgeLifecycleUIAdapter;
-  management: KnowledgeManagementUIAdapter;
+  pipeline: KnowledgePipelineUIAdapter;
 }
 
 /**
@@ -61,7 +60,7 @@ export class BrowserLifecycleService implements LifecycleService {
   private async _initAdapters(): Promise<LifecycleAdapters> {
     const [
       { createKnowledgePlatform },
-      { KnowledgeLifecycleUIAdapter, KnowledgeManagementUIAdapter },
+      { KnowledgeLifecycleUIAdapter, KnowledgePipelineUIAdapter },
     ] = await Promise.all([
       import("@klay/core"),
       import("@klay/core/adapters/ui"),
@@ -77,7 +76,7 @@ export class BrowserLifecycleService implements LifecycleService {
 
     return {
       lifecycle: new KnowledgeLifecycleUIAdapter(platform.lifecycle),
-      management: new KnowledgeManagementUIAdapter(platform.management),
+      pipeline: new KnowledgePipelineUIAdapter(platform.pipeline),
     };
   }
 
@@ -119,8 +118,8 @@ export class BrowserLifecycleService implements LifecycleService {
   async ingestAndAddSource(
     input: IngestAndAddSourceInput,
   ): Promise<ServiceResult<IngestAndAddSourceSuccess>> {
-    const { management } = await this._getAdapters();
-    return management.ingestAndAddSource(input) as Promise<
+    const { pipeline } = await this._getAdapters();
+    return pipeline.ingestAndAddSource(input) as Promise<
       ServiceResult<IngestAndAddSourceSuccess>
     >;
   }
