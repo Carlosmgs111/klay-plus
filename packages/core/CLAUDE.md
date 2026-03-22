@@ -5,7 +5,7 @@ Semantic Knowledge Platform core library. 4 bounded contexts, dual runtime (Serv
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 309 tests (vitest)
+pnpm --filter @klay/core test    # 336 tests (vitest)
 ```
 
 ## Structure
@@ -13,21 +13,17 @@ pnpm --filter @klay/core test    # 309 tests (vitest)
 ```
 src/
   contexts/       # 4 bounded contexts (source-ingestion, context-management, semantic-processing, knowledge-retrieval)
-  application/    # 2 Orchestrators: KnowledgePipelineOrchestrator, KnowledgeLifecycleOrchestrator
-  adapters/       # REST + UI adapters (2 each: Pipeline, Lifecycle)
+  application/    # KnowledgeCoordinator (unified pipeline + lifecycle, class = contract)
   platform/       # Shared infra: persistence, eventing, vector stores
-  shared/         # DDD building blocks: AggregateRoot, Result, Entity, ValueObject
+  shared/         # DDD building blocks: AggregateRoot, Result, Entity, ValueObject, resultTransformers
 ```
 
 ## Package Exports
 
 | Export path | Module |
 |-------------|--------|
-| `.` | knowledge-pipeline (main entry) |
-| `./adapters/rest` | 2 REST adapters (Pipeline, Lifecycle) |
-| `./adapters/ui` | 2 UI adapters (Pipeline, Lifecycle) |
-| `./lifecycle` | KnowledgeLifecyclePort + DTOs + factory |
-| `./management` | Re-exports from pipeline (deprecated alias) |
+| `.` | knowledge (main entry: KnowledgeCoordinator, DTOs, factory, errors) |
+| `./result` | Result transformers (toRESTResponse, unwrapResult, RESTResponse, UIResult) |
 | `./config` | Infrastructure config types, profiles, resolution, validation |
 | `./config/nedb` | NeDBConfigStore (server-side config persistence) |
 | `./config/browser` | IndexedDBConfigStore (browser-side config persistence) |

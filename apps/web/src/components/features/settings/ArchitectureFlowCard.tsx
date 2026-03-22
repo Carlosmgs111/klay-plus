@@ -6,22 +6,22 @@ interface ArchitectureFlowCardProps {
 }
 
 const SERVER_FLOW = `React Component
-  → usePipelineService()
-  → ServerPipelineService.method(input)
-  → fetch('/api/pipeline/...')
+  → useKnowledgeService()
+  → ServerKnowledgeService.method(input)
+  → fetch('/api/pipeline/...' | '/api/lifecycle/...')
   → Astro API Route
-  → KnowledgePipelineRESTAdapter
-  → KnowledgePipelineOrchestrator
+  → toRESTResponse(coordinator.method(body))
+  → KnowledgeCoordinator
   → (NeDB + Hash/OpenAI embeddings)
   → Response JSON`;
 
 const BROWSER_FLOW = `React Component
-  → usePipelineService()
-  → BrowserPipelineService.method(input)
+  → useKnowledgeService()
+  → BrowserKnowledgeService.method(input)
   → dynamic import("@klay/core")
-  → createKnowledgePipeline({ provider: "browser" })
-  → KnowledgePipelineUIAdapter
-  → KnowledgePipelineOrchestrator
+  → createKnowledgePlatform({ provider: "browser" })
+  → unwrapResult(coordinator.method(input))
+  → KnowledgeCoordinator
   → (IndexedDB + Hash/WebLLM embeddings)
   → UIResult<T>`;
 

@@ -23,11 +23,3 @@ export interface OrchestratorPolicy {
   infrastructure?: Partial<InfrastructureProfile>;
 }
 
-/** @deprecated Use `OrchestratorPolicy` instead. */
-export type KnowledgePipelinePolicy = OrchestratorPolicy;
-
-/** @deprecated Use `OrchestratorPolicy` instead. */
-export type KnowledgeManagementPolicy = OrchestratorPolicy;
-
-/** @deprecated Use `OrchestratorPolicy` instead. */
-export type KnowledgeLifecyclePolicy = OrchestratorPolicy;

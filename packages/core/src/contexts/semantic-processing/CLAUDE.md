@@ -68,7 +68,7 @@ Pipeline de GenerateProjection:
 - `VectorWriteStore` — escritura de vectores (`upsert()`, `delete()`, `deleteByProjectionId()`, `deleteBySourceId()`)
 
 **Chunking impls**: `FixedSizeChunker` (`fixed-{size}`), `SentenceChunker` (`sentence`), `RecursiveChunker` (`recursive-{size}`), `ChunkerFactory`, `BaseChunker`
-**Embedding impls**: `HashEmbeddingStrategy` (`hash`, testing), `AISdkEmbeddingStrategy` (`ai-sdk-{provider}`, server), `WebLLMEmbeddingStrategy` (`webllm`, browser)
+**Embedding impls**: `HashEmbeddingStrategy` (`hash`, testing), `AISdkEmbeddingStrategy` (`ai-sdk-{provider}`, server), `WebLLMEmbeddingStrategy` (`webllm`, browser), `TransformersJSEmbeddingStrategy` (`huggingface-{model}`, browser + server, local ONNX), `HFInferenceEmbeddingStrategy` (`hf-inference-{model}`, browser + server, remote API)
 **VectorWriteStore impls**: InMemory (test, platform/), IndexedDB (browser), NeDB (server)
 **Repos**: InMemory (test), IndexedDB (browser), NeDB (server)
 
@@ -111,5 +111,7 @@ Configuraciones de procesamiento declarativas, versionables y reproducibles. Dec
 | Strategy ID | Implementacion | Entorno |
 |-------------|---------------|---------|
 | `hash` | HashEmbeddingStrategy | Testing (deterministico) |
-| `ai-sdk-{provider}` | AISdkEmbeddingStrategy | Server (OpenAI, Cohere, etc.) |
+| `ai-sdk-{provider}` | AISdkEmbeddingStrategy | Server (OpenAI, Cohere) |
 | `webllm` | WebLLMEmbeddingStrategy | Browser (embeddings locales) |
+| `huggingface-{model}` | TransformersJSEmbeddingStrategy | Browser + Server (local ONNX) |
+| `hf-inference-{model}` | HFInferenceEmbeddingStrategy | Browser + Server (remote API) |

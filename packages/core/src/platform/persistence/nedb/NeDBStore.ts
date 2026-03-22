@@ -1,4 +1,12 @@
 /**
+ * Module-level cache of NeDB Datastore instances keyed by filename.
+ * Ensures that multiple NeDBStore instances pointing at the same file
+ * share a single Datastore — critical for read/write store pairs
+ * (e.g. VectorWriteStore and VectorReadStore) that must share in-memory state.
+ */
+const _datastoreCache = new Map<string, any>();
+
+/**
  * Generic NeDB key-value store wrapper.
  * Provides a simplified async Map-like interface over nedb-promises.
  * Server-only — requires Node.js.
@@ -12,12 +20,21 @@ export class NeDBStore<T> {
   private async ensureDB(): Promise<any> {
     if (this.db) return this.db;
 
+    // File-backed stores share a Datastore per filename
+    if (this.filename && _datastoreCache.has(this.filename)) {
+      this.db = _datastoreCache.get(this.filename);
+      return this.db;
+    }
+
     if (!this.initPromise) {
       this.initPromise = (async () => {
         const Datastore = (await import("nedb-promises")).default;
         this.db = Datastore.create(
           this.filename ? { filename: this.filename, autoload: true } : {},
         );
+        if (this.filename) {
+          _datastoreCache.set(this.filename, this.db);
+        }
       })();
     }
 

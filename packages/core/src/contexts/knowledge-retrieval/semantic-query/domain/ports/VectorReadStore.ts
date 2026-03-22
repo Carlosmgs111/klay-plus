@@ -3,6 +3,7 @@ export interface SearchHit {
   sourceId: string;
   content: string;
   score: number;
+  vector: number[];
   metadata: Record<string, unknown>;
 }
 

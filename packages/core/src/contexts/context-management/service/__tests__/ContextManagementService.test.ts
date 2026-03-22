@@ -6,7 +6,7 @@ import { ContextState } from "../../context/domain/ContextState";
 import { ContextCreated } from "../../context/domain/events/ContextCreated";
 import { ContextSourceAdded } from "../../context/domain/events/ContextSourceAdded";
 import { ContextSourceRemoved } from "../../context/domain/events/ContextSourceRemoved";
-import { ContextRolledBack } from "../../context/domain/events/ContextRolledBack";
+
 import { ContextDeprecated } from "../../context/domain/events/ContextDeprecated";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
 import type { DomainEvent } from "../../../../shared/domain";
@@ -98,7 +98,6 @@ describe("ContextManagementService", () => {
       const result = await service.addSourceToContext({
         contextId: "ctx-1",
         sourceId: "src-1",
-        sourceKnowledgeId: "sk-1",
       });
 
       expect(result.isOk()).toBe(true);
@@ -136,6 +135,28 @@ describe("ContextManagementService", () => {
       }
     });
 
+    it("stores projectionId when provided", async () => {
+      await service.createContext({
+        id: "ctx-1",
+        name: "My Context",
+        description: "Test",
+        language: "en",
+        requiredProfileId: "profile-1",
+        createdBy: "user",
+      });
+
+      const result = await service.addSourceToContext({
+        contextId: "ctx-1",
+        sourceId: "src-1",
+        projectionId: "proj-1",
+      });
+
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.allSources[0].projectionId).toBe("proj-1");
+      }
+    });
+
     it("returns NotFoundError for non-existent context", async () => {
       const result = await service.addSourceToContext({
         contextId: "non-existent",
@@ -146,6 +167,79 @@ describe("ContextManagementService", () => {
       if (result.isFail()) {
         expect(result.error.message).toContain("not found");
       }
+    });
+  });
+
+  // ── listContexts ─────────────────────────────────────────────────
+
+  describe("listContexts", () => {
+    it("returns all contexts", async () => {
+      await service.createContext({
+        id: "ctx-1",
+        name: "First",
+        description: "Test",
+        language: "en",
+        requiredProfileId: "profile-1",
+        createdBy: "user",
+      });
+      await service.createContext({
+        id: "ctx-2",
+        name: "Second",
+        description: "Test",
+        language: "en",
+        requiredProfileId: "profile-1",
+        createdBy: "user",
+      });
+
+      const result = await service.listContexts();
+
+      expect(result).toHaveLength(2);
+      const ids = result.map((c) => c.id.value).sort();
+      expect(ids).toEqual(["ctx-1", "ctx-2"]);
+    });
+
+    it("returns empty array when no contexts exist", async () => {
+      const result = await service.listContexts();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  // ── getContextsForSource ────────────────────────────────────────
+
+  describe("getContextsForSource", () => {
+    it("returns contexts containing the source", async () => {
+      await service.createContext({
+        id: "ctx-1",
+        name: "First",
+        description: "Test",
+        language: "en",
+        requiredProfileId: "profile-1",
+        createdBy: "user",
+      });
+      await service.createContext({
+        id: "ctx-2",
+        name: "Second",
+        description: "Test",
+        language: "en",
+        requiredProfileId: "profile-1",
+        createdBy: "user",
+      });
+
+      await service.addSourceToContext({ contextId: "ctx-1", sourceId: "src-A" });
+      await service.addSourceToContext({ contextId: "ctx-2", sourceId: "src-A" });
+
+      const result = await service.getContextsForSource("src-A");
+
+      expect(result).toHaveLength(2);
+      const ids = result.map((c) => c.id.value).sort();
+      expect(ids).toEqual(["ctx-1", "ctx-2"]);
+    });
+
+    it("returns empty array for unknown source", async () => {
+      const result = await service.getContextsForSource("non-existent");
+
+      expect(result).toEqual([]);
     });
   });
 
@@ -165,12 +259,10 @@ describe("ContextManagementService", () => {
       await service.addSourceToContext({
         contextId: "ctx-1",
         sourceId: "src-1",
-        sourceKnowledgeId: "sk-1",
       });
       await service.addSourceToContext({
         contextId: "ctx-1",
         sourceId: "src-2",
-        sourceKnowledgeId: "sk-2",
       });
 
       eventPublisher.publishedEvents.length = 0;
@@ -189,50 +281,6 @@ describe("ContextManagementService", () => {
       // Verify events
       const eventTypes = eventPublisher.publishedEvents.map((e) => e.eventType);
       expect(eventTypes).toContain(ContextSourceRemoved.EVENT_TYPE);
-    });
-  });
-
-  // ── rollbackContext ─────────────────────────────────────────────
-
-  describe("rollbackContext", () => {
-    it("rolls back to target version", async () => {
-      await service.createContext({
-        id: "ctx-1",
-        name: "My Context",
-        description: "Test",
-        language: "en",
-        requiredProfileId: "profile-1",
-        createdBy: "user",
-      });
-
-      await service.addSourceToContext({
-        contextId: "ctx-1",
-        sourceId: "src-1",
-        sourceKnowledgeId: "sk-1",
-      });
-      await service.addSourceToContext({
-        contextId: "ctx-1",
-        sourceId: "src-2",
-        sourceKnowledgeId: "sk-2",
-      });
-
-      // Currently at v2 with [src-1, src-2]
-      eventPublisher.publishedEvents.length = 0;
-
-      const result = await service.rollbackContext({
-        contextId: "ctx-1",
-        targetVersion: 1,
-      });
-
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value.currentVersion!.version).toBe(1);
-        expect(result.value.currentVersion!.sourceIds).toEqual(["src-1"]);
-      }
-
-      // Verify events
-      const eventTypes = eventPublisher.publishedEvents.map((e) => e.eventType);
-      expect(eventTypes).toContain(ContextRolledBack.EVENT_TYPE);
     });
   });
 

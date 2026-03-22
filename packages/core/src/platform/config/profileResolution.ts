@@ -7,6 +7,7 @@ import type {
 } from "./InfrastructureProfile";
 import { PRESET_PROFILES } from "./InfrastructureProfile";
 import type { ConfigStore } from "./ConfigStore";
+import { getModelsForProvider, getDefaultModel } from "./ProviderRequirements";
 
 // ── Profile Resolution ───────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ function mergeProfile(
     vectorStore: partial.vectorStore ?? base.vectorStore,
     embedding: partial.embedding ?? base.embedding,
     documentStorage: partial.documentStorage ?? base.documentStorage,
+    retrieval: partial.retrieval ?? base.retrieval,
   };
 }
 
@@ -149,6 +151,26 @@ function getEmbeddingDimensionsFromConfig(embedding: InfrastructureProfile["embe
   return undefined;
 }
 
+/**
+ * Resolve expected embedding dimensions from PROVIDER_REGISTRY model catalog.
+ * Used when embedding config doesn't declare explicit dimensions (e.g. huggingface, hf-inference).
+ */
+function resolveModelDimensions(embedding: InfrastructureProfile["embedding"]): number | undefined {
+  if (typeof embedding !== "object" || embedding === null) return undefined;
+
+  const providerId = embedding.type;
+  const modelId = "model" in embedding ? (embedding as Record<string, unknown>).model as string : undefined;
+
+  if (modelId) {
+    const models = getModelsForProvider(providerId);
+    const match = models.find((m) => m.id === modelId);
+    if (match) return match.dimensions;
+  }
+
+  const defaultModel = getDefaultModel(providerId);
+  return defaultModel?.dimensions;
+}
+
 function hasValidAuthRef(config: Record<string, unknown>): boolean {
   if (!("authRef" in config)) return true;
   const ref = config.authRef;
@@ -161,7 +183,7 @@ const SERVER_ONLY_TYPES = new Set(["nedb", "local"]);
 export function validateProfile(profile: InfrastructureProfile): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // 1. Dimension consistency
+  // 1. Dimension consistency — explicit config dimensions
   const embDim = getEmbeddingDimensionsFromConfig(profile.embedding);
   const vecDim = typeof profile.vectorStore === "object" && "dimensions" in profile.vectorStore
     ? profile.vectorStore.dimensions
@@ -171,6 +193,18 @@ export function validateProfile(profile: InfrastructureProfile): ValidationError
       code: "DIMENSION_MISMATCH",
       message: `Embedding dimensions (${embDim}) do not match vector store dimensions (${vecDim})`,
     });
+  }
+
+  // 1b. Dimension consistency — resolve from PROVIDER_REGISTRY model catalog
+  //     when embedding config has no explicit dimensions (e.g. huggingface, hf-inference)
+  if (embDim === undefined && vecDim !== undefined) {
+    const resolvedDim = resolveModelDimensions(profile.embedding);
+    if (resolvedDim !== undefined && resolvedDim !== vecDim) {
+      errors.push({
+        code: "DIMENSION_MISMATCH",
+        message: `Embedding model produces ${resolvedDim}d vectors but vector store expects ${vecDim}d`,
+      });
+    }
   }
 
   // 2. Auth ref validation for all axes

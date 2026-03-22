@@ -134,6 +134,8 @@ export class SourceIngestionService {
     return Result.ok({ sourceId: params.id });
   }
 
+  // ? Cross-module operations ──────────────────────────────────────────────
+  // ? Extrae el contenido de un source ya registrado
   async extractSource(params: {
     jobId: string;
     sourceId: string;
@@ -222,6 +224,20 @@ export class SourceIngestionService {
       extractedText: extractionResult.value.extractedText,
       metadata: extractionResult.value.metadata,
     });
+  }
+
+  // ── Source read operations ────────────────────────────────────────
+
+  async getSource(id: string): Promise<Source | null> {
+    return this._sourceRepository.findById(SourceId.create(id));
+  }
+
+  async listSources(): Promise<Source[]> {
+    return this._sourceRepository.findAll();
+  }
+
+  async getSourceCount(): Promise<number> {
+    return this._sourceRepository.count();
   }
 
   // ── Resource operations ────────────────────────────────────────────

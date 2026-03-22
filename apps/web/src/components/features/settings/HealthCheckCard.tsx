@@ -14,7 +14,7 @@ export function HealthCheckCard() {
   const { addToast } = useToast();
 
   const healthCheck = useCallback(
-    (input: SearchKnowledgeInput) => service!.searchKnowledge(input),
+    (input: SearchKnowledgeInput) => service!.search(input),
     [service],
   );
 

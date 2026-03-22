@@ -17,4 +17,12 @@ export class IndexedDBSourceRepository
   async findByUri(uri: string): Promise<Source | null> {
     return this.findOneWhere((d) => d.uri === uri);
   }
+
+  async findAll(): Promise<Source[]> {
+    return this.findWhere(() => true);
+  }
+
+  async count(): Promise<number> {
+    return (await this.findWhere(() => true)).length;
+  }
 }

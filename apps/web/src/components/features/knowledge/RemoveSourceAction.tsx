@@ -7,7 +7,7 @@ import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { OverlayPanel } from "../../shared/OverlayPanel";
 import { LoadingButton } from "../../shared/LoadingButton";
-import type { RemoveSourceInput } from "@klay/core/lifecycle";
+import type { RemoveSourceInput } from "@klay/core";
 
 interface RemoveSourceActionProps {
   contextId: string;
@@ -16,13 +16,13 @@ interface RemoveSourceActionProps {
 }
 
 export function RemoveSourceAction({ contextId, sourceId, onSuccess }: RemoveSourceActionProps) {
-  const { lifecycleService } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
 
   const removeAction = useCallback(
-    (input: RemoveSourceInput) => lifecycleService!.removeSource(input),
-    [lifecycleService],
+    (input: RemoveSourceInput) => service!.contexts.removeSource(input),
+    [service],
   );
 
   const { error, isLoading, execute } = useServiceAction(removeAction);

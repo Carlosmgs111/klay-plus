@@ -5,10 +5,7 @@ import { ArchiveContextAction } from "./ArchiveContextAction";
 import { DeprecateContextAction } from "./DeprecateContextAction";
 import { ActivateContextAction } from "./ActivateContextAction";
 import { useClickOutside } from "../../../hooks/useClickOutside";
-import {
-  useKnowledgeContext,
-  getOverallStatus,
-} from "../../../contexts/KnowledgeContextContext";
+import { useKnowledgeContext } from "../../../contexts/KnowledgeContextContext";
 
 interface ContextActionsMenuProps {
   contextId: string;
@@ -19,8 +16,8 @@ export function ContextActionsMenu({ contextId }: ContextActionsMenuProps) {
   const [showArchiveOverlay, setShowArchiveOverlay] = useState(false);
   const [showDeprecateOverlay, setShowDeprecateOverlay] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { manifests, refresh } = useKnowledgeContext();
-  const overallStatus = getOverallStatus(manifests);
+  const { detail, refresh } = useKnowledgeContext();
+  const overallStatus = detail?.status ?? "empty";
 
   useClickOutside(menuRef, useCallback(() => setOpen(false), []), open);
 

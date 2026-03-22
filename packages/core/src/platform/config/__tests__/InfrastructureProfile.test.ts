@@ -23,7 +23,7 @@ describe("PRESET_PROFILES", () => {
     expect(p.id).toBe("browser");
     expect(p.persistence).toEqual({ type: "indexeddb" });
     expect(p.vectorStore).toEqual({ type: "indexeddb", dimensions: 384 });
-    expect(p.embedding).toEqual({ type: "webllm", model: "Xenova/all-MiniLM-L6-v2" });
+    expect(p.embedding).toEqual({ type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" });
     expect(p.documentStorage).toEqual({ type: "browser" });
   });
 
@@ -31,8 +31,8 @@ describe("PRESET_PROFILES", () => {
     const p = PRESET_PROFILES["server"];
     expect(p.id).toBe("server");
     expect(p.persistence).toEqual({ type: "nedb" });
-    expect(p.vectorStore).toEqual({ type: "nedb", dimensions: 128 });
-    expect(p.embedding).toEqual({ type: "hash", dimensions: 128 });
+    expect(p.vectorStore).toEqual({ type: "nedb", dimensions: 384 });
+    expect(p.embedding).toEqual({ type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" });
     expect(p.documentStorage).toEqual({ type: "local", basePath: "./data/uploads" });
   });
 });
@@ -167,6 +167,48 @@ describe("resolveInfrastructureProfile", () => {
     expect(profile.vectorStore).toEqual({ type: "in-memory", dimensions: 256 });
     // persistence stays from defaults
     expect(profile.persistence).toEqual({ type: "indexeddb" });
+  });
+});
+
+describe("mergeProfile retrieval round-trips", () => {
+  it("preserves retrieval from partial when base has none", async () => {
+    // Base preset (in-memory) has no retrieval field.
+    // The explicit infrastructure override carries retrieval config.
+    const profile = await resolveInfrastructureProfile({
+      provider: "in-memory",
+      infrastructure: { retrieval: { ranking: "mmr", mmrLambda: 0.7 } },
+    });
+
+    expect(profile.retrieval).toEqual({ ranking: "mmr", mmrLambda: 0.7 });
+  });
+
+  it("uses base.retrieval when partial has none", async () => {
+    // We store a profile with retrieval into ConfigStore (acts as "base" layer),
+    // then resolve without any infrastructure override — partial has no retrieval.
+    const store = new InMemoryConfigStore();
+    const persisted: Partial<InfrastructureProfile> = {
+      retrieval: { search: "hybrid" },
+    };
+    await store.set(INFRA_PROFILE_KEY, JSON.stringify(persisted));
+
+    const profile = await resolveInfrastructureProfile({
+      provider: "in-memory",
+      configStore: store,
+      // no infrastructure override → partial passed to mergeProfile has no retrieval
+    });
+
+    expect(profile.retrieval).toEqual({ search: "hybrid" });
+  });
+
+  it("resolveInfrastructureProfile round-trips a full retrieval config", async () => {
+    const retrievalConfig = { ranking: "mmr" as const, mmrLambda: 0.3 };
+
+    const profile = await resolveInfrastructureProfile({
+      provider: "in-memory",
+      infrastructure: { retrieval: retrievalConfig },
+    });
+
+    expect(profile.retrieval).toEqual(retrievalConfig);
   });
 });
 

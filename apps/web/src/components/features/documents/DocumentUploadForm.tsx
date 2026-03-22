@@ -5,7 +5,7 @@ import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { Input } from "../../shared/Input";
 import { FileProcessingForm } from "../../shared/FileProcessingForm";
 import { detectFileType } from "../../../utils/fileDetection";
-import type { ExecutePipelineInput, ExecutePipelineSuccess } from "@klay/core";
+import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "@klay/core";
 
 interface DocumentUploadFormProps {
   onSuccess?: () => void;
@@ -18,12 +18,12 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
   const [language, setLanguage] = useState("en");
   const [createdBy, setCreatedBy] = useState("dashboard-user");
 
-  const executePipeline = useCallback(
-    (input: ExecutePipelineInput) => service!.execute(input),
+  const processKnowledge = useCallback(
+    (input: ProcessKnowledgeInput) => service!.process(input),
     [service],
   );
 
-  const { error, execute } = usePipelineAction(executePipeline);
+  const { error, execute } = usePipelineAction(processKnowledge);
 
   const handleProcess = async (file: File) => {
     if (!service) return null;
@@ -31,7 +31,7 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
     const fileBuffer = await file.arrayBuffer();
     const detected = detectFileType(file.name);
 
-    const input: ExecutePipelineInput = {
+    const input: ProcessKnowledgeInput = {
       sourceId: crypto.randomUUID(),
       sourceName: file.name,
       uri: file.name,
@@ -41,10 +41,6 @@ export function DocumentUploadForm({ onSuccess }: DocumentUploadFormProps) {
       projectionId: crypto.randomUUID(),
       projectionType: "EMBEDDING",
       processingProfileId: "default",
-      contextId: crypto.randomUUID(),
-      language,
-      createdBy,
-      content: fileBuffer,
     };
 
     const result = await execute(input);

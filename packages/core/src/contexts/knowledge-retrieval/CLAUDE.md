@@ -57,7 +57,7 @@ Pipeline:
 - `VectorReadStore` — `search(vector, topK, filters?) → SearchHit[]`
 - `RankingStrategy` — `rerank(query, hits[]) → RankedHit[]`
 
-**QueryEmbedder impls**: `HashQueryEmbedder` (testing), `AISdkQueryEmbedder` (server), `WebLLMQueryEmbedder` (browser)
+**QueryEmbedder impls**: `HashQueryEmbedder` (testing), `AISdkQueryEmbedder` (server), `WebLLMQueryEmbedder` (browser), `TransformersJSQueryEmbedder` (browser + server, local ONNX), `HFInferenceQueryEmbedder` (browser + server, remote API)
 **VectorReadStore impls**: InMemory (test, platform/), IndexedDB (browser), NeDB (server)
 **RankingStrategy impls**: `PassthroughRankingStrategy` (sin re-ranking)
 

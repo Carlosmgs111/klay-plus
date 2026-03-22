@@ -1,10 +1,7 @@
 /**
- * STANDBY: Version history has been absorbed into ContextSourcesPage
- * as a collapsible section. This file is kept for potential future
- * restoration as a standalone page.
- *
- * The version timeline, diff computation, and rollback action now live
- * in ContextSourcesPage.tsx.
+ * STANDBY: Version history has been simplified to an activity log
+ * in ContextSourcesPage. Rollback was removed — versions are now
+ * a read-only audit log of source add/remove events.
  */
 
 export default function UnitVersionsPage() {

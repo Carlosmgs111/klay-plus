@@ -27,9 +27,9 @@ describe("getProvidersForAxis", () => {
     expect(providers).toHaveLength(3);
   });
 
-  it("returns 5 embedding providers (no runtime filter)", () => {
+  it("returns 6 embedding providers (no runtime filter)", () => {
     const providers = getProvidersForAxis("embedding");
-    expect(providers).toHaveLength(5);
+    expect(providers).toHaveLength(6);
     expect(providers.map((p) => p.id)).toEqual(
       expect.arrayContaining([
         "hash",
@@ -37,6 +37,7 @@ describe("getProvidersForAxis", () => {
         "openai",
         "cohere",
         "huggingface",
+        "hf-inference",
       ]),
     );
   });
@@ -65,6 +66,7 @@ describe("getProvidersForAxis", () => {
     expect(ids).toContain("openai");
     expect(ids).toContain("cohere");
     expect(ids).toContain("huggingface");
+    expect(ids).toContain("hf-inference");
   });
 
   it("filters by server runtime — embedding excludes webllm", () => {
@@ -133,14 +135,19 @@ describe("getModelsForProvider", () => {
     expect(models).toHaveLength(3);
   });
 
-  it("returns 2 models for huggingface", () => {
+  it("returns 3 models for huggingface", () => {
     const models = getModelsForProvider("huggingface");
-    expect(models).toHaveLength(2);
+    expect(models).toHaveLength(3);
   });
 
   it("returns 2 models for hash", () => {
     const models = getModelsForProvider("hash");
     expect(models).toHaveLength(2);
+  });
+
+  it("returns 3 models for hf-inference", () => {
+    const models = getModelsForProvider("hf-inference");
+    expect(models).toHaveLength(3);
   });
 
   it("returns empty array for unknown provider", () => {
@@ -164,11 +171,9 @@ describe("getProfileRequirements", () => {
     ]);
   });
 
-  it("returns HUGGINGFACE_API_KEY for huggingface embedding", () => {
+  it("returns no requirements for huggingface (local)", () => {
     const reqs = getProfileRequirements({ embedding: "huggingface" });
-    expect(reqs).toEqual([
-      { key: "HUGGINGFACE_API_KEY", label: "HuggingFace API Key" },
-    ]);
+    expect(reqs).toEqual([]);
   });
 
   it("returns empty array for hash embedding", () => {
@@ -179,6 +184,13 @@ describe("getProfileRequirements", () => {
   it("returns empty array for webllm embedding", () => {
     const reqs = getProfileRequirements({ embedding: "webllm" });
     expect(reqs).toEqual([]);
+  });
+
+  it("returns HUGGINGFACE_API_KEY for hf-inference embedding", () => {
+    const reqs = getProfileRequirements({ embedding: "hf-inference" });
+    expect(reqs).toEqual([
+      { key: "HUGGINGFACE_API_KEY", label: "HuggingFace API Key" },
+    ]);
   });
 
   it("returns empty array for persistence-only profile", () => {
@@ -197,8 +209,8 @@ describe("getProfileRequirements", () => {
 });
 
 describe("PROVIDER_REGISTRY", () => {
-  it("has 14 total entries", () => {
-    expect(PROVIDER_REGISTRY).toHaveLength(14);
+  it("has 15 total entries", () => {
+    expect(PROVIDER_REGISTRY).toHaveLength(15);
   });
 
   it("every entry has required fields including runtimes and gateway", () => {
@@ -216,9 +228,9 @@ describe("PROVIDER_REGISTRY", () => {
 
   it("AI SDK embedding providers have gateway 'ai-sdk'", () => {
     const aiSdkProviders = PROVIDER_REGISTRY.filter(
-      (p) => p.axis === "embedding" && ["openai", "cohere", "huggingface"].includes(p.id),
+      (p) => p.axis === "embedding" && ["openai", "cohere"].includes(p.id),
     );
-    expect(aiSdkProviders).toHaveLength(3);
+    expect(aiSdkProviders).toHaveLength(2);
     for (const provider of aiSdkProviders) {
       expect(provider.gateway).toBe("ai-sdk");
     }
@@ -228,8 +240,8 @@ describe("PROVIDER_REGISTRY", () => {
     const localProviders = PROVIDER_REGISTRY.filter(
       (p) => p.gateway === "local",
     );
-    // 3 persistence + 3 vectorStore + 3 documentStorage + 2 embedding (hash, webllm)
-    expect(localProviders).toHaveLength(11);
+    // 3 persistence + 3 vectorStore + 3 documentStorage + 3 embedding (hash, webllm, huggingface)
+    expect(localProviders).toHaveLength(12);
   });
 
   it("all embedding providers have models defined", () => {

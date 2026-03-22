@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
 import { Spinner } from "../../shared/Spinner";
+import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
+import type { ListProfilesResult } from "@klay/core";
+
+type ProfileEntry = ListProfilesResult["profiles"][number];
 
 interface SearchBarProps {
   onSearch: (query: string, topK: number, minScore: number, filters?: Record<string, unknown>) => void;
@@ -17,6 +21,7 @@ interface SearchFilters {
   statusFilters: string[];
   contextFilter: string;
   sourceFilter: string;
+  profileFilter: string;
 }
 
 const DEFAULT_FILTERS: SearchFilters = {
@@ -25,12 +30,26 @@ const DEFAULT_FILTERS: SearchFilters = {
   statusFilters: [],
   contextFilter: "",
   sourceFilter: "",
+  profileFilter: "",
 };
 
 export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
+  const { service } = useRuntimeMode();
+  const [profiles, setProfiles] = useState<ProfileEntry[]>([]);
+
+  useEffect(() => {
+    if (!service) return;
+    let cancelled = false;
+    service.profiles.list().then((result) => {
+      if (!cancelled && result.success) {
+        setProfiles(result.data.profiles.filter((p) => p.status === "ACTIVE"));
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [service]);
 
   const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -51,6 +70,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
     filters.statusFilters.length > 0,
     !hideContextFilter && filters.contextFilter.trim() !== "",
     filters.sourceFilter.trim() !== "",
+    filters.profileFilter !== "",
   ].filter(Boolean).length;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,6 +81,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
     if (filters.statusFilters.length > 0) apiFilters.status = filters.statusFilters;
     if (!hideContextFilter && filters.contextFilter.trim()) apiFilters.contextId = filters.contextFilter.trim();
     if (filters.sourceFilter.trim()) apiFilters.sourceId = filters.sourceFilter.trim();
+    if (filters.profileFilter) apiFilters.processingProfileId = filters.profileFilter;
 
     const hasFilters = Object.keys(apiFilters).length > 0;
     onSearch(query.trim(), filters.topK, filters.minScore, hasFilters ? apiFilters : undefined);
@@ -68,6 +89,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {/* Main input row */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -110,6 +132,39 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
           )}
         </Button>
       </div>
+
+      {/* Profile quick-filter chips — always visible when profiles exist */}
+      {profiles.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-tertiary tracking-caps">Profile:</span>
+          <button
+            type="button"
+            onClick={() => updateFilter("profileFilter", "")}
+            className={`px-2.5 py-0.5 rounded text-xs font-medium transition-colors duration-fast ${
+              filters.profileFilter === ""
+                ? "bg-accent text-white"
+                : "bg-surface-2 text-tertiary hover:bg-surface-3"
+            }`}
+          >
+            All
+          </button>
+          {profiles.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => updateFilter("profileFilter", p.id)}
+              className={`px-2.5 py-0.5 rounded text-xs font-medium transition-colors duration-fast ${
+                filters.profileFilter === p.id
+                  ? "bg-accent text-white"
+                  : "bg-surface-2 text-tertiary hover:bg-surface-3"
+              }`}
+              title={p.id}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Collapsible advanced filters */}
       <div

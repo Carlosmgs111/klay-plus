@@ -41,6 +41,34 @@ describe("validateProfile", () => {
     );
   });
 
+  it("detects model dimension mismatch from PROVIDER_REGISTRY", () => {
+    const profile: InfrastructureProfile = {
+      id: "test",
+      name: "Test",
+      persistence: { type: "in-memory" },
+      vectorStore: { type: "in-memory", dimensions: 128 },
+      embedding: { type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" }, // produces 384d
+      documentStorage: { type: "in-memory" },
+    };
+    const errors = validateProfile(profile);
+    expect(errors).toContainEqual(
+      expect.objectContaining({ code: "DIMENSION_MISMATCH" })
+    );
+  });
+
+  it("accepts matching model dimensions from PROVIDER_REGISTRY", () => {
+    const profile: InfrastructureProfile = {
+      id: "test",
+      name: "Test",
+      persistence: { type: "in-memory" },
+      vectorStore: { type: "in-memory", dimensions: 384 },
+      embedding: { type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" }, // produces 384d
+      documentStorage: { type: "in-memory" },
+    };
+    const errors = validateProfile(profile);
+    expect(errors).toEqual([]);
+  });
+
   it("detects browser-only providers used with server-only providers", () => {
     const profile: InfrastructureProfile = {
       id: "test",

@@ -95,6 +95,20 @@ export class ContextManagementService {
   }
 
   /**
+   * Lists all contexts.
+   */
+  async listContexts(): Promise<Context[]> {
+    return this._repository.findAll();
+  }
+
+  /**
+   * Finds all contexts that contain a given source.
+   */
+  async getContextsForSource(sourceId: string): Promise<Context[]> {
+    return this._repository.findBySourceId(sourceId);
+  }
+
+  /**
    * Creates a new Context aggregate.
    */
   async createContext(params: {
@@ -135,7 +149,7 @@ export class ContextManagementService {
   async addSourceToContext(params: {
     contextId: string;
     sourceId: string;
-    sourceKnowledgeId?: string;
+    projectionId?: string;
   }): Promise<Result<DomainError, Context>> {
     const context = await this._repository.findById(
       ContextId.create(params.contextId),
@@ -144,10 +158,10 @@ export class ContextManagementService {
       return Result.fail(new ContextNotFoundError(params.contextId));
     }
 
-    const sourceKnowledgeId = params.sourceKnowledgeId ?? `sk-${params.sourceId}`;
     const source = ContextSource.create(
       params.sourceId,
-      sourceKnowledgeId,
+      undefined,
+      params.projectionId,
     );
     context.addSource(source);
 
@@ -172,28 +186,6 @@ export class ContextManagementService {
     }
 
     context.removeSource(params.sourceId);
-
-    await this._repository.save(context);
-    await this._eventPublisher.publishAll(context.clearEvents());
-
-    return Result.ok(context);
-  }
-
-  /**
-   * Rolls back a context to a previous version.
-   */
-  async rollbackContext(params: {
-    contextId: string;
-    targetVersion: number;
-  }): Promise<Result<DomainError, Context>> {
-    const context = await this._repository.findById(
-      ContextId.create(params.contextId),
-    );
-    if (!context) {
-      return Result.fail(new ContextNotFoundError(params.contextId));
-    }
-
-    context.rollbackToVersion(params.targetVersion);
 
     await this._repository.save(context);
     await this._eventPublisher.publishAll(context.clearEvents());
@@ -261,6 +253,27 @@ export class ContextManagementService {
 
     await this._repository.save(context);
     await this._eventPublisher.publishAll(context.clearEvents());
+
+    return Result.ok(context);
+  }
+
+  /**
+   * Changes the required processing profile of a context.
+   */
+  async updateContextProfile(params: {
+    contextId: string;
+    profileId: string;
+  }): Promise<Result<DomainError, Context>> {
+    const context = await this._repository.findById(
+      ContextId.create(params.contextId),
+    );
+    if (!context) {
+      return Result.fail(new ContextNotFoundError(params.contextId));
+    }
+
+    context.changeRequiredProfile(params.profileId);
+
+    await this._repository.save(context);
 
     return Result.ok(context);
   }

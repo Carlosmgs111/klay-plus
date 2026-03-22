@@ -20,7 +20,7 @@ export function ProfileEditForm({ profile, onSuccess, onCancel }: ProfileEditFor
   const { addToast } = useToast();
 
   const updateAction = useCallback(
-    (input: UpdateProfileInput) => service!.updateProfile(input),
+    (input: UpdateProfileInput) => service!.profiles.update(input),
     [service],
   );
 

@@ -9,6 +9,7 @@ const NAV_ITEMS: {
   icon: IconName;
 }[] = [
   { label: "Contexts", page: "contexts", href: "/contexts", icon: "brain" },
+  { label: "Sources", page: "sources", href: "/sources", icon: "database" },
   { label: "Profiles", page: "profiles", href: "/profiles", icon: "sliders" },
   { label: "Settings", page: "settings", href: "/settings", icon: "settings" },
 ];

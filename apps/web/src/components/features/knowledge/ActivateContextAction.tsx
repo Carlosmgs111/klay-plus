@@ -4,7 +4,7 @@ import { useToast } from "../../../contexts/ToastContext";
 import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Icon } from "../../shared/Icon";
 import { Spinner } from "../../shared/Spinner";
-import type { ActivateContextInput } from "@klay/core/lifecycle";
+import type { TransitionContextStateInput } from "@klay/core";
 
 interface ActivateContextActionProps {
   contextId: string;
@@ -12,18 +12,18 @@ interface ActivateContextActionProps {
 }
 
 export function ActivateContextAction({ contextId, onSuccess }: ActivateContextActionProps) {
-  const { lifecycleService } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
 
   const activateAction = useCallback(
-    (input: ActivateContextInput) => lifecycleService!.activateContext(input),
-    [lifecycleService],
+    (input: TransitionContextStateInput) => service!.contexts.transitionState(input),
+    [service],
   );
 
   const { isLoading, execute } = useServiceAction(activateAction);
 
   const handleActivate = async () => {
-    const result = await execute({ contextId });
+    const result = await execute({ contextId, targetState: "ACTIVE" });
     if (result) {
       addToast(`Context activated`, "success");
       onSuccess?.();

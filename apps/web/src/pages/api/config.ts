@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getConfigStore, invalidateAdapters } from "../../server/pipeline-singleton";
+import { getConfigStore, invalidateAdapters } from "../../server/knowledge-singleton";
 
 /**
  * GET /api/config — Load all config key-value pairs.

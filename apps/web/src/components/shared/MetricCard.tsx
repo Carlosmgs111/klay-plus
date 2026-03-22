@@ -8,6 +8,7 @@ interface MetricCardProps {
   variant?: "default" | "success" | "danger";
   icon?: IconName;
   trend?: { direction: "up" | "down" | "neutral"; value: string };
+  href?: string;
   children?: ReactNode;
 }
 
@@ -32,12 +33,17 @@ export function MetricCard({
   variant = "default",
   icon,
   trend,
+  href,
   children,
 }: MetricCardProps) {
   const variantClass = VARIANT_STYLES[variant];
+  const Tag = href ? "a" : "div";
 
   return (
-    <div className={`rounded-lg p-4 ${variantClass}`}>
+    <Tag
+      {...(href ? { href } : {})}
+      className={`rounded-lg p-4 block no-underline ${variantClass} ${href ? "cursor-pointer hover:scale-[1.02] transition-transform" : ""}`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium uppercase tracking-[0.1em]">
@@ -58,6 +64,6 @@ export function MetricCard({
         )}
       </div>
       {children}
-    </div>
+    </Tag>
   );
 }

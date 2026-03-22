@@ -12,10 +12,11 @@ import type {
  *   await strategy.initialize();
  */
 export class WebLLMEmbeddingStrategy implements EmbeddingStrategy {
-  readonly strategyId = "web-llm-embedding";
+  readonly strategyId = "webllm";
   readonly version = 1;
 
   private engine: any = null;
+  private initPromise: Promise<void> | null = null;
 
   constructor(
     private readonly modelId: string = "Phi-3-mini-4k-instruct-q4f16_1-MLC",
@@ -23,12 +24,17 @@ export class WebLLMEmbeddingStrategy implements EmbeddingStrategy {
   ) {}
 
   async initialize(): Promise<void> {
-    const webllm = await import("@mlc-ai/web-llm");
-    this.engine = await webllm.CreateMLCEngine(this.modelId);
+    if (!this.initPromise) {
+      this.initPromise = (async () => {
+        const webllm = await import("@mlc-ai/web-llm");
+        this.engine = await webllm.CreateMLCEngine(this.modelId);
+      })();
+    }
+    await this.initPromise;
   }
 
   async embed(content: string): Promise<EmbeddingResult> {
-    this.ensureInitialized();
+    await this.initialize();
 
     const response = await this.engine.embeddings.create({
       input: content,
@@ -45,7 +51,7 @@ export class WebLLMEmbeddingStrategy implements EmbeddingStrategy {
   }
 
   async embedBatch(contents: string[]): Promise<EmbeddingResult[]> {
-    this.ensureInitialized();
+    await this.initialize();
 
     const response = await this.engine.embeddings.create({
       input: contents,
@@ -57,13 +63,5 @@ export class WebLLMEmbeddingStrategy implements EmbeddingStrategy {
       model: this.modelId,
       dimensions: (item.embedding as number[]).length,
     }));
-  }
-
-  private ensureInitialized(): void {
-    if (!this.engine) {
-      throw new Error(
-        "WebLLMEmbeddingStrategy not initialized. Call initialize() first.",
-      );
-    }
   }
 }

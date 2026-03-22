@@ -20,4 +20,8 @@ export class InMemoryContextRepository
   async findByRequiredProfileId(profileId: string): Promise<Context[]> {
     return this.findWhere((ctx) => ctx.requiredProfileId === profileId);
   }
+
+  async findAll(): Promise<Context[]> {
+    return this.findWhere(() => true);
+  }
 }

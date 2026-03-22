@@ -15,7 +15,7 @@ import type {
   UnlinkContextsInput,
   GetContextLineageInput,
   GetContextLineageResult,
-} from "@klay/core/lifecycle";
+} from "@klay/core";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ interface RelatedContextsProps {
 }
 
 export function RelatedContexts({ contextId }: RelatedContextsProps) {
-  const { lifecycleService } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
 
   const [lineage, setLineage] = useState<GetContextLineageResult | null>(null);
@@ -61,13 +61,13 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
   // ─── Fetch Lineage ──────────────────────────────────────────────────
 
   const fetchLineage = useCallback(async () => {
-    if (!lifecycleService) return;
+    if (!service) return;
 
     setLineageLoading(true);
     setLineageError(null);
 
     try {
-      const result = await lifecycleService.getContextLineage({ contextId });
+      const result = await service.contexts.getLineage({ contextId });
       if (result.success) {
         setLineage(result.data);
       } else {
@@ -80,7 +80,7 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
     } finally {
       setLineageLoading(false);
     }
-  }, [lifecycleService, contextId]);
+  }, [service, contextId]);
 
   useEffect(() => {
     fetchLineage();
@@ -89,8 +89,8 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
   // ─── Link Action ────────────────────────────────────────────────────
 
   const linkAction = useCallback(
-    (input: LinkContextsInput) => lifecycleService!.linkContexts(input),
-    [lifecycleService],
+    (input: LinkContextsInput) => service!.contexts.link(input),
+    [service],
   );
 
   const {
@@ -130,8 +130,8 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
   // ─── Unlink Action ──────────────────────────────────────────────────
 
   const unlinkAction = useCallback(
-    (input: UnlinkContextsInput) => lifecycleService!.unlinkContexts(input),
-    [lifecycleService],
+    (input: UnlinkContextsInput) => service!.contexts.unlink(input),
+    [service],
   );
 
   const {

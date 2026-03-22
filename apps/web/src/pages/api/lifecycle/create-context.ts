@@ -1,10 +1,11 @@
 import type { APIRoute } from "astro";
-import { getLifecycleAdapter } from "../../../server/pipeline-singleton";
+import { getCoordinator } from "../../../server/knowledge-singleton";
+import { toRESTResponse } from "@klay/core/result";
 
 export const POST: APIRoute = async ({ request }) => {
-  const adapter = await getLifecycleAdapter();
+  const coordinator = await getCoordinator();
   const body = await request.json();
-  const result = await adapter.createContext({ body });
+  const result = toRESTResponse(await coordinator.contexts.create(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

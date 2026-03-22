@@ -164,6 +164,32 @@ describe("InMemoryContextRepository", () => {
     });
   });
 
+  // ── findAll ────────────────────────────────────────────────────
+
+  describe("findAll", () => {
+    it("returns all contexts", async () => {
+      const ctx1 = createContext({ id: "ctx-1" });
+      const ctx2 = createContext({ id: "ctx-2" });
+      const ctx3 = createContext({ id: "ctx-3" });
+
+      await repo.save(ctx1);
+      await repo.save(ctx2);
+      await repo.save(ctx3);
+
+      const results = await repo.findAll();
+
+      expect(results).toHaveLength(3);
+      const ids = results.map((c) => c.id.value).sort();
+      expect(ids).toEqual(["ctx-1", "ctx-2", "ctx-3"]);
+    });
+
+    it("returns empty array when no contexts exist", async () => {
+      const results = await repo.findAll();
+
+      expect(results).toEqual([]);
+    });
+  });
+
   // ── exists ──────────────────────────────────────────────────────
 
   describe("exists", () => {

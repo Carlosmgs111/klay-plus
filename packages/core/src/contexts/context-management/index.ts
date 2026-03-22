@@ -18,7 +18,7 @@ export { ContextSourceAdded } from "./context/domain/events/ContextSourceAdded";
 export { ContextSourceRemoved } from "./context/domain/events/ContextSourceRemoved";
 export { ContextVersioned } from "./context/domain/events/ContextVersioned";
 export { ContextDeprecated } from "./context/domain/events/ContextDeprecated";
-export { ContextRolledBack } from "./context/domain/events/ContextRolledBack";
+
 
 // ── Infrastructure ──────────────────────────────────────────────────
 

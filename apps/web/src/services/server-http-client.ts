@@ -19,16 +19,8 @@ async function request<T>(
 ): Promise<ServiceResult<T>> {
   try {
     const res = await fetch(path, options);
-    if (!res.ok) {
-      return {
-        success: false,
-        error: {
-          message: `HTTP ${res.status}: ${res.statusText}`,
-          code: `HTTP_${res.status}`,
-        },
-      };
-    }
     const json = await res.json();
+    // REST adapter returns { success, data/error } in body for all statuses
     return json as ServiceResult<T>;
   } catch (err) {
     return {

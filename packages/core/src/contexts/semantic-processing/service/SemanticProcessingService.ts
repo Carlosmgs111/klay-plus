@@ -25,6 +25,7 @@ export interface ProcessContentSuccess {
   chunksCount: number;
   dimensions: number;
   model: string;
+  processingProfileVersion: number;
 }
 
 export interface CreateProfileSuccess {
@@ -39,6 +40,14 @@ export interface UpdateProfileSuccess {
 
 export interface DeprecateProfileSuccess {
   profileId: string;
+}
+
+export interface ExistingProjectionInfo {
+  projectionId: string;
+  processingProfileId: string;
+  chunksCount: number;
+  dimensions: number;
+  model: string;
 }
 
 export class SemanticProcessingService {
@@ -188,6 +197,74 @@ export class SemanticProcessingService {
     return Result.ok({ profileId: profile.id.value });
   }
 
+  // ── Profile lookup ─────────────────────────────────────────────────
+
+  async getProcessingProfile(id: string): Promise<ProcessingProfile | null> {
+    return this._profileRepository.findById(ProcessingProfileId.create(id));
+  }
+
+  // ── Source cleanup ──────────────────────────────────────────────────
+
+  /** Delete all projections and vector entries for a source. */
+  async cleanupSourceProjections(sourceId: string): Promise<void> {
+    await this._projection.cleanupSourceData(sourceId);
+  }
+
+  /** Delete only the projection (and its vectors) for a specific profile. Preserves projections for other profiles. */
+  async cleanupSourceProjectionForProfile(sourceId: string, profileId: string): Promise<string | null> {
+    return this._projection.cleanupSourceProjectionForProfile(sourceId, profileId);
+  }
+
+  /** Find completed projections for multiple sources at once. Returns a map keyed by sourceId. */
+  async getProjectionsForSources(
+    sourceIds: string[], profileId: string,
+  ): Promise<Map<string, ExistingProjectionInfo>> {
+    const result = new Map<string, ExistingProjectionInfo>();
+    for (const sourceId of sourceIds) {
+      const info = await this.findExistingProjection(sourceId, profileId);
+      if (info) result.set(sourceId, info);
+    }
+    return result;
+  }
+
+  /** Find all completed projections for multiple sources (across all profiles). Returns a map keyed by sourceId. */
+  async getAllProjectionsForSources(
+    sourceIds: string[],
+  ): Promise<Map<string, ExistingProjectionInfo[]>> {
+    const result = new Map<string, ExistingProjectionInfo[]>();
+    for (const sourceId of sourceIds) {
+      const projections = await this._projection.findAllForSource(sourceId);
+      const completed = projections
+        .filter((p) => p.status === "COMPLETED")
+        .map((p) => {
+          const data = (p.result?.data ?? {}) as Record<string, unknown>;
+          return {
+            projectionId: p.id.value,
+            processingProfileId: p.processingProfileId,
+            chunksCount: (data.chunksCount as number) ?? 0,
+            dimensions: (data.dimensions as number) ?? 0,
+            model: (data.model as string) ?? "unknown",
+          };
+        });
+      if (completed.length > 0) result.set(sourceId, completed);
+    }
+    return result;
+  }
+
+  /** Find a completed projection for a source+profile combination. Returns projection info with stats or null. */
+  async findExistingProjection(sourceId: string, profileId: string): Promise<ExistingProjectionInfo | null> {
+    const projection = await this._projection.findProjectionForProfile(sourceId, profileId);
+    if (!projection || projection.status !== "COMPLETED") return null;
+    const data = (projection.result?.data ?? {}) as Record<string, unknown>;
+    return {
+      projectionId: projection.id.value,
+      processingProfileId: projection.processingProfileId,
+      chunksCount: (data.chunksCount as number) ?? 0,
+      dimensions: (data.dimensions as number) ?? 0,
+      model: (data.model as string) ?? "unknown",
+    };
+  }
+
   // ── Content processing ───────────────────────────────────────────────
 
   async processContent(params: {
@@ -214,6 +291,7 @@ export class SemanticProcessingService {
       chunksCount: result.value.chunksCount,
       dimensions: result.value.dimensions,
       model: result.value.model,
+      processingProfileVersion: result.value.processingProfileVersion,
     });
   }
 

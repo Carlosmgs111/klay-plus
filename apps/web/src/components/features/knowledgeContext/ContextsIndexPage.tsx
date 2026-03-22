@@ -1,6 +1,5 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
-import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { MetricCard } from "../../shared/MetricCard";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
@@ -10,7 +9,7 @@ import {
   SkeletonCard,
   SkeletonLine,
 } from "../../shared/Skeleton";
-import type { GetManifestInput, ContentManifestEntry } from "@klay/core";
+import type { EnrichedContextSummaryDTO } from "@klay/core";
 import ContextCard from "./ContextCard";
 import { CreateContextForm } from "../knowledge/CreateContextForm";
 import { OverlayPanel } from "../../shared/OverlayPanel";
@@ -19,53 +18,53 @@ export default function UnitsIndexPage() {
   const { service, isInitializing } = useRuntimeMode();
   const [filterText, setFilterText] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [contexts, setContexts] = useState<EnrichedContextSummaryDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<{ message: string; code?: string } | null>(null);
 
-  const fetchManifests = useCallback(
-    (input: GetManifestInput) => service!.getManifest(input),
-    [service],
-  );
-
-  const { data, error, isLoading, execute } = usePipelineAction(fetchManifests);
+  const loadAll = useCallback(async () => {
+    if (!service) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await service.contexts.list();
+      if (result.success) {
+        setContexts(result.data.contexts);
+      } else {
+        setError({ message: result.error?.message ?? "Failed to load contexts" });
+      }
+    } catch (err) {
+      setError({ message: err instanceof Error ? err.message : "Unknown error" });
+    } finally {
+      setLoading(false);
+    }
+  }, [service]);
 
   useEffect(() => {
     if (service && !isInitializing) {
-      execute({});
+      loadAll();
     }
   }, [service, isInitializing]);
 
-  // Group manifests by contextId (the unit/context they belong to)
-  const manifestsByUnit = useMemo(() => {
-    const map = new Map<string, ContentManifestEntry[]>();
-    for (const manifest of data?.manifests ?? []) {
-      if (!manifest.contextId) continue;
-      const group = map.get(manifest.contextId) ?? [];
-      group.push(manifest);
-      map.set(manifest.contextId, group);
-    }
-    return map;
-  }, [data]);
-
-  // Apply filter
-  const filteredUnitIds = useMemo(() => {
-    const allIds = Array.from(manifestsByUnit.keys());
-    if (!filterText.trim()) return allIds;
+  // Apply filter (matches by ID or name)
+  const filteredContexts = useMemo(() => {
+    if (!filterText.trim()) return contexts;
     const lower = filterText.toLowerCase();
-    return allIds.filter((id) => id.toLowerCase().includes(lower));
-  }, [manifestsByUnit, filterText]);
+    return contexts.filter((c) =>
+      c.id.toLowerCase().includes(lower) || c.name.toLowerCase().includes(lower),
+    );
+  }, [contexts, filterText]);
 
   // Aggregate metrics
   const metrics = useMemo(() => {
-    const allManifests = data?.manifests ?? [];
-    const uniqueSources = new Set(allManifests.map((m) => m.sourceId));
-    const uniqueProjections = new Set(
-      allManifests.filter((m) => m.projectionId).map((m) => m.projectionId),
-    );
+    const totalSources = contexts.reduce((sum, c) => sum + c.sourceCount, 0);
+    const uniqueProfiles = new Set(contexts.map((c) => c.requiredProfileId)).size;
     return {
-      totalUnits: manifestsByUnit.size,
-      totalSources: uniqueSources.size,
-      totalProjections: uniqueProjections.size,
+      totalUnits: contexts.length,
+      totalSources,
+      uniqueProfiles,
     };
-  }, [data, manifestsByUnit]);
+  }, [contexts]);
 
   if (isInitializing) {
     return (
@@ -96,9 +95,9 @@ export default function UnitsIndexPage() {
           icon="database"
         />
         <MetricCard
-          label="Total Projections"
-          value={metrics.totalProjections}
-          icon="layers"
+          label="Profiles"
+          value={metrics.uniqueProfiles}
+          icon="settings"
         />
       </div>
 
@@ -115,7 +114,7 @@ export default function UnitsIndexPage() {
               >
                 All Contexts
               </h2>
-              {isLoading && (
+              {loading && (
                 <div className="skeleton w-4 h-4 rounded-full" />
               )}
             </div>
@@ -123,8 +122,8 @@ export default function UnitsIndexPage() {
               <span
                 className="text-xs text-tertiary"
               >
-                {filteredUnitIds.length} of {manifestsByUnit.size} context
-                {manifestsByUnit.size !== 1 ? "s" : ""}
+                {filteredContexts.length} of {contexts.length} context
+                {contexts.length !== 1 ? "s" : ""}
               </span>
               <button
                 type="button"
@@ -147,12 +146,12 @@ export default function UnitsIndexPage() {
               type="text"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              placeholder="Filter contexts by ID..."
+              placeholder="Filter contexts..."
               className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm bg-surface-3 border border-default text-primary focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all duration-150"
             />
           </div>
 
-          {filteredUnitIds.length === 0 ? (
+          {filteredContexts.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center">
                 <Icon
@@ -160,7 +159,7 @@ export default function UnitsIndexPage() {
                   className="text-3xl text-tertiary"
                 />
               </div>
-              {manifestsByUnit.size === 0 ? (
+              {contexts.length === 0 ? (
                 <>
                   <p
                     className="text-sm text-secondary"
@@ -184,11 +183,10 @@ export default function UnitsIndexPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredUnitIds.map((contextId) => (
+              {filteredContexts.map((ctx) => (
                 <ContextCard
-                  key={contextId}
-                  contextId={contextId}
-                  manifests={manifestsByUnit.get(contextId) ?? []}
+                  key={ctx.id}
+                  context={ctx}
                 />
               ))}
             </div>
@@ -201,7 +199,7 @@ export default function UnitsIndexPage() {
         <CreateContextForm
           onSuccess={() => {
             setShowCreate(false);
-            execute({});
+            loadAll();
           }}
         />
       </OverlayPanel>

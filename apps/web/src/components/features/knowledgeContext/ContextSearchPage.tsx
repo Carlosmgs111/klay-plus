@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
@@ -9,6 +9,8 @@ import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { SearchBar } from "../search/SearchBar";
 import { SearchResults } from "../search/SearchResults";
+import { RetrievalStrategyPanel, DEFAULT_RETRIEVAL_OVERRIDE } from "./RetrievalStrategyPanel";
+import type { RetrievalOverride } from "./RetrievalStrategyPanel";
 import type { SearchKnowledgeInput } from "@klay/core";
 
 export default function ContextSearchPage() {
@@ -16,18 +18,29 @@ export default function ContextSearchPage() {
   const { service, isInitializing } = useRuntimeMode();
 
   const searchAction = useCallback(
-    (input: SearchKnowledgeInput) => service!.searchKnowledge(input),
+    (input: SearchKnowledgeInput) => service!.search(input),
     [service],
   );
 
   const { data, error, isLoading, execute } = usePipelineAction(searchAction);
+  const [activeProfileFilter, setActiveProfileFilter] = useState<string>("");
+  const [retrievalOverride, setRetrievalOverride] = useState<RetrievalOverride>(DEFAULT_RETRIEVAL_OVERRIDE);
 
   const handleSearch = (queryText: string, topK: number, minScore: number, filters?: Record<string, unknown>) => {
+    setActiveProfileFilter((filters?.processingProfileId as string) ?? "");
+    const override = retrievalOverride.ranking !== "passthrough"
+      ? {
+          ranking: retrievalOverride.ranking,
+          mmrLambda: retrievalOverride.mmrLambda,
+          crossEncoderModel: retrievalOverride.crossEncoderModel,
+        }
+      : undefined;
     execute({
       queryText,
       topK,
       minScore,
       filters: { ...filters, contextId },
+      ...(override !== undefined && { retrievalOverride: override }),
     });
   };
 
@@ -43,7 +56,7 @@ export default function ContextSearchPage() {
   if (contextError) {
     return (
       <div className="space-y-6">
-        <ErrorDisplay message={contextError} code="CONTEXT_LOAD_ERROR" />
+        <ErrorDisplay message={contextError.message} code={contextError.code} />
       </div>
     );
   }
@@ -74,6 +87,13 @@ export default function ContextSearchPage() {
         </CardBody>
       </Card>
 
+      {/* Retrieval strategy override */}
+      <RetrievalStrategyPanel
+        value={retrievalOverride}
+        onChange={setRetrievalOverride}
+        onReset={() => setRetrievalOverride(DEFAULT_RETRIEVAL_OVERRIDE)}
+      />
+
       {/* Error state */}
       {error && <ErrorDisplay {...error} />}
 
@@ -101,6 +121,11 @@ export default function ContextSearchPage() {
                   {data.totalFound}
                 </span>{" "}
                 result{data.totalFound !== 1 ? "s" : ""} for "{data.queryText}"
+                {activeProfileFilter && (
+                  <span className="ml-2 text-xs px-2 py-0.5 rounded font-medium bg-accent-muted text-accent">
+                    profile: {activeProfileFilter}
+                  </span>
+                )}
               </p>
             </div>
           </CardHeader>

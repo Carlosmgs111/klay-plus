@@ -31,12 +31,12 @@ export function ProfileList({ onEditProfile, refreshKey }: ProfileListProps) {
   const [deprecateReason, setDeprecateReason] = useState("");
 
   const listAction = useCallback(
-    () => service!.listProfiles(),
+    () => service!.profiles.list(),
     [service],
   );
 
   const deprecateAction = useCallback(
-    (input: DeprecateProfileInput) => service!.deprecateProfile(input),
+    (input: DeprecateProfileInput) => service!.profiles.deprecate(input),
     [service],
   );
 

@@ -9,7 +9,7 @@ import { Input } from "../../shared/Input";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { OverlayPanel } from "../../shared/OverlayPanel";
 import { LoadingButton } from "../../shared/LoadingButton";
-import type { DeprecateContextInput } from "@klay/core/lifecycle";
+import type { TransitionContextStateInput } from "@klay/core";
 
 interface DeprecateContextActionProps {
   contextId: string;
@@ -19,14 +19,14 @@ interface DeprecateContextActionProps {
 }
 
 export function DeprecateContextAction({ contextId, onSuccess, open, setOpen }: DeprecateContextActionProps) {
-  const { lifecycleService } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
   const { open: isOpen, setOpen: setIsOpen } = useToggleAction(open, setOpen);
   const [reason, setReason] = useState("");
 
   const deprecateAction = useCallback(
-    (input: DeprecateContextInput) => lifecycleService!.deprecateContext(input),
-    [lifecycleService],
+    (input: TransitionContextStateInput) => service!.contexts.transitionState(input),
+    [service],
   );
 
   const { error, isLoading, execute } = useServiceAction(deprecateAction);
@@ -34,6 +34,7 @@ export function DeprecateContextAction({ contextId, onSuccess, open, setOpen }: 
   const handleDeprecate = async () => {
     const result = await execute({
       contextId,
+      targetState: "DEPRECATED",
       reason: reason.trim() || "No reason provided",
     });
     if (result) {

@@ -296,29 +296,45 @@ export const PROVIDER_REGISTRY: ProviderMetadata[] = [
   },
   {
     id: "huggingface",
-    name: "HuggingFace",
-    description: "HuggingFace embeddings via AI SDK (@ai-sdk/huggingface)",
+    name: "HuggingFace Transformers",
+    description: "Local ONNX embeddings via @huggingface/transformers (no API key needed)",
     axis: "embedding",
     runtimes: ["browser", "server"],
-    gateway: "ai-sdk",
-    requirements: [
-      { key: "HUGGINGFACE_API_KEY", label: "HuggingFace API Key" },
-    ],
+    gateway: "local",
+    requirements: [],
     models: [
       {
-        id: "sentence-transformers/all-MiniLM-L6-v2",
+        id: "Xenova/all-MiniLM-L6-v2",
         name: "all-MiniLM-L6-v2",
         dimensions: 384,
         isDefault: true,
       },
       {
-        id: "sentence-transformers/all-mpnet-base-v2",
-        name: "all-mpnet-base-v2",
+        id: "Xenova/bge-small-en-v1.5",
+        name: "BGE Small EN v1.5",
+        dimensions: 384,
+      },
+      {
+        id: "nomic-ai/nomic-embed-text-v1.5",
+        name: "Nomic Embed Text v1.5",
         dimensions: 768,
       },
     ],
-    fields: [
-      { key: "endpointUrl", label: "Endpoint URL", inputType: "text", helpText: "Custom Inference Endpoints URL" },
+  },
+
+  // ── Embedding: HuggingFace Inference API (remote) ─────────────────
+  {
+    id: "hf-inference",
+    name: "HuggingFace Inference API",
+    description: "Remote embeddings via HuggingFace Inference API (@huggingface/inference)",
+    axis: "embedding",
+    runtimes: ["browser", "server"],
+    gateway: "native",
+    requirements: [{ key: "HUGGINGFACE_API_KEY", label: "HuggingFace API Key" }],
+    models: [
+      { id: "sentence-transformers/all-MiniLM-L6-v2", name: "all-MiniLM-L6-v2", dimensions: 384, isDefault: true },
+      { id: "sentence-transformers/all-mpnet-base-v2", name: "all-mpnet-base-v2", dimensions: 768 },
+      { id: "BAAI/bge-small-en-v1.5", name: "BGE Small EN v1.5", dimensions: 384 },
     ],
   },
 ];

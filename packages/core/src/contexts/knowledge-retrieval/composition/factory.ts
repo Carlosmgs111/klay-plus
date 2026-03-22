@@ -3,6 +3,7 @@ import type { SemanticQueryUseCases } from "../semantic-query/application";
 import type { ResolvedSemanticQueryInfra } from "../semantic-query/composition/factory";
 import type { SemanticQueryInfrastructurePolicy } from "../semantic-query/composition/factory";
 import type { ConfigStore } from "../../../platform/config/ConfigStore";
+import type { RetrievalConfig } from "../../../platform/config/InfrastructureProfile";
 
 interface SemanticQueryOverrides {
   provider?: string;
@@ -21,6 +22,7 @@ export interface KnowledgeRetrievalServicePolicy {
   embeddingProvider?: string;
   embeddingModel?: string;
   vectorStoreProvider?: string;
+  retrieval?: RetrievalConfig;
   overrides?: {
     semanticQuery?: SemanticQueryOverrides;
   };
@@ -51,6 +53,7 @@ export async function resolveKnowledgeRetrievalModules(
       policy.embeddingModel,
     webLLMModelId:
       policy.overrides?.semanticQuery?.webLLMModelId,
+    retrieval: policy.retrieval,
     configOverrides:
       policy.overrides?.semanticQuery?.configOverrides ??
       policy.configOverrides,

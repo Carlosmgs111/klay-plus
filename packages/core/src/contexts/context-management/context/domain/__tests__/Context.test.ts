@@ -10,7 +10,7 @@ import { ContextSourceAdded } from "../events/ContextSourceAdded";
 import { ContextSourceRemoved } from "../events/ContextSourceRemoved";
 import { ContextVersioned } from "../events/ContextVersioned";
 import { ContextDeprecated } from "../events/ContextDeprecated";
-import { ContextRolledBack } from "../events/ContextRolledBack";
+
 
 // ──────────────────────────────────────────────
 // Helpers
@@ -117,6 +117,29 @@ describe("ContextSource", () => {
     expect(source.sourceId).toBe("src-1");
     expect(source.sourceKnowledgeId).toBe("sk-1");
     expect(source.addedAt).toEqual(date);
+  });
+
+  it("should create with projectionId", () => {
+    const source = ContextSource.create("src-1", "sk-1", "proj-1");
+    expect(source.projectionId).toBe("proj-1");
+  });
+
+  it("should have undefined projectionId when not provided", () => {
+    const source = ContextSource.create("src-1");
+    expect(source.projectionId).toBeUndefined();
+  });
+
+  it("should reconstitute with projectionId", () => {
+    const date = new Date("2025-01-01");
+    const source = ContextSource.reconstitute("src-1", "sk-1", date, "proj-1");
+    expect(source.projectionId).toBe("proj-1");
+  });
+
+  it("should derive sourceKnowledgeId via getter fallback", () => {
+    const date = new Date("2025-01-01");
+    // reconstitute with empty sourceKnowledgeId to test fallback
+    const source = ContextSource.create("src-1");
+    expect(source.sourceKnowledgeId).toBe("sk-src-1");
   });
 });
 
@@ -280,6 +303,20 @@ describe("Context", () => {
       expect(events[1].payload).toMatchObject({ version: 1 });
     });
 
+    it("should include projectionId in ContextSourceAdded event when provided", () => {
+      const ctx = makeContext();
+      ctx.clearEvents();
+
+      const source = ContextSource.create("src-1", undefined, "proj-1");
+      ctx.addSource(source);
+      const events = ctx.domainEvents;
+
+      expect(events[0].payload).toMatchObject({
+        sourceId: "src-1",
+        projectionId: "proj-1",
+      });
+    });
+
     it("should throw if source already exists", () => {
       const ctx = makeContext();
       ctx.addSource(makeSource("src-1"));
@@ -375,59 +412,6 @@ describe("Context", () => {
       expect(() => ctx.removeSource("src-1")).toThrow(
         "Cannot remove source when no version exists",
       );
-    });
-  });
-
-  describe("rollbackToVersion", () => {
-    it("should move currentVersionNumber to target version", () => {
-      const ctx = makeContext();
-      ctx.addSource(makeSource("src-1"));
-      ctx.addSource(makeSource("src-2"));
-
-      expect(ctx.currentVersion!.version).toBe(2);
-
-      ctx.clearEvents();
-      ctx.rollbackToVersion(1);
-
-      expect(ctx.currentVersion!.version).toBe(1);
-      expect(ctx.currentVersion!.sourceIds).toEqual(["src-1"]);
-      expect(ctx.activeSources).toHaveLength(1);
-    });
-
-    it("should emit ContextRolledBack event", () => {
-      const ctx = makeContext();
-      ctx.addSource(makeSource("src-1"));
-      ctx.addSource(makeSource("src-2"));
-      ctx.clearEvents();
-
-      ctx.rollbackToVersion(1);
-      const events = ctx.domainEvents;
-
-      expect(events).toHaveLength(1);
-      expect(events[0].eventType).toBe(ContextRolledBack.EVENT_TYPE);
-      expect(events[0].payload).toMatchObject({
-        fromVersion: 2,
-        toVersion: 1,
-      });
-    });
-
-    it("should allow rolling forward again", () => {
-      const ctx = makeContext();
-      ctx.addSource(makeSource("src-1"));
-      ctx.addSource(makeSource("src-2"));
-
-      ctx.rollbackToVersion(1);
-      expect(ctx.currentVersion!.version).toBe(1);
-
-      ctx.rollbackToVersion(2);
-      expect(ctx.currentVersion!.version).toBe(2);
-    });
-
-    it("should throw if version not found", () => {
-      const ctx = makeContext();
-      ctx.addSource(makeSource("src-1"));
-
-      expect(() => ctx.rollbackToVersion(99)).toThrow("Version 99 not found");
     });
   });
 
@@ -560,18 +544,5 @@ describe("Context", () => {
       expect(ctx.allSources).toHaveLength(3);
     });
 
-    it("should reflect correct activeSources after rollback", () => {
-      const ctx = makeContext();
-      ctx.addSource(makeSource("src-1"));
-      ctx.addSource(makeSource("src-2"));
-
-      // v2 has [src-1, src-2]
-      expect(ctx.activeSources).toHaveLength(2);
-
-      // Rollback to v1 which has [src-1]
-      ctx.rollbackToVersion(1);
-      expect(ctx.activeSources).toHaveLength(1);
-      expect(ctx.activeSources[0].sourceId).toBe("src-1");
-    });
   });
 });

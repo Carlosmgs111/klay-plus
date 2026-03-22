@@ -9,4 +9,5 @@ export interface ContextRepository
   findByState(state: ContextState): Promise<Context[]>;
   findByRequiredProfileId(profileId: string): Promise<Context[]>;
   exists(id: ContextId): Promise<boolean>;
+  findAll(): Promise<Context[]>;
 }

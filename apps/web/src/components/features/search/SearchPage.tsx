@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { usePipelineAction } from "../../../hooks/usePipelineAction";
 import { Card, CardHeader, CardBody } from "../../shared/Card";
@@ -13,13 +13,15 @@ export function SearchPage() {
   const { service, isInitializing } = useRuntimeMode();
 
   const searchAction = useCallback(
-    (input: SearchKnowledgeInput) => service!.searchKnowledge(input),
+    (input: SearchKnowledgeInput) => service!.search(input),
     [service],
   );
 
   const { data, error, isLoading, execute } = usePipelineAction(searchAction);
+  const [activeProfileFilter, setActiveProfileFilter] = useState<string>("");
 
   const handleSearch = (queryText: string, topK: number, minScore: number, filters?: Record<string, unknown>) => {
+    setActiveProfileFilter((filters?.processingProfileId as string) ?? "");
     execute({ queryText, topK, minScore, filters });
   };
 
@@ -65,6 +67,11 @@ export function SearchPage() {
               <Icon name="layers" className="text-tertiary" />
               <p className="text-sm font-medium text-secondary">
                 Found <span className="font-semibold text-primary">{data.totalFound}</span> result{data.totalFound !== 1 ? "s" : ""} for "{data.queryText}"
+                {activeProfileFilter && (
+                  <span className="ml-2 text-xs px-2 py-0.5 rounded font-medium bg-accent-muted text-accent">
+                    profile: {activeProfileFilter}
+                  </span>
+                )}
               </p>
             </div>
           </CardHeader>

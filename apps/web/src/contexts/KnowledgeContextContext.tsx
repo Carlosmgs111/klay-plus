@@ -8,17 +8,22 @@ import {
   type ReactNode,
 } from "react";
 import { useRuntimeMode } from "./RuntimeModeContext";
-import type { ContentManifestEntry } from "@klay/core";
+import type { GetContextDetailsResult, ContextSourceDetailDTO } from "@klay/core";
 
-interface UnitContextValue {
+export interface ContextError {
+  message: string;
+  code?: string;
+}
+
+interface ContextDetailValue {
   contextId: string;
-  manifests: ContentManifestEntry[];
+  detail: GetContextDetailsResult | null;
   loading: boolean;
-  error: string | null;
+  error: ContextError | null;
   refresh: () => void;
 }
 
-const UnitContext = createContext<UnitContextValue | null>(null);
+const UnitContext = createContext<ContextDetailValue | null>(null);
 
 interface KnowledgeContextProviderProps {
   contextId: string;
@@ -30,23 +35,26 @@ export function KnowledgeContextProvider({
   children,
 }: KnowledgeContextProviderProps) {
   const { service, isInitializing } = useRuntimeMode();
-  const [manifests, setManifests] = useState<ContentManifestEntry[]>([]);
+  const [detail, setDetail] = useState<GetContextDetailsResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ContextError | null>(null);
 
-  const fetchManifests = useCallback(async () => {
+  const fetchDetails = useCallback(async () => {
     if (!service) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await service.getManifest({ contextId });
+      const result = await service.contexts.get({ contextId });
       if (result.success) {
-        setManifests(result.data.manifests);
+        setDetail(result.data);
       } else {
-        setError(result.error?.message ?? "Failed to fetch manifests");
+        setError({
+          message: result.error?.message ?? "Failed to fetch context details",
+          code: result.error?.code,
+        });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError({ message: err instanceof Error ? err.message : "Unknown error" });
     } finally {
       setLoading(false);
     }
@@ -54,71 +62,28 @@ export function KnowledgeContextProvider({
 
   useEffect(() => {
     if (!isInitializing && service) {
-      fetchManifests();
+      fetchDetails();
     }
-  }, [isInitializing, service, fetchManifests]);
+  }, [isInitializing, service, fetchDetails]);
 
-  const value = useMemo<UnitContextValue>(
+  const value = useMemo<ContextDetailValue>(
     () => ({
       contextId,
-      manifests,
+      detail,
       loading: loading || isInitializing,
       error,
-      refresh: fetchManifests,
+      refresh: fetchDetails,
     }),
-    [contextId, manifests, loading, isInitializing, error, fetchManifests],
+    [contextId, detail, loading, isInitializing, error, fetchDetails],
   );
 
   return <UnitContext.Provider value={value}>{children}</UnitContext.Provider>;
 }
 
-export function useKnowledgeContext(): UnitContextValue {
+export function useKnowledgeContext(): ContextDetailValue {
   const ctx = useContext(UnitContext);
   if (!ctx) {
     throw new Error("useKnowledgeContext must be used within a KnowledgeContextProvider");
   }
   return ctx;
-}
-
-/** Extract unique sources from manifests */
-export function getUnitSources(manifests: ContentManifestEntry[]) {
-  const seen = new Set<string>();
-  return manifests.filter((m) => {
-    if (seen.has(m.sourceId)) return false;
-    seen.add(m.sourceId);
-    return true;
-  });
-}
-
-/** Extract projection info from manifests */
-export function getUnitProjections(manifests: ContentManifestEntry[]) {
-  return manifests
-    .filter((m) => m.projectionId)
-    .map((m) => ({
-      projectionId: m.projectionId,
-      sourceId: m.sourceId,
-      status: m.status,
-      chunksCount: m.chunksCount,
-      dimensions: m.dimensions,
-      model: m.model,
-    }));
-}
-
-/** Derive overall status from manifest statuses */
-export function getOverallStatus(
-  manifests: ContentManifestEntry[],
-): "complete" | "partial" | "failed" | "empty" {
-  if (manifests.length === 0) return "empty";
-  if (manifests.some((m) => m.status === "failed")) return "failed";
-  if (manifests.every((m) => m.status === "complete")) return "complete";
-  return "partial";
-}
-
-/** Derive current version info from latest manifest */
-export function getCurrentVersion(manifests: ContentManifestEntry[]) {
-  if (manifests.length === 0) return null;
-  const sorted = [...manifests].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-  return sorted[0];
 }

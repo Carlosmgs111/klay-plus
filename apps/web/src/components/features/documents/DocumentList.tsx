@@ -1,25 +1,25 @@
 import { DataTable } from "../../shared/DataTable";
 import { StatusBadge } from "../../shared/StatusBadge";
 import { SkeletonTableRow } from "../../shared/Skeleton";
-import type { ContentManifestEntry } from "@klay/core";
+import type { SourceSummaryDTO } from "@klay/core";
 
 interface DocumentListProps {
-  manifests: ContentManifestEntry[];
+  sources: SourceSummaryDTO[];
   isLoading?: boolean;
 }
 
-export function DocumentList({ manifests, isLoading }: DocumentListProps) {
+export function DocumentList({ sources, isLoading }: DocumentListProps) {
   if (isLoading) {
     return (
       <div className="overflow-x-auto">
         <table className="data-table">
           <thead>
             <tr>
-              <th>Source ID</th>
-              <th>Status</th>
-              <th>Chunks</th>
-              <th>Dimensions</th>
-              <th>Created</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Extracted</th>
+              <th>Version</th>
+              <th>Registered</th>
             </tr>
           </thead>
           <tbody>
@@ -33,36 +33,46 @@ export function DocumentList({ manifests, isLoading }: DocumentListProps) {
   }
 
   const columns = [
-    { key: "sourceId", header: "Source ID" },
     {
-      key: "status",
-      header: "Status",
-      render: (row: ContentManifestEntry) => (
-        <StatusBadge status={row.status as any} />
+      key: "name",
+      header: "Name",
+      render: (row: SourceSummaryDTO) => (
+        <span className="font-mono text-xs">
+          {row.name.length > 30 ? `${row.name.slice(0, 30)}...` : row.name}
+        </span>
       ),
     },
     {
-      key: "chunksCount",
-      header: "Chunks",
-      render: (row: ContentManifestEntry) => String(row.chunksCount ?? "—"),
+      key: "type",
+      header: "Type",
+      render: (row: SourceSummaryDTO) => (
+        <span className="text-xs text-secondary">{row.type}</span>
+      ),
     },
     {
-      key: "dimensions",
-      header: "Dimensions",
-      render: (row: ContentManifestEntry) => String(row.dimensions ?? "—"),
+      key: "hasBeenExtracted",
+      header: "Extracted",
+      render: (row: SourceSummaryDTO) => (
+        <StatusBadge status={row.hasBeenExtracted ? "complete" : "partial"} />
+      ),
     },
     {
-      key: "createdAt",
-      header: "Created",
-      render: (row: ContentManifestEntry) =>
-        new Date(row.createdAt).toLocaleDateString(),
+      key: "currentVersion",
+      header: "Version",
+      render: (row: SourceSummaryDTO) => String(row.currentVersion ?? "—"),
+    },
+    {
+      key: "registeredAt",
+      header: "Registered",
+      render: (row: SourceSummaryDTO) =>
+        new Date(row.registeredAt).toLocaleDateString(),
     },
   ];
 
   return (
     <DataTable
       columns={columns}
-      rows={manifests}
+      rows={sources}
       keyExtractor={(row) => row.id}
       emptyMessage="No documents ingested yet"
     />

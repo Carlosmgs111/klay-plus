@@ -33,6 +33,11 @@ const SettingsPage = lazy(() =>
 const UnitsIndexPage = lazy(
   () => import("../features/knowledgeContext/ContextsIndexPage")
 );
+const SourcesPage = lazy(() =>
+  import("../features/sources/SourcesPage").then((m) => ({
+    default: m.SourcesPage,
+  }))
+);
 
 const PAGE_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -41,6 +46,7 @@ const PAGE_TITLES: Record<string, string> = {
   profiles: "Processing Profiles",
   settings: "Settings",
   contexts: "Contexts",
+  sources: "Sources",
 };
 
 const PAGE_COMPONENTS: Record<string, React.ComponentType> = {
@@ -50,6 +56,7 @@ const PAGE_COMPONENTS: Record<string, React.ComponentType> = {
   profiles: ProfilesPage,
   settings: SettingsPage,
   contexts: UnitsIndexPage,
+  sources: SourcesPage,
 };
 
 interface DashboardShellProps {

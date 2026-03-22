@@ -8,7 +8,7 @@ import { Icon } from "../../shared/Icon";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { OverlayPanel } from "../../shared/OverlayPanel";
 import { LoadingButton } from "../../shared/LoadingButton";
-import type { ArchiveContextInput } from "@klay/core/lifecycle";
+import type { TransitionContextStateInput } from "@klay/core";
 
 interface ArchiveContextActionProps {
   contextId: string;
@@ -18,19 +18,19 @@ interface ArchiveContextActionProps {
 }
 
 export function ArchiveContextAction({ contextId, onSuccess, open, setOpen }: ArchiveContextActionProps) {
-  const { lifecycleService } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
   const { open: isOpen, setOpen: setIsOpen } = useToggleAction(open, setOpen);
 
   const archiveAction = useCallback(
-    (input: ArchiveContextInput) => lifecycleService!.archiveContext(input),
-    [lifecycleService],
+    (input: TransitionContextStateInput) => service!.contexts.transitionState(input),
+    [service],
   );
 
   const { error, isLoading, execute } = useServiceAction(archiveAction);
 
   const handleArchive = async () => {
-    const result = await execute({ contextId });
+    const result = await execute({ contextId, targetState: "ARCHIVED" });
     if (result) {
       addToast(`Context archived`, "success");
       setIsOpen(false);

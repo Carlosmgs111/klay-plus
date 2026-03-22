@@ -9,22 +9,21 @@ import { SkeletonLine } from "../../shared/Skeleton";
 import { OverlayPanel } from "../../shared/OverlayPanel";
 import { DocumentUploadForm } from "./DocumentUploadForm";
 import { DocumentList } from "./DocumentList";
-import type { GetManifestInput } from "@klay/core";
 
 export function DocumentsPage() {
   const { service, isInitializing } = useRuntimeMode();
   const [showOverlay, setShowOverlay] = useState(false);
 
-  const fetchManifests = useCallback(
-    (input: GetManifestInput) => service!.getManifest(input),
+  const fetchSources = useCallback(
+    () => service!.sources.list(),
     [service],
   );
 
-  const { data, error, isLoading, execute } = usePipelineAction(fetchManifests);
+  const { data, error, isLoading, execute } = usePipelineAction(fetchSources);
 
   useEffect(() => {
     if (service && !isInitializing) {
-      execute({});
+      execute();
     }
   }, [service, isInitializing]);
 
@@ -73,7 +72,7 @@ export function DocumentsPage() {
       <OverlayPanel open={showOverlay} setOpen={setShowOverlay} icon="upload" title="Ingest Document">
         <DocumentUploadForm
           onSuccess={() => {
-            execute({});
+            execute();
           }}
         />
       </OverlayPanel>
@@ -94,7 +93,7 @@ export function DocumentsPage() {
           </div>
         </CardHeader>
         <CardBody>
-          <DocumentList manifests={data?.manifests ?? []} isLoading={isLoading && !data} />
+          <DocumentList sources={data?.sources ?? []} isLoading={isLoading && !data} />
         </CardBody>
       </Card>
     </div>

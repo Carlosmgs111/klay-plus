@@ -14,7 +14,7 @@ export interface PlatformDependencies {
   processing: SemanticProcessingService;
   contextManagement: ContextManagementService;
 
-  /** Resolved provider strings — exposed for factory-specific infra (e.g. ManifestRepository, Retrieval). */
+  /** Resolved provider strings — exposed for factory-specific infra (e.g. Retrieval). */
   resolved: {
     persistenceProvider: string;
     embeddingProvider: string;
@@ -36,7 +36,7 @@ export interface PlatformDependencies {
  *
  * Individual orchestrator factories call this once and then wire any
  * additional factory-specific dependencies (e.g. KnowledgeRetrieval,
- * ManifestRepository) on top.
+ * KnowledgeRetrieval) on top.
  */
 export async function resolvePlatformDependencies(
   policy: OrchestratorPolicy,
@@ -97,25 +97,27 @@ export async function resolvePlatformDependencies(
   const { createContextManagementContext } = await import(
     "../../contexts/context-management/composition/factory"
   );
-  const { InMemoryContextRepository } = await import(
-    "../../contexts/context-management/context/infrastructure/InMemoryContextRepository"
-  );
-  const { InMemoryEventPublisher } = await import(
-    "../../platform/eventing/InMemoryEventPublisher"
+  const { contextFactory } = await import(
+    "../../contexts/context-management/context/composition/factory"
   );
   const { lineageFactory } = await import(
     "../../contexts/context-management/lineage/composition/factory"
   );
 
-  const { infra: lineageInfra } = await lineageFactory({
+  const contextPolicy = {
     provider: persistenceProvider,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
-  });
+  };
+
+  const [{ infra: contextInfra }, { infra: lineageInfra }] = await Promise.all([
+    contextFactory(contextPolicy),
+    lineageFactory(contextPolicy),
+  ]);
 
   const { service: contextManagement } = createContextManagementContext({
-    contextRepository: new InMemoryContextRepository(),
-    contextEventPublisher: new InMemoryEventPublisher(),
+    contextRepository: contextInfra.repository,
+    contextEventPublisher: contextInfra.eventPublisher,
     lineageRepository: lineageInfra.repository,
     lineageEventPublisher: lineageInfra.eventPublisher,
   });

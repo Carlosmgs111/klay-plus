@@ -15,6 +15,7 @@ export type {
   VectorStoreConfig, DistanceMetric,
   EmbeddingConfig, EmbeddingFingerprint,
   DocumentStorageConfig,
+  RetrievalConfig,
   KlayConfig, KlayProfileConfig,
 } from "./InfrastructureProfile";
 export { PRESET_PROFILES, defineConfig } from "./InfrastructureProfile";

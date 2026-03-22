@@ -21,7 +21,8 @@ export type EmbeddingConfig =
   | { type: "webllm"; model?: string }
   | { type: "openai"; authRef: string; model: string; dimensions?: number; baseUrl?: string }
   | { type: "cohere"; authRef: string; model: string; dimensions?: number }
-  | { type: "huggingface"; authRef: string; model: string; endpointUrl?: string };
+  | { type: "huggingface"; model?: string }
+  | { type: "hf-inference"; authRef: string; model: string };
 
 /** Fingerprint stored with each knowledge context to detect embedding incompatibilities */
 export interface EmbeddingFingerprint {
@@ -38,6 +39,16 @@ export type DocumentStorageConfig =
   | { type: "local"; basePath: string }
   | { type: "browser" };
 
+// ── Retrieval ─────────────────────────────────────────────────────────
+
+export type RetrievalConfig = {
+  ranking?: "passthrough" | "mmr" | "cross-encoder";
+  search?: "dense" | "hybrid";
+  queryExpansion?: "none" | "multi-query" | "hyde";
+  mmrLambda?: number;
+  crossEncoderModel?: string;
+};
+
 // ── Infrastructure Profile ───────────────────────────────────────────
 
 export interface InfrastructureProfile {
@@ -47,6 +58,7 @@ export interface InfrastructureProfile {
   vectorStore: VectorStoreConfig;
   embedding: EmbeddingConfig;
   documentStorage: DocumentStorageConfig;
+  retrieval?: RetrievalConfig;
 }
 
 // ── Preset Profiles ──────────────────────────────────────────────────
@@ -65,15 +77,15 @@ export const PRESET_PROFILES: Record<string, InfrastructureProfile> = {
     name: "Browser",
     persistence: { type: "indexeddb" },
     vectorStore: { type: "indexeddb", dimensions: 384 },
-    embedding: { type: "webllm", model: "Xenova/all-MiniLM-L6-v2" },
+    embedding: { type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" },
     documentStorage: { type: "browser" },
   },
   server: {
     id: "server",
     name: "Server (NeDB)",
     persistence: { type: "nedb" },
-    vectorStore: { type: "nedb", dimensions: 128 },
-    embedding: { type: "hash", dimensions: 128 },
+    vectorStore: { type: "nedb", dimensions: 384 },
+    embedding: { type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" },
     documentStorage: { type: "local", basePath: "./data/uploads" },
   },
 };

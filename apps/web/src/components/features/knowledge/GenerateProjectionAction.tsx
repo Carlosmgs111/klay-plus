@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRuntimeMode } from "../../../contexts/RuntimeModeContext";
 import { useToast } from "../../../contexts/ToastContext";
-import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Button } from "../../shared/Button";
 import { Icon } from "../../shared/Icon";
 import { Select } from "../../shared/Select";
 import { ErrorDisplay } from "../../shared/ErrorDisplay";
 import { OverlayPanel } from "../../shared/OverlayPanel";
 import { LoadingButton } from "../../shared/LoadingButton";
-import type { GenerateProjectionInput } from "@klay/core/lifecycle";
+
+const ALL_PROFILES_VALUE = "__ALL_ACTIVE__";
 
 interface GenerateProjectionActionProps {
   sourceId: string;
@@ -16,15 +16,17 @@ interface GenerateProjectionActionProps {
 }
 
 export function GenerateProjectionAction({ sourceId, onSuccess }: GenerateProjectionActionProps) {
-  const { lifecycleService, service } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [profileId, setProfileId] = useState("default");
   const [profiles, setProfiles] = useState<Array<{ id: string; name: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<{ message: string } | null>(null);
 
   useEffect(() => {
     if (!showForm || !service) return;
-    service.listProfiles().then((result) => {
+    service.profiles.list().then((result) => {
       if (result.success && result.data) {
         const loaded = result.data.profiles ?? [];
         setProfiles(loaded);
@@ -33,25 +35,71 @@ export function GenerateProjectionAction({ sourceId, onSuccess }: GenerateProjec
     });
   }, [showForm, service]);
 
-  const generateAction = useCallback(
-    (input: GenerateProjectionInput) => lifecycleService!.generateProjection(input),
-    [lifecycleService],
-  );
-
-  const { error, isLoading, execute } = useServiceAction(generateAction);
-
   const handleGenerate = async () => {
-    if (!profileId.trim()) return;
-    const result = await execute({ sourceId, processingProfileId: profileId });
-    if (result) {
-      addToast(
-        `Projection generated: ${result.chunksCount} chunks, ${result.dimensions}d`,
-        "success",
-      );
-      setShowForm(false);
-      onSuccess?.();
+    if (!service) return;
+    setIsLoading(true);
+    setError(null);
+
+    if (profileId === ALL_PROFILES_VALUE) {
+      const activeProfiles = profiles.filter((p) => (p as any).status === "ACTIVE" || true);
+      let totalChunks = 0;
+      let failedCount = 0;
+
+      for (const profile of activeProfiles) {
+        const result = await service.process({
+          sourceId,
+          processingProfileId: profile.id,
+        });
+        if (result.success && result.data) {
+          totalChunks += result.data.chunksCount ?? 0;
+        } else {
+          failedCount++;
+        }
+      }
+
+      setIsLoading(false);
+      if (failedCount === 0) {
+        addToast(
+          `Generated projections across ${activeProfiles.length} profiles. Total chunks: ${totalChunks}`,
+          "success",
+        );
+        setShowForm(false);
+        onSuccess?.();
+      } else {
+        setError({ message: `${failedCount} of ${activeProfiles.length} profiles failed` });
+      }
+    } else {
+      if (!profileId.trim()) {
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await service.process({
+        sourceId,
+        processingProfileId: profileId,
+      });
+
+      setIsLoading(false);
+
+      if (result.success && result.data) {
+        addToast(
+          `Projection generated: ${result.data.chunksCount ?? 0} chunks, ${result.data.dimensions ?? 0}d`,
+          "success",
+        );
+        setShowForm(false);
+        onSuccess?.();
+      } else {
+        setError({ message: (result as any).error?.message ?? "Projection generation failed" });
+      }
     }
   };
+
+  const selectOptions = [
+    ...(profiles.length === 0
+      ? [{ value: "default", label: "default" }]
+      : profiles.map((p) => ({ value: p.id, label: p.name }))),
+    { value: ALL_PROFILES_VALUE, label: "All active profiles" },
+  ];
 
   return (
     <>
@@ -68,9 +116,7 @@ export function GenerateProjectionAction({ sourceId, onSuccess }: GenerateProjec
         <div className="space-y-4">
           <Select
             label="Processing Profile"
-            options={profiles.length === 0
-              ? [{ value: "default", label: "default" }]
-              : profiles.map((p) => ({ value: p.id, label: p.name }))}
+            options={selectOptions}
             value={profileId}
             onChange={(e) => setProfileId(e.target.value)}
           />

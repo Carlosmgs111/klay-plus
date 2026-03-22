@@ -9,4 +9,12 @@ export class InMemorySourceRepository
   async findByUri(uri: string): Promise<Source | null> {
     return this.findOneWhere((s) => s.uri === uri);
   }
+
+  async findAll(): Promise<Source[]> {
+    return this.findWhere(() => true);
+  }
+
+  async count(): Promise<number> {
+    return this.findWhere(() => true).length;
+  }
 }

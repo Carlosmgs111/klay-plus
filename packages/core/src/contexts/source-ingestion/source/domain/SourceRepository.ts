@@ -5,4 +5,6 @@ import type { SourceId } from "./SourceId";
 export interface SourceRepository extends Repository<Source, SourceId> {
   findByUri(uri: string): Promise<Source | null>;
   exists(id: SourceId): Promise<boolean>;
+  findAll(): Promise<Source[]>;
+  count(): Promise<number>;
 }

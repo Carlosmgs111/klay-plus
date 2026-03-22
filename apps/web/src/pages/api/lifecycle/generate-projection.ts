@@ -1,20 +1,10 @@
+// Removed — use pipeline.processDocument via /api/pipeline/process instead.
+// This file is kept to avoid 404s during transition.
 import type { APIRoute } from "astro";
-import { getLifecycleAdapter } from "../../../server/pipeline-singleton";
 
-export const POST: APIRoute = async ({ request }) => {
-  const adapter = await getLifecycleAdapter();
-  const body = await request.json();
-
-  if (!body?.sourceId || !body?.processingProfileId) {
-    return new Response(
-      JSON.stringify({ success: false, error: { message: "sourceId and processingProfileId are required", code: "VALIDATION_ERROR" } }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
-  const result = await adapter.generateProjection({ body });
-  return new Response(JSON.stringify(result.body), {
-    status: result.status,
-    headers: { "Content-Type": "application/json" },
-  });
+export const POST: APIRoute = async () => {
+  return new Response(
+    JSON.stringify({ success: false, error: { message: "Removed. Use POST /api/pipeline/process instead.", code: "DEPRECATED" } }),
+    { status: 410, headers: { "Content-Type": "application/json" } },
+  );
 };

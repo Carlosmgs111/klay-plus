@@ -19,7 +19,25 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(head:*)",
+      "Bash(USERPROFILE=\"\" HOME=\"/tmp\" rm:*)",
+      "Bash(USERPROFILE=\"\" HOME=\"/tmp\" pkill:*)",
+      "Bash(USERPROFILE=\"\" HOME=\"/tmp\" pnpm:*)",
+      "Bash(cat:*)",
+      "Bash(HOME=/tmp git:*)",
+      "Bash(GIT_CONFIG_GLOBAL=/dev/null git:*)",
+      "Bash(cd \"D:/Documentos/Desktop/klay+\" && gh pr create --base main --head feat/infrastructure-profile --title \"feat: 3-layer processing profile pipeline + infrastructure config\" --body \"$\\(cat <<'EOF'\n## Summary\n\n- **Processing Profile Layers**: Redesigned `ProcessingProfile` from flat `chunkingStrategyId`/`embeddingStrategyId` to a 3-layer pipeline model: **Preparation** → **Fragmentation** → **Projection**. Each layer is a typed Value Object with configurable parameters \\(chunk size, overlap, dimensions, batch size, etc.\\)\n- **PreparationStrategy port**: Added async `PreparationStrategy` port with NoOp \\(pass-through\\) and Basic \\(whitespace normalization, encoding cleanup, trim\\) implementations\n- **Legacy migration**: On-read DTO migration detects old flat format and converts to 3-layer structure — no database migration needed\n- **Full-stack**: Domain VOs, aggregate refactor, materializer, pipeline execution, service layer, orchestrator, REST API, composition factory, UI constants, and all profile forms updated\n\n## Changes\n\n### Core \\(`@klay/core`\\)\n- 3 new Value Objects: `PreparationLayer`, `FragmentationLayer`, `ProjectionLayer`\n- Refactored `ProcessingProfile` aggregate to use layer VOs\n- `ProfileDTO` with shared NeDB/IndexedDB format + legacy `fromDTO\\(\\)` migration\n- `PreparationStrategy` port + `NoOpPreparationStrategy` + `BasicPreparationStrategy`\n- Normalized chunker `strategyId` props \\(`recursive-chunker` → `recursive`, etc.\\)\n- Updated `ProcessingProfileMaterializer` for 3-layer resolution\n- Added preparation step to `GenerateProjection` pipeline\n- Updated `SemanticProcessingService`, orchestrator, REST adapter, DTOs\n- 42 new tests \\(28 VO + 4 DTO + 10 preparation strategy\\)\n\n### Web \\(`@klay/web`\\)\n- Layer-based strategy constants \\(`PREPARATION_STRATEGIES`, `FRAGMENTATION_STRATEGIES`\\)\n- Updated `CreateProfileForm`, `ProfileEditForm`, `ProfileList`, `ContextProjectionsPage`\n\n## Test Plan\n- [x] 374 core tests passing \\(30 test files, 0 failures\\)\n- [x] Web build succeeds \\(Server built in 8.73s\\)\n- [x] Legacy DTO migration verified \\(on-read conversion\\)\n- [x] E2E pipeline test passes with 3-layer profiles\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\" 2>&1)",
+      "Bash(echo gh not found:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(wc:*)",
+      "Bash(tail:*)",
+      "Bash(\"C:/Users/RYZEN 7/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh\":*)",
+      "Bash(cd \"/d/Documentos/Desktop/klay+landing\" && npm create astro@latest -- . --template minimal --no-install --no-git --typescript strict 2>&1)",
+      "Bash(echo No version manager found:*)",
+      "Bash(cd \"/d/Documentos/Desktop/klay+landing\" && npx create-astro@4.11.0 . --template minimal --no-install --no-git --typescript strict 2>&1)",
+      "Bash(cd \"/d/Documentos/Desktop/klay+landing\" && npx astro build 2>&1)",
+      "Bash(cd D:\\\\Documentos\\\\Desktop\\\\klay+:*)"
     ]
   },
   "mcpServers": {

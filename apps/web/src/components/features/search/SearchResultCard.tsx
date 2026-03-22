@@ -40,16 +40,17 @@ export function SearchResultCard({
   // Extract prominent metadata fields
   const contextId = metadata.contextId as string | undefined;
   const model = metadata.model as string | undefined;
+  const processingProfileId = metadata.processingProfileId as string | undefined;
   const chunkIndex = metadata.chunkIndex as number | undefined;
   const totalChunks = metadata.totalChunks as number | undefined;
-  const prominentKeys = new Set(["contextId", "model", "chunkIndex", "totalChunks"]);
+  const prominentKeys = new Set(["contextId", "model", "processingProfileId", "chunkIndex", "totalChunks"]);
 
   // Remaining metadata (non-prominent)
   const otherMetadata = Object.entries(metadata).filter(
     ([key]) => !prominentKeys.has(key),
   );
 
-  const hasProminent = contextId || model || chunkIndex != null;
+  const hasProminent = contextId || model || processingProfileId || chunkIndex != null;
   const hasOther = otherMetadata.length > 0;
 
   return (
@@ -110,9 +111,18 @@ export function SearchResultCard({
       {hasProminent && (
         <div className="flex flex-wrap items-center gap-3 text-xs">
           {contextId && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent-muted text-accent font-mono text-[11px]">
+            <a
+              href={`/contexts/${contextId}/dashboard`}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent-muted text-accent font-mono text-[11px] no-underline hover:underline"
+            >
               <Icon name="layers" className="text-[10px]" />
               {contextId.length > 16 ? `${contextId.slice(0, 16)}...` : contextId}
+            </a>
+          )}
+          {processingProfileId && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-2 text-secondary font-mono text-[11px]">
+              <Icon name="settings" className="text-[10px]" />
+              {processingProfileId}
             </span>
           )}
           {model && (

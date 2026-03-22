@@ -9,7 +9,7 @@ import { ContextSourceAdded } from "./events/ContextSourceAdded";
 import { ContextSourceRemoved } from "./events/ContextSourceRemoved";
 import { ContextVersioned } from "./events/ContextVersioned";
 import { ContextDeprecated } from "./events/ContextDeprecated";
-import { ContextRolledBack } from "./events/ContextRolledBack";
+
 
 /**
  * Context aggregate.
@@ -208,6 +208,7 @@ export class Context extends AggregateRoot<ContextId> {
       payload: {
         sourceId: source.sourceId,
         sourceKnowledgeId: source.sourceKnowledgeId,
+        projectionId: source.projectionId,
       },
     });
 
@@ -279,28 +280,6 @@ export class Context extends AggregateRoot<ContextId> {
     return newVersion;
   }
 
-  rollbackToVersion(targetVersion: number): void {
-    const target = this._versions.find((v) => v.version === targetVersion);
-    if (!target) {
-      throw new Error(`Version ${targetVersion} not found`);
-    }
-
-    const previousVersion = this._currentVersionNumber;
-    this._currentVersionNumber = targetVersion;
-    this._metadata = this._metadata.withUpdatedTimestamp();
-
-    this.record({
-      eventId: crypto.randomUUID(),
-      occurredOn: new Date(),
-      eventType: ContextRolledBack.EVENT_TYPE,
-      aggregateId: this.id.value,
-      payload: {
-        fromVersion: previousVersion,
-        toVersion: targetVersion,
-      },
-    });
-  }
-
   activate(): void {
     this.transitionTo(ContextState.Active);
   }
@@ -315,6 +294,14 @@ export class Context extends AggregateRoot<ContextId> {
       aggregateId: this.id.value,
       payload: { reason },
     });
+  }
+
+  changeRequiredProfile(newProfileId: string): void {
+    if (this._state === ContextState.Archived) {
+      throw new Error("Cannot change profile of an archived context");
+    }
+    this._requiredProfileId = newProfileId;
+    this._metadata = this._metadata.withUpdatedTimestamp();
   }
 
   archive(): void {

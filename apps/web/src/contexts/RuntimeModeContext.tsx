@@ -8,16 +8,14 @@ import {
   type ReactNode,
 } from "react";
 import type { RuntimeMode } from "../services/types";
-import type { PipelineService } from "../services/pipeline-service";
-import type { LifecycleService } from "../services/lifecycle-service";
+import type { KnowledgeService } from "../services/knowledge-service";
 import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
 import type { SecretStore } from "@klay/core/secrets";
 
 interface RuntimeModeContextValue {
   mode: RuntimeMode;
   setMode: (mode: RuntimeMode) => void;
-  service: PipelineService | null;
-  lifecycleService: LifecycleService | null;
+  service: KnowledgeService | null;
   isInitializing: boolean;
   reinitialize: () => void;
   configStore: ConfigStore | null;
@@ -37,8 +35,7 @@ interface InitResult {
   configStore: ConfigStore;
   secretStore: SecretStore;
   profile: InfrastructureProfile;
-  pipelineService: PipelineService;
-  lifecycleService: LifecycleService;
+  service: KnowledgeService;
 }
 
 async function migrateLocalStorageKeys(store: ConfigStore): Promise<void> {
@@ -74,17 +71,13 @@ async function initServerMode(
     profile = await resolveInfrastructureProfile({ provider: "server", configStore: store });
   }
 
-  const [{ ServerPipelineService }, { ServerLifecycleService }] = await Promise.all([
-    import("../services/server-pipeline-service"),
-    import("../services/server-lifecycle-service"),
-  ]);
+  const { ServerKnowledgeService } = await import("../services/server-knowledge-service");
 
   return {
     configStore: store,
     secretStore,
     profile,
-    pipelineService: new ServerPipelineService(),
-    lifecycleService: new ServerLifecycleService(),
+    service: new ServerKnowledgeService(),
   };
 }
 
@@ -108,17 +101,13 @@ async function initBrowserMode(
     profile = await resolveInfrastructureProfile({ provider: "browser", configStore: store });
   }
 
-  const [{ BrowserPipelineService }, { BrowserLifecycleService }] = await Promise.all([
-    import("../services/browser-pipeline-service"),
-    import("../services/browser-lifecycle-service"),
-  ]);
+  const { BrowserKnowledgeService } = await import("../services/browser-knowledge-service");
 
   return {
     configStore: store,
     secretStore,
     profile,
-    pipelineService: new BrowserPipelineService(store, profile),
-    lifecycleService: new BrowserLifecycleService(store, profile),
+    service: new BrowserKnowledgeService(store, profile),
   };
 }
 
@@ -127,8 +116,7 @@ async function initBrowserMode(
 export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<RuntimeMode>("browser");
   const [modeResolved, setModeResolved] = useState(false);
-  const [service, setService] = useState<PipelineService | null>(null);
-  const [lifecycleService, setLifecycleService] = useState<LifecycleService | null>(null);
+  const [service, setService] = useState<KnowledgeService | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [reinitKey, setReinitKey] = useState(0);
   const [configStore, setConfigStore] = useState<ConfigStore | null>(null);
@@ -190,8 +178,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
         setConfigStore(result.configStore);
         setSecretStore(result.secretStore);
         setInfrastructureProfileState(result.profile);
-        setService(result.pipelineService);
-        setLifecycleService(result.lifecycleService);
+        setService(result.service);
       })
       .catch((err) => {
         console.error("Failed to initialize services:", err);
@@ -204,7 +191,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   }, [mode, reinitKey, modeResolved]);
 
   return (
-    <RuntimeModeContext.Provider value={{ mode, setMode, service, lifecycleService, isInitializing, reinitialize, configStore, secretStore, infrastructureProfile, setInfrastructureProfile }}>
+    <RuntimeModeContext.Provider value={{ mode, setMode, service, isInitializing, reinitialize, configStore, secretStore, infrastructureProfile, setInfrastructureProfile }}>
       {children}
     </RuntimeModeContext.Provider>
   );
@@ -220,26 +207,19 @@ export function useRuntimeMode(): RuntimeModeContextValue {
   return ctx;
 }
 
-export function usePipelineService(): PipelineService {
+export function useKnowledgeService(): KnowledgeService {
   const { service, isInitializing } = useRuntimeMode();
   if (!service) {
     throw new Error(
       isInitializing
-        ? "Pipeline service is still initializing"
-        : "Pipeline service is not available",
+        ? "Knowledge service is still initializing"
+        : "Knowledge service is not available",
     );
   }
   return service;
 }
 
-export function useLifecycleService(): LifecycleService {
-  const { lifecycleService, isInitializing } = useRuntimeMode();
-  if (!lifecycleService) {
-    throw new Error(
-      isInitializing
-        ? "Lifecycle service is still initializing"
-        : "Lifecycle service is not available",
-    );
-  }
-  return lifecycleService;
-}
+/** @deprecated Use `useKnowledgeService()` instead. */
+export const usePipelineService = useKnowledgeService;
+/** @deprecated Use `useKnowledgeService()` instead. */
+export const useLifecycleService = useKnowledgeService;

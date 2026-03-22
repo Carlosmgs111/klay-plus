@@ -4,6 +4,7 @@ import { Icon } from "../../shared/Icon";
 import { LoadingButton } from "../../shared/LoadingButton";
 import { useToast } from "../../../contexts/ToastContext";
 import { ProviderForm } from "./ProviderForm";
+import { RetrievalSection } from "./RetrievalSection";
 import { normalizeProfile, setNestedValue } from "./infrastructure-helpers";
 import {
   PRESET_PROFILES,
@@ -17,6 +18,7 @@ import {
 import type {
   InfrastructureAxis,
   InfrastructureProfile,
+  RetrievalConfig,
   RuntimeEnvironment,
 } from "@klay/core/config";
 import type { ConfigStore } from "@klay/core/config";
@@ -185,6 +187,10 @@ export function InfrastructureSection({
     setApiKeyValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleRetrievalChange = (retrieval: RetrievalConfig) => {
+    setLocalProfile({ ...localProfile, retrieval });
+  };
+
   const handleSave = async () => {
     if (!configStore) return;
     setIsSaving(true);
@@ -335,6 +341,13 @@ export function InfrastructureSection({
               </div>
             );
           })}
+
+          {/* Retrieval */}
+          <RetrievalSection
+            value={localProfile.retrieval ?? {}}
+            onChange={handleRetrievalChange}
+            runtimeMode={mode as "browser" | "server" | "uninitialized"}
+          />
 
           {/* Save */}
           <div className="flex items-center gap-3 pt-2 border-t border-subtle">

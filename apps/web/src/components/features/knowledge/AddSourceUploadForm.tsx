@@ -5,7 +5,7 @@ import { useServiceAction } from "../../../hooks/usePipelineAction";
 import { Input } from "../../shared/Input";
 import { FileProcessingForm } from "../../shared/FileProcessingForm";
 import { detectFileType } from "../../../utils/fileDetection";
-import type { IngestAndAddSourceInput, IngestAndAddSourceSuccess } from "@klay/core";
+import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "@klay/core";
 
 interface AddSourceUploadFormProps {
   contextId: string;
@@ -13,26 +13,25 @@ interface AddSourceUploadFormProps {
 }
 
 export function AddSourceUploadForm({ contextId, onSuccess }: AddSourceUploadFormProps) {
-  const { lifecycleService } = useRuntimeMode();
+  const { service } = useRuntimeMode();
   const { addToast } = useToast();
 
   const [processingProfileId, setProcessingProfileId] = useState("default");
 
-  const addSourceAction = useCallback(
-    (input: IngestAndAddSourceInput) => lifecycleService!.ingestAndAddSource(input),
-    [lifecycleService],
+  const processAction = useCallback(
+    (input: ProcessKnowledgeInput) => service!.process(input),
+    [service],
   );
 
-  const { error, execute } = useServiceAction(addSourceAction);
+  const { error, execute } = useServiceAction(processAction);
 
   const handleProcess = async (file: File) => {
-    if (!lifecycleService) return null;
+    if (!service) return null;
 
     const fileBuffer = await file.arrayBuffer();
     const detected = detectFileType(file.name);
 
-    const input: IngestAndAddSourceInput = {
-      contextId,
+    const input: ProcessKnowledgeInput = {
       sourceId: crypto.randomUUID(),
       sourceName: file.name,
       uri: file.name,
@@ -41,13 +40,14 @@ export function AddSourceUploadForm({ contextId, onSuccess }: AddSourceUploadFor
       projectionId: crypto.randomUUID(),
       projectionType: "EMBEDDING",
       processingProfileId,
+      contextId,
       content: fileBuffer,
     };
 
     const result = await execute(input);
     if (result) {
       addToast(
-        `Source added — ${result.chunksCount} chunks, v${result.contextId.slice(0, 8)}`,
+        `Source added — ${result.chunksCount ?? 0} chunks`,
         "success",
       );
       return { result, toastMessage: "Source added" };
@@ -61,7 +61,7 @@ export function AddSourceUploadForm({ contextId, onSuccess }: AddSourceUploadFor
       successLabel="Source added successfully"
       submitLabel="Add Source"
       resetLabel="Add Another Source"
-      serviceReady={!!lifecycleService}
+      serviceReady={!!service}
       onProcess={handleProcess}
       error={error}
       onSuccess={onSuccess}

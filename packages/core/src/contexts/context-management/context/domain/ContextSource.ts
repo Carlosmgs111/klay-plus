@@ -3,6 +3,7 @@ import { ValueObject } from "../../../../shared/domain";
 interface ContextSourceProps {
   sourceId: string;
   sourceKnowledgeId: string;
+  projectionId?: string;
   addedAt: Date;
 }
 
@@ -17,14 +18,18 @@ export class ContextSource extends ValueObject<ContextSourceProps> {
   }
 
   get sourceKnowledgeId(): string {
-    return this.props.sourceKnowledgeId;
+    return this.props.sourceKnowledgeId ?? `sk-${this.props.sourceId}`;
+  }
+
+  get projectionId(): string | undefined {
+    return this.props.projectionId;
   }
 
   get addedAt(): Date {
     return this.props.addedAt;
   }
 
-  static create(sourceId: string, sourceKnowledgeId?: string): ContextSource {
+  static create(sourceId: string, sourceKnowledgeId?: string, projectionId?: string): ContextSource {
     if (!sourceId || sourceId.trim().length === 0) {
       throw new Error("ContextSource sourceId is required");
     }
@@ -32,6 +37,7 @@ export class ContextSource extends ValueObject<ContextSourceProps> {
     return new ContextSource({
       sourceId,
       sourceKnowledgeId: sourceKnowledgeId || `sk-${sourceId}`,
+      projectionId,
       addedAt: new Date(),
     });
   }
@@ -40,10 +46,12 @@ export class ContextSource extends ValueObject<ContextSourceProps> {
     sourceId: string,
     sourceKnowledgeId: string,
     addedAt: Date,
+    projectionId?: string,
   ): ContextSource {
     return new ContextSource({
       sourceId,
       sourceKnowledgeId,
+      projectionId,
       addedAt,
     });
   }

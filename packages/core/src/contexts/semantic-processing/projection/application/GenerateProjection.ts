@@ -30,6 +30,7 @@ export interface GenerateProjectionResult {
   chunksCount: number;
   dimensions: number;
   model: string;
+  processingProfileVersion: number;
 }
 
 export class GenerateProjection {
@@ -65,9 +66,6 @@ export class GenerateProjection {
       );
     }
 
-    const { embeddingStrategy, chunkingStrategy, preparationStrategy } =
-      await this.materializer.materialize(profile);
-
     const projectionId = ProjectionId.create(command.projectionId);
 
     const projection = SemanticProjection.create(
@@ -80,6 +78,10 @@ export class GenerateProjection {
     projection.markProcessing();
 
     try {
+      // Materialize strategies (inside try/catch — initialization can throw)
+      const { embeddingStrategy, chunkingStrategy, preparationStrategy } =
+        await this.materializer.materialize(profile);
+
       // Prepare content
       const prepared = await preparationStrategy.prepare(command.content);
 
@@ -127,6 +129,7 @@ export class GenerateProjection {
         chunksCount: chunks.length,
         dimensions: embeddings[0]?.dimensions ?? 0,
         model: embeddings[0]?.model ?? "unknown",
+        processingProfileVersion: profile.version,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

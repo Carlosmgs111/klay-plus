@@ -3,7 +3,7 @@
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 309 tests (vitest)
+pnpm --filter @klay/core test    # 336 tests (vitest)
 ```
 
 ## Conventions
@@ -22,11 +22,10 @@ Plataforma de gestion de conocimiento semantico: transforma contenido (archivos,
 ## Architecture
 
 ```
-adapters/       REST + UI adapters (2 sets: Pipeline, Lifecycle)
-application/    Orchestration layer (2 orchestrators: Pipeline, Lifecycle)
+application/    KnowledgeCoordinator (class = contract, no separate Port/Adapter)
 contexts/       4 Bounded Contexts (domain core)
 platform/       Shared infra (config, persistence, eventing, vectors)
-shared/         DDD building blocks (AggregateRoot, Result, ValueObject)
+shared/         DDD building blocks (AggregateRoot, Result, ValueObject, resultTransformers)
 ```
 
 ## Bounded Contexts
@@ -44,17 +43,30 @@ Each context has its own `CLAUDE.md` with full entity/port/event specs.
 
 ## Application Layer
 
-### Knowledge Pipeline Orchestrator (`application/knowledge-pipeline/`)
-Coordina los 4 contextos para **construccion inicial** y **adicion de fuentes**. Gestiona `ContentManifest` (tracker cross-context: resourceId, sourceId, extractionJobId, contextId, projectionId). Absorbed the former Knowledge Management orchestrator.
+### KnowledgeCoordinator (`application/knowledge/`)
+Single unified coordinator (class = contract) coordinating all 4 bounded contexts. API organized by resource namespace — consumers call `coordinator.contexts.*`, `coordinator.sources.*`, `coordinator.profiles.*`, `coordinator.process()`, `coordinator.search()`, applying `toRESTResponse()` or `unwrapResult()` as needed.
 
-Operaciones: `execute` (pipeline completo), `ingestAndAddSource` (ingest + add to existing context), `ingestDocument`, `processDocument`, `catalogDocument`, `searchKnowledge`, `createProcessingProfile`, `getManifest`
+**Files** (8 source + 1 test):
+- `KnowledgeCoordinator.ts` — 3 namespace objects (ContextOperations, SourceOperations, ProfileOperations) + 2 top-level methods, private `_query`/`_wrap` helpers
+- `ProcessKnowledge.ts` — multi-step pipeline (Ingest → Process → Catalog)
+- `ReconcileProjections.ts` — ensure all sources in a context have projections for a given profile
+- `dtos.ts` — pure data contracts (input/output types)
+- `domain/KnowledgeError.ts` — error with step tracking (self-contained, no base class)
+- `domain/OperationStep.ts` — enum of all operation stages
+- `composition/knowledge.factory.ts` — `createKnowledgePlatform()` → `KnowledgeCoordinator`
+- `index.ts` — barrel exports (includes ContextOperations, SourceOperations, ProfileOperations types)
 
-### Knowledge Lifecycle Orchestrator (`application/knowledge-lifecycle/`)
-Operaciones atomicas de ciclo de vida sobre unidades semanticas existentes. Coordina knowledge + processing contexts.
+**Top-level**: `process(input)` (onboarding pipeline), `search(input)` (semantic query)
 
-Operaciones: `removeSource`, `reprocessContext`, `rollbackContext`, `linkContexts`, `unlinkContexts`
+**coordinator.contexts**: `create`, `get`, `list` (enriched summary), `listRefs` (simple refs), `transitionState`, `updateProfile`, `reconcileProjections`, `removeSource`, `link`, `unlink`, `getLineage`
 
-**Factory combinada**: `createKnowledgePlatform(policy)` en `application/composition/knowledge-platform.factory.ts` — retorna `{ pipeline, management: pipeline, lifecycle }` (`management` is a deprecated alias for `pipeline`)
+**coordinator.sources**: `list`, `get`, `getContexts`
+
+**coordinator.profiles**: `create`, `list`, `update`, `deprecate`
+
+**Result transformers** (`shared/resultTransformers.ts`, exported via `@klay/core/result`):
+- `toRESTResponse(result)` — converts Result to `{ status, body, headers }` for API routes
+- `unwrapResult(result)` — converts Result to `UIResult<T>` for browser consumers
 
 ## Data Flow
 
@@ -85,3 +97,4 @@ Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
 - `Result<E, T>` (Ok/Fail pattern)
 - `DomainError`, `NotFoundError`, `OperationError`
 - `ProviderRegistry`, `ProviderFactory`
+- `resultTransformers.ts` — `toRESTResponse`, `unwrapResult`, `RESTResponse`, `UIResult<T>`

@@ -1,47 +1,19 @@
-import { useMemo } from "react";
 import { Card } from "../../shared/Card";
 import { Icon } from "../../shared/Icon";
 import { StatusBadge } from "../../shared/StatusBadge";
-import {
-  getUnitSources,
-  getUnitProjections,
-  getOverallStatus,
-} from "../../../contexts/KnowledgeContextContext";
-import type { ContentManifestEntry } from "@klay/core";
+import type { EnrichedContextSummaryDTO } from "@klay/core";
 
 interface ContextCardProps {
-  contextId: string;
-  manifests: ContentManifestEntry[];
+  context: EnrichedContextSummaryDTO;
 }
 
-export default function ContextCard({ contextId, manifests }: ContextCardProps) {
+export default function ContextCard({ context }: ContextCardProps) {
   const truncatedId =
-    contextId.length > 8 ? `${contextId.slice(0, 8)}...` : contextId;
-
-  const sources = useMemo(() => getUnitSources(manifests), [manifests]);
-  const projections = useMemo(() => getUnitProjections(manifests), [manifests]);
-  const status = useMemo(() => getOverallStatus(manifests), [manifests]);
-
-  const createdDate = useMemo(() => {
-    if (manifests.length === 0) return null;
-    const sorted = [...manifests].sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
-    return new Date(sorted[0].createdAt);
-  }, [manifests]);
-
-  const formattedDate = createdDate
-    ? createdDate.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : "--";
+    context.id.length > 12 ? `${context.id.slice(0, 12)}...` : context.id;
 
   return (
     <a
-      href={`/contexts/${contextId}/dashboard`}
+      href={`/contexts/${context.id}/dashboard`}
       className="block group no-underline"
     >
       <Card className="transition-all duration-150 ease-in-out group-hover:border-accent group-hover:shadow-md cursor-pointer p-5">
@@ -52,11 +24,16 @@ export default function ContextCard({ contextId, manifests }: ContextCardProps) 
                 name="brain"
                 className="text-lg text-tertiary"
               />
-              <h3
-                className="text-sm font-semibold font-mono truncate text-primary"
-              >
-                {truncatedId}
-              </h3>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold truncate text-primary">
+                  {context.name || truncatedId}
+                </h3>
+                {context.name && (
+                  <p className="text-xs font-mono text-tertiary truncate">
+                    {truncatedId}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="mt-3 flex items-center gap-4">
@@ -68,38 +45,25 @@ export default function ContextCard({ contextId, manifests }: ContextCardProps) 
                 <span
                   className="text-xs text-secondary"
                 >
-                  {sources.length} source{sources.length !== 1 ? "s" : ""}
+                  {context.sourceCount} source{context.sourceCount !== 1 ? "s" : ""}
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5">
                 <Icon
-                  name="layers"
+                  name="settings"
                   className="text-sm text-tertiary"
                 />
                 <span
-                  className="text-xs text-secondary"
+                  className="text-xs text-secondary font-mono"
                 >
-                  {projections.length} projection
-                  {projections.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <Icon
-                  name="clock"
-                  className="text-sm text-tertiary"
-                />
-                <span
-                  className="text-xs text-secondary"
-                >
-                  {formattedDate}
+                  {context.requiredProfileId}
                 </span>
               </div>
             </div>
           </div>
 
-          <StatusBadge status={status} />
+          <StatusBadge status={context.status} />
         </div>
       </Card>
     </a>

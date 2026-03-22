@@ -33,8 +33,20 @@ describe("EmbeddingConfig", () => {
   });
 
   it("models HuggingFace embedding", () => {
-    const cfg: EmbeddingConfig = { type: "huggingface", authRef: "HF_KEY", model: "sentence-transformers/all-MiniLM-L6-v2" };
+    const cfg: EmbeddingConfig = { type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" };
     if (cfg.type === "huggingface") {
+      expect(cfg.model).toBe("Xenova/all-MiniLM-L6-v2");
+    }
+  });
+
+  it("models HuggingFace Inference API embedding with authRef", () => {
+    const cfg: EmbeddingConfig = {
+      type: "hf-inference",
+      authRef: "HUGGINGFACE_API_KEY",
+      model: "sentence-transformers/all-MiniLM-L6-v2",
+    };
+    if (cfg.type === "hf-inference") {
+      expect(cfg.authRef).toBe("HUGGINGFACE_API_KEY");
       expect(cfg.model).toBe("sentence-transformers/all-MiniLM-L6-v2");
     }
   });

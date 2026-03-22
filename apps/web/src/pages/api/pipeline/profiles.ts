@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
-import { getServerAdapter } from "../../../server/pipeline-singleton";
+import { getCoordinator } from "../../../server/knowledge-singleton";
+import { toRESTResponse } from "@klay/core/result";
 
 export const GET: APIRoute = async () => {
-  const adapter = await getServerAdapter();
-  const result = await adapter.listProfiles({ body: null });
+  const coordinator = await getCoordinator();
+  const result = toRESTResponse(await coordinator.profiles.list());
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },
@@ -11,9 +12,9 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
-  const adapter = await getServerAdapter();
+  const coordinator = await getCoordinator();
   const body = await request.json();
-  const result = await adapter.createProcessingProfile({ body });
+  const result = toRESTResponse(await coordinator.profiles.create(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },
@@ -21,9 +22,9 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const PUT: APIRoute = async ({ request }) => {
-  const adapter = await getServerAdapter();
+  const coordinator = await getCoordinator();
   const body = await request.json();
-  const result = await adapter.updateProfile({ body });
+  const result = toRESTResponse(await coordinator.profiles.update(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

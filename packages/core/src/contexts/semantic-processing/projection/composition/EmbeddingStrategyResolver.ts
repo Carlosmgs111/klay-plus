@@ -19,7 +19,7 @@ export interface EmbeddingResolutionPolicy {
  * Resolves a ProjectionLayer's declarative strategyId into a concrete
  * EmbeddingStrategy instance. Encapsulates:
  * - Provider detection (prefix matching on strategyId)
- * - Dynamic SDK imports (@ai-sdk/openai, @ai-sdk/cohere, @ai-sdk/huggingface, web-llm)
+ * - Dynamic SDK imports (@ai-sdk/openai, @ai-sdk/cohere, @huggingface/transformers, @huggingface/inference, web-llm)
  * - API key resolution via ConfigProvider
  * - Model instantiation for each vendor
  *
@@ -37,13 +37,44 @@ export class EmbeddingStrategyResolver {
   async resolve(layer: ProjectionLayer): Promise<EmbeddingStrategy> {
     const embeddingId = layer.strategyId;
 
-    // AI SDK providers (OpenAI, Cohere, HuggingFace)
+    // AI SDK providers (OpenAI, Cohere)
     if (this.isAIProvider(embeddingId)) {
       return this.resolveAIEmbeddingStrategy(embeddingId);
     }
 
+    // HuggingFace Inference API (remote — browser + server)
+    if (embeddingId.startsWith("hf-inference-")) {
+      const { HFInferenceEmbeddingStrategy } = await import(
+        "../infrastructure/strategies/embedding/HFInferenceEmbeddingStrategy"
+      );
+      const { resolveConfigProvider } = await import(
+        "../../../../platform/config/ConfigProvider"
+      );
+      const configProvider = await resolveConfigProvider(this.policy);
+      const apiKey = configProvider.require("HUGGINGFACE_API_KEY");
+      const modelId = embeddingId.replace("hf-inference-", "") || "sentence-transformers/all-MiniLM-L6-v2";
+      return new HFInferenceEmbeddingStrategy(apiKey, modelId);
+    }
+
+    // HuggingFace Transformers (local ONNX — browser + server)
+    if (embeddingId.startsWith("huggingface-")) {
+      const { TransformersJSEmbeddingStrategy } = await import(
+        "../infrastructure/strategies/embedding/TransformersJSEmbeddingStrategy"
+      );
+      const modelId = embeddingId.replace("huggingface-", "") || "Xenova/all-MiniLM-L6-v2";
+      const strategy = new TransformersJSEmbeddingStrategy(modelId);
+      try {
+        await strategy.initialize();
+      } catch (err) {
+        throw new Error(
+          `Failed to initialize local embedding model '${modelId}': ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      return strategy;
+    }
+
     // WebLLM (browser-side)
-    if (embeddingId === "web-llm-embedding") {
+    if (embeddingId === "webllm") {
       const { WebLLMEmbeddingStrategy } = await import(
         "../infrastructure/strategies/embedding/WebLLMEmbeddingStrategy"
       );
@@ -66,7 +97,7 @@ export class EmbeddingStrategyResolver {
   // ── Private ───────────────────────────────────────────────────────
 
   private isAIProvider(id: string): boolean {
-    return id.startsWith("openai-") || id.startsWith("cohere-") || id.startsWith("huggingface-");
+    return id.startsWith("openai-") || id.startsWith("cohere-");
   }
 
   private async resolveAIEmbeddingStrategy(
@@ -95,14 +126,6 @@ export class EmbeddingStrategyResolver {
       const { createCohere } = await import(/* @vite-ignore */ "@ai-sdk/cohere");
       const cohere = createCohere({ apiKey });
       return new AISdkEmbeddingStrategy(cohere.textEmbeddingModel(modelId), `cohere-${modelId}`);
-    }
-
-    if (embeddingId.startsWith("huggingface-")) {
-      const modelId = embeddingId.replace("huggingface-", "") || "sentence-transformers/all-MiniLM-L6-v2";
-      const apiKey = configProvider.require("HUGGINGFACE_API_KEY");
-      const { createHuggingFace } = await import(/* @vite-ignore */ "@ai-sdk/huggingface");
-      const hf = createHuggingFace({ apiKey });
-      return new AISdkEmbeddingStrategy(hf.textEmbeddingModel(modelId), `huggingface-${modelId}`);
     }
 
     throw new Error(`Unknown AI embedding provider in strategyId: ${embeddingId}`);

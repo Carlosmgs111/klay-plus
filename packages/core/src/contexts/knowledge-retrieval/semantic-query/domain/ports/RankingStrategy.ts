@@ -5,5 +5,5 @@ export interface RankedHit extends SearchHit {
 }
 
 export interface RankingStrategy {
-  rerank(query: string, hits: SearchHit[]): Promise<RankedHit[]>;
+  rerank(query: string, queryVector: number[], hits: SearchHit[]): Promise<RankedHit[]>;
 }

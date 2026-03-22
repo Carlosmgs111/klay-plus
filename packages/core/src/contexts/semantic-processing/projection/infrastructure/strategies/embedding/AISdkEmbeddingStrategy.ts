@@ -13,7 +13,6 @@ import type {
  * Supported providers:
  * - OpenAI: openai.embedding("text-embedding-3-small")
  * - Cohere: cohere.textEmbeddingModel("embed-multilingual-v3.0")
- * - HuggingFace: hf.textEmbeddingModel("sentence-transformers/all-MiniLM-L6-v2")
  *
  * @example
  * // Model is created by ProjectionComposer
