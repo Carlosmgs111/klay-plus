@@ -12,8 +12,9 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
+import { createKnowledgeApplication } from "../composition/knowledge.factory";
+import type { KnowledgeApplication } from "../composition/knowledge.factory";
 import {
-  createKnowledgeApplication,
   executeCreateProfile,
   executeListProfiles,
   executeUpdateProfile,
@@ -24,8 +25,7 @@ import {
   executeTransitionContextState,
   executeLinkContexts,
   executeUnlinkContexts,
-} from "../composition/knowledge.factory";
-import type { KnowledgeApplication } from "../composition/knowledge.factory";
+} from "../boundary/executors";
 import { OperationStep } from "../domain/OperationStep";
 import { KnowledgeError } from "../domain/KnowledgeError";
 

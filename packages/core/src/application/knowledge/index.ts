@@ -1,16 +1,14 @@
 /**
- * Knowledge — Unified Platform Module
+ * Knowledge — Unified Application Module
  *
- * Runtime-agnostic application service that coordinates all 4 bounded contexts
- * into a unified knowledge platform.
+ * Runtime-agnostic application layer coordinating all 4 bounded contexts.
  *
- * Public API:
- * - KnowledgeApplication: exposes all use cases directly + 2 orchestrators
- * - DTOs: input/output contracts (pipeline + lifecycle)
- * - KnowledgeError: error with operation step tracking
- * - OperationStep: enum of all operation stages
- * - createKnowledgeApplication(): factory function
- * - Mapping utilities: mapSourcesToDTO, mapProfilesToDTO, etc.
+ * Structure:
+ * - orchestrators/  — Multi-step coordination (ProcessKnowledge, CreateContextAndActivate, etc.)
+ * - composition/    — Dependency wiring (resolveDependencies, createKnowledgeApplication)
+ * - boundary/       — DTO mapping + error wrapping for web consumers
+ * - domain/         — KnowledgeError, OperationStep
+ * - dtos.ts         — Pure data contracts
  */
 
 export type { KnowledgeApplication, ResolvedDependencies } from "./composition/knowledge.factory";
@@ -88,7 +86,7 @@ export type { OperationStep as OperationStepType } from "./domain/OperationStep"
 // ── Factory ──────────────────────────────────────────────────────────
 export { createKnowledgeApplication, createKnowledgePlatform } from "./composition/knowledge.factory";
 
-// ── DTO Mapping Utilities ────────────────────────────────────────────
+// ── Boundary: DTO Mapping Utilities ─────────────────────────────────
 export {
   mapSourcesToDTO,
   mapSourceToDetailDTO,
@@ -102,6 +100,10 @@ export {
   mapUpdateProfileResult,
   mapDeprecateProfileResult,
   mapTransitionInput,
+} from "./boundary/mappers";
+
+// ── Boundary: Execute Functions ─────────────────────────────────────
+export {
   executeTransitionContextState,
   executeRemoveSource,
   executeLinkContexts,
@@ -113,7 +115,7 @@ export {
   executeListProfiles,
   executeUpdateProfile,
   executeDeprecateProfile,
-} from "./composition/knowledge.factory";
+} from "./boundary/executors";
 
 // ── Shared types ─────────────────────────────────────────────────────
 export type { OrchestratorPolicy } from "../composition/OrchestratorPolicy";

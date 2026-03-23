@@ -1,14 +1,14 @@
-import type { IngestAndExtract } from "../../contexts/source-ingestion/source/application/use-cases/IngestAndExtract";
-import type { SourceQueries } from "../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
-import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
-import type { ProjectionOperationsPort } from "../../contexts/context-management/context/application/ports/ProjectionOperationsPort";
-import type { AddSourceToContext } from "../../contexts/context-management/context/application/use-cases/AddSourceToContext";
-import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "./dtos";
-import type { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";
-import type { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType";
-import { Result } from "../../shared/domain/Result";
-import { KnowledgeError } from "./domain/KnowledgeError";
-import { OperationStep } from "./domain/OperationStep";
+import type { IngestAndExtract } from "../../../contexts/source-ingestion/source/application/use-cases/IngestAndExtract";
+import type { SourceQueries } from "../../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
+import type { ContextQueries } from "../../../contexts/context-management/context/application/use-cases/ContextQueries";
+import type { ProjectionOperationsPort } from "../../../contexts/context-management/context/application/ports/ProjectionOperationsPort";
+import type { AddSourceToContext } from "../../../contexts/context-management/context/application/use-cases/AddSourceToContext";
+import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "../dtos";
+import type { SourceType } from "../../../contexts/source-ingestion/source/domain/SourceType";
+import type { ProjectionType } from "../../../contexts/semantic-processing/projection/domain/ProjectionType";
+import { Result } from "../../../shared/domain/Result";
+import { KnowledgeError } from "../domain/KnowledgeError";
+import { OperationStep } from "../domain/OperationStep";
 
 const DEFAULT_PROJECTION_TYPE = "EMBEDDING";
 
@@ -245,9 +245,9 @@ export class ProcessKnowledge {
         ctx.processingProfileId = context.requiredProfileId;
       }
       ctx.resolvedContext = {
-        activeSources: context.activeSources,
-        allSources: context.allSources,
-        currentVersion: context.currentVersion,
+        activeSources: [...context.activeSources], // Create a mutable copy
+        allSources: [...context.allSources],       // Create a mutable copy
+        currentVersion: context.currentVersion!,
         requiredProfileId: context.requiredProfileId,
       };
     }

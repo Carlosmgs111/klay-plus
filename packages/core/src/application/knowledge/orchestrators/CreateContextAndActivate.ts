@@ -1,9 +1,9 @@
-import { Result } from "../../shared/domain/Result";
-import { KnowledgeError } from "./domain/KnowledgeError";
-import { OperationStep } from "./domain/OperationStep";
-import type { CreateContext } from "../../contexts/context-management/context/application/use-cases/CreateContext";
-import type { TransitionContextState } from "../../contexts/context-management/context/application/use-cases/TransitionContextState";
-import type { CreateContextInput, CreateContextResult } from "./dtos";
+import { Result } from "../../../shared/domain/Result";
+import { KnowledgeError } from "../domain/KnowledgeError";
+import { OperationStep } from "../domain/OperationStep";
+import type { CreateContext } from "../../../contexts/context-management/context/application/use-cases/CreateContext";
+import type { TransitionContextState } from "../../../contexts/context-management/context/application/use-cases/TransitionContextState";
+import type { CreateContextInput, CreateContextResult } from "../dtos";
 
 /**
  * CreateContextAndActivate — orchestrates context creation + auto-activation.

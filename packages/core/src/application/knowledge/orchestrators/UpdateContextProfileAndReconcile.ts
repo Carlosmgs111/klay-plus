@@ -1,9 +1,9 @@
-import { Result } from "../../shared/domain/Result";
-import { KnowledgeError } from "./domain/KnowledgeError";
-import { OperationStep } from "./domain/OperationStep";
-import type { UpdateContextProfile } from "../../contexts/context-management/context/application/use-cases/UpdateContextProfile";
-import type { ReconcileProjections } from "../../contexts/context-management/context/application/use-cases/ReconcileProjections";
-import type { UpdateContextProfileInput, UpdateContextProfileResult } from "./dtos";
+import { Result } from "../../../shared/domain/Result";
+import { KnowledgeError } from "../domain/KnowledgeError";
+import { OperationStep } from "../domain/OperationStep";
+import type { UpdateContextProfile } from "../../../contexts/context-management/context/application/use-cases/UpdateContextProfile";
+import type { ReconcileProjections } from "../../../contexts/context-management/context/application/use-cases/ReconcileProjections";
+import type { UpdateContextProfileInput, UpdateContextProfileResult } from "../dtos";
 
 /**
  * UpdateContextProfileAndReconcile — orchestrates profile update + auto-reconciliation.

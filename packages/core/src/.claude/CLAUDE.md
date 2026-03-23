@@ -43,28 +43,26 @@ Each context has its own `CLAUDE.md` with full entity/port/event specs.
 
 **Cross-context wiring**: Semantic Processing escribe al vector store; Knowledge Retrieval lee del mismo store. El wiring ocurre en el PipelineComposer. Ambos deben usar el mismo modelo de embeddings. `sourceKnowledgeId` is auto-derived as `sk-{sourceId}` when not provided.
 
-## Application Layer
+## Application Layer (`application/knowledge/`)
 
-### KnowledgeCoordinator (`application/knowledge/`)
-Single unified coordinator (class = contract) coordinating all 4 bounded contexts. API organized by resource namespace — consumers call `coordinator.contexts.*`, `coordinator.sources.*`, `coordinator.profiles.*`, `coordinator.process()`, `coordinator.search()`, applying `toRESTResponse()` or `unwrapResult()` as needed.
+`KnowledgeApplication` — exposes all use cases directly + 3 orchestrators. Consumers call `app.processKnowledge.execute(input)` directly. Three clear responsibility layers:
 
-**Files** (8 source + 1 test):
-- `KnowledgeCoordinator.ts` — 3 namespace objects (ContextOperations, SourceOperations, ProfileOperations) + 2 top-level methods, private `_query`/`_wrap` helpers
-- `ProcessKnowledge.ts` — multi-step pipeline (Ingest → Process → Catalog)
-- `ReconcileProjections.ts` — ensure all sources in a context have projections for a given profile
-- `dtos.ts` — pure data contracts (input/output types)
-- `domain/KnowledgeError.ts` — error with step tracking (self-contained, no base class)
-- `domain/OperationStep.ts` — enum of all operation stages
-- `composition/knowledge.factory.ts` — `createKnowledgePlatform()` → `KnowledgeCoordinator`; `resolveDependencies()` wires all 4 contexts via grouped `Promise.all` imports
-- `index.ts` — barrel exports (includes ContextOperations, SourceOperations, ProfileOperations types)
-
-**Top-level**: `process(input)` (onboarding pipeline), `search(input)` (semantic query)
-
-**coordinator.contexts**: `create`, `get`, `list` (enriched summary), `listRefs` (simple refs), `transitionState`, `updateProfile`, `reconcileProjections`, `removeSource`, `link`, `unlink`, `getLineage`
-
-**coordinator.sources**: `list`, `get`, `getContexts`
-
-**coordinator.profiles**: `create`, `list`, `update`, `deprecate`
+```
+orchestrators/    Multi-step coordination (real application logic)
+  ProcessKnowledge.ts           — pipeline: Ingest → Process → Catalog
+  CreateContextAndActivate.ts   — create context + auto-activate (Draft→Active)
+  UpdateContextProfileAndReconcile.ts — update profile + auto-reconcile projections
+composition/      Dependency wiring
+  knowledge.factory.ts          — resolveDependencies() + createKnowledgeApplication()
+boundary/         DTO mapping + error wrapping (for web consumers)
+  mappers.ts                    — map* functions (domain→DTO)
+  executors.ts                  — execute* functions (use case call + error wrap + DTO map)
+domain/           Error types
+  KnowledgeError.ts             — error with step tracking
+  OperationStep.ts              — enum of all operation stages
+dtos.ts           Pure data contracts (input/output types)
+index.ts          Barrel exports
+```
 
 **Result transformers** (`shared/resultTransformers.ts`, exported via `@klay/core/result`):
 - `toRESTResponse(result)` — converts Result to `{ status, body, headers }` for API routes

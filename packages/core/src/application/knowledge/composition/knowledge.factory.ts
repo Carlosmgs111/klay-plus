@@ -1,25 +1,7 @@
 import type { OrchestratorPolicy } from "../../composition/OrchestratorPolicy";
-import { Result } from "../../../shared/domain/Result";
-import { KnowledgeError } from "../domain/KnowledgeError";
-import { OperationStep } from "../domain/OperationStep";
-import { ProcessKnowledge } from "../ProcessKnowledge";
-import { CreateContextAndActivate } from "../CreateContextAndActivate";
-import { UpdateContextProfileAndReconcile } from "../UpdateContextProfileAndReconcile";
-import type {
-  CreateProcessingProfileSuccess,
-  ListProfilesResult,
-  UpdateProfileResult,
-  DeprecateProfileResult,
-  ListSourcesResult,
-  GetSourceResult,
-  RemoveSourceResult,
-  LinkContextsResult,
-  UnlinkContextsResult,
-  GetContextLineageResult,
-  TransitionContextStateInput,
-  TransitionContextStateResult,
-  ProcessSourceAllProfilesResult,
-} from "../dtos";
+import { ProcessKnowledge } from "../orchestrators/ProcessKnowledge";
+import { CreateContextAndActivate } from "../orchestrators/CreateContextAndActivate";
+import { UpdateContextProfileAndReconcile } from "../orchestrators/UpdateContextProfileAndReconcile";
 import type { SourceQueries } from "../../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
 import type { CreateProcessingProfile } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/CreateProcessingProfile";
 import type { UpdateProcessingProfile } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/UpdateProcessingProfile";
@@ -38,7 +20,7 @@ import type { LineageQueries } from "../../../contexts/context-management/lineag
 import type { ProcessSourceAllProfiles } from "../../../contexts/semantic-processing/projection/application/use-cases/ProcessSourceAllProfiles";
 import type { SearchKnowledge } from "../../../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
 
-// ── Resolved dependencies (internal, unchanged) ──────────────────────────────
+// ── Resolved dependencies (internal) ─────────────────────────────────
 
 export interface ResolvedDependencies {
   // Source Ingestion (consolidated query class)
@@ -67,309 +49,21 @@ export interface ResolvedDependencies {
   lineageQueries: LineageQueries;
 }
 
-// ── Public application type ──────────────────────────────────────────────────
+// ── Public application type ──────────────────────────────────────────
 
 /**
- * KnowledgeApplication — exposes all use cases directly + 2 orchestrators.
+ * KnowledgeApplication — exposes all use cases directly + 3 orchestrators.
  *
  * Consumers call use cases directly (e.g. `app.processKnowledge.execute(input)`)
- * instead of going through a 22-method facade. DTO mapping utilities are
- * exported as standalone functions for consumers that need them.
+ * instead of going through a facade. Boundary functions (DTO mapping + error
+ * wrapping) are in `boundary/` for web consumers that need them.
  */
 export interface KnowledgeApplication extends ResolvedDependencies {
   createContextAndActivate: CreateContextAndActivate;
   updateContextProfileAndReconcile: UpdateContextProfileAndReconcile;
 }
 
-// ── DTO mapping utilities (for web consumers) ────────────────────────────────
-
-export function mapSourcesToDTO(sources: any[]): ListSourcesResult {
-  return {
-    sources: sources.map((s: any) => ({
-      id: s.id.value,
-      name: s.name,
-      type: s.type,
-      uri: s.uri,
-      hasBeenExtracted: s.hasBeenExtracted,
-      currentVersion: s.currentVersion?.version ?? null,
-      registeredAt: s.registeredAt.toISOString(),
-    })),
-    total: sources.length,
-  };
-}
-
-export async function mapSourceToDetailDTO(source: any, sourceQueries: any): Promise<GetSourceResult> {
-  let extractedTextPreview: string | null = null;
-  const textResult = await sourceQueries.getExtractedText(source.id.value);
-  if (textResult.isOk()) {
-    const text = textResult.value.text;
-    extractedTextPreview = text.length > 500 ? text.slice(0, 500) + "..." : text;
-  }
-  return {
-    source: {
-      id: source.id.value,
-      name: source.name,
-      type: source.type,
-      uri: source.uri,
-      hasBeenExtracted: source.hasBeenExtracted,
-      currentVersion: source.currentVersion?.version ?? null,
-      registeredAt: source.registeredAt.toISOString(),
-      versions: source.versions.map((v: any) => ({
-        version: v.version,
-        contentHash: v.contentHash,
-        extractedAt: v.extractedAt.toISOString(),
-      })),
-      extractedTextPreview,
-    },
-  };
-}
-
-export function mapProfilesToDTO(profiles: any[]): ListProfilesResult {
-  return {
-    profiles: profiles.map((p: any) => ({
-      id: p.id.value,
-      name: p.name,
-      version: p.version,
-      preparation: p.preparation.toDTO(),
-      fragmentation: p.fragmentation.toDTO(),
-      projection: p.projection.toDTO(),
-      status: p.status,
-      createdAt: p.createdAt.toISOString(),
-    })),
-  };
-}
-
-export function mapTransitionResult(ctx: any): TransitionContextStateResult {
-  return { contextId: ctx.id.value, state: ctx.state };
-}
-
-export function mapRemoveSourceResult(ctx: any): RemoveSourceResult {
-  return { contextId: ctx.id.value, version: ctx.currentVersion?.version ?? 0 };
-}
-
-export function mapLinkResult(v: any): LinkContextsResult {
-  return { sourceContextId: v.fromContextId, targetContextId: v.toContextId };
-}
-
-export function mapUnlinkResult(v: any): UnlinkContextsResult {
-  return { sourceContextId: v.fromContextId, targetContextId: v.toContextId };
-}
-
-export function mapLineageResult(v: any): GetContextLineageResult {
-  return {
-    contextId: v.contextId,
-    traces: v.traces.map((t: any) => ({ ...t, createdAt: t.createdAt.toISOString() })),
-  };
-}
-
-export function mapCreateProfileResult(v: any): CreateProcessingProfileSuccess {
-  return { profileId: v.profileId, version: v.version };
-}
-
-export function mapUpdateProfileResult(v: any): UpdateProfileResult {
-  return { profileId: v.profileId, version: v.version };
-}
-
-export function mapDeprecateProfileResult(v: any): DeprecateProfileResult {
-  return { profileId: v.profileId };
-}
-
-/**
- * Maps a TransitionContextStateInput (targetState: "ACTIVE"|"DEPRECATED"|"ARCHIVED")
- * to the use case input (action: "activate"|"deprecate"|"archive").
- */
-export function mapTransitionInput(input: TransitionContextStateInput) {
-  const actionMap = { ACTIVE: "activate", DEPRECATED: "deprecate", ARCHIVED: "archive" } as const;
-  return {
-    contextId: input.contextId,
-    action: actionMap[input.targetState],
-    ...(input.reason && { reason: input.reason }),
-  };
-}
-
-/**
- * Convenience: execute transitionContextState use case with DTO mapping.
- * Wraps the use case call + error handling + DTO mapping in a single function.
- */
-export async function executeTransitionContextState(
-  transitionContextState: TransitionContextState,
-  input: TransitionContextStateInput,
-): Promise<Result<KnowledgeError, TransitionContextStateResult>> {
-  try {
-    const result = await transitionContextState.execute(mapTransitionInput(input));
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.TransitionState, result.error, []));
-    return Result.ok(mapTransitionResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.TransitionState, error, []));
-  }
-}
-
-/**
- * Convenience: execute removeSourceFromContext use case with DTO mapping.
- */
-export async function executeRemoveSource(
-  removeSourceFromContext: RemoveSourceFromContext,
-  input: { contextId: string; sourceId: string },
-): Promise<Result<KnowledgeError, RemoveSourceResult>> {
-  try {
-    const result = await removeSourceFromContext.execute(input);
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.RemoveSource, result.error, []));
-    return Result.ok(mapRemoveSourceResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.RemoveSource, error, []));
-  }
-}
-
-/**
- * Convenience: execute linkContexts use case with DTO mapping.
- */
-export async function executeLinkContexts(
-  linkContexts: LinkContexts,
-  input: { sourceContextId: string; targetContextId: string; relationshipType: string },
-): Promise<Result<KnowledgeError, LinkContextsResult>> {
-  try {
-    const result = await linkContexts.execute({
-      fromContextId: input.sourceContextId,
-      toContextId: input.targetContextId,
-      relationship: input.relationshipType,
-    });
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Link, result.error, []));
-    return Result.ok(mapLinkResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Link, error, []));
-  }
-}
-
-/**
- * Convenience: execute unlinkContexts use case with DTO mapping.
- */
-export async function executeUnlinkContexts(
-  unlinkContexts: UnlinkContexts,
-  input: { sourceContextId: string; targetContextId: string },
-): Promise<Result<KnowledgeError, UnlinkContextsResult>> {
-  try {
-    const result = await unlinkContexts.execute({
-      fromContextId: input.sourceContextId,
-      toContextId: input.targetContextId,
-    });
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Unlink, result.error, []));
-    return Result.ok(mapUnlinkResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Unlink, error, []));
-  }
-}
-
-/**
- * Convenience: execute getContextLineage with DTO mapping.
- */
-export async function executeGetContextLineage(
-  lineageQueries: LineageQueries,
-  contextId: string,
-): Promise<Result<KnowledgeError, GetContextLineageResult>> {
-  try {
-    const result = await lineageQueries.getLineage(contextId);
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Link, result.error, []));
-    return Result.ok(mapLineageResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Link, error, []));
-  }
-}
-
-/**
- * Convenience: list sources with DTO mapping wrapped in Result.
- */
-export async function executeListSources(
-  sourceQueries: SourceQueries,
-): Promise<Result<KnowledgeError, ListSourcesResult>> {
-  try {
-    const sources = await sourceQueries.listAll();
-    return Result.ok(mapSourcesToDTO(sources));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Ingestion, error, []));
-  }
-}
-
-/**
- * Convenience: get source detail with DTO mapping wrapped in Result.
- */
-export async function executeGetSource(
-  sourceQueries: SourceQueries,
-  sourceId: string,
-): Promise<Result<KnowledgeError, GetSourceResult>> {
-  try {
-    const source = await sourceQueries.getById(sourceId);
-    if (!source) {
-      throw { message: `Source ${sourceId} not found`, code: "SOURCE_NOT_FOUND" };
-    }
-    return Result.ok(await mapSourceToDetailDTO(source, sourceQueries));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Ingestion, error, []));
-  }
-}
-
-/**
- * Convenience: create profile with DTO mapping wrapped in Result.
- */
-export async function executeCreateProfile(
-  createProcessingProfile: CreateProcessingProfile,
-  input: { id: string; name: string; preparation: any; fragmentation: any; projection: any },
-): Promise<Result<KnowledgeError, CreateProcessingProfileSuccess>> {
-  try {
-    const result = await createProcessingProfile.execute(input);
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, result.error, []));
-    return Result.ok(mapCreateProfileResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
-  }
-}
-
-/**
- * Convenience: list profiles with DTO mapping wrapped in Result.
- */
-export async function executeListProfiles(
-  profileQueries: ProfileQueries,
-): Promise<Result<KnowledgeError, ListProfilesResult>> {
-  try {
-    const profiles = await profileQueries.listAll();
-    return Result.ok(mapProfilesToDTO(profiles));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
-  }
-}
-
-/**
- * Convenience: update profile with DTO mapping wrapped in Result.
- */
-export async function executeUpdateProfile(
-  updateProcessingProfile: UpdateProcessingProfile,
-  input: { id: string; name?: string; preparation?: any; fragmentation?: any; projection?: any },
-): Promise<Result<KnowledgeError, UpdateProfileResult>> {
-  try {
-    const result = await updateProcessingProfile.execute(input);
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, result.error, []));
-    return Result.ok(mapUpdateProfileResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
-  }
-}
-
-/**
- * Convenience: deprecate profile with DTO mapping wrapped in Result.
- */
-export async function executeDeprecateProfile(
-  deprecateProcessingProfile: DeprecateProcessingProfile,
-  input: { id: string; reason: string },
-): Promise<Result<KnowledgeError, DeprecateProfileResult>> {
-  try {
-    const result = await deprecateProcessingProfile.execute(input);
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, result.error, []));
-    return Result.ok(mapDeprecateProfileResult(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
-  }
-}
-
-// ── Dependency resolver ───────────────────────────────────────────────────────
+// ── Dependency resolver ──────────────────────────────────────────────
 
 export async function resolveDependencies(
   policy: OrchestratorPolicy,
@@ -409,7 +103,7 @@ export async function resolveDependencies(
   const deprecateProcessingProfile = new DeprecateProcessingProfile(profileRepository, profileEventPublisher);
   const profileQueries = new ProfileQueries(profileRepository);
 
-  // ── Projection use cases ───────────────────────────────────────────
+  // ── Projection use cases ──────────────────────────────────────────
   const [
     { GenerateProjection },
     { ProjectionQueries },
@@ -430,7 +124,7 @@ export async function resolveDependencies(
   const projectionQueries = new ProjectionQueries(projectionRepository);
   const cleanupProjections = new CleanupProjections(projectionRepository, vectorStore.write);
 
-  // ── Source ingestion modules ───────────────────────────────────────
+  // ── Source ingestion modules ──────────────────────────────────────
   const { resolveSourceIngestionModules } = await import(
     "../../../contexts/source-ingestion/composition/factory"
   );
@@ -547,7 +241,7 @@ export async function resolveDependencies(
   const unlinkContexts = new UnlinkContexts(lineageInfra.repository);
   const lineageQueries = new LineageQueries(lineageInfra.repository);
 
-  // ── Cross-context adapters ─────────────────────────────────────────
+  // ── Cross-context adapters ────────────────────────────────────────
   const [
     { SourceIngestionAdapter },
     { ProjectionOperationsAdapter },
@@ -597,7 +291,7 @@ export async function resolveDependencies(
     sourceIngestionAdapter,
   );
 
-  // ── Search + Process ───────────────────────────────────────────────
+  // ── Search + Process ──────────────────────────────────────────────
   const [
     { ContextSourceAdapter },
     { SearchKnowledge },
@@ -605,7 +299,7 @@ export async function resolveDependencies(
   ] = await Promise.all([
     import("../../../contexts/knowledge-retrieval/semantic-query/infrastructure/adapters/ContextSourceAdapter"),
     import("../../../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge"),
-    import("../ProcessKnowledge"),
+    import("../orchestrators/ProcessKnowledge"),
   ]);
 
   const { semanticQueryFactory } = await import(
@@ -656,7 +350,7 @@ export async function resolveDependencies(
   };
 }
 
-// ── Public factory ────────────────────────────────────────────────────────────
+// ── Public factory ──────────────────────────────────────────────────
 
 export async function createKnowledgeApplication(
   policy: OrchestratorPolicy,

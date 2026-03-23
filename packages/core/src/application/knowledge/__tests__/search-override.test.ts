@@ -10,11 +10,9 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import {
-  createKnowledgeApplication,
-  executeCreateProfile,
-} from "../composition/knowledge.factory";
+import { createKnowledgeApplication } from "../composition/knowledge.factory";
 import type { KnowledgeApplication } from "../composition/knowledge.factory";
+import { executeCreateProfile } from "../boundary/executors";
 
 // ── Shared fixture ────────────────────────────────────────────────────
 
