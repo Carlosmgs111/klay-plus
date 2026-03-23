@@ -1,19 +1,22 @@
 /**
- * Knowledge — Unified Coordinator Module
+ * Knowledge — Unified Platform Module
  *
  * Runtime-agnostic application service that coordinates all 4 bounded contexts
  * into a unified knowledge platform.
  *
  * Public API:
- * - KnowledgeCoordinator: the single entry point (class = contract)
+ * - KnowledgePlatform: the single entry point (plain-object type = contract)
+ * - KnowledgeCoordinator: deprecated alias for KnowledgePlatform
  * - DTOs: input/output contracts (pipeline + lifecycle)
  * - KnowledgeError: error with operation step tracking
  * - OperationStep: enum of all operation stages
  * - createKnowledgePlatform(): factory function
  */
 
-export { KnowledgeCoordinator } from "./KnowledgeCoordinator";
-export type { ResolvedDependencies } from "./KnowledgeCoordinator";
+export type { KnowledgePlatform, ResolvedDependencies } from "./composition/knowledge.factory";
+
+/** @deprecated Use `KnowledgePlatform` instead. */
+export type { KnowledgePlatform as KnowledgeCoordinator } from "./composition/knowledge.factory";
 
 // ── Pipeline DTOs ──────────────────────────────────────────────────
 export type {

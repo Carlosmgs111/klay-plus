@@ -37,48 +37,12 @@ export type {
   RegisterSourceSuccess,
 } from "./application/use-cases/RegisterSource";
 
-export { GetSource } from "./application/use-cases/GetSource";
-export type { GetSourceInput } from "./application/use-cases/GetSource";
-
-export { ListSources } from "./application/use-cases/ListSources";
-
-export { GetSourceCount } from "./application/use-cases/GetSourceCount";
-
+export { SourceQueries } from "./application/use-cases/SourceQueries";
 export { ExtractSource } from "./application/use-cases/ExtractSource";
-export type {
-  ExtractSourceInput,
-  ExtractSourceSuccess,
-} from "./application/use-cases/ExtractSource";
-
-export { GetExtractedText } from "./application/use-cases/GetExtractedText";
-export type { GetExtractedTextInput } from "./application/use-cases/GetExtractedText";
-
+export type { ExtractSourceInput, ExtractSourceSuccess } from "./application/use-cases/ExtractSource";
 export { IngestAndExtract } from "./application/use-cases/IngestAndExtract";
-export type {
-  IngestAndExtractInput,
-  IngestAndExtractSuccess,
-} from "./application/use-cases/IngestAndExtract";
-
-export { IngestFile } from "./application/use-cases/IngestFile";
-export type {
-  IngestFileInput,
-  IngestFileSuccess,
-} from "./application/use-cases/IngestFile";
-
-export { IngestExternalResource } from "./application/use-cases/IngestExternalResource";
-export type {
-  IngestExternalResourceInput,
-  IngestExternalResourceSuccess,
-} from "./application/use-cases/IngestExternalResource";
-
-export { BatchRegister } from "./application/use-cases/BatchRegister";
-export type {
-  BatchRegisterInput,
-  BatchRegisterItemResult,
-} from "./application/use-cases/BatchRegister";
-
-export { BatchIngestAndExtract } from "./application/use-cases/BatchIngestAndExtract";
-export type {
-  BatchIngestAndExtractInput,
-  BatchIngestAndExtractItemResult,
-} from "./application/use-cases/BatchIngestAndExtract";
+export type { IngestAndExtractInput, IngestAndExtractSuccess } from "./application/use-cases/IngestAndExtract";
+export { IngestSource } from "./application/use-cases/IngestSource";
+export type { IngestSourceInput, IngestSourceResult } from "./application/use-cases/IngestSource";
+export { BatchIngest } from "./application/use-cases/BatchIngest";
+export type { BatchIngestItemResult } from "./application/use-cases/BatchIngest";

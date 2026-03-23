@@ -1,16 +1,15 @@
-import type { ListProcessingProfiles } from "../../../../semantic-processing/processing-profile/application/use-cases/ListProcessingProfiles";
+import type { ProfileQueries } from "../../../../semantic-processing/processing-profile/application/use-cases/ProfileQueries";
 import type { ActiveProfileRef, ActiveProfilesPort } from "../../application/ports/ActiveProfilesPort";
 
 /**
- * Adapts ListProcessingProfiles use case to the ActiveProfilesPort interface.
+ * Adapts ProfileQueries to the ActiveProfilesPort interface.
+ * Updated to use ProfileQueries.listActive() directly.
  */
 export class ActiveProfilesAdapter implements ActiveProfilesPort {
-  constructor(private readonly _listProfiles: ListProcessingProfiles) {}
+  constructor(private readonly _profileQueries: ProfileQueries) {}
 
   async listActiveProfiles(): Promise<ActiveProfileRef[]> {
-    const all = await this._listProfiles.execute();
-    return all
-      .filter((p) => p.status === "ACTIVE")
-      .map((p) => ({ id: p.id.value }));
+    const active = await this._profileQueries.listActive();
+    return active.map((p) => ({ id: p.id.value }));
   }
 }

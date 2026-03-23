@@ -13,7 +13,7 @@ import * as path from "path";
 import { fileURLToPath } from "url";
 
 import { createKnowledgePlatform } from "../composition/knowledge.factory";
-import type { KnowledgeCoordinator } from "../KnowledgeCoordinator";
+import type { KnowledgePlatform } from "../composition/knowledge.factory";
 import { OperationStep } from "../domain/OperationStep";
 import { KnowledgeError } from "../domain/KnowledgeError";
 
@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 const FIXTURES_DIR = path.resolve(__dirname, "../../../tests/integration/fixtures");
 
 describe("Knowledge Orchestrator — E2E", () => {
-  let knowledge: KnowledgeCoordinator;
+  let knowledge: KnowledgePlatform;
   let profileId: string;
 
   beforeAll(async () => {

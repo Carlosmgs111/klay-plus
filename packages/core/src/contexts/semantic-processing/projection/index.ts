@@ -56,15 +56,9 @@ export type {
   GenerateProjectionCommand,
   GenerateProjectionResult,
 } from "./application/use-cases/GenerateProjection";
-export { ProcessContent } from "./application/use-cases/ProcessContent";
-export type { ProcessContentInput, ProcessContentSuccess } from "./application/use-cases/ProcessContent";
-export { BatchProcessContent } from "./application/use-cases/BatchProcessContent";
-export type { BatchProcessContentItem, BatchProcessContentResult } from "./application/use-cases/BatchProcessContent";
-export { FindExistingProjection } from "./application/use-cases/FindExistingProjection";
-export type { ExistingProjectionInfo } from "./application/use-cases/FindExistingProjection";
-export { GetProjectionsForSources } from "./application/use-cases/GetProjectionsForSources";
-export { GetAllProjectionsForSources } from "./application/use-cases/GetAllProjectionsForSources";
-export { CleanupSourceProjections } from "./application/use-cases/CleanupSourceProjections";
-export { CleanupSourceProjectionForProfile } from "./application/use-cases/CleanupSourceProjectionForProfile";
+export { ProjectionQueries } from "./application/use-cases/ProjectionQueries";
+export type { ExistingProjectionInfo } from "./application/use-cases/ProjectionQueries";
+export { CleanupProjections } from "./application/use-cases/CleanupProjections";
+export type { CleanupProjectionsInput } from "./application/use-cases/CleanupProjections";
 export { ProcessSourceAllProfiles } from "./application/use-cases/ProcessSourceAllProfiles";
 export type { SourceIngestionPort } from "./application/ports/SourceIngestionPort";

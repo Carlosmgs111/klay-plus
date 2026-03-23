@@ -11,7 +11,7 @@ const SERVER_FLOW = `React Component
   → fetch('/api/pipeline/...' | '/api/lifecycle/...')
   → Astro API Route
   → toRESTResponse(coordinator.method(body))
-  → KnowledgeCoordinator
+  → KnowledgePlatform
   → (NeDB + Hash/OpenAI embeddings)
   → Response JSON`;
 
@@ -21,7 +21,7 @@ const BROWSER_FLOW = `React Component
   → dynamic import("@klay/core")
   → createKnowledgePlatform({ provider: "browser" })
   → unwrapResult(coordinator.method(input))
-  → KnowledgeCoordinator
+  → KnowledgePlatform
   → (IndexedDB + Hash/WebLLM embeddings)
   → UIResult<T>`;
 

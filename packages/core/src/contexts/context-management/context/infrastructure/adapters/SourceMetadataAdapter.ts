@@ -1,14 +1,15 @@
-import type { GetSource } from "../../../../source-ingestion/source/application/use-cases/GetSource";
+import type { SourceQueries } from "../../../../source-ingestion/source/application/use-cases/SourceQueries";
 import type { SourceMetadata, SourceMetadataPort } from "../../application/ports/SourceMetadataPort";
 
 /**
- * Adapts GetSource use case to the SourceMetadataPort interface.
+ * Adapts SourceQueries to the SourceMetadataPort interface.
+ * Updated to use SourceQueries.getById() directly.
  */
 export class SourceMetadataAdapter implements SourceMetadataPort {
-  constructor(private readonly getSource: GetSource) {}
+  constructor(private readonly _sourceQueries: SourceQueries) {}
 
   async getSourceMetadata(sourceId: string): Promise<SourceMetadata | null> {
-    const source = await this.getSource.execute({ sourceId });
+    const source = await this._sourceQueries.getById(sourceId);
     if (!source) return null;
     return { name: source.name, type: source.type };
   }

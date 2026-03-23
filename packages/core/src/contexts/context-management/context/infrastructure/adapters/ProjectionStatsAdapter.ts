@@ -1,15 +1,14 @@
-import type { GetAllProjectionsForSources } from "../../../../semantic-processing/projection/application/use-cases/GetAllProjectionsForSources";
+import type { ProjectionQueries } from "../../../../semantic-processing/projection/application/use-cases/ProjectionQueries";
 import type { ProjectionSummary, ProjectionStatsPort } from "../../application/ports/ProjectionStatsPort";
 
 /**
- * Adapts GetAllProjectionsForSources use case to the ProjectionStatsPort interface.
- * The return type is structurally compatible: GetAllProjectionsForSources returns
- * ExistingProjectionInfo[] which has the same fields as ProjectionSummary.
+ * Adapts ProjectionQueries to the ProjectionStatsPort interface.
+ * Updated to use ProjectionQueries.listAllForSources() directly.
  */
 export class ProjectionStatsAdapter implements ProjectionStatsPort {
-  constructor(private readonly _getAllProjectionsForSources: GetAllProjectionsForSources) {}
+  constructor(private readonly _projectionQueries: ProjectionQueries) {}
 
   async getAllProjectionsForSources(sourceIds: string[]): Promise<Map<string, ProjectionSummary[]>> {
-    return this._getAllProjectionsForSources.execute(sourceIds);
+    return this._projectionQueries.listAllForSources(sourceIds);
   }
 }

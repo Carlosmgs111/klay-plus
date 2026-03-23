@@ -1,7 +1,7 @@
 import type { SourceIngestionPort } from "../ports/SourceIngestionPort";
-import type { ListProcessingProfiles } from "../../../processing-profile/application/use-cases/ListProcessingProfiles";
-import type { FindExistingProjection } from "./FindExistingProjection";
-import type { ProcessContent } from "./ProcessContent";
+import type { ProfileQueries } from "../../../processing-profile/application/use-cases/ProfileQueries";
+import type { ProjectionQueries } from "./ProjectionQueries";
+import type { GenerateProjection } from "./GenerateProjection";
 import type { ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult } from "../../../../../application/knowledge/dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { KnowledgeError } from "../../../../../application/knowledge/domain/KnowledgeError";
@@ -13,12 +13,13 @@ import { OperationStep } from "../../../../../application/knowledge/domain/Opera
  * Processes a source against all active processing profiles.
  * Uses SourceIngestionPort to access source existence and extracted text
  * without directly depending on SourceIngestionService.
+ * Updated to use ProfileQueries, ProjectionQueries, and GenerateProjection directly.
  */
 export class ProcessSourceAllProfiles {
   constructor(
-    private readonly _listProfiles: ListProcessingProfiles,
-    private readonly _findExistingProjection: FindExistingProjection,
-    private readonly _processContent: ProcessContent,
+    private readonly _profileQueries: ProfileQueries,
+    private readonly _projectionQueries: ProjectionQueries,
+    private readonly _generateProjection: GenerateProjection,
     private readonly _sourceIngestion: SourceIngestionPort,
   ) {}
 
@@ -48,22 +49,21 @@ export class ProcessSourceAllProfiles {
         );
       }
 
-      const allProfiles = await this._listProfiles.execute();
-      const activeProfiles = allProfiles.filter((p) => p.status === "ACTIVE");
+      const activeProfiles = await this._profileQueries.listActive();
 
       const profileResults: Array<{ profileId: string; processedCount: number; failedCount: number }> = [];
 
       for (const profile of activeProfiles) {
         const profileId = profile.id.value;
         try {
-          const existing = await this._findExistingProjection.execute(input.sourceId, profileId);
+          const existing = await this._projectionQueries.findExisting(input.sourceId, profileId);
           if (existing) {
             profileResults.push({ profileId, processedCount: 1, failedCount: 0 });
             continue;
           }
 
           const projectionId = crypto.randomUUID();
-          const result = await this._processContent.execute({
+          const result = await this._generateProjection.execute({
             projectionId,
             sourceId: input.sourceId,
             content: textResult.value.text,

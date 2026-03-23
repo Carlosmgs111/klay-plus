@@ -1,6 +1,6 @@
 import type { KnowledgeService } from "./knowledge-service";
 import type { ServiceResult } from "./types";
-import type { KnowledgeCoordinator } from "@klay/core";
+import type { KnowledgePlatform } from "@klay/core";
 import type {
   ProcessKnowledgeInput,
   ProcessKnowledgeSuccess,
@@ -16,21 +16,21 @@ import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
  * with IndexedDB storage and hash embeddings.
  */
 export class BrowserKnowledgeService implements KnowledgeService {
-  private _coordinatorPromise: Promise<KnowledgeCoordinator> | null = null;
+  private _coordinatorPromise: Promise<KnowledgePlatform> | null = null;
 
   constructor(
     private readonly configStore?: ConfigStore,
     private readonly profile?: InfrastructureProfile,
   ) {}
 
-  private _getCoordinator(): Promise<KnowledgeCoordinator> {
+  private _getCoordinator(): Promise<KnowledgePlatform> {
     if (!this._coordinatorPromise) {
       this._coordinatorPromise = this._initCoordinator();
     }
     return this._coordinatorPromise;
   }
 
-  private async _initCoordinator(): Promise<KnowledgeCoordinator> {
+  private async _initCoordinator(): Promise<KnowledgePlatform> {
     const { createKnowledgePlatform } = await import("@klay/core");
 
     const coordinator = await createKnowledgePlatform({
@@ -53,7 +53,7 @@ export class BrowserKnowledgeService implements KnowledgeService {
     return coordinator;
   }
 
-  private async _call<T>(fn: (c: KnowledgeCoordinator) => Promise<any>): Promise<ServiceResult<T>> {
+  private async _call<T>(fn: (c: KnowledgePlatform) => Promise<any>): Promise<ServiceResult<T>> {
     const { unwrapResult } = await import("@klay/core/result");
     const coordinator = await this._getCoordinator();
     return unwrapResult(await fn(coordinator)) as ServiceResult<T>;

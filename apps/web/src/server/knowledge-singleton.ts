@@ -1,10 +1,10 @@
 import { createKnowledgePlatform } from "@klay/core";
-import type { KnowledgeCoordinator } from "@klay/core";
+import type { KnowledgePlatform } from "@klay/core";
 import type { ConfigStore } from "@klay/core/config";
 import { resolveInfrastructureProfile } from "@klay/core/config";
 import { InMemorySecretStore } from "@klay/core/secrets";
 
-let _coordinatorPromise: Promise<KnowledgeCoordinator> | null = null;
+let _coordinatorPromise: Promise<KnowledgePlatform> | null = null;
 let _configStore: ConfigStore | null = null;
 
 const DB_PATH = process.env.KLAY_DB_PATH ?? "./data";
@@ -21,14 +21,14 @@ export async function getConfigStore(): Promise<ConfigStore> {
   return _configStore;
 }
 
-function _getCoordinator(): Promise<KnowledgeCoordinator> {
+function _getCoordinator(): Promise<KnowledgePlatform> {
   if (!_coordinatorPromise) {
     _coordinatorPromise = _createCoordinator();
   }
   return _coordinatorPromise;
 }
 
-async function _createCoordinator(): Promise<KnowledgeCoordinator> {
+async function _createCoordinator(): Promise<KnowledgePlatform> {
   const configStore = await getConfigStore();
 
   // Create SecretStore and seed from env vars for immediate use
@@ -71,7 +71,7 @@ export function invalidateAdapters(): void {
   _coordinatorPromise = null;
 }
 
-export async function getCoordinator(): Promise<KnowledgeCoordinator> {
+export async function getCoordinator(): Promise<KnowledgePlatform> {
   return _getCoordinator();
 }
 

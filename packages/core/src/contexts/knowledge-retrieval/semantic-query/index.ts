@@ -9,7 +9,7 @@ export type {
   ContextSourcePort,
 } from "./domain";
 
-export { ExecuteSemanticQuery, SemanticQueryUseCases, SearchKnowledge, BatchQuery } from "./application";
+export { ExecuteSemanticQuery, SemanticQueryUseCases, SearchKnowledge } from "./application";
 export type { ExecuteSemanticQueryCommand } from "./application";
 
 export { ContextSourceAdapter } from "./infrastructure/adapters/ContextSourceAdapter";

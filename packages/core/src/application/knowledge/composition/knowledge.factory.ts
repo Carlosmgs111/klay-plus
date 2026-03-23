@@ -1,5 +1,458 @@
-import type { KnowledgeCoordinator, ResolvedDependencies } from "../KnowledgeCoordinator";
 import type { OrchestratorPolicy } from "../../composition/OrchestratorPolicy";
+import { Result } from "../../../shared/domain/Result";
+import { KnowledgeError } from "../domain/KnowledgeError";
+import { OperationStep } from "../domain/OperationStep";
+import { ProcessKnowledge } from "../ProcessKnowledge";
+import type {
+  ProcessKnowledgeInput,
+  ProcessKnowledgeSuccess,
+  SearchKnowledgeInput,
+  SearchKnowledgeSuccess,
+  CreateProcessingProfileInput,
+  CreateProcessingProfileSuccess,
+  ListProfilesResult,
+  UpdateProfileInput,
+  UpdateProfileResult,
+  DeprecateProfileInput,
+  DeprecateProfileResult,
+  GetContextDetailsInput,
+  GetContextDetailsResult,
+  ListContextsSummaryResult,
+  ListContextsResult,
+  GetSourceInput,
+  GetSourceResult,
+  GetSourceContextsInput,
+  GetSourceContextsResult,
+  RemoveSourceInput,
+  RemoveSourceResult,
+  ReconcileProjectionsInput,
+  ReconcileProjectionsResult,
+  ReconcileAllProfilesInput,
+  ReconcileAllProfilesResult,
+  ProcessSourceAllProfilesInput,
+  ProcessSourceAllProfilesResult,
+  LinkContextsInput,
+  LinkContextsResult,
+  UnlinkContextsInput,
+  UnlinkContextsResult,
+  CreateContextInput,
+  CreateContextResult,
+  GetContextLineageInput,
+  GetContextLineageResult,
+  UpdateContextProfileInput,
+  UpdateContextProfileResult,
+  TransitionContextStateInput,
+  TransitionContextStateResult,
+  ListSourcesResult,
+} from "../dtos";
+import type { SourceQueries } from "../../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
+import type { CreateProcessingProfile } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/CreateProcessingProfile";
+import type { UpdateProcessingProfile } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/UpdateProcessingProfile";
+import type { DeprecateProcessingProfile } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/DeprecateProcessingProfile";
+import type { ProfileQueries } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/ProfileQueries";
+import type { CreateContext } from "../../../contexts/context-management/context/application/use-cases/CreateContext";
+import type { AddSourceToContext } from "../../../contexts/context-management/context/application/use-cases/AddSourceToContext";
+import type { RemoveSourceFromContext } from "../../../contexts/context-management/context/application/use-cases/RemoveSourceFromContext";
+import type { TransitionContextState } from "../../../contexts/context-management/context/application/use-cases/TransitionContextState";
+import type { UpdateContextProfile } from "../../../contexts/context-management/context/application/use-cases/UpdateContextProfile";
+import type { ContextQueries } from "../../../contexts/context-management/context/application/use-cases/ContextQueries";
+import type { ReconcileProjections as ReconcileProjectionsCM } from "../../../contexts/context-management/context/application/use-cases/ReconcileProjections";
+import type { LinkContexts } from "../../../contexts/context-management/lineage/application/use-cases/LinkContexts";
+import type { UnlinkContexts } from "../../../contexts/context-management/lineage/application/use-cases/UnlinkContexts";
+import type { LineageQueries } from "../../../contexts/context-management/lineage/application/use-cases/LineageQueries";
+import type { ProcessSourceAllProfiles } from "../../../contexts/semantic-processing/projection/application/use-cases/ProcessSourceAllProfiles";
+import type { SearchKnowledge } from "../../../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
+
+// ── Public platform type ──────────────────────────────────────────────────────
+
+/**
+ * KnowledgePlatform — the single public entry point for all knowledge operations.
+ *
+ * Plain-object type returned by `createKnowledgePlatform()`. Replaces the
+ * former `KnowledgeCoordinator` class (same method signatures, duck-typed).
+ */
+export type KnowledgePlatform = {
+  // ── Cross-cutting ────────────────────────────────────────────────
+  process(input: ProcessKnowledgeInput): Promise<Result<KnowledgeError, ProcessKnowledgeSuccess>>;
+  search(input: SearchKnowledgeInput): Promise<Result<KnowledgeError, SearchKnowledgeSuccess>>;
+  // ── Contexts ─────────────────────────────────────────────────────
+  createContext(input: CreateContextInput): Promise<Result<KnowledgeError, CreateContextResult>>;
+  getContext(input: GetContextDetailsInput): Promise<Result<KnowledgeError, GetContextDetailsResult>>;
+  listContexts(): Promise<Result<KnowledgeError, ListContextsSummaryResult>>;
+  listContextRefs(): Promise<Result<KnowledgeError, ListContextsResult>>;
+  transitionContextState(input: TransitionContextStateInput): Promise<Result<KnowledgeError, TransitionContextStateResult>>;
+  updateContextProfile(input: UpdateContextProfileInput): Promise<Result<KnowledgeError, UpdateContextProfileResult>>;
+  reconcileProjections(input: ReconcileProjectionsInput): Promise<Result<KnowledgeError, ReconcileProjectionsResult>>;
+  reconcileAllProfiles(input: ReconcileAllProfilesInput): Promise<Result<KnowledgeError, ReconcileAllProfilesResult>>;
+  removeSourceFromContext(input: RemoveSourceInput): Promise<Result<KnowledgeError, RemoveSourceResult>>;
+  linkContexts(input: LinkContextsInput): Promise<Result<KnowledgeError, LinkContextsResult>>;
+  unlinkContexts(input: UnlinkContextsInput): Promise<Result<KnowledgeError, UnlinkContextsResult>>;
+  getContextLineage(input: GetContextLineageInput): Promise<Result<KnowledgeError, GetContextLineageResult>>;
+  // ── Sources ──────────────────────────────────────────────────────
+  listSources(): Promise<Result<KnowledgeError, ListSourcesResult>>;
+  getSource(input: GetSourceInput): Promise<Result<KnowledgeError, GetSourceResult>>;
+  getSourceContexts(input: GetSourceContextsInput): Promise<Result<KnowledgeError, GetSourceContextsResult>>;
+  processSourceAllProfiles(input: ProcessSourceAllProfilesInput): Promise<Result<KnowledgeError, ProcessSourceAllProfilesResult>>;
+  // ── Profiles ─────────────────────────────────────────────────────
+  createProfile(input: CreateProcessingProfileInput): Promise<Result<KnowledgeError, CreateProcessingProfileSuccess>>;
+  listProfiles(): Promise<Result<KnowledgeError, ListProfilesResult>>;
+  updateProfile(input: UpdateProfileInput): Promise<Result<KnowledgeError, UpdateProfileResult>>;
+  deprecateProfile(input: DeprecateProfileInput): Promise<Result<KnowledgeError, DeprecateProfileResult>>;
+};
+
+// ── Resolved dependencies (kept for downstream use) ──────────────────────────
+
+export interface ResolvedDependencies {
+  // Source Ingestion (consolidated query class)
+  sourceQueries: SourceQueries;
+  // Semantic Processing write use cases
+  createProcessingProfile: CreateProcessingProfile;
+  updateProcessingProfile: UpdateProcessingProfile;
+  deprecateProcessingProfile: DeprecateProcessingProfile;
+  // Semantic Processing read (consolidated query class)
+  profileQueries: ProfileQueries;
+  processKnowledge: ProcessKnowledge;
+  // Context-management read (consolidated query class)
+  contextQueries: ContextQueries;
+  reconcileProjections: ReconcileProjectionsCM;
+  processSourceAllProfiles: ProcessSourceAllProfiles;
+  searchKnowledge: SearchKnowledge;
+  // Context use cases (write)
+  createContext: CreateContext;
+  addSourceToContext: AddSourceToContext;
+  removeSourceFromContext: RemoveSourceFromContext;
+  transitionContextState: TransitionContextState;
+  updateContextProfile: UpdateContextProfile;
+  // Lineage use cases
+  linkContexts: LinkContexts;
+  unlinkContexts: UnlinkContexts;
+  lineageQueries: LineageQueries;
+}
+
+// ── Private helpers (module-level, mirror of old class helpers) ───────────────
+
+async function _query<T>(
+  step: OperationStep,
+  fn: () => Promise<T>,
+): Promise<Result<KnowledgeError, T>> {
+  try {
+    return Result.ok(await fn());
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(step, error, []));
+  }
+}
+
+async function _wrap<T, R>(
+  step: OperationStep,
+  fn: () => Promise<Result<any, T>>,
+  map: (v: T) => R,
+): Promise<Result<KnowledgeError, R>> {
+  try {
+    const result = await fn();
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(step, result.error, []));
+    return Result.ok(map(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(step, error, []));
+  }
+}
+
+// ── Builder ───────────────────────────────────────────────────────────────────
+
+function buildPlatform(deps: ResolvedDependencies): KnowledgePlatform {
+  return {
+    // ── Cross-cutting ────────────────────────────────────────────────
+
+    process(input: ProcessKnowledgeInput) {
+      return deps.processKnowledge.execute(input);
+    },
+
+    search(input: SearchKnowledgeInput) {
+      return deps.searchKnowledge.execute(input);
+    },
+
+    // ── Contexts ─────────────────────────────────────────────────────
+
+    async createContext(input: CreateContextInput) {
+      try {
+        const createResult = await deps.createContext.execute({
+          id: input.id,
+          name: input.name,
+          description: input.description,
+          language: input.language,
+          requiredProfileId: input.requiredProfileId,
+          createdBy: input.createdBy,
+          tags: input.tags,
+          attributes: input.attributes,
+        });
+
+        if (createResult.isFail()) {
+          return Result.fail(
+            KnowledgeError.fromStep(OperationStep.CreateContext, createResult.error, []),
+          );
+        }
+
+        // Auto-activate for low-friction UX (Draft → Active)
+        const activateResult = await deps.transitionContextState.execute({
+          contextId: createResult.value.id.value,
+          action: "activate",
+        });
+
+        if (activateResult.isFail()) {
+          return Result.fail(
+            KnowledgeError.fromStep(OperationStep.ActivateContext, activateResult.error, []),
+          );
+        }
+
+        return Result.ok({
+          contextId: activateResult.value.id.value,
+          state: activateResult.value.state,
+        });
+      } catch (error) {
+        return Result.fail(
+          KnowledgeError.fromStep(OperationStep.CreateContext, error, []),
+        );
+      }
+    },
+
+    getContext(input: GetContextDetailsInput) {
+      return deps.contextQueries.getDetail(input.contextId);
+    },
+
+    listContexts() {
+      return deps.contextQueries.listSummary();
+    },
+
+    listContextRefs() {
+      return deps.contextQueries.listRefs();
+    },
+
+    transitionContextState(input: TransitionContextStateInput) {
+      return _wrap(
+        OperationStep.TransitionState,
+        () => {
+          switch (input.targetState) {
+            case "ACTIVE":
+              return deps.transitionContextState.execute({ contextId: input.contextId, action: "activate" });
+            case "DEPRECATED":
+              return deps.transitionContextState.execute({ contextId: input.contextId, action: "deprecate", reason: input.reason ?? "" });
+            case "ARCHIVED":
+              return deps.transitionContextState.execute({ contextId: input.contextId, action: "archive" });
+          }
+        },
+        (ctx) => ({ contextId: ctx.id.value, state: ctx.state }),
+      );
+    },
+
+    async updateContextProfile(input: UpdateContextProfileInput) {
+      try {
+        const result = await deps.updateContextProfile.execute({
+          contextId: input.contextId,
+          profileId: input.profileId,
+        });
+
+        if (result.isFail()) {
+          return Result.fail(
+            KnowledgeError.fromStep(OperationStep.UpdateContextProfile, result.error, []),
+          );
+        }
+
+        const updatedContext = result.value;
+        let reconciled: { processedCount: number; failedCount: number } | undefined;
+
+        // Auto-reconcile projections if context has active sources
+        if (updatedContext.activeSources.length > 0) {
+          const reconcileResult = await deps.reconcileProjections.execute({
+            contextId: input.contextId,
+            profileId: input.profileId,
+          });
+
+          if (reconcileResult.isOk()) {
+            reconciled = {
+              processedCount: reconcileResult.value.processedCount,
+              failedCount: reconcileResult.value.failedCount,
+            };
+          }
+        }
+
+        return Result.ok({
+          contextId: updatedContext.id.value,
+          profileId: updatedContext.requiredProfileId,
+          reconciled,
+        });
+      } catch (error) {
+        return Result.fail(
+          KnowledgeError.fromStep(OperationStep.UpdateContextProfile, error, []),
+        );
+      }
+    },
+
+    reconcileProjections(input: ReconcileProjectionsInput) {
+      return deps.reconcileProjections.execute(input);
+    },
+
+    reconcileAllProfiles(input: ReconcileAllProfilesInput) {
+      return deps.reconcileProjections.executeAllProfiles(input);
+    },
+
+    removeSourceFromContext(input: RemoveSourceInput) {
+      return _wrap(
+        OperationStep.RemoveSource,
+        () => deps.removeSourceFromContext.execute({ contextId: input.contextId, sourceId: input.sourceId }),
+        (ctx) => ({ contextId: ctx.id.value, version: ctx.currentVersion?.version ?? 0 }),
+      );
+    },
+
+    linkContexts(input: LinkContextsInput) {
+      return _wrap(
+        OperationStep.Link,
+        () => deps.linkContexts.execute({ fromContextId: input.sourceContextId, toContextId: input.targetContextId, relationship: input.relationshipType }),
+        (v) => ({ sourceContextId: v.fromContextId, targetContextId: v.toContextId }),
+      );
+    },
+
+    unlinkContexts(input: UnlinkContextsInput) {
+      return _wrap(
+        OperationStep.Unlink,
+        () => deps.unlinkContexts.execute({ fromContextId: input.sourceContextId, toContextId: input.targetContextId }),
+        (v) => ({ sourceContextId: v.fromContextId, targetContextId: v.toContextId }),
+      );
+    },
+
+    getContextLineage(input: GetContextLineageInput) {
+      return _wrap(
+        OperationStep.Link,
+        () => deps.lineageQueries.getLineage(input.contextId),
+        (v) => ({
+          contextId: v.contextId,
+          traces: v.traces.map((t: any) => ({ ...t, createdAt: t.createdAt.toISOString() })),
+        }),
+      );
+    },
+
+    // ── Sources ──────────────────────────────────────────────────────
+
+    listSources() {
+      return _query(OperationStep.Ingestion, async () => {
+        const sources = await deps.sourceQueries.listAll();
+        return {
+          sources: sources.map((s) => ({
+            id: s.id.value,
+            name: s.name,
+            type: s.type,
+            uri: s.uri,
+            hasBeenExtracted: s.hasBeenExtracted,
+            currentVersion: s.currentVersion?.version ?? null,
+            registeredAt: s.registeredAt.toISOString(),
+          })),
+          total: sources.length,
+        };
+      });
+    },
+
+    getSource(input: GetSourceInput) {
+      return _query(OperationStep.Ingestion, async () => {
+        const source = await deps.sourceQueries.getById(input.sourceId);
+        if (!source) {
+          throw { message: `Source ${input.sourceId} not found`, code: "SOURCE_NOT_FOUND" };
+        }
+
+        let extractedTextPreview: string | null = null;
+        const textResult = await deps.sourceQueries.getExtractedText(input.sourceId);
+        if (textResult.isOk()) {
+          const text = textResult.value.text;
+          extractedTextPreview = text.length > 500 ? text.slice(0, 500) + "..." : text;
+        }
+
+        return {
+          source: {
+            id: source.id.value,
+            name: source.name,
+            type: source.type,
+            uri: source.uri,
+            hasBeenExtracted: source.hasBeenExtracted,
+            currentVersion: source.currentVersion?.version ?? null,
+            registeredAt: source.registeredAt.toISOString(),
+            versions: source.versions.map((v) => ({
+              version: v.version,
+              contentHash: v.contentHash,
+              extractedAt: v.extractedAt.toISOString(),
+            })),
+            extractedTextPreview,
+          },
+        };
+      });
+    },
+
+    getSourceContexts(input: GetSourceContextsInput) {
+      return deps.contextQueries.listBySource(input.sourceId);
+    },
+
+    processSourceAllProfiles(input: ProcessSourceAllProfilesInput) {
+      return deps.processSourceAllProfiles.execute(input);
+    },
+
+    // ── Profiles ─────────────────────────────────────────────────────
+
+    createProfile(input: CreateProcessingProfileInput) {
+      return _wrap(
+        OperationStep.Processing,
+        () => deps.createProcessingProfile.execute({
+          id: input.id,
+          name: input.name,
+          preparation: input.preparation,
+          fragmentation: input.fragmentation,
+          projection: input.projection,
+        }),
+        (v) => ({ profileId: v.profileId, version: v.version }),
+      );
+    },
+
+    listProfiles() {
+      return _query(OperationStep.Processing, async () => {
+        const profiles = await deps.profileQueries.listAll();
+        return {
+          profiles: profiles.map((p) => ({
+            id: p.id.value,
+            name: p.name,
+            version: p.version,
+            preparation: p.preparation.toDTO(),
+            fragmentation: p.fragmentation.toDTO(),
+            projection: p.projection.toDTO(),
+            status: p.status,
+            createdAt: p.createdAt.toISOString(),
+          })),
+        };
+      });
+    },
+
+    updateProfile(input: UpdateProfileInput) {
+      return _wrap(
+        OperationStep.Processing,
+        () => deps.updateProcessingProfile.execute({
+          id: input.id,
+          name: input.name,
+          preparation: input.preparation,
+          fragmentation: input.fragmentation,
+          projection: input.projection,
+        }),
+        (v) => ({ profileId: v.profileId, version: v.version }),
+      );
+    },
+
+    deprecateProfile(input: DeprecateProfileInput) {
+      return _wrap(
+        OperationStep.Processing,
+        () => deps.deprecateProcessingProfile.execute({
+          id: input.id,
+          reason: input.reason,
+        }),
+        (v) => ({ profileId: v.profileId }),
+      );
+    },
+  };
+}
+
+// ── Dependency resolver (unchanged logic) ─────────────────────────────────────
 
 export async function resolveDependencies(
   policy: OrchestratorPolicy,
@@ -36,43 +489,24 @@ export async function resolveDependencies(
   const { DeprecateProcessingProfile } = await import(
     "../../../contexts/semantic-processing/processing-profile/application/use-cases/DeprecateProcessingProfile"
   );
-  const { ListProcessingProfiles } = await import(
-    "../../../contexts/semantic-processing/processing-profile/application/use-cases/ListProcessingProfiles"
-  );
-  const { GetProcessingProfile } = await import(
-    "../../../contexts/semantic-processing/processing-profile/application/use-cases/GetProcessingProfile"
+  const { ProfileQueries } = await import(
+    "../../../contexts/semantic-processing/processing-profile/application/use-cases/ProfileQueries"
   );
 
   const createProcessingProfile = new CreateProcessingProfile(profileRepository, profileEventPublisher);
   const updateProcessingProfile = new UpdateProcessingProfile(profileRepository, profileEventPublisher);
   const deprecateProcessingProfile = new DeprecateProcessingProfile(profileRepository, profileEventPublisher);
-  const listProcessingProfiles = new ListProcessingProfiles(profileRepository);
-  const getProcessingProfile = new GetProcessingProfile(profileRepository);
+  const profileQueries = new ProfileQueries(profileRepository);
 
-  // ── Projection use cases (in order of deps) ───────────────────────
+  // ── Projection use cases ───────────────────────────────────────────
   const { GenerateProjection } = await import(
     "../../../contexts/semantic-processing/projection/application/use-cases/GenerateProjection"
   );
-  const { ProcessContent } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/ProcessContent"
+  const { ProjectionQueries } = await import(
+    "../../../contexts/semantic-processing/projection/application/use-cases/ProjectionQueries"
   );
-  const { FindExistingProjection } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/FindExistingProjection"
-  );
-  const { GetProjectionsForSources } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/GetProjectionsForSources"
-  );
-  const { GetAllProjectionsForSources } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/GetAllProjectionsForSources"
-  );
-  const { CleanupSourceProjections } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/CleanupSourceProjections"
-  );
-  const { CleanupSourceProjectionForProfile } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/CleanupSourceProjectionForProfile"
-  );
-  const { BatchProcessContent } = await import(
-    "../../../contexts/semantic-processing/projection/application/use-cases/BatchProcessContent"
+  const { CleanupProjections } = await import(
+    "../../../contexts/semantic-processing/projection/application/use-cases/CleanupProjections"
   );
 
   const generateProjection = new GenerateProjection(
@@ -82,13 +516,8 @@ export async function resolveDependencies(
     vectorWriteStore,
     projectionEventPublisher,
   );
-  const processContent = new ProcessContent(generateProjection);
-  const findExistingProjection = new FindExistingProjection(projectionRepository);
-  const getProjectionsForSources = new GetProjectionsForSources(findExistingProjection);
-  const getAllProjectionsForSources = new GetAllProjectionsForSources(projectionRepository);
-  const cleanupSourceProjections = new CleanupSourceProjections(projectionRepository, vectorWriteStore);
-  const cleanupSourceProjectionForProfile = new CleanupSourceProjectionForProfile(projectionRepository, vectorWriteStore);
-  const batchProcessContent = new BatchProcessContent(processContent);
+  const projectionQueries = new ProjectionQueries(projectionRepository);
+  const cleanupProjections = new CleanupProjections(projectionRepository, vectorWriteStore);
 
   // ── Knowledge retrieval context ────────────────────────────────────
   const { resolveKnowledgeRetrievalModules } = await import(
@@ -124,20 +553,8 @@ export async function resolveDependencies(
   });
 
   // ── Source Ingestion: individual use cases ─────────────────────────
-  const { ListSources } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/ListSources"
-  );
-  const { GetSource } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/GetSource"
-  );
-  const { GetExtractedText } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/GetExtractedText"
-  );
   const { RegisterSource } = await import(
     "../../../contexts/source-ingestion/source/application/use-cases/RegisterSource"
-  );
-  const { GetSourceCount } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/GetSourceCount"
   );
   const { ExtractSource } = await import(
     "../../../contexts/source-ingestion/source/application/use-cases/ExtractSource"
@@ -145,17 +562,11 @@ export async function resolveDependencies(
   const { IngestAndExtract } = await import(
     "../../../contexts/source-ingestion/source/application/use-cases/IngestAndExtract"
   );
-  const { IngestFile } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/IngestFile"
+  const { SourceQueries } = await import(
+    "../../../contexts/source-ingestion/source/application/use-cases/SourceQueries"
   );
-  const { IngestExternalResource } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/IngestExternalResource"
-  );
-  const { BatchRegister } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/BatchRegister"
-  );
-  const { BatchIngestAndExtract } = await import(
-    "../../../contexts/source-ingestion/source/application/use-cases/BatchIngestAndExtract"
+  const { IngestSource } = await import(
+    "../../../contexts/source-ingestion/source/application/use-cases/IngestSource"
   );
   const { StoreResource } = await import(
     "../../../contexts/source-ingestion/resource/application/use-cases/StoreResource"
@@ -182,7 +593,7 @@ export async function resolveDependencies(
     resourceEventPublisher,
   } = ingestionModules;
 
-  // Resource use cases
+  // Resource use cases (internal)
   const storeResource = new StoreResource(
     resourceRepository,
     resourceStorage,
@@ -200,17 +611,11 @@ export async function resolveDependencies(
   );
   const getResource = new GetResource(resourceRepository);
 
-  // Source read use cases
-  const listSources = new ListSources(sourceRepository);
-  const getSource = new GetSource(sourceRepository);
-  const getSourceCount = new GetSourceCount(sourceRepository);
-  const registerSource = new RegisterSource(sourceRepository, sourceEventPublisher);
+  // Source query class (replaces GetSource, ListSources, GetSourceCount, GetExtractedText)
+  const sourceQueries = new SourceQueries(sourceRepository, extractionJobRepository);
 
-  // Extraction-dependent source use cases
-  const getExtractedText = new GetExtractedText(
-    sourceRepository,
-    extractionJobRepository,
-  );
+  // Source write use cases
+  const registerSource = new RegisterSource(sourceRepository, sourceEventPublisher);
   const extractSource = new ExtractSource(
     sourceRepository,
     sourceEventPublisher,
@@ -223,20 +628,7 @@ export async function resolveDependencies(
     sourceEventPublisher,
     extractionUseCases.executeExtraction,
   );
-  const ingestFile = new IngestFile(
-    storeResource,
-    sourceRepository,
-    sourceEventPublisher,
-    extractionUseCases.executeExtraction,
-  );
-  const ingestExternalResource = new IngestExternalResource(
-    registerExternalResource,
-    sourceRepository,
-    sourceEventPublisher,
-    extractionUseCases.executeExtraction,
-  );
-  const batchRegister = new BatchRegister(registerSource);
-  const batchIngestAndExtract = new BatchIngestAndExtract(ingestAndExtract);
+  const ingestSource = new IngestSource(ingestAndExtract, storeResource, registerExternalResource);
 
   // ── Context-management infra (repos + event publishers) ────────────
   const { contextFactory } = await import(
@@ -266,15 +658,6 @@ export async function resolveDependencies(
   const { CreateContext } = await import(
     "../../../contexts/context-management/context/application/use-cases/CreateContext"
   );
-  const { GetContext } = await import(
-    "../../../contexts/context-management/context/application/use-cases/GetContext"
-  );
-  const { ListContexts } = await import(
-    "../../../contexts/context-management/context/application/use-cases/ListContexts"
-  );
-  const { GetContextsForSource } = await import(
-    "../../../contexts/context-management/context/application/use-cases/GetContextsForSource"
-  );
   const { AddSourceToContext } = await import(
     "../../../contexts/context-management/context/application/use-cases/AddSourceToContext"
   );
@@ -289,9 +672,6 @@ export async function resolveDependencies(
   );
 
   const createContext = new CreateContext(contextRepository, contextEventPublisher);
-  const getContext = new GetContext(contextRepository);
-  const listContexts = new ListContexts(contextRepository);
-  const getContextsForSource = new GetContextsForSource(contextRepository);
   const addSourceToContext = new AddSourceToContext(contextRepository, contextEventPublisher);
   const removeSourceFromContext = new RemoveSourceFromContext(contextRepository, contextEventPublisher);
   const transitionContextState = new TransitionContextState(contextRepository, contextEventPublisher);
@@ -302,7 +682,7 @@ export async function resolveDependencies(
     "../../../contexts/semantic-processing/projection/infrastructure/adapters/SourceIngestionAdapter"
   );
 
-  const sourceIngestionAdapter = new SourceIngestionAdapter(getSource, getExtractedText);
+  const sourceIngestionAdapter = new SourceIngestionAdapter(sourceQueries);
 
   // ── ProcessSourceAllProfiles ───────────────────────────────────────
   const { ProcessSourceAllProfiles } = await import(
@@ -310,9 +690,9 @@ export async function resolveDependencies(
   );
 
   const processSourceAllProfiles = new ProcessSourceAllProfiles(
-    listProcessingProfiles,
-    findExistingProjection,
-    processContent,
+    profileQueries,
+    projectionQueries,
+    generateProjection,
     sourceIngestionAdapter,
   );
 
@@ -322,9 +702,9 @@ export async function resolveDependencies(
   );
 
   const projectionOperationsAdapter = new ProjectionOperationsAdapter(
-    findExistingProjection,
-    cleanupSourceProjectionForProfile,
-    processContent,
+    projectionQueries,
+    cleanupProjections,
+    generateProjection,
   );
 
   // ── Context-management adapters ────────────────────────────────────
@@ -341,44 +721,31 @@ export async function resolveDependencies(
     "../../../contexts/context-management/context/infrastructure/adapters/ActiveProfilesAdapter"
   );
 
-  const sourceTextAdapter = new SourceTextAdapter(getExtractedText);
-  const sourceMetadataAdapter = new SourceMetadataAdapter(getSource);
-  const projectionStatsAdapter = new ProjectionStatsAdapter(getAllProjectionsForSources);
-  const activeProfilesAdapter = new ActiveProfilesAdapter(listProcessingProfiles);
+  const sourceTextAdapter = new SourceTextAdapter(sourceQueries);
+  const sourceMetadataAdapter = new SourceMetadataAdapter(sourceQueries);
+  const projectionStatsAdapter = new ProjectionStatsAdapter(projectionQueries);
+  const activeProfilesAdapter = new ActiveProfilesAdapter(profileQueries);
 
-  // ── GetContextDetails + ListContextsSummary ────────────────────────
-  const { GetContextDetails } = await import(
-    "../../../contexts/context-management/context/application/use-cases/GetContextDetails"
-  );
-  const { ListContextsSummary } = await import(
-    "../../../contexts/context-management/context/application/use-cases/ListContextsSummary"
+  // ── ContextQueries (replaces GetContextDetails + ListContextsSummary + GetContext + ListContexts + GetContextsForSource) ──
+  const { ContextQueries } = await import(
+    "../../../contexts/context-management/context/application/use-cases/ContextQueries"
   );
 
-  const getContextDetails = new GetContextDetails(
+  const contextQueries = new ContextQueries(
     contextRepository,
     sourceMetadataAdapter,
     projectionStatsAdapter,
   );
-  const listContextsSummary = new ListContextsSummary(
-    contextRepository,
-    projectionStatsAdapter,
-  );
 
-  // ── ReconcileProjections + ReconcileAllProfiles ────────────────────
+  // ── ReconcileProjections (merged with ReconcileAllProfiles) ────────
   const { ReconcileProjections: ReconcileProjectionsCM } = await import(
     "../../../contexts/context-management/context/application/use-cases/ReconcileProjections"
   );
-  const { ReconcileAllProfiles } = await import(
-    "../../../contexts/context-management/context/application/use-cases/ReconcileAllProfiles"
-  );
 
-  const reconcileProjectionsCM = new ReconcileProjectionsCM(
+  const reconcileProjections = new ReconcileProjectionsCM(
     contextRepository,
     projectionOperationsAdapter,
     sourceTextAdapter,
-  );
-  const reconcileAllProfiles = new ReconcileAllProfiles(
-    reconcileProjectionsCM,
     activeProfilesAdapter,
   );
 
@@ -389,15 +756,15 @@ export async function resolveDependencies(
   const { UnlinkContexts } = await import(
     "../../../contexts/context-management/lineage/application/use-cases/UnlinkContexts"
   );
-  const { GetLineage } = await import(
-    "../../../contexts/context-management/lineage/application/use-cases/GetLineage"
+  const { LineageQueries } = await import(
+    "../../../contexts/context-management/lineage/application/use-cases/LineageQueries"
   );
 
   const linkContexts = new LinkContexts(lineageRepository);
   const unlinkContexts = new UnlinkContexts(lineageRepository);
-  const getLineage = new GetLineage(lineageRepository);
+  const lineageQueries = new LineageQueries(lineageRepository);
 
-  // ── Task 3.3: Knowledge-retrieval adapter ─────────────────────────
+  // ── Knowledge-retrieval adapter ────────────────────────────────────
   const { ContextSourceAdapter } = await import(
     "../../../contexts/knowledge-retrieval/semantic-query/infrastructure/adapters/ContextSourceAdapter"
   );
@@ -419,50 +786,39 @@ export async function resolveDependencies(
 
   const processKnowledge = new ProcessKnowledge({
     ingestAndExtract,
-    getSource,
-    getExtractedText,
+    sourceQueries,
     projectionOperations: projectionOperationsAdapter,
-    getContext,
+    contextQueries,
     addSourceToContext,
   });
 
   return {
-    listSources,
-    getSource,
-    getExtractedText,
+    sourceQueries,
     createProcessingProfile,
     updateProcessingProfile,
     deprecateProcessingProfile,
-    listProcessingProfiles,
-    getProcessingProfile,
+    profileQueries,
     processKnowledge,
-    getContextDetails,
-    listContextsSummary,
-    reconcileProjections: reconcileProjectionsCM,
-    reconcileAllProfiles,
+    contextQueries,
+    reconcileProjections,
     processSourceAllProfiles,
     searchKnowledge,
     createContext,
-    getContext,
-    listContexts,
-    getContextsForSource,
     addSourceToContext,
     removeSourceFromContext,
     transitionContextState,
     updateContextProfile,
     linkContexts,
     unlinkContexts,
-    getLineage,
+    lineageQueries,
   };
 }
 
+// ── Public factory ────────────────────────────────────────────────────────────
+
 export async function createKnowledgePlatform(
   policy: OrchestratorPolicy,
-): Promise<KnowledgeCoordinator> {
-  const { KnowledgeCoordinator } = await import(
-    "../KnowledgeCoordinator"
-  );
-
+): Promise<KnowledgePlatform> {
   const deps = await resolveDependencies(policy);
-  return new KnowledgeCoordinator(deps);
+  return buildPlatform(deps);
 }

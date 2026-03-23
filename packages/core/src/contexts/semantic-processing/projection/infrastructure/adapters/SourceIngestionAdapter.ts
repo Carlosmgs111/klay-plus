@@ -1,24 +1,22 @@
-import type { GetSource } from "../../../../source-ingestion/source/application/use-cases/GetSource";
-import type { GetExtractedText } from "../../../../source-ingestion/source/application/use-cases/GetExtractedText";
+import type { SourceQueries } from "../../../../source-ingestion/source/application/use-cases/SourceQueries";
 import type { SourceIngestionPort } from "../../application/ports/SourceIngestionPort";
 import type { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
 
 /**
- * Adapts GetSource + GetExtractedText use cases to the SourceIngestionPort interface.
+ * Adapts SourceQueries to the SourceIngestionPort interface.
+ * Updated to use SourceQueries directly instead of GetSource + GetExtractedText.
  */
 export class SourceIngestionAdapter implements SourceIngestionPort {
   constructor(
-    private readonly _getSource: GetSource,
-    private readonly _getExtractedText: GetExtractedText,
+    private readonly _sourceQueries: SourceQueries,
   ) {}
 
   async sourceExists(sourceId: string): Promise<boolean> {
-    const source = await this._getSource.execute({ sourceId });
-    return source !== null;
+    return this._sourceQueries.exists(sourceId);
   }
 
   getExtractedText(sourceId: string): Promise<Result<DomainError, { text: string }>> {
-    return this._getExtractedText.execute({ sourceId });
+    return this._sourceQueries.getExtractedText(sourceId);
   }
 }

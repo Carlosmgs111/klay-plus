@@ -45,7 +45,7 @@ import type {
 /**
  * KnowledgeService — runtime-agnostic interface for all knowledge operations.
  *
- * Flat method surface matching KnowledgeCoordinator:
+ * Flat method surface matching KnowledgePlatform:
  * - Context operations: createContext, getContext, listContexts, listContextRefs,
  *   transitionContextState, updateContextProfile, reconcileProjections,
  *   reconcileAllProfiles, removeSourceFromContext, linkContexts, unlinkContexts,
@@ -56,7 +56,7 @@ import type {
  *
  * Implemented by:
  * - ServerKnowledgeService (fetches /api/* routes)
- * - BrowserKnowledgeService (calls KnowledgeCoordinator directly)
+ * - BrowserKnowledgeService (calls KnowledgePlatform directly)
  */
 export interface KnowledgeService {
   // ── Cross-cutting ──────────────────────────────────────────────────

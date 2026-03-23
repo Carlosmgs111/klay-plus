@@ -6,7 +6,6 @@ import type { QueryExpander } from "../domain/ports/QueryExpander";
 export { ExecuteSemanticQuery } from "./use-cases/ExecuteSemanticQuery";
 export type { ExecuteSemanticQueryCommand } from "./use-cases/ExecuteSemanticQuery";
 export { SearchKnowledge } from "./use-cases/SearchKnowledge";
-export { BatchQuery } from "./use-cases/BatchQuery";
 
 import { ExecuteSemanticQuery } from "./use-cases/ExecuteSemanticQuery";
 

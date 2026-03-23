@@ -11,12 +11,12 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { createKnowledgePlatform } from "../composition/knowledge.factory";
-import type { KnowledgeCoordinator } from "../KnowledgeCoordinator";
+import type { KnowledgePlatform } from "../composition/knowledge.factory";
 
 // ── Shared fixture ────────────────────────────────────────────────────
 
 describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
-  let knowledge: KnowledgeCoordinator;
+  let knowledge: KnowledgePlatform;
   const profileId = "profile-search-override-001";
 
   beforeAll(async () => {

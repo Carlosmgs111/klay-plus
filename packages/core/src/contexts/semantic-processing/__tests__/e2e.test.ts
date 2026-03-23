@@ -16,10 +16,8 @@ import { ProjectionType } from "../projection/domain/ProjectionType";
 import { CreateProcessingProfile } from "../processing-profile/application/use-cases/CreateProcessingProfile";
 import { UpdateProcessingProfile } from "../processing-profile/application/use-cases/UpdateProcessingProfile";
 import { DeprecateProcessingProfile } from "../processing-profile/application/use-cases/DeprecateProcessingProfile";
-import { ListProcessingProfiles } from "../processing-profile/application/use-cases/ListProcessingProfiles";
+import { ProfileQueries } from "../processing-profile/application/use-cases/ProfileQueries";
 import { GenerateProjection } from "../projection/application/use-cases/GenerateProjection";
-import { ProcessContent } from "../projection/application/use-cases/ProcessContent";
-import { BatchProcessContent } from "../projection/application/use-cases/BatchProcessContent";
 
 async function createUseCases(dims = 128) {
   const modules = await resolveSemanticProcessingModules({
@@ -34,7 +32,7 @@ async function createUseCases(dims = 128) {
   const createProcessingProfile = new CreateProcessingProfile(profileRepository, profileEventPublisher);
   const updateProcessingProfile = new UpdateProcessingProfile(profileRepository, profileEventPublisher);
   const deprecateProcessingProfile = new DeprecateProcessingProfile(profileRepository, profileEventPublisher);
-  const listProcessingProfiles = new ListProcessingProfiles(profileRepository);
+  const profileQueries = new ProfileQueries(profileRepository);
   const generateProjection = new GenerateProjection(
     repository,
     profileRepository,
@@ -42,16 +40,13 @@ async function createUseCases(dims = 128) {
     vectorWriteStore,
     eventPublisher,
   );
-  const processContent = new ProcessContent(generateProjection);
-  const batchProcessContent = new BatchProcessContent(processContent);
 
   return {
     createProcessingProfile,
     updateProcessingProfile,
     deprecateProcessingProfile,
-    listProcessingProfiles,
-    processContent,
-    batchProcessContent,
+    profileQueries,
+    processContent: generateProjection,
     vectorStoreConfig: modules.vectorStoreConfig,
   };
 }
@@ -135,9 +130,9 @@ There are three main types of machine learning:
       },
     ];
 
-    const batchResults = await ucs.batchProcessContent.execute(batchItems);
+    const batchResults = await Promise.all(batchItems.map((item) => ucs.processContent.execute(item)));
     expect(batchResults).toHaveLength(2);
-    expect(batchResults.every((r) => r.success)).toBe(true);
+    expect(batchResults.every((r) => r.isOk())).toBe(true);
 
     // Empty content should fail
     const emptyContentResult = await ucs.processContent.execute({
@@ -257,7 +252,7 @@ There are three main types of machine learning:
     // Deprecate profile A
     await ucs.deprecateProcessingProfile.execute({ id: id1, reason: "testing" });
 
-    const profiles = await ucs.listProcessingProfiles.execute();
+    const profiles = await ucs.profileQueries.listAll();
 
     expect(profiles).toHaveLength(3);
 

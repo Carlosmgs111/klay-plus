@@ -19,17 +19,12 @@ export { ContextDeprecated } from "./domain/events/ContextDeprecated";
 // ── Use Cases ────────────────────────────────────────────────────────
 
 export { CreateContext } from "./application/use-cases/CreateContext";
-export { GetContext } from "./application/use-cases/GetContext";
-export { ListContexts } from "./application/use-cases/ListContexts";
-export { GetContextsForSource } from "./application/use-cases/GetContextsForSource";
+export { ContextQueries } from "./application/use-cases/ContextQueries";
 export { AddSourceToContext } from "./application/use-cases/AddSourceToContext";
 export { RemoveSourceFromContext } from "./application/use-cases/RemoveSourceFromContext";
 export { TransitionContextState } from "./application/use-cases/TransitionContextState";
 export { UpdateContextProfile } from "./application/use-cases/UpdateContextProfile";
-export { GetContextDetails } from "./application/use-cases/GetContextDetails";
-export { ListContextsSummary } from "./application/use-cases/ListContextsSummary";
 export { ReconcileProjections } from "./application/use-cases/ReconcileProjections";
-export { ReconcileAllProfiles } from "./application/use-cases/ReconcileAllProfiles";
 
 // ── Ports ────────────────────────────────────────────────────────────
 

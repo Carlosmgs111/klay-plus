@@ -1,37 +1,33 @@
-import type { SourceType } from "../../domain/SourceType";
-import type { IngestAndExtract } from "./IngestAndExtract";
+import type { IngestSource, IngestSourceInput } from "./IngestSource";
 
-export interface BatchIngestAndExtractInput {
-  sources: Array<{
-    sourceId: string;
-    sourceName: string;
-    uri: string;
-    type: SourceType;
-    extractionJobId: string;
-  }>;
-}
-
-export interface BatchIngestAndExtractItemResult {
+export interface BatchIngestItemResult {
   sourceId: string;
-  jobId: string;
+  jobId?: string;
   success: boolean;
   contentHash?: string;
   error?: string;
 }
 
-export class BatchIngestAndExtract {
+/**
+ * BatchIngest — maps IngestSource over an array of inputs.
+ *
+ * Merges: BatchRegister (maps RegisterSource) + BatchIngestAndExtract (maps IngestAndExtract)
+ * Both are subsumed by IngestSource which handles both file and external paths.
+ */
+export class BatchIngest {
   constructor(
-    private readonly ingestAndExtract: IngestAndExtract,
+    private readonly _ingestSource: IngestSource,
   ) {}
 
   async execute(
-    params: BatchIngestAndExtractInput,
-  ): Promise<BatchIngestAndExtractItemResult[]> {
+    inputs: IngestSourceInput[],
+  ): Promise<BatchIngestItemResult[]> {
     const results = await Promise.allSettled(
-      params.sources.map((source) => this.ingestAndExtract.execute(source)),
+      inputs.map((input) => this._ingestSource.execute(input)),
     );
 
     return results.map((promiseResult, index) => {
+      const sourceId = inputs[index].sourceId;
       if (promiseResult.status === "fulfilled") {
         const result = promiseResult.value;
         if (result.isOk()) {
@@ -43,15 +39,13 @@ export class BatchIngestAndExtract {
           };
         }
         return {
-          sourceId: params.sources[index].sourceId,
-          jobId: params.sources[index].extractionJobId,
+          sourceId,
           success: false,
           error: result.error.message,
         };
       }
       return {
-        sourceId: params.sources[index].sourceId,
-        jobId: params.sources[index].extractionJobId,
+        sourceId,
         success: false,
         error: promiseResult.reason instanceof Error
           ? promiseResult.reason.message

@@ -12,7 +12,7 @@ export type { KnowledgeLineageRepository } from "./domain";
 
 export { LinkContexts } from "./application/use-cases/LinkContexts";
 export { UnlinkContexts } from "./application/use-cases/UnlinkContexts";
-export { GetLineage } from "./application/use-cases/GetLineage";
+export { LineageQueries } from "./application/use-cases/LineageQueries";
 
 // ── Infrastructure ───────────────────────────────────────────────────
 

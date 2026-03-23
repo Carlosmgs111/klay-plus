@@ -1,7 +1,8 @@
 import type { ContextRepository } from "../../domain/ContextRepository";
 import type { ProjectionOperationsPort } from "../ports/ProjectionOperationsPort";
 import type { SourceTextPort } from "../ports/SourceTextPort";
-import type { ReconcileProjectionsInput, ReconcileProjectionsResult } from "../../../../../application/knowledge/dtos";
+import type { ActiveProfilesPort } from "../ports/ActiveProfilesPort";
+import type { ReconcileProjectionsInput, ReconcileProjectionsResult, ReconcileAllProfilesInput, ReconcileAllProfilesResult } from "../../../../../application/knowledge/dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { KnowledgeError } from "../../../../../application/knowledge/domain/KnowledgeError";
 import { OperationStep } from "../../../../../application/knowledge/domain/OperationStep";
@@ -21,6 +22,7 @@ export class ReconcileProjections {
     private readonly _contextRepository: ContextRepository,
     private readonly _projectionOperations: ProjectionOperationsPort,
     private readonly _sourceText: SourceTextPort,
+    private readonly _activeProfiles?: ActiveProfilesPort,
   ) {}
 
   async execute(
@@ -73,6 +75,46 @@ export class ReconcileProjections {
       return Result.fail(
         KnowledgeError.fromStep(OperationStep.ReconcileProjections, error, []),
       );
+    }
+  }
+
+  /** From ReconcileAllProfiles — loops through all active profiles calling execute() for each. */
+  async executeAllProfiles(
+    input: ReconcileAllProfilesInput,
+  ): Promise<Result<KnowledgeError, ReconcileAllProfilesResult>> {
+    try {
+      if (!this._activeProfiles) {
+        return Result.fail(
+          KnowledgeError.fromStep(
+            OperationStep.Processing,
+            { message: "ActiveProfilesPort not provided", code: "INTERNAL_ERROR" },
+            [],
+          ),
+        );
+      }
+
+      const activeProfiles = await this._activeProfiles.listActiveProfiles();
+
+      const profileResults: Array<{ profileId: string; processedCount: number; failedCount: number }> = [];
+
+      for (const profile of activeProfiles) {
+        const profileId = profile.id;
+        const result = await this.execute({ contextId: input.contextId, profileId });
+        if (result.isOk()) {
+          profileResults.push({ profileId, processedCount: result.value.processedCount, failedCount: result.value.failedCount });
+        } else {
+          profileResults.push({ profileId, processedCount: 0, failedCount: 1 });
+        }
+      }
+
+      return Result.ok({
+        contextId: input.contextId,
+        profileResults,
+        totalProcessed: profileResults.reduce((sum, r) => sum + r.processedCount, 0),
+        totalFailed: profileResults.reduce((sum, r) => sum + r.failedCount, 0),
+      });
+    } catch (error) {
+      return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
     }
   }
 

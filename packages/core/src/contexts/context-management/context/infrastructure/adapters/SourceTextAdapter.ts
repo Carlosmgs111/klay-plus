@@ -1,15 +1,16 @@
-import type { GetExtractedText } from "../../../../source-ingestion/source/application/use-cases/GetExtractedText";
+import type { SourceQueries } from "../../../../source-ingestion/source/application/use-cases/SourceQueries";
 import type { SourceTextPort } from "../../application/ports/SourceTextPort";
 import type { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
 
 /**
- * Adapts GetExtractedText use case to the SourceTextPort interface.
+ * Adapts SourceQueries to the SourceTextPort interface.
+ * Updated to use SourceQueries.getExtractedText() directly.
  */
 export class SourceTextAdapter implements SourceTextPort {
-  constructor(private readonly _getExtractedText: GetExtractedText) {}
+  constructor(private readonly _sourceQueries: SourceQueries) {}
 
   getExtractedText(sourceId: string): Promise<Result<DomainError, { text: string }>> {
-    return this._getExtractedText.execute({ sourceId });
+    return this._sourceQueries.getExtractedText(sourceId);
   }
 }

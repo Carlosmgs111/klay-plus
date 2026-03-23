@@ -1,8 +1,7 @@
 import type { IngestAndExtract } from "../../contexts/source-ingestion/source/application/use-cases/IngestAndExtract";
-import type { GetSource } from "../../contexts/source-ingestion/source/application/use-cases/GetSource";
-import type { GetExtractedText } from "../../contexts/source-ingestion/source/application/use-cases/GetExtractedText";
+import type { SourceQueries } from "../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
+import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
 import type { ProjectionOperationsPort } from "../../contexts/context-management/context/application/ports/ProjectionOperationsPort";
-import type { GetContext } from "../../contexts/context-management/context/application/use-cases/GetContext";
 import type { AddSourceToContext } from "../../contexts/context-management/context/application/use-cases/AddSourceToContext";
 import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "./dtos";
 import type { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";
@@ -38,8 +37,7 @@ export interface PipelineContext {
 export class IngestStep {
   constructor(
     private ingestAndExtract: IngestAndExtract,
-    private getSource: GetSource,
-    private getExtractedText: GetExtractedText,
+    private sourceQueries: SourceQueries,
   ) {}
 
   shouldRun(ctx: PipelineContext): boolean {
@@ -72,7 +70,7 @@ export class IngestStep {
     }
 
     // Existing source — verify it exists and load extracted text
-    const source = await this.getSource.execute({ sourceId: ctx.input.sourceId });
+    const source = await this.sourceQueries.getById(ctx.input.sourceId);
     if (!source) {
       return Result.fail(
         KnowledgeError.fromStep(
@@ -83,7 +81,7 @@ export class IngestStep {
       );
     }
 
-    const textResult = await this.getExtractedText.execute({ sourceId: ctx.input.sourceId });
+    const textResult = await this.sourceQueries.getExtractedText(ctx.input.sourceId);
     const extractedText = textResult.isOk() ? textResult.value.text : undefined;
 
     return Result.ok({ ...ctx, extractedText });
@@ -201,20 +199,19 @@ export class ProcessKnowledge {
   private ingest: IngestStep;
   private process: ProcessStep;
   private catalog: CatalogStep;
-  private readonly _getContext: GetContext;
+  private readonly _contextQueries: ContextQueries;
 
   constructor(deps: {
     ingestAndExtract: IngestAndExtract;
-    getSource: GetSource;
-    getExtractedText: GetExtractedText;
+    sourceQueries: SourceQueries;
     projectionOperations: ProjectionOperationsPort;
-    getContext: GetContext;
+    contextQueries: ContextQueries;
     addSourceToContext: AddSourceToContext;
   }) {
-    this.ingest = new IngestStep(deps.ingestAndExtract, deps.getSource, deps.getExtractedText);
+    this.ingest = new IngestStep(deps.ingestAndExtract, deps.sourceQueries);
     this.process = new ProcessStep(deps.projectionOperations);
     this.catalog = new CatalogStep(deps.addSourceToContext);
-    this._getContext = deps.getContext;
+    this._contextQueries = deps.contextQueries;
   }
 
   async execute(
@@ -234,7 +231,7 @@ export class ProcessKnowledge {
 
     // ── Resolve context (if provided) and effective profile ──────────
     if (input.contextId) {
-      const context = await this._getContext.execute({ contextId: input.contextId });
+      const context = await this._contextQueries.getRaw(input.contextId);
       if (!context) {
         return Result.fail(
           KnowledgeError.fromStep(

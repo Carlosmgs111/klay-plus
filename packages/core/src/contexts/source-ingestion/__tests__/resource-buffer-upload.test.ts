@@ -24,8 +24,8 @@ import { StoreResource } from "../resource/application/use-cases/StoreResource";
 import { RegisterExternalResource } from "../resource/application/use-cases/RegisterExternalResource";
 import { DeleteResource } from "../resource/application/use-cases/DeleteResource";
 import { GetResource } from "../resource/application/use-cases/GetResource";
-import { IngestFile } from "../source/application/use-cases/IngestFile";
-import { IngestExternalResource } from "../source/application/use-cases/IngestExternalResource";
+import { IngestSource } from "../source/application/use-cases/IngestSource";
+import { IngestAndExtract } from "../source/application/use-cases/IngestAndExtract";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -34,8 +34,7 @@ describe("Resource Buffer Upload — E2E", () => {
   let registerExternalResource: RegisterExternalResource;
   let deleteResource: DeleteResource;
   let getResource: GetResource;
-  let ingestFile: IngestFile;
-  let ingestExternalResource: IngestExternalResource;
+  let ingestSource: IngestSource;
 
   beforeAll(async () => {
     // Resolve infrastructure
@@ -78,19 +77,13 @@ describe("Resource Buffer Upload — E2E", () => {
     );
     getResource = new GetResource(resourceRepository);
 
-    // Composite use cases
-    ingestFile = new IngestFile(
-      storeResource,
+    // Composite use case
+    const ingestAndExtract = new IngestAndExtract(
       sourceRepository,
       sourceEventPublisher,
       extractionUseCases.executeExtraction,
     );
-    ingestExternalResource = new IngestExternalResource(
-      registerExternalResource,
-      sourceRepository,
-      sourceEventPublisher,
-      extractionUseCases.executeExtraction,
-    );
+    ingestSource = new IngestSource(ingestAndExtract, storeResource, registerExternalResource);
   });
 
   // 1. Basic Buffer Upload
@@ -403,7 +396,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const originalContent = "This plain text document will be uploaded as a buffer, stored, registered as a source, and its content extracted.";
       const buffer = new TextEncoder().encode(originalContent).buffer;
 
-      const result = await ingestFile.execute({
+      const result = await ingestSource.execute({ type: "file",
         resourceId,
         sourceId,
         sourceName: "Buffer Upload Test",
@@ -438,7 +431,7 @@ describe("Resource Buffer Upload — E2E", () => {
       ].join("\n");
       const unicodeBuffer = new TextEncoder().encode(unicodeContent).buffer;
 
-      const unicodeResult = await ingestFile.execute({
+      const unicodeResult = await ingestSource.execute({ type: "file",
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Unicode Buffer Test",
@@ -460,7 +453,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer1 = new TextEncoder().encode(content).buffer;
       const buffer2 = new TextEncoder().encode(content).buffer;
 
-      const result1 = await ingestFile.execute({
+      const result1 = await ingestSource.execute({ type: "file",
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Hash Test 1",
@@ -469,7 +462,7 @@ describe("Resource Buffer Upload — E2E", () => {
         file: { buffer: buffer1, originalName: "hash1.txt", mimeType: "text/plain" },
       });
 
-      const result2 = await ingestFile.execute({
+      const result2 = await ingestSource.execute({ type: "file",
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Hash Test 2",
@@ -483,7 +476,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result1.value.contentHash).toBe(result2.value.contentHash);
 
       // Different content → different hash
-      const result3 = await ingestFile.execute({
+      const result3 = await ingestSource.execute({ type: "file",
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Different Content",
@@ -510,7 +503,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const sourceId = crypto.randomUUID();
       const externalContent = "This content exists externally and requires no upload.";
 
-      const result = await ingestExternalResource.execute({
+      const result = await ingestSource.execute({ type: "external",
         resourceId,
         sourceId,
         sourceName: "External Content",
@@ -654,7 +647,7 @@ describe("Resource Buffer Upload — E2E", () => {
         const resourceId = crypto.randomUUID();
         const sourceId = crypto.randomUUID();
 
-        const result = await ingestFile.execute({
+        const result = await ingestSource.execute({ type: "file",
           resourceId,
           sourceId,
           sourceName: "Archivo de Educación (Buffer Upload)",
@@ -678,7 +671,7 @@ describe("Resource Buffer Upload — E2E", () => {
         expect(result.value.metadata.pageCount).toBeGreaterThan(0);
 
         // Consistent hash for same PDF
-        const result2 = await ingestFile.execute({
+        const result2 = await ingestSource.execute({ type: "file",
           resourceId: crypto.randomUUID(),
           sourceId: crypto.randomUUID(),
           sourceName: "PDF Hash Test 2",

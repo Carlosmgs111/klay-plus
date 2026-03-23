@@ -3,14 +3,12 @@ import { semanticQueryFactory } from "../semantic-query/composition/factory";
 import { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
 import { hashToVector } from "../../../platform/vector/hashVector";
 import type { ExecuteSemanticQuery } from "../semantic-query/application/use-cases/ExecuteSemanticQuery";
-import { BatchQuery } from "../semantic-query/application/use-cases/BatchQuery";
 import type { VectorEntry } from "../../../platform/vector/VectorEntry";
 import { MMRRankingStrategy } from "../semantic-query/infrastructure/ranking/MMRRankingStrategy";
 import type { SearchHit } from "../semantic-query/domain/ports/VectorReadStore";
 
 describe("Knowledge Retrieval Context E2E", () => {
   let executeQuery: ExecuteSemanticQuery;
-  let batchQuery: BatchQuery;
   let vectorWriteStore: InMemoryVectorWriteStore;
 
   const DIMENSIONS = 128;
@@ -64,7 +62,6 @@ describe("Knowledge Retrieval Context E2E", () => {
     });
 
     executeQuery = useCases.executeSemanticQuery;
-    batchQuery = new BatchQuery(executeQuery);
   });
 
   it("should perform a semantic query", async () => {
@@ -108,21 +105,16 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should perform batch queries", async () => {
-    const { results } = await batchQuery.execute([
-      { text: "neural networks", topK: 2, minScore: 0.0 },
-      { text: "database optimization", topK: 2, minScore: 0.0 },
-      { text: "react components", topK: 2, minScore: 0.0 },
+    const results = await Promise.all([
+      executeQuery.execute({ text: "neural networks", topK: 2, minScore: 0.0 }),
+      executeQuery.execute({ text: "database optimization", topK: 2, minScore: 0.0 }),
+      executeQuery.execute({ text: "react components", topK: 2, minScore: 0.0 }),
     ]);
 
     expect(results).toHaveLength(3);
-    // Each result is a RetrievalResult (not an error)
-    expect("queryText" in results[0]).toBe(true);
-    expect("queryText" in results[1]).toBe(true);
-    expect("queryText" in results[2]).toBe(true);
-
-    if ("queryText" in results[0]) expect(results[0].queryText).toBe("neural networks");
-    if ("queryText" in results[1]) expect(results[1].queryText).toBe("database optimization");
-    if ("queryText" in results[2]) expect(results[2].queryText).toBe("react components");
+    expect(results[0].queryText).toBe("neural networks");
+    expect(results[1].queryText).toBe("database optimization");
+    expect(results[2].queryText).toBe("react components");
   });
 
   it("should expose executeSemanticQuery use case", async () => {
