@@ -28,3 +28,21 @@ export type {
   ResolvedResourceInfra,
   ResourceFactoryResult,
 } from "./composition";
+
+export { StoreResource } from "./application/use-cases/StoreResource";
+export type {
+  StoreResourceInput,
+  StoreResourceSuccess,
+} from "./application/use-cases/StoreResource";
+
+export { RegisterExternalResource } from "./application/use-cases/RegisterExternalResource";
+export type {
+  RegisterExternalResourceInput,
+  RegisterExternalResourceSuccess,
+} from "./application/use-cases/RegisterExternalResource";
+
+export { DeleteResource } from "./application/use-cases/DeleteResource";
+export type { DeleteResourceInput } from "./application/use-cases/DeleteResource";
+
+export { GetResource } from "./application/use-cases/GetResource";
+export type { GetResourceInput } from "./application/use-cases/GetResource";

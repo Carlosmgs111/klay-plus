@@ -15,7 +15,7 @@ export function ProcessAllProfilesAction({ sourceId, onSuccess }: ProcessAllProf
   const { addToast } = useToast();
 
   const action = useCallback(
-    (input: ProcessSourceAllProfilesInput) => service!.sources.processAllProfiles(input),
+    (input: ProcessSourceAllProfilesInput) => service!.processSourceAllProfiles(input),
     [service],
   );
 

@@ -26,7 +26,7 @@ export function GenerateProjectionAction({ sourceId, onSuccess }: GenerateProjec
 
   useEffect(() => {
     if (!showForm || !service) return;
-    service.profiles.list().then((result) => {
+    service.listProfiles().then((result) => {
       if (result.success && result.data) {
         const loaded = result.data.profiles ?? [];
         setProfiles(loaded);

@@ -49,7 +49,7 @@ export async function lineageFactory(
           "../infrastructure/persistence/nedb/NeDBKnowledgeLineageRepository"
         );
         const filename = p.dbPath
-          ? `${p.dbPath}/knowledge-lineage.db`
+          ? `${p.dbPath}/lineage.db`
           : undefined;
         return new NeDBKnowledgeLineageRepository(filename);
       },

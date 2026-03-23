@@ -27,7 +27,7 @@ export default function UnitsIndexPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await service.contexts.list();
+      const result = await service.listContexts();
       if (result.success) {
         setContexts(result.data.contexts);
       } else {

@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { createKnowledgeRetrievalService } from "../service";
+import { semanticQueryFactory } from "../semantic-query/composition/factory";
 import { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
 import { hashToVector } from "../../../platform/vector/hashVector";
-import type { KnowledgeRetrievalService } from "../service/KnowledgeRetrievalService";
+import type { ExecuteSemanticQuery } from "../semantic-query/application/use-cases/ExecuteSemanticQuery";
+import { BatchQuery } from "../semantic-query/application/use-cases/BatchQuery";
 import type { VectorEntry } from "../../../platform/vector/VectorEntry";
 import { MMRRankingStrategy } from "../semantic-query/infrastructure/ranking/MMRRankingStrategy";
 import type { SearchHit } from "../semantic-query/domain/ports/VectorReadStore";
 
 describe("Knowledge Retrieval Context E2E", () => {
-  let service: KnowledgeRetrievalService;
+  let executeQuery: ExecuteSemanticQuery;
+  let batchQuery: BatchQuery;
   let vectorWriteStore: InMemoryVectorWriteStore;
 
   const DIMENSIONS = 128;
@@ -55,15 +57,18 @@ describe("Knowledge Retrieval Context E2E", () => {
     vectorWriteStore = new InMemoryVectorWriteStore();
     await vectorWriteStore.upsert(testEntries);
 
-    service = await createKnowledgeRetrievalService({
+    const { useCases } = await semanticQueryFactory({
       provider: "in-memory",
       vectorStoreConfig: { sharedEntries: vectorWriteStore.sharedEntries },
       embeddingDimensions: DIMENSIONS,
     });
+
+    executeQuery = useCases.executeSemanticQuery;
+    batchQuery = new BatchQuery(executeQuery);
   });
 
   it("should perform a semantic query", async () => {
-    const result = await service.query({
+    const result = await executeQuery.execute({
       text: "neural network learning",
       topK: 3,
       minScore: 0.0,
@@ -76,7 +81,7 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should find best match with topK=1", async () => {
-    const result = await service.query({
+    const result = await executeQuery.execute({
       text: "machine learning algorithms and neural networks",
       topK: 1,
       minScore: 0.0,
@@ -89,7 +94,7 @@ describe("Knowledge Retrieval Context E2E", () => {
   it("should filter low-scoring results with high relative threshold", async () => {
     // minScore is a relative threshold (normalized to best match = 1.0).
     // A high minScore keeps only results very close to the best match.
-    const result = await service.query({
+    const result = await executeQuery.execute({
       text: "machine learning algorithms and neural networks",
       topK: 5,
       minScore: 0.95,
@@ -103,20 +108,25 @@ describe("Knowledge Retrieval Context E2E", () => {
   });
 
   it("should perform batch queries", async () => {
-    const results = await service.batchQuery([
+    const { results } = await batchQuery.execute([
       { text: "neural networks", topK: 2, minScore: 0.0 },
       { text: "database optimization", topK: 2, minScore: 0.0 },
       { text: "react components", topK: 2, minScore: 0.0 },
     ]);
 
     expect(results).toHaveLength(3);
-    expect(results[0].queryText).toBe("neural networks");
-    expect(results[1].queryText).toBe("database optimization");
-    expect(results[2].queryText).toBe("react components");
+    // Each result is a RetrievalResult (not an error)
+    expect("queryText" in results[0]).toBe(true);
+    expect("queryText" in results[1]).toBe(true);
+    expect("queryText" in results[2]).toBe(true);
+
+    if ("queryText" in results[0]) expect(results[0].queryText).toBe("neural networks");
+    if ("queryText" in results[1]) expect(results[1].queryText).toBe("database optimization");
+    if ("queryText" in results[2]) expect(results[2].queryText).toBe("react components");
   });
 
-  it("should provide direct module access", async () => {
-    expect(service.semanticQuery).toBeDefined();
+  it("should expose executeSemanticQuery use case", async () => {
+    expect(executeQuery).toBeDefined();
   });
 });
 
@@ -221,14 +231,14 @@ describe("Hybrid Search Strategy (BM25 + Dense)", () => {
 
     await writeStore.upsert([exactMatchChunk, ...otherChunks]);
 
-    const hybridService = await createKnowledgeRetrievalService({
+    const { useCases } = await semanticQueryFactory({
       provider: "in-memory",
       vectorStoreConfig: { sharedEntries: writeStore.sharedEntries },
       embeddingDimensions: DIMENSIONS,
       retrieval: { search: "hybrid" },
     });
 
-    const result = await hybridService.query({
+    const result = await useCases.executeSemanticQuery.execute({
       text: "quetzalcoatl",
       topK: 4,
       minScore: 0.0,

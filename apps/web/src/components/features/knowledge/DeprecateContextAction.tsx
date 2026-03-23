@@ -25,7 +25,7 @@ export function DeprecateContextAction({ contextId, onSuccess, open, setOpen }: 
   const [reason, setReason] = useState("");
 
   const deprecateAction = useCallback(
-    (input: TransitionContextStateInput) => service!.contexts.transitionState(input),
+    (input: TransitionContextStateInput) => service!.transitionContextState(input),
     [service],
   );
 

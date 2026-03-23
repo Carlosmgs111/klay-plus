@@ -20,8 +20,8 @@ export function DashboardPage() {
     setError(null);
     try {
       const [ctxResult, srcResult] = await Promise.all([
-        service.contexts.list(),
-        service.sources.list(),
+        service.listContexts(),
+        service.listSources(),
       ]);
       if (ctxResult.success) setContexts(ctxResult.data.contexts);
       if (srcResult.success) setSources(srcResult.data.sources);

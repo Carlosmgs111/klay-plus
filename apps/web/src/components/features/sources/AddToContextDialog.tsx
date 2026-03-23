@@ -28,7 +28,7 @@ export function AddToContextDialog({ sourceId, onClose, onSuccess }: AddToContex
   useEffect(() => {
     if (!service) return;
     setLoadingContexts(true);
-    service.contexts.listRefs().then((result) => {
+    service.listContextRefs().then((result) => {
       if (result.success) {
         setContexts(result.data.contexts);
       }

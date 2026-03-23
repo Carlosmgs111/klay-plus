@@ -40,7 +40,7 @@ export default function UnitProjectionsPage() {
   // Load active profiles for coverage matrix columns
   useEffect(() => {
     if (!service || !detail) return;
-    service.profiles.list().then((result) => {
+    service.listProfiles().then((result) => {
       if (result.success && result.data) {
         setActiveProfiles(result.data.profiles.filter((p) => p.status === "ACTIVE"));
       }
@@ -49,7 +49,7 @@ export default function UnitProjectionsPage() {
 
   // "Fill all gaps" — reconcile all active profiles for all sources in context
   const reconcileAllAction = useCallback(
-    (input: ReconcileAllProfilesInput) => service!.contexts.reconcileAllProfiles(input),
+    (input: ReconcileAllProfilesInput) => service!.reconcileAllProfiles(input),
     [service],
   );
   const { isLoading: isReconciling, execute: executeReconcileAll } = useServiceAction(reconcileAllAction);

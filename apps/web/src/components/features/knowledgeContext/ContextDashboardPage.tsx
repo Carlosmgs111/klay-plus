@@ -79,7 +79,7 @@ export default function ContextDashboardPage() {
     if (!service) return;
     setProfilesLoading(true);
     try {
-      const res = await service.profiles.list();
+      const res = await service.listProfiles();
       if (res.success) {
         setProfiles(res.data.profiles.filter((p) => p.status === "ACTIVE"));
       }
@@ -99,7 +99,7 @@ export default function ContextDashboardPage() {
     if (!service || newProfileId === currentProfileId) return;
     setSaving(true);
     try {
-      const result = await service.contexts.updateProfile({
+      const result = await service.updateContextProfile({
         contextId,
         profileId: newProfileId,
       });

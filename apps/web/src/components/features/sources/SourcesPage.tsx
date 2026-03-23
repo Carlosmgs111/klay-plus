@@ -29,7 +29,7 @@ export function SourcesPage() {
 
   // Fetch all sources
   const fetchSources = useCallback(
-    () => service!.sources.list(),
+    () => service!.listSources(),
     [service],
   );
   const { data, error, isLoading, execute } = usePipelineAction(fetchSources);

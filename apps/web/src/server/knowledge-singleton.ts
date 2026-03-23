@@ -52,7 +52,7 @@ async function _createCoordinator(): Promise<KnowledgeCoordinator> {
     infrastructure,
   });
 
-  await coordinator.profiles.create({
+  await coordinator.createProfile({
     id: "default",
     name: "Default",
     preparation: { strategyId: "basic", config: {} },

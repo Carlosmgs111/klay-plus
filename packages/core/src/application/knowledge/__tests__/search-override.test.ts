@@ -27,7 +27,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     // Create a processing profile
-    const profileResult = await knowledge.profiles.create({
+    const profileResult = await knowledge.createProfile({
       id: profileId,
       name: "Search Override Test Profile",
       preparation: { strategyId: "basic", config: {} },

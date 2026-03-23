@@ -27,7 +27,7 @@ export function AddExistingSourcePicker({
 
   useEffect(() => {
     if (!service) return;
-    service.sources.list().then((result) => {
+    service.listSources().then((result) => {
       if (result.success) {
         const existing = new Set(existingSourceIds);
         setSources(

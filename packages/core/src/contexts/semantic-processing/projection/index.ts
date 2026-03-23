@@ -40,12 +40,6 @@ export type {
   ProjectionError,
 } from "./domain";
 
-export { GenerateProjection, ProjectionUseCases } from "./application";
-export type {
-  GenerateProjectionCommand,
-  GenerateProjectionResult,
-} from "./application";
-
 export {
   projectionFactory,
 } from "./composition";
@@ -55,3 +49,22 @@ export type {
   ProjectionFactoryResult,
   MaterializedStrategies,
 } from "./composition";
+
+// Application use cases
+export { GenerateProjection } from "./application/use-cases/GenerateProjection";
+export type {
+  GenerateProjectionCommand,
+  GenerateProjectionResult,
+} from "./application/use-cases/GenerateProjection";
+export { ProcessContent } from "./application/use-cases/ProcessContent";
+export type { ProcessContentInput, ProcessContentSuccess } from "./application/use-cases/ProcessContent";
+export { BatchProcessContent } from "./application/use-cases/BatchProcessContent";
+export type { BatchProcessContentItem, BatchProcessContentResult } from "./application/use-cases/BatchProcessContent";
+export { FindExistingProjection } from "./application/use-cases/FindExistingProjection";
+export type { ExistingProjectionInfo } from "./application/use-cases/FindExistingProjection";
+export { GetProjectionsForSources } from "./application/use-cases/GetProjectionsForSources";
+export { GetAllProjectionsForSources } from "./application/use-cases/GetAllProjectionsForSources";
+export { CleanupSourceProjections } from "./application/use-cases/CleanupSourceProjections";
+export { CleanupSourceProjectionForProfile } from "./application/use-cases/CleanupSourceProjectionForProfile";
+export { ProcessSourceAllProfiles } from "./application/use-cases/ProcessSourceAllProfiles";
+export type { SourceIngestionPort } from "./application/ports/SourceIngestionPort";

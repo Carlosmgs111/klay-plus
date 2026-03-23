@@ -15,7 +15,7 @@ export function CreateProfileForm({ onSuccess }: CreateProfileFormProps) {
   const { addToast } = useToast();
 
   const createProfile = useCallback(
-    (input: CreateProcessingProfileInput) => service!.profiles.create(input),
+    (input: CreateProcessingProfileInput) => service!.createProfile(input),
     [service],
   );
 

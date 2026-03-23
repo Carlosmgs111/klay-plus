@@ -43,7 +43,7 @@ export function SearchBar({ onSearch, isLoading, hideContextFilter }: SearchBarP
   useEffect(() => {
     if (!service) return;
     let cancelled = false;
-    service.profiles.list().then((result) => {
+    service.listProfiles().then((result) => {
       if (!cancelled && result.success) {
         setProfiles(result.data.profiles.filter((p) => p.status === "ACTIVE"));
       }

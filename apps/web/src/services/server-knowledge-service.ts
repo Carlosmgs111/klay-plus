@@ -12,41 +12,6 @@ import type {
  * ServerKnowledgeService — delegates to /api/* routes via fetch.
  */
 export class ServerKnowledgeService implements KnowledgeService {
-  readonly contexts: KnowledgeService["contexts"];
-  readonly sources: KnowledgeService["sources"];
-  readonly profiles: KnowledgeService["profiles"];
-
-  constructor() {
-    this.contexts = {
-      create: (input) => serverPost("/api/lifecycle/create-context", input),
-      get: (input) => serverGet(`/api/pipeline/contexts?id=${encodeURIComponent(input.contextId)}`),
-      list: () => serverGet("/api/pipeline/contexts?summary=true"),
-      listRefs: () => serverGet("/api/pipeline/contexts"),
-      transitionState: (input) => serverPost("/api/lifecycle/transition-state", input),
-      updateProfile: (input) => serverPost("/api/lifecycle/update-context-profile", input),
-      reconcileProjections: (input) => serverPost("/api/lifecycle/reconcile-projections", input),
-      reconcileAllProfiles: (input) => serverPost("/api/lifecycle/reconcile-all-profiles", input),
-      removeSource: (input) => serverPost("/api/lifecycle/remove-source", input),
-      link: (input) => serverPost("/api/lifecycle/link", input),
-      unlink: (input) => serverPost("/api/lifecycle/unlink", input),
-      getLineage: (input) => serverPost("/api/lifecycle/get-lineage", input),
-    };
-
-    this.sources = {
-      list: () => serverGet("/api/pipeline/sources"),
-      get: (input) => serverGet(`/api/pipeline/sources/${input.sourceId}`),
-      getContexts: (input) => serverGet(`/api/pipeline/sources/${input.sourceId}/contexts`),
-      processAllProfiles: (input) => serverPost("/api/lifecycle/process-source-all-profiles", input),
-    };
-
-    this.profiles = {
-      create: (input) => serverPost("/api/pipeline/profiles", input),
-      list: () => serverGet("/api/pipeline/profiles"),
-      update: (input) => serverPut("/api/pipeline/profiles", input),
-      deprecate: (input) => serverPost("/api/pipeline/profiles/deprecate", input),
-    };
-  }
-
   // ── Cross-cutting ──────────────────────────────────────────────────
 
   async process(input: ProcessKnowledgeInput): Promise<ServiceResult<ProcessKnowledgeSuccess>> {
@@ -55,5 +20,91 @@ export class ServerKnowledgeService implements KnowledgeService {
 
   async search(input: SearchKnowledgeInput): Promise<ServiceResult<SearchKnowledgeSuccess>> {
     return serverPost("/api/pipeline/search", input);
+  }
+
+  // ── Contexts ──────────────────────────────────────────────────────
+
+  createContext(input: Parameters<KnowledgeService["createContext"]>[0]) {
+    return serverPost("/api/lifecycle/create-context", input);
+  }
+
+  getContext(input: Parameters<KnowledgeService["getContext"]>[0]) {
+    return serverGet(`/api/pipeline/contexts?id=${encodeURIComponent(input.contextId)}`);
+  }
+
+  listContexts() {
+    return serverGet("/api/pipeline/contexts?summary=true");
+  }
+
+  listContextRefs() {
+    return serverGet("/api/pipeline/contexts");
+  }
+
+  transitionContextState(input: Parameters<KnowledgeService["transitionContextState"]>[0]) {
+    return serverPost("/api/lifecycle/transition-state", input);
+  }
+
+  updateContextProfile(input: Parameters<KnowledgeService["updateContextProfile"]>[0]) {
+    return serverPost("/api/lifecycle/update-context-profile", input);
+  }
+
+  reconcileProjections(input: Parameters<KnowledgeService["reconcileProjections"]>[0]) {
+    return serverPost("/api/lifecycle/reconcile-projections", input);
+  }
+
+  reconcileAllProfiles(input: Parameters<KnowledgeService["reconcileAllProfiles"]>[0]) {
+    return serverPost("/api/lifecycle/reconcile-all-profiles", input);
+  }
+
+  removeSourceFromContext(input: Parameters<KnowledgeService["removeSourceFromContext"]>[0]) {
+    return serverPost("/api/lifecycle/remove-source", input);
+  }
+
+  linkContexts(input: Parameters<KnowledgeService["linkContexts"]>[0]) {
+    return serverPost("/api/lifecycle/link", input);
+  }
+
+  unlinkContexts(input: Parameters<KnowledgeService["unlinkContexts"]>[0]) {
+    return serverPost("/api/lifecycle/unlink", input);
+  }
+
+  getContextLineage(input: Parameters<KnowledgeService["getContextLineage"]>[0]) {
+    return serverPost("/api/lifecycle/get-lineage", input);
+  }
+
+  // ── Sources ──────────────────────────────────────────────────────
+
+  listSources() {
+    return serverGet("/api/pipeline/sources");
+  }
+
+  getSource(input: Parameters<KnowledgeService["getSource"]>[0]) {
+    return serverGet(`/api/pipeline/sources/${input.sourceId}`);
+  }
+
+  getSourceContexts(input: Parameters<KnowledgeService["getSourceContexts"]>[0]) {
+    return serverGet(`/api/pipeline/sources/${input.sourceId}/contexts`);
+  }
+
+  processSourceAllProfiles(input: Parameters<KnowledgeService["processSourceAllProfiles"]>[0]) {
+    return serverPost("/api/lifecycle/process-source-all-profiles", input);
+  }
+
+  // ── Profiles ──────────────────────────────────────────────────────
+
+  createProfile(input: Parameters<KnowledgeService["createProfile"]>[0]) {
+    return serverPost("/api/pipeline/profiles", input);
+  }
+
+  listProfiles() {
+    return serverGet("/api/pipeline/profiles");
+  }
+
+  updateProfile(input: Parameters<KnowledgeService["updateProfile"]>[0]) {
+    return serverPut("/api/pipeline/profiles", input);
+  }
+
+  deprecateProfile(input: Parameters<KnowledgeService["deprecateProfile"]>[0]) {
+    return serverPost("/api/pipeline/profiles/deprecate", input);
   }
 }

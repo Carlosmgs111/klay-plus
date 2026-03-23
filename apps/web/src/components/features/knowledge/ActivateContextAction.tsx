@@ -16,7 +16,7 @@ export function ActivateContextAction({ contextId, onSuccess }: ActivateContextA
   const { addToast } = useToast();
 
   const activateAction = useCallback(
-    (input: TransitionContextStateInput) => service!.contexts.transitionState(input),
+    (input: TransitionContextStateInput) => service!.transitionContextState(input),
     [service],
   );
 

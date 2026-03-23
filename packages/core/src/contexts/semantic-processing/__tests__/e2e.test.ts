@@ -2,35 +2,70 @@
  * End-to-End Test for Semantic Processing Context
  *
  * Tests the complete flow:
- * 1. Create service with in-memory infrastructure
+ * 1. Create individual use cases with in-memory infrastructure
  * 2. Create a processing profile
  * 3. Process content into projections (chunk + embed + store)
  * 4. Batch processing
  * 5. Error handling (validations)
  * 6. Profile lifecycle (update, deprecate)
- *
- * Run with: npx vitest run src/backend/klay+/semantic-processing/__tests__/e2e.test.ts
  */
 
 import { describe, it, expect } from "vitest";
-import { createSemanticProcessingService } from "../service";
+import { resolveSemanticProcessingModules } from "../composition/factory";
 import { ProjectionType } from "../projection/domain/ProjectionType";
+import { CreateProcessingProfile } from "../processing-profile/application/use-cases/CreateProcessingProfile";
+import { UpdateProcessingProfile } from "../processing-profile/application/use-cases/UpdateProcessingProfile";
+import { DeprecateProcessingProfile } from "../processing-profile/application/use-cases/DeprecateProcessingProfile";
+import { ListProcessingProfiles } from "../processing-profile/application/use-cases/ListProcessingProfiles";
+import { GenerateProjection } from "../projection/application/use-cases/GenerateProjection";
+import { ProcessContent } from "../projection/application/use-cases/ProcessContent";
+import { BatchProcessContent } from "../projection/application/use-cases/BatchProcessContent";
+
+async function createUseCases(dims = 128) {
+  const modules = await resolveSemanticProcessingModules({
+    provider: "in-memory",
+    embeddingDimensions: dims,
+    defaultChunkingStrategy: "recursive",
+  });
+
+  const { projectionInfra, profileRepository, profileEventPublisher } = modules;
+  const { repository, materializer, vectorWriteStore, eventPublisher } = projectionInfra;
+
+  const createProcessingProfile = new CreateProcessingProfile(profileRepository, profileEventPublisher);
+  const updateProcessingProfile = new UpdateProcessingProfile(profileRepository, profileEventPublisher);
+  const deprecateProcessingProfile = new DeprecateProcessingProfile(profileRepository, profileEventPublisher);
+  const listProcessingProfiles = new ListProcessingProfiles(profileRepository);
+  const generateProjection = new GenerateProjection(
+    repository,
+    profileRepository,
+    materializer,
+    vectorWriteStore,
+    eventPublisher,
+  );
+  const processContent = new ProcessContent(generateProjection);
+  const batchProcessContent = new BatchProcessContent(processContent);
+
+  return {
+    createProcessingProfile,
+    updateProcessingProfile,
+    deprecateProcessingProfile,
+    listProcessingProfiles,
+    processContent,
+    batchProcessContent,
+    vectorStoreConfig: modules.vectorStoreConfig,
+  };
+}
 
 describe("Semantic Processing Context E2E", () => {
   it("should process content end-to-end with a processing profile", async () => {
-    const service = await createSemanticProcessingService({
-      provider: "in-memory",
-      embeddingDimensions: 128,
-      defaultChunkingStrategy: "recursive",
-    });
+    const ucs = await createUseCases(128);
 
-    expect(service).toBeDefined();
-    expect(service.projection).toBeDefined();
-    expect(service.vectorStoreConfig).toBeDefined();
-    expect(service.createProcessingProfile).toBeDefined();
+    expect(ucs.processContent).toBeDefined();
+    expect(ucs.vectorStoreConfig).toBeDefined();
+    expect(ucs.createProcessingProfile).toBeDefined();
 
     const profileId = crypto.randomUUID();
-    const createProfileResult = await service.createProcessingProfile({
+    const createProfileResult = await ucs.createProcessingProfile.execute({
       id: profileId,
       name: "Default Test Profile",
       preparation: { strategyId: "basic", config: {} },
@@ -68,7 +103,7 @@ There are three main types of machine learning:
 - **Inference**: Using the trained model to make predictions on new data
     `.trim();
 
-    const processResult = await service.processContent({
+    const processResult = await ucs.processContent.execute({
       projectionId: crypto.randomUUID(),
       sourceId,
       content: testContent,
@@ -100,12 +135,12 @@ There are three main types of machine learning:
       },
     ];
 
-    const batchResults = await service.batchProcess(batchItems);
+    const batchResults = await ucs.batchProcessContent.execute(batchItems);
     expect(batchResults).toHaveLength(2);
     expect(batchResults.every((r) => r.success)).toBe(true);
 
     // Empty content should fail
-    const emptyContentResult = await service.processContent({
+    const emptyContentResult = await ucs.processContent.execute({
       projectionId: crypto.randomUUID(),
       sourceId: crypto.randomUUID(),
       content: "",
@@ -115,7 +150,7 @@ There are three main types of machine learning:
     expect(emptyContentResult.isFail()).toBe(true);
 
     // Empty source ID should fail
-    const emptyIdResult = await service.processContent({
+    const emptyIdResult = await ucs.processContent.execute({
       projectionId: crypto.randomUUID(),
       sourceId: "",
       content: "Some content",
@@ -125,7 +160,7 @@ There are three main types of machine learning:
     expect(emptyIdResult.isFail()).toBe(true);
 
     // Non-existent profile should fail
-    const badProfileResult = await service.processContent({
+    const badProfileResult = await ucs.processContent.execute({
       projectionId: crypto.randomUUID(),
       sourceId: crypto.randomUUID(),
       content: "Some content",
@@ -136,14 +171,11 @@ There are three main types of machine learning:
   });
 
   it("should manage processing profile lifecycle", async () => {
-    const service = await createSemanticProcessingService({
-      provider: "in-memory",
-      embeddingDimensions: 128,
-    });
+    const ucs = await createUseCases(128);
 
     // Create profile
     const profileId = crypto.randomUUID();
-    const createResult = await service.createProcessingProfile({
+    const createResult = await ucs.createProcessingProfile.execute({
       id: profileId,
       name: "Lifecycle Test Profile",
       preparation: { strategyId: "basic", config: {} },
@@ -153,7 +185,7 @@ There are three main types of machine learning:
     expect(createResult.isOk()).toBe(true);
 
     // Update profile
-    const updateResult = await service.updateProcessingProfile({
+    const updateResult = await ucs.updateProcessingProfile.execute({
       id: profileId,
       name: "Updated Lifecycle Profile",
       fragmentation: { strategyId: "fixed-size", config: {} },
@@ -164,14 +196,14 @@ There are three main types of machine learning:
     }
 
     // Deprecate profile
-    const deprecateResult = await service.deprecateProcessingProfile({
+    const deprecateResult = await ucs.deprecateProcessingProfile.execute({
       id: profileId,
       reason: "No longer needed",
     });
     expect(deprecateResult.isOk()).toBe(true);
 
     // Processing with deprecated profile should fail
-    const processResult = await service.processContent({
+    const processResult = await ucs.processContent.execute({
       projectionId: crypto.randomUUID(),
       sourceId: crypto.randomUUID(),
       content: "Some content to process",
@@ -181,7 +213,7 @@ There are three main types of machine learning:
     expect(processResult.isFail()).toBe(true);
 
     // Duplicate profile ID should fail
-    const duplicateResult = await service.createProcessingProfile({
+    const duplicateResult = await ucs.createProcessingProfile.execute({
       id: profileId,
       name: "Duplicate Profile",
       preparation: { strategyId: "basic", config: {} },
@@ -192,14 +224,11 @@ There are three main types of machine learning:
   });
 
   it("should list all processing profiles sorted by status and date", async () => {
-    const service = await createSemanticProcessingService({
-      provider: "in-memory",
-      embeddingDimensions: 128,
-    });
+    const ucs = await createUseCases(128);
 
     // Create profiles with slight delay to ensure different createdAt
     const id1 = crypto.randomUUID();
-    await service.createProcessingProfile({
+    await ucs.createProcessingProfile.execute({
       id: id1,
       name: "Profile A",
       preparation: { strategyId: "basic", config: {} },
@@ -208,7 +237,7 @@ There are three main types of machine learning:
     });
 
     const id2 = crypto.randomUUID();
-    await service.createProcessingProfile({
+    await ucs.createProcessingProfile.execute({
       id: id2,
       name: "Profile B",
       preparation: { strategyId: "basic", config: {} },
@@ -217,7 +246,7 @@ There are three main types of machine learning:
     });
 
     const id3 = crypto.randomUUID();
-    await service.createProcessingProfile({
+    await ucs.createProcessingProfile.execute({
       id: id3,
       name: "Profile C",
       preparation: { strategyId: "basic", config: {} },
@@ -226,9 +255,9 @@ There are three main types of machine learning:
     });
 
     // Deprecate profile A
-    await service.deprecateProcessingProfile({ id: id1, reason: "testing" });
+    await ucs.deprecateProcessingProfile.execute({ id: id1, reason: "testing" });
 
-    const profiles = await service.listProcessingProfiles();
+    const profiles = await ucs.listProcessingProfiles.execute();
 
     expect(profiles).toHaveLength(3);
 

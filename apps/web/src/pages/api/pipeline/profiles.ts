@@ -4,7 +4,7 @@ import { toRESTResponse } from "@klay/core/result";
 
 export const GET: APIRoute = async () => {
   const coordinator = await getCoordinator();
-  const result = toRESTResponse(await coordinator.profiles.list());
+  const result = toRESTResponse(await coordinator.listProfiles());
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },
@@ -14,7 +14,7 @@ export const GET: APIRoute = async () => {
 export const POST: APIRoute = async ({ request }) => {
   const coordinator = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await coordinator.profiles.create(body));
+  const result = toRESTResponse(await coordinator.createProfile(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },
@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
 export const PUT: APIRoute = async ({ request }) => {
   const coordinator = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await coordinator.profiles.update(body));
+  const result = toRESTResponse(await coordinator.updateProfile(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

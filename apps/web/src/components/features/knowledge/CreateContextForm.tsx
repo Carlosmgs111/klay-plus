@@ -54,7 +54,7 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
 
   const createAction = useCallback(
-    (input: CreateContextInput) => service!.contexts.create(input),
+    (input: CreateContextInput) => service!.createContext(input),
     [service],
   );
 
@@ -69,13 +69,13 @@ export function CreateContextForm({ onSuccess }: CreateContextFormProps) {
   // Load available processing profiles and existing sources
   useEffect(() => {
     if (!service) return;
-    service.profiles.list().then((result) => {
+    service.listProfiles().then((result) => {
       if (result.success && result.data.profiles.length > 0) {
         setProfiles(result.data.profiles);
         setProfileId(result.data.profiles[0].id);
       }
     });
-    service.sources.list().then((result) => {
+    service.listSources().then((result) => {
       if (result.success) {
         setSources(result.data.sources.filter((s) => s.hasBeenExtracted));
       }

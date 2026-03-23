@@ -18,20 +18,79 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { createSourceIngestionService } from "../service";
 import { SourceType } from "../source/domain/SourceType";
 import { ResourceStatus } from "../resource/domain/ResourceStatus";
-import type { SourceIngestionService } from "../service/SourceIngestionService";
+import { StoreResource } from "../resource/application/use-cases/StoreResource";
+import { RegisterExternalResource } from "../resource/application/use-cases/RegisterExternalResource";
+import { DeleteResource } from "../resource/application/use-cases/DeleteResource";
+import { GetResource } from "../resource/application/use-cases/GetResource";
+import { IngestFile } from "../source/application/use-cases/IngestFile";
+import { IngestExternalResource } from "../source/application/use-cases/IngestExternalResource";
 import * as fs from "fs";
 import * as path from "path";
 
 describe("Resource Buffer Upload — E2E", () => {
-  let service: SourceIngestionService;
+  let storeResource: StoreResource;
+  let registerExternalResource: RegisterExternalResource;
+  let deleteResource: DeleteResource;
+  let getResource: GetResource;
+  let ingestFile: IngestFile;
+  let ingestExternalResource: IngestExternalResource;
 
   beforeAll(async () => {
-    service = await createSourceIngestionService({
-      provider: "in-memory",
-    });
+    // Resolve infrastructure
+    const { resourceFactory } = await import("../resource/composition/factory");
+    const { sourceFactory } = await import("../source/composition/factory");
+    const { extractionFactory } = await import("../extraction/composition/factory");
+
+    const [resourceResult, sourceResult, extractionResult] = await Promise.all([
+      resourceFactory({ provider: "in-memory" }),
+      sourceFactory({ provider: "in-memory" }),
+      extractionFactory({ provider: "in-memory" }),
+    ]);
+
+    const resourceRepository = resourceResult.infra.repository;
+    const resourceStorage = resourceResult.infra.storage;
+    const resourceStorageProvider = resourceResult.infra.storageProvider;
+    const resourceEventPublisher = resourceResult.infra.eventPublisher;
+
+    const sourceRepository = sourceResult.infra.repository;
+    const sourceEventPublisher = sourceResult.infra.eventPublisher;
+
+    const extractionUseCases = extractionResult.useCases;
+    const extractionJobRepository = extractionResult.infra.repository;
+
+    // Resource use cases
+    storeResource = new StoreResource(
+      resourceRepository,
+      resourceStorage,
+      resourceStorageProvider,
+      resourceEventPublisher,
+    );
+    registerExternalResource = new RegisterExternalResource(
+      resourceRepository,
+      resourceEventPublisher,
+    );
+    deleteResource = new DeleteResource(
+      resourceRepository,
+      resourceStorage,
+      resourceEventPublisher,
+    );
+    getResource = new GetResource(resourceRepository);
+
+    // Composite use cases
+    ingestFile = new IngestFile(
+      storeResource,
+      sourceRepository,
+      sourceEventPublisher,
+      extractionUseCases.executeExtraction,
+    );
+    ingestExternalResource = new IngestExternalResource(
+      registerExternalResource,
+      sourceRepository,
+      sourceEventPublisher,
+      extractionUseCases.executeExtraction,
+    );
   });
 
   // 1. Basic Buffer Upload
@@ -42,7 +101,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode(content).buffer;
       const resourceId = crypto.randomUUID();
 
-      const result = await service.storeResource({
+      const result = await storeResource.execute({
         id: resourceId,
         buffer,
         originalName: "hello.txt",
@@ -57,7 +116,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.size).toBe(content.length);
 
       // Special characters in filename
-      const specialResult = await service.storeResource({
+      const specialResult = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: new TextEncoder().encode("content").buffer,
         originalName: "my document (v2) — final.txt",
@@ -79,7 +138,7 @@ describe("Resource Buffer Upload — E2E", () => {
       pdfCombined.set(pdfHeader, 0);
       pdfCombined.set(binaryData, pdfHeader.length);
 
-      const pdfResult = await service.storeResource({
+      const pdfResult = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: pdfCombined.buffer,
         originalName: "document.pdf",
@@ -99,7 +158,7 @@ describe("Resource Buffer Upload — E2E", () => {
       pngCombined.set(pngMagic, 0);
       pngCombined.set(imageData, pngMagic.length);
 
-      const pngResult = await service.storeResource({
+      const pngResult = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: pngCombined.buffer,
         originalName: "screenshot.png",
@@ -119,7 +178,7 @@ describe("Resource Buffer Upload — E2E", () => {
         crypto.getRandomValues(largeData.subarray(offset, offset + size));
       }
 
-      const result = await service.storeResource({
+      const result = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: largeData.buffer,
         originalName: "large-file.bin",
@@ -133,7 +192,7 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should handle an empty buffer (0 bytes)", async () => {
       const emptyBuffer = new ArrayBuffer(0);
 
-      const result = await service.storeResource({
+      const result = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: emptyBuffer,
         originalName: "empty.txt",
@@ -153,14 +212,14 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode(content).buffer;
       const resourceId = crypto.randomUUID();
 
-      await service.storeResource({
+      await storeResource.execute({
         id: resourceId,
         buffer,
         originalName: "state-test.txt",
         mimeType: "text/plain",
       });
 
-      const getResult = await service.getResource(resourceId);
+      const getResult = await getResource.execute({ id: resourceId });
       expect(getResult.isOk()).toBe(true);
 
       const resource = getResult.value;
@@ -180,7 +239,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const resourceId = crypto.randomUUID();
       const externalUri = "https://cdn.example.com/files/report-2024.pdf";
 
-      await service.registerExternalResource({
+      await registerExternalResource.execute({
         id: resourceId,
         name: "Annual Report 2024",
         mimeType: "application/pdf",
@@ -188,7 +247,7 @@ describe("Resource Buffer Upload — E2E", () => {
         size: 5_000_000,
       });
 
-      const getResult = await service.getResource(resourceId);
+      const getResult = await getResource.execute({ id: resourceId });
       expect(getResult.isOk()).toBe(true);
 
       const resource = getResult.value;
@@ -203,14 +262,14 @@ describe("Resource Buffer Upload — E2E", () => {
     it("should generate unique URIs for uploads with the same filename", async () => {
       const buffer = new TextEncoder().encode("content A").buffer;
 
-      const result1 = await service.storeResource({
+      const result1 = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer,
         originalName: "same-name.txt",
         mimeType: "text/plain",
       });
 
-      const result2 = await service.storeResource({
+      const result2 = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: new TextEncoder().encode("content B").buffer,
         originalName: "same-name.txt",
@@ -232,7 +291,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode(content).buffer;
 
       // Store
-      const storeResult = await service.storeResource({
+      const storeResult = await storeResource.execute({
         id: resourceId,
         buffer,
         originalName: "lifecycle.txt",
@@ -242,24 +301,24 @@ describe("Resource Buffer Upload — E2E", () => {
       const { storageUri } = storeResult.value;
 
       // Retrieve
-      const getResult = await service.getResource(resourceId);
+      const getResult = await getResource.execute({ id: resourceId });
       expect(getResult.isOk()).toBe(true);
       expect(getResult.value.isStored).toBe(true);
       expect(getResult.value.storageUri).toBe(storageUri);
 
       // Delete
-      const deleteResult = await service.deleteResource({ id: resourceId });
+      const deleteResult = await deleteResource.execute({ id: resourceId });
       expect(deleteResult.isOk()).toBe(true);
 
       // Verify deleted
-      const getAfterDelete = await service.getResource(resourceId);
+      const getAfterDelete = await getResource.execute({ id: resourceId });
       expect(getAfterDelete.isOk()).toBe(true);
       expect(getAfterDelete.value.isDeleted).toBe(true);
       expect(getAfterDelete.value.status).toBe(ResourceStatus.Deleted);
     });
 
     it("should fail to delete a non-existent resource", async () => {
-      const result = await service.deleteResource({
+      const result = await deleteResource.execute({
         id: "non-existent-resource-id",
       });
 
@@ -275,7 +334,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer = new TextEncoder().encode("content").buffer;
 
       // Empty originalName
-      const emptyName = await service.storeResource({
+      const emptyName = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer,
         originalName: "",
@@ -284,7 +343,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(emptyName.isFail()).toBe(true);
 
       // Empty mimeType
-      const emptyMime = await service.storeResource({
+      const emptyMime = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer,
         originalName: "valid-name.txt",
@@ -293,7 +352,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(emptyMime.isFail()).toBe(true);
 
       // Whitespace-only originalName
-      const whitespaceName = await service.storeResource({
+      const whitespaceName = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer,
         originalName: "   ",
@@ -302,7 +361,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(whitespaceName.isFail()).toBe(true);
 
       // External resource with empty name
-      const emptyExtName = await service.registerExternalResource({
+      const emptyExtName = await registerExternalResource.execute({
         id: crypto.randomUUID(),
         name: "",
         mimeType: "application/pdf",
@@ -315,7 +374,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const resourceId = crypto.randomUUID();
       const buffer = new TextEncoder().encode("content").buffer;
 
-      const first = await service.storeResource({
+      const first = await storeResource.execute({
         id: resourceId,
         buffer,
         originalName: "first.txt",
@@ -323,7 +382,7 @@ describe("Resource Buffer Upload — E2E", () => {
       });
       expect(first.isOk()).toBe(true);
 
-      const second = await service.storeResource({
+      const second = await storeResource.execute({
         id: resourceId,
         buffer: new TextEncoder().encode("different").buffer,
         originalName: "second.txt",
@@ -344,7 +403,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const originalContent = "This plain text document will be uploaded as a buffer, stored, registered as a source, and its content extracted.";
       const buffer = new TextEncoder().encode(originalContent).buffer;
 
-      const result = await service.ingestFile({
+      const result = await ingestFile.execute({
         resourceId,
         sourceId,
         sourceName: "Buffer Upload Test",
@@ -365,7 +424,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.extractedText).toBe(originalContent);
 
       // Verify resource aggregate
-      const resourceResult = await service.getResource(resourceId);
+      const resourceResult = await getResource.execute({ id: resourceId });
       expect(resourceResult.isOk()).toBe(true);
       expect(resourceResult.value.originalName).toBe("buffer-test.txt");
       expect(resourceResult.value.size).toBe(buffer.byteLength);
@@ -379,7 +438,7 @@ describe("Resource Buffer Upload — E2E", () => {
       ].join("\n");
       const unicodeBuffer = new TextEncoder().encode(unicodeContent).buffer;
 
-      const unicodeResult = await service.ingestFile({
+      const unicodeResult = await ingestFile.execute({
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Unicode Buffer Test",
@@ -401,7 +460,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const buffer1 = new TextEncoder().encode(content).buffer;
       const buffer2 = new TextEncoder().encode(content).buffer;
 
-      const result1 = await service.ingestFile({
+      const result1 = await ingestFile.execute({
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Hash Test 1",
@@ -410,7 +469,7 @@ describe("Resource Buffer Upload — E2E", () => {
         file: { buffer: buffer1, originalName: "hash1.txt", mimeType: "text/plain" },
       });
 
-      const result2 = await service.ingestFile({
+      const result2 = await ingestFile.execute({
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Hash Test 2",
@@ -424,7 +483,7 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result1.value.contentHash).toBe(result2.value.contentHash);
 
       // Different content → different hash
-      const result3 = await service.ingestFile({
+      const result3 = await ingestFile.execute({
         resourceId: crypto.randomUUID(),
         sourceId: crypto.randomUUID(),
         sourceName: "Different Content",
@@ -451,7 +510,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const sourceId = crypto.randomUUID();
       const externalContent = "This content exists externally and requires no upload.";
 
-      const result = await service.ingestExternalResource({
+      const result = await ingestExternalResource.execute({
         resourceId,
         sourceId,
         sourceName: "External Content",
@@ -468,24 +527,24 @@ describe("Resource Buffer Upload — E2E", () => {
       expect(result.value.extractedText).toBe(externalContent);
       expect(result.value.contentHash).toBeTruthy();
 
-      const resourceResult = await service.getResource(resourceId);
+      const resourceResult = await getResource.execute({ id: resourceId });
       expect(resourceResult.isOk()).toBe(true);
       expect(resourceResult.value.provider).toBe("external");
       expect(resourceResult.value.isStored).toBe(true);
 
       // Delete external resource (marks as deleted, no storage.delete() call)
       const deleteResourceId = crypto.randomUUID();
-      await service.registerExternalResource({
+      await registerExternalResource.execute({
         id: deleteResourceId,
         name: "External to Delete",
         mimeType: "text/plain",
         uri: "https://example.com/external-file.txt",
       });
 
-      const deleteResult = await service.deleteResource({ id: deleteResourceId });
+      const deleteResult = await deleteResource.execute({ id: deleteResourceId });
       expect(deleteResult.isOk()).toBe(true);
 
-      const getResult = await service.getResource(deleteResourceId);
+      const getResult = await getResource.execute({ id: deleteResourceId });
       expect(getResult.isOk()).toBe(true);
       expect(getResult.value.isDeleted).toBe(true);
       expect(getResult.value.provider).toBe("external");
@@ -500,7 +559,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const japaneseText = "こんにちは世界";
       const jpBuffer = new TextEncoder().encode(japaneseText).buffer;
 
-      const jpResult = await service.storeResource({
+      const jpResult = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: jpBuffer,
         originalName: "japanese.txt",
@@ -515,7 +574,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const emojiText = "Hello 🌍🚀✨ World";
       const emojiBuffer = new TextEncoder().encode(emojiText).buffer;
 
-      const emojiResult = await service.storeResource({
+      const emojiResult = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: emojiBuffer,
         originalName: "emoji.txt",
@@ -531,7 +590,7 @@ describe("Resource Buffer Upload — E2E", () => {
       const binaryData = new Uint8Array(exactSize);
       crypto.getRandomValues(binaryData);
 
-      const binResult = await service.storeResource({
+      const binResult = await storeResource.execute({
         id: crypto.randomUUID(),
         buffer: binaryData.buffer,
         originalName: "exact-4kb.bin",
@@ -565,7 +624,7 @@ describe("Resource Buffer Upload — E2E", () => {
       it("should store a real PDF buffer with correct size and preserve integrity", async () => {
         const resourceId = crypto.randomUUID();
 
-        const result = await service.storeResource({
+        const result = await storeResource.execute({
           id: resourceId,
           buffer: pdfBuffer,
           originalName: path.basename(PDF_PATH),
@@ -578,7 +637,7 @@ describe("Resource Buffer Upload — E2E", () => {
         expect(result.value.storageUri).toMatch(/^mem:\/\//);
 
         // Verify aggregate state
-        const getResult = await service.getResource(resourceId);
+        const getResult = await getResource.execute({ id: resourceId });
         expect(getResult.isOk()).toBe(true);
         expect(getResult.value.originalName).toBe("archivo-de-educacion.pdf");
         expect(getResult.value.mimeType).toBe("application/pdf");
@@ -595,7 +654,7 @@ describe("Resource Buffer Upload — E2E", () => {
         const resourceId = crypto.randomUUID();
         const sourceId = crypto.randomUUID();
 
-        const result = await service.ingestFile({
+        const result = await ingestFile.execute({
           resourceId,
           sourceId,
           sourceName: "Archivo de Educación (Buffer Upload)",
@@ -619,7 +678,7 @@ describe("Resource Buffer Upload — E2E", () => {
         expect(result.value.metadata.pageCount).toBeGreaterThan(0);
 
         // Consistent hash for same PDF
-        const result2 = await service.ingestFile({
+        const result2 = await ingestFile.execute({
           resourceId: crypto.randomUUID(),
           sourceId: crypto.randomUUID(),
           sourceName: "PDF Hash Test 2",

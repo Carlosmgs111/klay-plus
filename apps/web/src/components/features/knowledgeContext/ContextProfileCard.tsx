@@ -27,8 +27,8 @@ export function ContextProfileCard({ contextId, onProfileChanged }: ContextProfi
     setLoading(true);
     try {
       const [contextsRes, profilesRes] = await Promise.all([
-        service.contexts.listRefs(),
-        service.profiles.list(),
+        service.listContextRefs(),
+        service.listProfiles(),
       ]);
 
       if (contextsRes.success) {
@@ -54,7 +54,7 @@ export function ContextProfileCard({ contextId, onProfileChanged }: ContextProfi
     if (!service || newProfileId === currentProfileId) return;
     setSaving(true);
     try {
-      const result = await service.contexts.updateProfile({
+      const result = await service.updateContextProfile({
         contextId,
         profileId: newProfileId,
       });

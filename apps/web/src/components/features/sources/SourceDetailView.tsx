@@ -26,7 +26,7 @@ export function SourceDetailView({ sourceId, onAddedToContext }: SourceDetailVie
 
   // Fetch source detail
   const fetchSource = useCallback(
-    (input: GetSourceInput) => service!.sources.get(input),
+    (input: GetSourceInput) => service!.getSource(input),
     [service],
   );
   const { data: sourceData, error: sourceError, isLoading: sourceLoading, execute: fetchSourceDetail } =
@@ -34,7 +34,7 @@ export function SourceDetailView({ sourceId, onAddedToContext }: SourceDetailVie
 
   // Fetch source contexts
   const fetchContexts = useCallback(
-    (input: GetSourceContextsInput) => service!.sources.getContexts(input),
+    (input: GetSourceContextsInput) => service!.getSourceContexts(input),
     [service],
   );
   const { data: contextsData, error: contextsError, isLoading: contextsLoading, execute: fetchSourceContexts } =

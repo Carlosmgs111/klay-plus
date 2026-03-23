@@ -1,6 +1,9 @@
-import type { SourceIngestionService } from "../../contexts/source-ingestion/service/SourceIngestionService";
-import type { SemanticProcessingService } from "../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { ContextManagementService } from "../../contexts/context-management/service/ContextManagementService";
+import type { IngestAndExtract } from "../../contexts/source-ingestion/source/application/use-cases/IngestAndExtract";
+import type { GetSource } from "../../contexts/source-ingestion/source/application/use-cases/GetSource";
+import type { GetExtractedText } from "../../contexts/source-ingestion/source/application/use-cases/GetExtractedText";
+import type { ProjectionOperationsPort } from "../../contexts/context-management/context/application/ports/ProjectionOperationsPort";
+import type { GetContext } from "../../contexts/context-management/context/application/use-cases/GetContext";
+import type { AddSourceToContext } from "../../contexts/context-management/context/application/use-cases/AddSourceToContext";
 import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "./dtos";
 import type { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";
 import type { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType";
@@ -33,7 +36,11 @@ export interface PipelineContext {
 // ── Steps ─────────────────────────────────────────────────────────────
 
 export class IngestStep {
-  constructor(private ingestion: SourceIngestionService) {}
+  constructor(
+    private ingestAndExtract: IngestAndExtract,
+    private getSource: GetSource,
+    private getExtractedText: GetExtractedText,
+  ) {}
 
   shouldRun(ctx: PipelineContext): boolean {
     return !!ctx.input.sourceName;
@@ -41,7 +48,7 @@ export class IngestStep {
 
   async execute(ctx: PipelineContext): Promise<Result<KnowledgeError, PipelineContext>> {
     if (ctx.input.sourceName) {
-      const ingestionResult = await this.ingestion.ingestAndExtract({
+      const ingestionResult = await this.ingestAndExtract.execute({
         sourceId: ctx.input.sourceId,
         sourceName: ctx.input.sourceName,
         uri: ctx.input.uri ?? "",
@@ -65,7 +72,7 @@ export class IngestStep {
     }
 
     // Existing source — verify it exists and load extracted text
-    const source = await this.ingestion.getSource(ctx.input.sourceId);
+    const source = await this.getSource.execute({ sourceId: ctx.input.sourceId });
     if (!source) {
       return Result.fail(
         KnowledgeError.fromStep(
@@ -76,7 +83,7 @@ export class IngestStep {
       );
     }
 
-    const textResult = await this.ingestion.getExtractedText(ctx.input.sourceId);
+    const textResult = await this.getExtractedText.execute({ sourceId: ctx.input.sourceId });
     const extractedText = textResult.isOk() ? textResult.value.text : undefined;
 
     return Result.ok({ ...ctx, extractedText });
@@ -84,7 +91,7 @@ export class IngestStep {
 }
 
 export class ProcessStep {
-  constructor(private processing: SemanticProcessingService) {}
+  constructor(private projectionOperations: ProjectionOperationsPort) {}
 
   shouldRun(ctx: PipelineContext): boolean {
     return !!(ctx.processingProfileId || ctx.input.contextId) && !!ctx.extractedText;
@@ -96,7 +103,7 @@ export class ProcessStep {
 
     // Check reuse of existing projection (when adding existing source to context)
     if (!ctx.input.sourceName && ctx.processingProfileId) {
-      const existing = await this.processing.findExistingProjection(ctx.input.sourceId, ctx.processingProfileId);
+      const existing = await this.projectionOperations.findExistingProjection(ctx.input.sourceId, ctx.processingProfileId);
       if (existing) {
         return Result.ok({
           ...ctx,
@@ -122,14 +129,14 @@ export class ProcessStep {
 
     // Cleanup existing projection for this profile (for reconciliation)
     if (!ctx.input.sourceName) {
-      await this.processing.cleanupSourceProjectionForProfile(ctx.input.sourceId, ctx.processingProfileId);
+      await this.projectionOperations.cleanupSourceProjectionForProfile(ctx.input.sourceId, ctx.processingProfileId);
     }
 
     if (!projectionId) {
       projectionId = crypto.randomUUID();
     }
 
-    const processingResult = await this.processing.processContent({
+    const processingResult = await this.projectionOperations.processContent({
       projectionId,
       sourceId: ctx.input.sourceId,
       content: ctx.extractedText!,
@@ -155,7 +162,7 @@ export class ProcessStep {
 }
 
 export class CatalogStep {
-  constructor(private contextMgmt: ContextManagementService) {}
+  constructor(private addSourceToContext: AddSourceToContext) {}
 
   shouldRun(ctx: PipelineContext): boolean {
     return !!ctx.input.contextId && !!ctx.resolvedContext;
@@ -168,7 +175,7 @@ export class CatalogStep {
     );
 
     if (!alreadyInContext) {
-      const addResult = await this.contextMgmt.addSourceToContext({
+      const addResult = await this.addSourceToContext.execute({
         contextId: ctx.input.contextId!,
         sourceId: ctx.input.sourceId,
         projectionId: ctx.projectionId,
@@ -194,15 +201,20 @@ export class ProcessKnowledge {
   private ingest: IngestStep;
   private process: ProcessStep;
   private catalog: CatalogStep;
+  private readonly _getContext: GetContext;
 
   constructor(deps: {
-    ingestion: SourceIngestionService;
-    processing: SemanticProcessingService;
-    contextManagement: ContextManagementService;
+    ingestAndExtract: IngestAndExtract;
+    getSource: GetSource;
+    getExtractedText: GetExtractedText;
+    projectionOperations: ProjectionOperationsPort;
+    getContext: GetContext;
+    addSourceToContext: AddSourceToContext;
   }) {
-    this.ingest = new IngestStep(deps.ingestion);
-    this.process = new ProcessStep(deps.processing);
-    this.catalog = new CatalogStep(deps.contextManagement);
+    this.ingest = new IngestStep(deps.ingestAndExtract, deps.getSource, deps.getExtractedText);
+    this.process = new ProcessStep(deps.projectionOperations);
+    this.catalog = new CatalogStep(deps.addSourceToContext);
+    this._getContext = deps.getContext;
   }
 
   async execute(
@@ -222,7 +234,7 @@ export class ProcessKnowledge {
 
     // ── Resolve context (if provided) and effective profile ──────────
     if (input.contextId) {
-      const context = await this.catalog["contextMgmt"].getContext(input.contextId);
+      const context = await this._getContext.execute({ contextId: input.contextId });
       if (!context) {
         return Result.fail(
           KnowledgeError.fromStep(

@@ -1,8 +1,7 @@
-import type { ProjectionUseCases } from "../projection/application";
 import type { ProcessingProfileRepository } from "../processing-profile/domain/ProcessingProfileRepository";
 import type { EventPublisher } from "../../../shared/domain/EventPublisher";
 import type { VectorEntry } from "../../../platform/vector/VectorEntry";
-import type { ProjectionInfrastructurePolicy } from "../projection/composition/factory";
+import type { ProjectionInfrastructurePolicy, ResolvedProjectionInfra } from "../projection/composition/factory";
 import type { ProcessingProfileInfrastructurePolicy } from "../processing-profile/composition/factory";
 import { resolveConfigProvider } from "../../../platform/config/ConfigProvider";
 import type { ConfigStore } from "../../../platform/config/ConfigStore";
@@ -48,7 +47,7 @@ export interface SemanticProcessingServicePolicy {
 }
 
 export interface ResolvedSemanticProcessingModules {
-  projection: ProjectionUseCases;
+  projectionInfra: ResolvedProjectionInfra;
   profileRepository: ProcessingProfileRepository;
   profileEventPublisher: EventPublisher;
   vectorStoreConfig: VectorStoreConfig;
@@ -119,7 +118,7 @@ export async function resolveSemanticProcessingModules(
   }
 
   return {
-    projection: projectionResult.useCases,
+    projectionInfra: projectionResult.infra,
     profileRepository: processingProfileResult.repository,
     profileEventPublisher: processingProfileResult.eventPublisher,
     vectorStoreConfig,

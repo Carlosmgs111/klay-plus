@@ -46,3 +46,14 @@ export type {
   ResolvedProcessingProfileInfra,
   ProcessingProfileFactoryResult,
 } from "./composition";
+
+// Application use cases
+export { CreateProcessingProfile } from "./application/use-cases/CreateProcessingProfile";
+export type { CreateProcessingProfileInput, CreateProcessingProfileSuccess } from "./application/use-cases/CreateProcessingProfile";
+export { UpdateProcessingProfile } from "./application/use-cases/UpdateProcessingProfile";
+export type { UpdateProcessingProfileInput, UpdateProcessingProfileSuccess } from "./application/use-cases/UpdateProcessingProfile";
+export { DeprecateProcessingProfile } from "./application/use-cases/DeprecateProcessingProfile";
+export type { DeprecateProcessingProfileInput, DeprecateProcessingProfileSuccess } from "./application/use-cases/DeprecateProcessingProfile";
+export { ListProcessingProfiles } from "./application/use-cases/ListProcessingProfiles";
+export { GetProcessingProfile } from "./application/use-cases/GetProcessingProfile";
+export type { GetProcessingProfileInput } from "./application/use-cases/GetProcessingProfile";

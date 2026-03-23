@@ -13,7 +13,7 @@
  */
 
 export { KnowledgeCoordinator } from "./KnowledgeCoordinator";
-export type { ResolvedDependencies, ContextOperations, SourceOperations, ProfileOperations } from "./KnowledgeCoordinator";
+export type { ResolvedDependencies } from "./KnowledgeCoordinator";
 
 // ── Pipeline DTOs ──────────────────────────────────────────────────
 export type {
@@ -66,6 +66,8 @@ export type {
   GetContextLineageResult,
   UpdateContextProfileInput,
   UpdateContextProfileResult,
+  TransitionContextStateInput,
+  TransitionContextStateResult,
   ReconcileAllProfilesInput,
   ReconcileAllProfilesResult,
   ProcessSourceAllProfilesInput,

@@ -34,7 +34,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
     // Create a processing profile for all tests
     profileId = "profile-test-001";
-    const profileResult = await knowledge.profiles.create({
+    const profileResult = await knowledge.createProfile({
       id: profileId,
       name: "Test Profile",
       preparation: { strategyId: "basic", config: {} },
@@ -101,7 +101,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should execute pipeline with contextId and add source to context", async () => {
-      const contextResult = await knowledge.contexts.create({
+      const contextResult = await knowledge.createContext({
         id: "ctx-test-001",
         name: "Test Context",
         description: "A context for testing",
@@ -177,7 +177,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should catalog a document (create context) independently", async () => {
-      const result = await knowledge.contexts.create({
+      const result = await knowledge.createContext({
         id: "ctx-clean-001",
         name: "Clean Architecture",
         description: "Clean Architecture principles and patterns",
@@ -348,7 +348,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("Context Details", () => {
     it("should get details for a context with sources and projections", async () => {
-      const result = await knowledge.contexts.get({ contextId: "ctx-test-001" });
+      const result = await knowledge.getContext({ contextId: "ctx-test-001" });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -367,7 +367,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should return empty status for context with no sources", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-empty-details-001",
         name: "Empty Details Context",
         description: "No sources",
@@ -377,7 +377,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(ctxResult.isOk()).toBe(true);
 
-      const result = await knowledge.contexts.get({ contextId: "ctx-empty-details-001" });
+      const result = await knowledge.getContext({ contextId: "ctx-empty-details-001" });
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.sources).toEqual([]);
@@ -386,12 +386,12 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail for non-existent context", async () => {
-      const result = await knowledge.contexts.get({ contextId: "non-existent" });
+      const result = await knowledge.getContext({ contextId: "non-existent" });
       expect(result.isFail()).toBe(true);
     });
 
     it("should list contexts summary with enriched data", async () => {
-      const result = await knowledge.contexts.list();
+      const result = await knowledge.listContexts();
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.contexts.length).toBeGreaterThan(0);
@@ -408,7 +408,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("Source Library", () => {
     it("should list all sources in the ecosystem", async () => {
-      const result = await knowledge.sources.list();
+      const result = await knowledge.listSources();
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -421,7 +421,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should get detailed source information", async () => {
-      const result = await knowledge.sources.get({ sourceId: "src-ddd-001" });
+      const result = await knowledge.getSource({ sourceId: "src-ddd-001" });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -434,12 +434,12 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should return error for non-existent source", async () => {
-      const result = await knowledge.sources.get({ sourceId: "non-existent-source" });
+      const result = await knowledge.getSource({ sourceId: "non-existent-source" });
       expect(result.isFail()).toBe(true);
     });
 
     it("should get contexts for a source", async () => {
-      const result = await knowledge.sources.getContexts({ sourceId: "src-ctx-001" });
+      const result = await knowledge.getSourceContexts({ sourceId: "src-ctx-001" });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -449,7 +449,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should add an existing source to a new context", async () => {
-      const catalogResult = await knowledge.contexts.create({
+      const catalogResult = await knowledge.createContext({
         id: "ctx-reuse-001",
         name: "Reuse Context",
         description: "Context for testing source reuse",
@@ -477,7 +477,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("processKnowledge", () => {
     it("should execute full pipeline with new source + context", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-pk-full-001",
         name: "PK Full Test",
         description: "processKnowledge full pipeline test",
@@ -552,7 +552,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("Processing Profile Management", () => {
     it("should create a processing profile", async () => {
-      const result = await knowledge.profiles.create({
+      const result = await knowledge.createProfile({
         id: "profile-custom-001",
         name: "Custom Profile",
         preparation: { strategyId: "basic", config: {} },
@@ -568,7 +568,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should list all profiles", async () => {
-      const result = await knowledge.profiles.list();
+      const result = await knowledge.listProfiles();
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -577,7 +577,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should update a profile", async () => {
-      const result = await knowledge.profiles.update({
+      const result = await knowledge.updateProfile({
         id: "profile-custom-001",
         name: "Updated Custom Profile",
       });
@@ -589,7 +589,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should deprecate a profile", async () => {
-      const result = await knowledge.profiles.deprecate({
+      const result = await knowledge.deprecateProfile({
         id: "profile-custom-001",
         reason: "No longer needed",
       });
@@ -604,7 +604,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("removeSource", () => {
     it("should remove a source from a context with multiple sources", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-lc-rm-001",
         name: "Remove Source Test",
         description: "Context for testing source removal",
@@ -638,7 +638,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(addResult.isOk()).toBe(true);
 
-      const result = await knowledge.contexts.removeSource({
+      const result = await knowledge.removeSourceFromContext({
         contextId: "ctx-lc-rm-001",
         sourceId: "src-lc-rm-001",
       });
@@ -650,7 +650,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail when removing the last source", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-lc-rm-last-001",
         name: "Last Source Test",
         description: "Context for testing last source removal",
@@ -672,7 +672,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(execResult.isOk()).toBe(true);
 
-      const result = await knowledge.contexts.removeSource({
+      const result = await knowledge.removeSourceFromContext({
         contextId: "ctx-lc-rm-last-001",
         sourceId: "src-lc-rm-last-001",
       });
@@ -688,7 +688,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("reconcileProjections", () => {
     it("should reconcile projections for an existing context", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-lc-rp-001",
         name: "Reconcile Test",
         description: "Context for testing projection reconciliation",
@@ -710,7 +710,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(execResult.isOk()).toBe(true);
 
-      const result = await knowledge.contexts.reconcileProjections({
+      const result = await knowledge.reconcileProjections({
         contextId: "ctx-lc-rp-001",
         profileId,
       });
@@ -724,7 +724,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail when context does not exist", async () => {
-      const result = await knowledge.contexts.reconcileProjections({
+      const result = await knowledge.reconcileProjections({
         contextId: "non-existent-context",
         profileId,
       });
@@ -740,7 +740,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("linkContexts", () => {
     it("should link two existing contexts", async () => {
-      const result = await knowledge.contexts.link({
+      const result = await knowledge.linkContexts({
         sourceContextId: "ctx-lc-rm-001",
         targetContextId: "ctx-lc-rp-001",
         relationshipType: "related-to",
@@ -754,7 +754,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail when linking a context to itself", async () => {
-      const result = await knowledge.contexts.link({
+      const result = await knowledge.linkContexts({
         sourceContextId: "ctx-lc-rm-001",
         targetContextId: "ctx-lc-rm-001",
         relationshipType: "self-ref",
@@ -770,7 +770,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("unlinkContexts", () => {
     it("should unlink two previously linked contexts", async () => {
-      const result = await knowledge.contexts.unlink({
+      const result = await knowledge.unlinkContexts({
         sourceContextId: "ctx-lc-rm-001",
         targetContextId: "ctx-lc-rp-001",
       });
@@ -779,7 +779,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail when link does not exist", async () => {
-      const result = await knowledge.contexts.unlink({
+      const result = await knowledge.unlinkContexts({
         sourceContextId: "ctx-lc-rm-001",
         targetContextId: "ctx-lc-rp-001",
       });
@@ -794,7 +794,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
   describe("transitionContextState", () => {
     it("should archive a context", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-transition-archive-001",
         name: "Transition Archive Test",
         description: "Test transitionContextState archive",
@@ -804,7 +804,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(ctxResult.isOk()).toBe(true);
 
-      const result = await knowledge.contexts.transitionState({
+      const result = await knowledge.transitionContextState({
         contextId: "ctx-transition-archive-001",
         targetState: "ARCHIVED",
       });
@@ -816,7 +816,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should deprecate a context", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-transition-deprecate-001",
         name: "Transition Deprecate Test",
         description: "Test transitionContextState deprecate",
@@ -826,7 +826,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(ctxResult.isOk()).toBe(true);
 
-      const result = await knowledge.contexts.transitionState({
+      const result = await knowledge.transitionContextState({
         contextId: "ctx-transition-deprecate-001",
         targetState: "DEPRECATED",
         reason: "No longer needed",
@@ -839,7 +839,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should activate a deprecated context", async () => {
-      const result = await knowledge.contexts.transitionState({
+      const result = await knowledge.transitionContextState({
         contextId: "ctx-transition-deprecate-001",
         targetState: "ACTIVE",
       });
@@ -851,7 +851,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail for non-existent context", async () => {
-      const result = await knowledge.contexts.transitionState({
+      const result = await knowledge.transitionContextState({
         contextId: "non-existent-transition-ctx",
         targetState: "ARCHIVED",
       });
@@ -872,7 +872,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       profileA = "profile-enforce-A";
       profileB = "profile-enforce-B";
 
-      const resultA = await knowledge.profiles.create({
+      const resultA = await knowledge.createProfile({
         id: profileA,
         name: "Enforce Profile A",
         preparation: { strategyId: "basic", config: {} },
@@ -881,7 +881,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(resultA.isOk()).toBe(true);
 
-      const resultB = await knowledge.profiles.create({
+      const resultB = await knowledge.createProfile({
         id: profileB,
         name: "Enforce Profile B",
         preparation: { strategyId: "basic", config: {} },
@@ -892,7 +892,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("updateContextProfile should trigger automatic reconciliation", async () => {
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-autoreconcile-001",
         name: "Auto-Reconcile Test",
         description: "Context for auto-reconciliation",
@@ -914,7 +914,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(addResult.isOk()).toBe(true);
 
-      const updateResult = await knowledge.contexts.updateProfile({
+      const updateResult = await knowledge.updateContextProfile({
         contextId: "ctx-autoreconcile-001",
         profileId: profileB,
       });
@@ -961,7 +961,7 @@ describe("Knowledge Orchestrator — E2E", () => {
         defaultChunkingStrategy: "recursive",
       });
 
-      const rA = await localKnowledge.profiles.create({
+      const rA = await localKnowledge.createProfile({
         id: rapProfileA,
         name: "RAP Profile A",
         preparation: { strategyId: "basic", config: {} },
@@ -970,7 +970,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(rA.isOk()).toBe(true);
 
-      const rB = await localKnowledge.profiles.create({
+      const rB = await localKnowledge.createProfile({
         id: rapProfileB,
         name: "RAP Profile B",
         preparation: { strategyId: "basic", config: {} },
@@ -979,7 +979,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(rB.isOk()).toBe(true);
 
-      const ctxResult = await localKnowledge.contexts.create({
+      const ctxResult = await localKnowledge.createContext({
         id: rapContextId,
         name: "Reconcile All Profiles Test",
         description: "Context for reconcileAllProfiles",
@@ -1001,7 +1001,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should reconcile all active profiles for a context", async () => {
-      const result = await localKnowledge.contexts.reconcileAllProfiles({ contextId: rapContextId });
+      const result = await localKnowledge.reconcileAllProfiles({ contextId: rapContextId });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -1017,7 +1017,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should be idempotent — calling again yields failedCount === 0", async () => {
-      const result = await localKnowledge.contexts.reconcileAllProfiles({ contextId: rapContextId });
+      const result = await localKnowledge.reconcileAllProfiles({ contextId: rapContextId });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -1044,7 +1044,7 @@ describe("Knowledge Orchestrator — E2E", () => {
         defaultChunkingStrategy: "recursive",
       });
 
-      const rA = await localKnowledge.profiles.create({
+      const rA = await localKnowledge.createProfile({
         id: psapProfileA,
         name: "PSAP Profile A",
         preparation: { strategyId: "basic", config: {} },
@@ -1053,7 +1053,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(rA.isOk()).toBe(true);
 
-      const rB = await localKnowledge.profiles.create({
+      const rB = await localKnowledge.createProfile({
         id: psapProfileB,
         name: "PSAP Profile B",
         preparation: { strategyId: "basic", config: {} },
@@ -1074,7 +1074,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should generate projections for all active profiles for a single source", async () => {
-      const result = await localKnowledge.sources.processAllProfiles({ sourceId: psapSourceId });
+      const result = await localKnowledge.processSourceAllProfiles({ sourceId: psapSourceId });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -1090,7 +1090,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should be idempotent — calling again yields same counts, no failures", async () => {
-      const result = await localKnowledge.sources.processAllProfiles({ sourceId: psapSourceId });
+      const result = await localKnowledge.processSourceAllProfiles({ sourceId: psapSourceId });
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -1100,7 +1100,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should fail for non-existent source", async () => {
-      const result = await localKnowledge.sources.processAllProfiles({ sourceId: "non-existent-psap" });
+      const result = await localKnowledge.processSourceAllProfiles({ sourceId: "non-existent-psap" });
 
       expect(result.isFail()).toBe(true);
       if (result.isFail()) {
@@ -1117,7 +1117,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       profileX = "profile-multi-X";
       profileY = "profile-multi-Y";
 
-      const resultX = await knowledge.profiles.create({
+      const resultX = await knowledge.createProfile({
         id: profileX,
         name: "Multi Profile X",
         preparation: { strategyId: "basic", config: {} },
@@ -1126,7 +1126,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       });
       expect(resultX.isOk()).toBe(true);
 
-      const resultY = await knowledge.profiles.create({
+      const resultY = await knowledge.createProfile({
         id: profileY,
         name: "Multi Profile Y",
         preparation: { strategyId: "basic", config: {} },
@@ -1138,7 +1138,7 @@ describe("Knowledge Orchestrator — E2E", () => {
 
     it("should return multiple projections per source in context details", async () => {
       // Create context with profileX as required
-      const ctxResult = await knowledge.contexts.create({
+      const ctxResult = await knowledge.createContext({
         id: "ctx-multi-proj-001",
         name: "Multi Projection Test",
         description: "Testing multi-profile projection visibility",
@@ -1170,7 +1170,7 @@ describe("Knowledge Orchestrator — E2E", () => {
       expect(proc2.isOk()).toBe(true);
 
       // Get context details → source should have 2 projections
-      const detailResult = await knowledge.contexts.get({ contextId: "ctx-multi-proj-001" });
+      const detailResult = await knowledge.getContext({ contextId: "ctx-multi-proj-001" });
       expect(detailResult.isOk()).toBe(true);
       if (detailResult.isOk()) {
         const source = detailResult.value.sources[0];
@@ -1227,7 +1227,7 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
 
     it("should reflect total projection count in list summary", async () => {
-      const listResult = await knowledge.contexts.list();
+      const listResult = await knowledge.listContexts();
       expect(listResult.isOk()).toBe(true);
       if (listResult.isOk()) {
         const ctx = listResult.value.contexts.find((c) => c.id === "ctx-multi-proj-001");
@@ -1240,3 +1240,4 @@ describe("Knowledge Orchestrator — E2E", () => {
     });
   });
 });
+

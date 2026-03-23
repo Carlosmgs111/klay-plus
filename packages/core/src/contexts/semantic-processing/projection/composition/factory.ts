@@ -3,7 +3,6 @@ import type { VectorWriteStore } from "../domain/ports/VectorWriteStore";
 import type { EventPublisher } from "../../../../shared/domain/EventPublisher";
 import type { ProcessingProfileRepository } from "../../processing-profile/domain/ProcessingProfileRepository";
 import type { ProcessingProfileMaterializer } from "./ProcessingProfileMaterializer";
-import type { ProjectionUseCases } from "../application";
 import type { ConfigStore } from "../../../../platform/config/ConfigStore";
 
 export interface ProjectionInfrastructurePolicy {
@@ -29,7 +28,6 @@ export interface ResolvedProjectionInfra {
 }
 
 export interface ProjectionFactoryResult {
-  useCases: ProjectionUseCases;
   infra: ResolvedProjectionInfra;
 }
 
@@ -135,14 +133,5 @@ export async function projectionFactory(
     eventPublisher,
   };
 
-  const { ProjectionUseCases } = await import("../application");
-  const useCases = new ProjectionUseCases(
-    infra.repository,
-    infra.profileRepository,
-    infra.materializer,
-    infra.vectorWriteStore,
-    infra.eventPublisher,
-  );
-
-  return { useCases, infra };
+  return { infra };
 }

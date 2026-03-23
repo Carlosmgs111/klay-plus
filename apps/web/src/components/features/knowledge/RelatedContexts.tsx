@@ -67,7 +67,7 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
     setLineageError(null);
 
     try {
-      const result = await service.contexts.getLineage({ contextId });
+      const result = await service.getContextLineage({ contextId });
       if (result.success) {
         setLineage(result.data);
       } else {
@@ -89,7 +89,7 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
   // ─── Link Action ────────────────────────────────────────────────────
 
   const linkAction = useCallback(
-    (input: LinkContextsInput) => service!.contexts.link(input),
+    (input: LinkContextsInput) => service!.linkContexts(input),
     [service],
   );
 
@@ -130,7 +130,7 @@ export function RelatedContexts({ contextId }: RelatedContextsProps) {
   // ─── Unlink Action ──────────────────────────────────────────────────
 
   const unlinkAction = useCallback(
-    (input: UnlinkContextsInput) => service!.contexts.unlink(input),
+    (input: UnlinkContextsInput) => service!.unlinkContexts(input),
     [service],
   );
 

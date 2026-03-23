@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRuntimeMode } from "./RuntimeModeContext";
-import type { GetContextDetailsResult, ContextSourceDetailDTO } from "@klay/core";
+import type { GetContextDetailsResult } from "@klay/core";
 
 export interface ContextError {
   message: string;
@@ -44,7 +44,7 @@ export function KnowledgeContextProvider({
     setLoading(true);
     setError(null);
     try {
-      const result = await service.contexts.get({ contextId });
+      const result = await service.getContext({ contextId });
       if (result.success) {
         setDetail(result.data);
       } else {

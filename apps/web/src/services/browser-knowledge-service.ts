@@ -18,43 +18,10 @@ import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
 export class BrowserKnowledgeService implements KnowledgeService {
   private _coordinatorPromise: Promise<KnowledgeCoordinator> | null = null;
 
-  readonly contexts: KnowledgeService["contexts"];
-  readonly sources: KnowledgeService["sources"];
-  readonly profiles: KnowledgeService["profiles"];
-
   constructor(
     private readonly configStore?: ConfigStore,
     private readonly profile?: InfrastructureProfile,
-  ) {
-    this.contexts = {
-      create: (input) => this._call(c => c.contexts.create(input)),
-      get: (input) => this._call(c => c.contexts.get(input)),
-      list: () => this._call(c => c.contexts.list()),
-      listRefs: () => this._call(c => c.contexts.listRefs()),
-      transitionState: (input) => this._call(c => c.contexts.transitionState(input)),
-      updateProfile: (input) => this._call(c => c.contexts.updateProfile(input)),
-      reconcileProjections: (input) => this._call(c => c.contexts.reconcileProjections(input)),
-      reconcileAllProfiles: (input) => this._call(c => c.contexts.reconcileAllProfiles(input)),
-      removeSource: (input) => this._call(c => c.contexts.removeSource(input)),
-      link: (input) => this._call(c => c.contexts.link(input)),
-      unlink: (input) => this._call(c => c.contexts.unlink(input)),
-      getLineage: (input) => this._call(c => c.contexts.getLineage(input)),
-    };
-
-    this.sources = {
-      list: () => this._call(c => c.sources.list()),
-      get: (input) => this._call(c => c.sources.get(input)),
-      getContexts: (input) => this._call(c => c.sources.getContexts(input)),
-      processAllProfiles: (input) => this._call(c => c.sources.processAllProfiles(input)),
-    };
-
-    this.profiles = {
-      create: (input) => this._call(c => c.profiles.create(input)),
-      list: () => this._call(c => c.profiles.list()),
-      update: (input) => this._call(c => c.profiles.update(input)),
-      deprecate: (input) => this._call(c => c.profiles.deprecate(input)),
-    };
-  }
+  ) {}
 
   private _getCoordinator(): Promise<KnowledgeCoordinator> {
     if (!this._coordinatorPromise) {
@@ -75,7 +42,7 @@ export class BrowserKnowledgeService implements KnowledgeService {
     });
 
     // Seed default processing profile (ignore if already exists)
-    await coordinator.profiles.create({
+    await coordinator.createProfile({
       id: "default",
       name: "Default",
       preparation: { strategyId: "basic", config: {} },
@@ -100,5 +67,91 @@ export class BrowserKnowledgeService implements KnowledgeService {
 
   async search(input: SearchKnowledgeInput): Promise<ServiceResult<SearchKnowledgeSuccess>> {
     return this._call(c => c.search(input));
+  }
+
+  // ── Contexts ──────────────────────────────────────────────────────
+
+  createContext(input: Parameters<KnowledgeService["createContext"]>[0]) {
+    return this._call(c => c.createContext(input));
+  }
+
+  getContext(input: Parameters<KnowledgeService["getContext"]>[0]) {
+    return this._call(c => c.getContext(input));
+  }
+
+  listContexts() {
+    return this._call(c => c.listContexts());
+  }
+
+  listContextRefs() {
+    return this._call(c => c.listContextRefs());
+  }
+
+  transitionContextState(input: Parameters<KnowledgeService["transitionContextState"]>[0]) {
+    return this._call(c => c.transitionContextState(input));
+  }
+
+  updateContextProfile(input: Parameters<KnowledgeService["updateContextProfile"]>[0]) {
+    return this._call(c => c.updateContextProfile(input));
+  }
+
+  reconcileProjections(input: Parameters<KnowledgeService["reconcileProjections"]>[0]) {
+    return this._call(c => c.reconcileProjections(input));
+  }
+
+  reconcileAllProfiles(input: Parameters<KnowledgeService["reconcileAllProfiles"]>[0]) {
+    return this._call(c => c.reconcileAllProfiles(input));
+  }
+
+  removeSourceFromContext(input: Parameters<KnowledgeService["removeSourceFromContext"]>[0]) {
+    return this._call(c => c.removeSourceFromContext(input));
+  }
+
+  linkContexts(input: Parameters<KnowledgeService["linkContexts"]>[0]) {
+    return this._call(c => c.linkContexts(input));
+  }
+
+  unlinkContexts(input: Parameters<KnowledgeService["unlinkContexts"]>[0]) {
+    return this._call(c => c.unlinkContexts(input));
+  }
+
+  getContextLineage(input: Parameters<KnowledgeService["getContextLineage"]>[0]) {
+    return this._call(c => c.getContextLineage(input));
+  }
+
+  // ── Sources ──────────────────────────────────────────────────────
+
+  listSources() {
+    return this._call(c => c.listSources());
+  }
+
+  getSource(input: Parameters<KnowledgeService["getSource"]>[0]) {
+    return this._call(c => c.getSource(input));
+  }
+
+  getSourceContexts(input: Parameters<KnowledgeService["getSourceContexts"]>[0]) {
+    return this._call(c => c.getSourceContexts(input));
+  }
+
+  processSourceAllProfiles(input: Parameters<KnowledgeService["processSourceAllProfiles"]>[0]) {
+    return this._call(c => c.processSourceAllProfiles(input));
+  }
+
+  // ── Profiles ──────────────────────────────────────────────────────
+
+  createProfile(input: Parameters<KnowledgeService["createProfile"]>[0]) {
+    return this._call(c => c.createProfile(input));
+  }
+
+  listProfiles() {
+    return this._call(c => c.listProfiles());
+  }
+
+  updateProfile(input: Parameters<KnowledgeService["updateProfile"]>[0]) {
+    return this._call(c => c.updateProfile(input));
+  }
+
+  deprecateProfile(input: Parameters<KnowledgeService["deprecateProfile"]>[0]) {
+    return this._call(c => c.deprecateProfile(input));
   }
 }

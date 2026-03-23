@@ -23,12 +23,12 @@ export function ReconcileProjectionsAction({ contextId, profileId, onSuccess }: 
   useClickOutside(dropdownRef, () => setDropdownOpen(false), dropdownOpen);
 
   const reconcileAction = useCallback(
-    (input: ReconcileProjectionsInput) => service!.contexts.reconcileProjections(input),
+    (input: ReconcileProjectionsInput) => service!.reconcileProjections(input),
     [service],
   );
 
   const reconcileAllAction = useCallback(
-    (input: ReconcileAllProfilesInput) => service!.contexts.reconcileAllProfiles(input),
+    (input: ReconcileAllProfilesInput) => service!.reconcileAllProfiles(input),
     [service],
   );
 

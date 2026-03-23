@@ -23,7 +23,7 @@ export function ArchiveContextAction({ contextId, onSuccess, open, setOpen }: Ar
   const { open: isOpen, setOpen: setIsOpen } = useToggleAction(open, setOpen);
 
   const archiveAction = useCallback(
-    (input: TransitionContextStateInput) => service!.contexts.transitionState(input),
+    (input: TransitionContextStateInput) => service!.transitionContextState(input),
     [service],
   );
 

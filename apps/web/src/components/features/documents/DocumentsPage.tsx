@@ -15,7 +15,7 @@ export function DocumentsPage() {
   const [showOverlay, setShowOverlay] = useState(false);
 
   const fetchSources = useCallback(
-    () => service!.sources.list(),
+    () => service!.listSources(),
     [service],
   );
 

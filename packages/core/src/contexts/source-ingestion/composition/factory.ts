@@ -1,4 +1,5 @@
 import type { ExtractionUseCases } from "../extraction/application";
+import type { ExtractionJobRepository } from "../extraction/domain/ExtractionJobRepository";
 import type { SourceRepository } from "../source/domain/SourceRepository";
 import type { ResourceRepository } from "../resource/domain/ResourceRepository";
 import type { ResourceStorage } from "../resource/domain/ResourceStorage";
@@ -45,6 +46,7 @@ export interface SourceIngestionServicePolicy {
 
 export interface ResolvedSourceIngestionModules {
   extraction: ExtractionUseCases;
+  extractionJobRepository: ExtractionJobRepository;
   sourceRepository: SourceRepository;
   sourceEventPublisher: EventPublisher;
   resourceRepository: ResourceRepository;
@@ -105,6 +107,7 @@ export async function resolveSourceIngestionModules(
 
   return {
     extraction: extractionResult.useCases,
+    extractionJobRepository: extractionResult.infra.repository,
     sourceRepository: sourceResult.infra.repository,
     sourceEventPublisher: sourceResult.infra.eventPublisher,
     resourceRepository: resourceResult.infra.repository,

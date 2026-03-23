@@ -353,3 +353,14 @@ export interface ReconcileAllProfilesResult {
   totalProcessed: number;
   totalFailed: number;
 }
+
+export interface TransitionContextStateInput {
+  contextId: string;
+  targetState: "ACTIVE" | "DEPRECATED" | "ARCHIVED";
+  reason?: string;
+}
+
+export interface TransitionContextStateResult {
+  contextId: string;
+  state: string;
+}

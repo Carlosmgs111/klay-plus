@@ -1,24 +1,38 @@
-import type { SourceIngestionService } from "../../contexts/source-ingestion/service/SourceIngestionService";
-import type { SemanticProcessingService } from "../../contexts/semantic-processing/service/SemanticProcessingService";
-import type { ContextManagementService } from "../../contexts/context-management/service/ContextManagementService";
+import type { VectorStoreConfig } from "../../contexts/semantic-processing/composition/factory";
+import type { ResolvedProjectionInfra } from "../../contexts/semantic-processing/projection/composition/factory";
 import type { OrchestratorPolicy } from "./OrchestratorPolicy";
+import type { ProcessingProfileRepository } from "../../contexts/semantic-processing/processing-profile/domain/ProcessingProfileRepository";
+import type { EventPublisher } from "../../shared/domain/EventPublisher";
 
 /**
  * Shared platform dependencies resolved by all orchestrator factories.
  *
- * Contains the 3 core bounded-context services that every orchestrator
- * needs, plus the resolved provider strings for factory-specific wiring.
+ * Contains the resolved semantic-processing infra components and the
+ * resolved provider strings for factory-specific wiring.
+ *
+ * Source ingestion is now wired individually per coordinator via use cases
+ * (Vertical Slice Architecture) — no shared SourceIngestionService.
+ * Context management is wired individually per coordinator via use cases
+ * (Vertical Slice Architecture) — no shared ContextManagementService.
+ * Semantic processing is now wired via individual use cases — no shared
+ * SemanticProcessingService.
  */
 export interface PlatformDependencies {
-  ingestion: SourceIngestionService;
-  processing: SemanticProcessingService;
-  contextManagement: ContextManagementService;
+  /** Infra components from the projection module */
+  projectionInfra: ResolvedProjectionInfra;
+  /** Processing profile repository for profile UCs */
+  profileRepository: ProcessingProfileRepository;
+  /** Event publisher for processing profile events */
+  profileEventPublisher: EventPublisher;
+  /** Vector store config for wiring with knowledge-retrieval */
+  vectorStoreConfig: VectorStoreConfig;
 
   /** Resolved provider strings — exposed for factory-specific infra (e.g. Retrieval). */
   resolved: {
     persistenceProvider: string;
     embeddingProvider: string;
     vectorStoreProvider: string;
+    documentStorageProvider: string;
     embeddingDimensions: number | undefined;
     embeddingModel: string | undefined;
   };
@@ -30,13 +44,11 @@ export interface PlatformDependencies {
  * Handles:
  * 1. Infrastructure profile resolution (preset + ConfigStore + overrides)
  * 2. Typed config → legacy provider string conversion
- * 3. SourceIngestionService creation
- * 4. SemanticProcessingService creation
- * 5. ContextManagementContext creation (with lineage wiring)
+ * 3. Semantic processing infra resolution (without creating SemanticProcessingService)
  *
  * Individual orchestrator factories call this once and then wire any
  * additional factory-specific dependencies (e.g. KnowledgeRetrieval,
- * KnowledgeRetrieval) on top.
+ * context-management use cases, source-ingestion use cases) on top.
  */
 export async function resolvePlatformDependencies(
   policy: OrchestratorPolicy,
@@ -61,75 +73,34 @@ export async function resolvePlatformDependencies(
   const embeddingDimensions = _getDims(profile);
   const embeddingModel = _getModel(profile);
 
-  // ── 3. Create core bounded-context services ───────────────────────
-  const [
-    { createSourceIngestionService },
-    { createSemanticProcessingService },
-  ] = await Promise.all([
-    import("../../contexts/source-ingestion/service"),
-    import("../../contexts/semantic-processing/service"),
-  ]);
-
-  const [ingestion, processing] = await Promise.all([
-    createSourceIngestionService({
-      provider: persistenceProvider,
-      dbPath: policy.dbPath,
-      dbName: policy.dbName,
-      documentStorageProvider,
-      configOverrides: policy.configOverrides,
-      configStore: policy.configStore,
-    }),
-    createSemanticProcessingService({
-      provider: persistenceProvider,
-      dbPath: policy.dbPath,
-      dbName: policy.dbName,
-      embeddingDimensions,
-      defaultChunkingStrategy: policy.defaultChunkingStrategy,
-      embeddingProvider,
-      embeddingModel,
-      vectorStoreProvider,
-      configOverrides: policy.configOverrides,
-      configStore: policy.configStore,
-    }),
-  ]);
-
-  // ── 4. Context-management context (with lineage wiring) ──────────
-  const { createContextManagementContext } = await import(
-    "../../contexts/context-management/composition/factory"
-  );
-  const { contextFactory } = await import(
-    "../../contexts/context-management/context/composition/factory"
-  );
-  const { lineageFactory } = await import(
-    "../../contexts/context-management/lineage/composition/factory"
+  // ── 3. Resolve semantic-processing infra (without Service) ────────
+  const { resolveSemanticProcessingModules } = await import(
+    "../../contexts/semantic-processing/composition/factory"
   );
 
-  const contextPolicy = {
+  const modules = await resolveSemanticProcessingModules({
     provider: persistenceProvider,
     dbPath: policy.dbPath,
     dbName: policy.dbName,
-  };
-
-  const [{ infra: contextInfra }, { infra: lineageInfra }] = await Promise.all([
-    contextFactory(contextPolicy),
-    lineageFactory(contextPolicy),
-  ]);
-
-  const { service: contextManagement } = createContextManagementContext({
-    contextRepository: contextInfra.repository,
-    contextEventPublisher: contextInfra.eventPublisher,
-    lineageRepository: lineageInfra.repository,
-    lineageEventPublisher: lineageInfra.eventPublisher,
+    embeddingDimensions,
+    defaultChunkingStrategy: policy.defaultChunkingStrategy,
+    embeddingProvider,
+    embeddingModel,
+    vectorStoreProvider,
+    configOverrides: policy.configOverrides,
+    configStore: policy.configStore,
   });
 
   return {
-    ingestion,
-    processing,
-    contextManagement,
+    projectionInfra: modules.projectionInfra,
+    profileRepository: modules.profileRepository,
+    profileEventPublisher: modules.profileEventPublisher,
+    vectorStoreConfig: modules.vectorStoreConfig,
     resolved: {
       persistenceProvider,
       embeddingProvider,
       vectorStoreProvider,
+      documentStorageProvider,
       embeddingDimensions,
       embeddingModel,
     },

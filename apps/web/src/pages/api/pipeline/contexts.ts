@@ -10,13 +10,13 @@ export const GET: APIRoute = async ({ url }) => {
   let result;
   if (id) {
     // GET /api/pipeline/contexts?id=xxx → getContextDetails
-    result = toRESTResponse(await coordinator.contexts.get({ contextId: id }));
+    result = toRESTResponse(await coordinator.getContext({ contextId: id }));
   } else if (summary === "true") {
     // GET /api/pipeline/contexts?summary=true → listContextsSummary
-    result = toRESTResponse(await coordinator.contexts.list());
+    result = toRESTResponse(await coordinator.listContexts());
   } else {
     // GET /api/pipeline/contexts → listContexts (simple list)
-    result = toRESTResponse(await coordinator.contexts.listRefs());
+    result = toRESTResponse(await coordinator.listContextRefs());
   }
 
   return new Response(JSON.stringify(result.body), {

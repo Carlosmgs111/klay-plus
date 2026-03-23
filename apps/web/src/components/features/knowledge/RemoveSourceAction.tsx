@@ -21,7 +21,7 @@ export function RemoveSourceAction({ contextId, sourceId, onSuccess }: RemoveSou
   const [showConfirm, setShowConfirm] = useState(false);
 
   const removeAction = useCallback(
-    (input: RemoveSourceInput) => service!.contexts.removeSource(input),
+    (input: RemoveSourceInput) => service!.removeSourceFromContext(input),
     [service],
   );
 

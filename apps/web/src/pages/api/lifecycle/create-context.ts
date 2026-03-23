@@ -5,7 +5,7 @@ import { toRESTResponse } from "@klay/core/result";
 export const POST: APIRoute = async ({ request }) => {
   const coordinator = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await coordinator.contexts.create(body));
+  const result = toRESTResponse(await coordinator.createContext(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

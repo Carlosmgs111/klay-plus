@@ -6,10 +6,13 @@ export type {
   RankingStrategy,
   RankedHit,
   QueryEmbedder,
+  ContextSourcePort,
 } from "./domain";
 
-export { ExecuteSemanticQuery, SemanticQueryUseCases } from "./application";
+export { ExecuteSemanticQuery, SemanticQueryUseCases, SearchKnowledge, BatchQuery } from "./application";
 export type { ExecuteSemanticQueryCommand } from "./application";
+
+export { ContextSourceAdapter } from "./infrastructure/adapters/ContextSourceAdapter";
 
 export {
   semanticQueryFactory,
@@ -18,5 +21,6 @@ export {
 export type {
   SemanticQueryInfrastructurePolicy,
   ResolvedSemanticQueryInfra,
+  VectorStoreConfig,
   SemanticQueryFactoryResult,
 } from "./composition";
