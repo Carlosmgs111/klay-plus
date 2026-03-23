@@ -1,7 +1,7 @@
 import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepository";
 import type { ExtractionJob } from "../../../domain/ExtractionJob";
 import type { ExtractionStatus } from "../../../domain/ExtractionStatus";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { BaseNeDBRepository } from "../../../../../../shared/persistence/BaseNeDBRepository";
 import { toDTO, fromDTO, type ExtractionJobDTO } from "../indexeddb/ExtractionJobDTO";
 
 export class NeDBExtractionJobRepository

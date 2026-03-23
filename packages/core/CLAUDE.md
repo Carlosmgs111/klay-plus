@@ -5,7 +5,7 @@ Semantic Knowledge Platform core library. 4 bounded contexts, dual runtime (Serv
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 336 tests (vitest)
+pnpm --filter @klay/core test    # 332 tests (vitest)
 ```
 
 ## Structure
@@ -14,8 +14,10 @@ pnpm --filter @klay/core test    # 336 tests (vitest)
 src/
   contexts/       # 4 bounded contexts (source-ingestion, context-management, semantic-processing, knowledge-retrieval)
   application/    # KnowledgeCoordinator (unified pipeline + lifecycle, class = contract)
-  platform/       # Shared infra: persistence, eventing, vector stores
+  config/         # Infrastructure config: ConfigProvider, ConfigStore, InfrastructureProfile, profileResolution, secrets/
   shared/         # DDD building blocks: AggregateRoot, Result, Entity, ValueObject, resultTransformers
+                  #   shared/persistence/ — BaseInMemoryRepository, BaseNeDBRepository, BaseIndexedDBRepository
+                  #   shared/vector/      — VectorEntry, hashVector, InMemoryVectorWriteStore
 ```
 
 ## Package Exports

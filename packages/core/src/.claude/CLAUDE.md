@@ -24,8 +24,10 @@ Plataforma de gestion de conocimiento semantico: transforma contenido (archivos,
 ```
 application/    KnowledgeCoordinator (class = contract, no separate Port/Adapter)
 contexts/       4 Bounded Contexts (domain core)
-platform/       Shared infra (config, persistence, eventing, vectors)
+config/         Shared infra: ConfigProvider, ConfigStore, InfrastructureProfile, profileResolution, secrets/
 shared/         DDD building blocks (AggregateRoot, Result, ValueObject, resultTransformers)
+                  shared/persistence/ — BaseInMemoryRepository, BaseNeDBRepository, BaseIndexedDBRepository
+                  shared/vector/      — VectorEntry, hashVector, InMemoryVectorWriteStore
 ```
 
 ## Bounded Contexts
@@ -53,7 +55,7 @@ Single unified coordinator (class = contract) coordinating all 4 bounded context
 - `dtos.ts` — pure data contracts (input/output types)
 - `domain/KnowledgeError.ts` — error with step tracking (self-contained, no base class)
 - `domain/OperationStep.ts` — enum of all operation stages
-- `composition/knowledge.factory.ts` — `createKnowledgePlatform()` → `KnowledgeCoordinator`
+- `composition/knowledge.factory.ts` — `createKnowledgePlatform()` → `KnowledgeCoordinator`; `resolveDependencies()` wires all 4 contexts via grouped `Promise.all` imports
 - `index.ts` — barrel exports (includes ContextOperations, SourceOperations, ProfileOperations types)
 
 **Top-level**: `process(input)` (onboarding pipeline), `search(input)` (semantic query)
@@ -77,18 +79,15 @@ Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
   → [Knowledge Retrieval] → Semantic query + Ranking → RetrievalResult
 ```
 
-## Platform (`platform/`)
+## Config (`config/`)
 
-- **Config** (5 files):
-  - `ConfigProvider.ts` — ConfigProvider interface, BaseConfigProvider, NodeConfigProvider, InMemoryConfigProvider, resolveConfigProvider
-  - `ConfigStore.ts` — ConfigStore interface, InMemoryConfigStore, IndexedDBConfigStore, NeDBConfigStore
-  - `InfrastructureProfile.ts` — Type unions (Persistence, VectorStore, Embedding, DocumentStorage), InfrastructureProfile, PRESET_PROFILES, defineConfig
-  - `profileResolution.ts` — resolveInfrastructureProfile, saveProfileToStore, validation, profile helpers
-  - `ProviderRequirements.ts` — PROVIDER_REGISTRY, declarative field specs for auto-generated UI forms
-- **Persistence**: `IndexedDBStore`, `NeDBStore`, repository helpers
-- **Eventing**: `InMemoryEventPublisher`
-- **Vector**: `InMemoryVectorWriteStore`, `hashVector`, `VectorEntry` serialization
-- **Composition**: `ProviderRegistryBuilder`
+5 files — infrastructure profile resolution, config store, provider requirements:
+- `ConfigProvider.ts` — ConfigProvider interface, BaseConfigProvider, NodeConfigProvider, InMemoryConfigProvider, resolveConfigProvider
+- `ConfigStore.ts` — ConfigStore interface, InMemoryConfigStore, IndexedDBConfigStore, NeDBConfigStore
+- `InfrastructureProfile.ts` — Type unions (Persistence, VectorStore, Embedding, DocumentStorage), InfrastructureProfile, PRESET_PROFILES, defineConfig
+- `profileResolution.ts` — resolveInfrastructureProfile, saveProfileToStore, validation, profile helpers
+- `ProviderRequirements.ts` — PROVIDER_REGISTRY, declarative field specs for auto-generated UI forms
+- `secrets/` — SecretStore, ManagedSecret, InMemorySecretStore, SecretResolver
 
 ## Shared Kernel (`shared/`)
 
@@ -98,3 +97,7 @@ Archivo/URL/API → [Source Ingestion] → texto extraido + contentHash
 - `DomainError`, `NotFoundError`, `OperationError`
 - `ProviderRegistry`, `ProviderFactory`
 - `resultTransformers.ts` — `toRESTResponse`, `unwrapResult`, `RESTResponse`, `UIResult<T>`
+- `InMemoryEventPublisher.ts` — in-memory event bus (used by all context factories)
+- `retry.ts` — `retryWithBackoff` utility
+- `persistence/` — `BaseInMemoryRepository`, `BaseNeDBRepository`, `BaseIndexedDBRepository`, `NeDBStore`, `IndexedDBStore`
+- `vector/` — `VectorEntry`, `hashToVector`, `cosineSimilarity`, `InMemoryVectorWriteStore`, `VectorEntrySerialization`

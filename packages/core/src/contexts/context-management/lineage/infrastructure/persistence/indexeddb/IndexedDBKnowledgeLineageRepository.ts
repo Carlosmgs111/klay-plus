@@ -1,6 +1,6 @@
 import type { KnowledgeLineageRepository } from "../../../domain/KnowledgeLineageRepository";
 import type { KnowledgeLineage } from "../../../domain/KnowledgeLineage";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type LineageDTO } from "./LineageDTO";
 
 export class IndexedDBKnowledgeLineageRepository

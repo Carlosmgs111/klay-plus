@@ -1,6 +1,6 @@
 import type { VectorReadStore, SearchHit } from "../../domain/ports/VectorReadStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
-import { cosineSimilarity } from "../../../../../platform/vector/hashVector";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
+import { cosineSimilarity } from "../../../../../shared/vector/hashVector";
 
 /**
  * Base class for VectorReadStore implementations.

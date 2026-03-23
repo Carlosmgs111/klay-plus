@@ -6,7 +6,7 @@ import { ProjectionResult } from "../../domain/ProjectionResult";
 import type { ProjectionType } from "../../domain/ProjectionType";
 import type { SemanticProjectionRepository } from "../../domain/SemanticProjectionRepository";
 import type { VectorWriteStore } from "../../domain/ports/VectorWriteStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
 import type { ProcessingProfileRepository } from "../../../processing-profile/domain/ProcessingProfileRepository";
 import type { ProcessingProfileMaterializer } from "../../composition/ProcessingProfileMaterializer";
 import { ProcessingProfileId } from "../../../processing-profile/domain/ProcessingProfileId";

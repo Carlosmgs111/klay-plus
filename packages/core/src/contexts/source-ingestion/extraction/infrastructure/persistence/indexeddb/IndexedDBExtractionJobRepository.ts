@@ -1,7 +1,7 @@
 import type { ExtractionJobRepository } from "../../../domain/ExtractionJobRepository";
 import type { ExtractionJob } from "../../../domain/ExtractionJob";
 import type { ExtractionStatus } from "../../../domain/ExtractionStatus";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type ExtractionJobDTO } from "./ExtractionJobDTO";
 
 export class IndexedDBExtractionJobRepository

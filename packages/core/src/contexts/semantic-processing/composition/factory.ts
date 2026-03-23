@@ -1,10 +1,10 @@
 import type { ProcessingProfileRepository } from "../processing-profile/domain/ProcessingProfileRepository";
 import type { EventPublisher } from "../../../shared/domain/EventPublisher";
-import type { VectorEntry } from "../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../shared/vector/VectorEntry";
 import type { ProjectionInfrastructurePolicy, ResolvedProjectionInfra } from "../projection/composition/factory";
 import type { ProcessingProfileInfrastructurePolicy } from "../processing-profile/composition/factory";
-import { resolveConfigProvider } from "../../../platform/config/ConfigProvider";
-import type { ConfigStore } from "../../../platform/config/ConfigStore";
+import { resolveConfigProvider } from "../../../config/ConfigProvider";
+import type { ConfigStore } from "../../../config/ConfigStore";
 
 export interface VectorStoreConfig {
   dbPath?: string;

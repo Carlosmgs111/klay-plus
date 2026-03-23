@@ -24,7 +24,7 @@ export class TransformersJSEmbeddingStrategy implements EmbeddingStrategy {
   }
 
   async initialize(): Promise<void> {
-    const { retryWithBackoff } = await import("../../../../../../platform/retry");
+    const { retryWithBackoff } = await import("../../../../../../shared/retry");
     this.extractor = await retryWithBackoff(
       async () => {
         const { pipeline } = await import("@huggingface/transformers");

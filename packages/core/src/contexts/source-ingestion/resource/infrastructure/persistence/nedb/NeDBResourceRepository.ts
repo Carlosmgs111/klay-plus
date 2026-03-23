@@ -1,7 +1,7 @@
 import type { ResourceRepository } from "../../../domain/ResourceRepository";
 import type { Resource } from "../../../domain/Resource";
 import type { ResourceStatus } from "../../../domain/ResourceStatus";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { BaseNeDBRepository } from "../../../../../../shared/persistence/BaseNeDBRepository";
 import { toDTO, fromDTO, type ResourceDTO } from "../indexeddb/ResourceDTO";
 
 export class NeDBResourceRepository

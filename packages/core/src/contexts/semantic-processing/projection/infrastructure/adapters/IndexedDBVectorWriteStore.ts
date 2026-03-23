@@ -1,7 +1,7 @@
 import type { VectorWriteStore } from "../../domain/ports/VectorWriteStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
-import { IndexedDBStore } from "../../../../../platform/persistence/indexeddb/IndexedDBStore";
-import { toDTO, type VectorEntryDTO } from "../../../../../platform/vector/VectorEntrySerialization";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
+import { IndexedDBStore } from "../../../../../shared/persistence/indexeddb/IndexedDBStore";
+import { toDTO, type VectorEntryDTO } from "../../../../../shared/vector/VectorEntrySerialization";
 
 export class IndexedDBVectorWriteStore implements VectorWriteStore {
   private store: IndexedDBStore<VectorEntryDTO>;

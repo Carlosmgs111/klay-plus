@@ -40,7 +40,7 @@ export class InMemoryConfigStore implements ConfigStore {
 
 // ── IndexedDBConfigStore ─────────────────────────────────────────────
 
-import { IndexedDBStore } from "../persistence/indexeddb/IndexedDBStore";
+import { IndexedDBStore } from "../shared/persistence/indexeddb/IndexedDBStore";
 
 export class IndexedDBConfigStore implements ConfigStore {
   private readonly store: IndexedDBStore<string>;
@@ -73,7 +73,7 @@ export class IndexedDBConfigStore implements ConfigStore {
 
 // ── NeDBConfigStore ──────────────────────────────────────────────────
 
-import { NeDBStore } from "../persistence/nedb/NeDBStore";
+import { NeDBStore } from "../shared/persistence/nedb/NeDBStore";
 
 export class NeDBConfigStore implements ConfigStore {
   private readonly store: NeDBStore<string>;

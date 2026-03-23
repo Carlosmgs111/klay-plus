@@ -1,7 +1,7 @@
 import type { ContextRepository } from "../../../domain/ContextRepository";
 import type { Context } from "../../../domain/Context";
 import type { ContextState } from "../../../domain/ContextState";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { BaseNeDBRepository } from "../../../../../../shared/persistence/BaseNeDBRepository";
 import { toDTO, fromDTO, type ContextDTO } from "../indexeddb/ContextDTO";
 
 export class NeDBContextRepository

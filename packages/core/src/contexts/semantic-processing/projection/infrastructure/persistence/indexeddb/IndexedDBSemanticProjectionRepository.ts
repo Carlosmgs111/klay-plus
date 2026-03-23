@@ -1,7 +1,7 @@
 import type { SemanticProjectionRepository } from "../../../domain/SemanticProjectionRepository";
 import type { SemanticProjection } from "../../../domain/SemanticProjection";
 import type { ProjectionStatus } from "../../../domain/ProjectionStatus";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type ProjectionDTO } from "./ProjectionDTO";
 
 export class IndexedDBSemanticProjectionRepository

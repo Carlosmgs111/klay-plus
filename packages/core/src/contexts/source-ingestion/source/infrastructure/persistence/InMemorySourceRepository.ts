@@ -1,6 +1,6 @@
 import type { SourceRepository } from "../../domain/SourceRepository";
 import type { Source } from "../../domain/Source";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
+import { BaseInMemoryRepository } from "../../../../../shared/persistence/BaseInMemoryRepository";
 
 export class InMemorySourceRepository
   extends BaseInMemoryRepository<Source>

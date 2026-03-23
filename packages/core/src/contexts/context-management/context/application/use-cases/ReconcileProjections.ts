@@ -2,7 +2,12 @@ import type { ContextRepository } from "../../domain/ContextRepository";
 import type { ProjectionOperationsPort } from "../ports/ProjectionOperationsPort";
 import type { SourceTextPort } from "../ports/SourceTextPort";
 import type { ActiveProfilesPort } from "../ports/ActiveProfilesPort";
-import type { ReconcileProjectionsInput, ReconcileProjectionsResult, ReconcileAllProfilesInput, ReconcileAllProfilesResult } from "../../../../../application/knowledge/dtos";
+import type {
+  ReconcileProjectionsInput,
+  ReconcileProjectionsResult,
+  ReconcileAllProfilesInput,
+  ReconcileAllProfilesResult,
+} from "../../../../../application/knowledge/dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { KnowledgeError } from "../../../../../application/knowledge/domain/KnowledgeError";
 import { OperationStep } from "../../../../../application/knowledge/domain/OperationStep";
@@ -22,22 +27,27 @@ export class ReconcileProjections {
     private readonly _contextRepository: ContextRepository,
     private readonly _projectionOperations: ProjectionOperationsPort,
     private readonly _sourceText: SourceTextPort,
-    private readonly _activeProfiles?: ActiveProfilesPort,
+    private readonly _activeProfiles?: ActiveProfilesPort
   ) {}
 
   async execute(
-    input: ReconcileProjectionsInput,
+    input: ReconcileProjectionsInput
   ): Promise<Result<KnowledgeError, ReconcileProjectionsResult>> {
     try {
-      const context = await this._contextRepository.findById(ContextId.create(input.contextId));
+      const context = await this._contextRepository.findById(
+        ContextId.create(input.contextId)
+      );
 
       if (!context) {
         return Result.fail(
           KnowledgeError.fromStep(
             OperationStep.ReconcileProjections,
-            { message: `Context ${input.contextId} not found`, code: "CONTEXT_NOT_FOUND" },
-            [],
-          ),
+            {
+              message: `Context ${input.contextId} not found`,
+              code: "CONTEXT_NOT_FOUND",
+            },
+            []
+          )
         );
       }
 
@@ -47,7 +57,11 @@ export class ReconcileProjections {
 
       for (const source of sources) {
         try {
-          const existing = await this._projectionOperations.findExistingProjection(source.sourceId, input.profileId);
+          const existing =
+            await this._projectionOperations.findExistingProjection(
+              source.sourceId,
+              input.profileId
+            );
           if (existing) {
             processedCount++;
             continue;
@@ -73,35 +87,49 @@ export class ReconcileProjections {
       });
     } catch (error) {
       return Result.fail(
-        KnowledgeError.fromStep(OperationStep.ReconcileProjections, error, []),
+        KnowledgeError.fromStep(OperationStep.ReconcileProjections, error, [])
       );
     }
   }
 
   /** From ReconcileAllProfiles — loops through all active profiles calling execute() for each. */
   async executeAllProfiles(
-    input: ReconcileAllProfilesInput,
+    input: ReconcileAllProfilesInput
   ): Promise<Result<KnowledgeError, ReconcileAllProfilesResult>> {
     try {
       if (!this._activeProfiles) {
         return Result.fail(
           KnowledgeError.fromStep(
             OperationStep.Processing,
-            { message: "ActiveProfilesPort not provided", code: "INTERNAL_ERROR" },
-            [],
-          ),
+            {
+              message: "ActiveProfilesPort not provided",
+              code: "INTERNAL_ERROR",
+            },
+            []
+          )
         );
       }
 
       const activeProfiles = await this._activeProfiles.listActiveProfiles();
 
-      const profileResults: Array<{ profileId: string; processedCount: number; failedCount: number }> = [];
+      const profileResults: Array<{
+        profileId: string;
+        processedCount: number;
+        failedCount: number;
+      }> = [];
 
       for (const profile of activeProfiles) {
         const profileId = profile.id;
-        const result = await this.execute({ contextId: input.contextId, profileId });
+        const result = await this.execute({
+          contextId: input.contextId,
+          profileId,
+        });
         if (result.isOk()) {
-          profileResults.push({ profileId, processedCount: result.value.processedCount, failedCount: result.value.failedCount });
+          profileResults.push({
+            profileId,
+            processedCount: result.value.processedCount,
+            failedCount: result.value.failedCount,
+          });
         } else {
           profileResults.push({ profileId, processedCount: 0, failedCount: 1 });
         }
@@ -110,11 +138,16 @@ export class ReconcileProjections {
       return Result.ok({
         contextId: input.contextId,
         profileResults,
-        totalProcessed: profileResults.reduce((sum, r) => sum + r.processedCount, 0),
+        totalProcessed: profileResults.reduce(
+          (sum, r) => sum + r.processedCount,
+          0
+        ),
         totalFailed: profileResults.reduce((sum, r) => sum + r.failedCount, 0),
       });
     } catch (error) {
-      return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
+      return Result.fail(
+        KnowledgeError.fromStep(OperationStep.Processing, error, [])
+      );
     }
   }
 
@@ -126,7 +159,10 @@ export class ReconcileProjections {
     const textResult = await this._sourceText.getExtractedText(params.sourceId);
     if (textResult.isFail()) return { success: false };
 
-    await this._projectionOperations.cleanupSourceProjectionForProfile(params.sourceId, params.profileId);
+    await this._projectionOperations.cleanupSourceProjectionForProfile(
+      params.sourceId,
+      params.profileId
+    );
 
     const projectionId = crypto.randomUUID();
     const result = await this._projectionOperations.processContent({

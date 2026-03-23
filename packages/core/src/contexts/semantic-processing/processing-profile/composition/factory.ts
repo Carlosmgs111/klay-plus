@@ -17,51 +17,41 @@ export interface ProcessingProfileFactoryResult {
   eventPublisher: EventPublisher;
 }
 
+async function resolveRepository(policy: ProcessingProfileInfrastructurePolicy): Promise<ProcessingProfileRepository> {
+  switch (policy.provider) {
+    case "browser": {
+      const { IndexedDBProcessingProfileRepository } = await import(
+        "../infrastructure/persistence/indexeddb/IndexedDBProcessingProfileRepository"
+      );
+      return new IndexedDBProcessingProfileRepository(
+        (policy.dbName as string) ?? "knowledge-platform",
+      );
+    }
+    case "server": {
+      const { NeDBProcessingProfileRepository } = await import(
+        "../infrastructure/persistence/nedb/NeDBProcessingProfileRepository"
+      );
+      const filename = policy.dbPath
+        ? `${policy.dbPath}/processing-profiles.db`
+        : undefined;
+      return new NeDBProcessingProfileRepository(filename);
+    }
+    default: {
+      const { InMemoryProcessingProfileRepository } = await import(
+        "../infrastructure/persistence/InMemoryProcessingProfileRepository"
+      );
+      return new InMemoryProcessingProfileRepository();
+    }
+  }
+}
+
 export async function processingProfileFactory(
   policy: ProcessingProfileInfrastructurePolicy,
 ): Promise<ProcessingProfileFactoryResult> {
-  const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
-  );
-
-  const repositoryRegistry = new ProviderRegistryBuilder<ProcessingProfileRepository>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryProcessingProfileRepository } = await import(
-          "../infrastructure/persistence/InMemoryProcessingProfileRepository"
-        );
-        return new InMemoryProcessingProfileRepository();
-      },
-    })
-    .add("browser", {
-      create: async (p) => {
-        const { IndexedDBProcessingProfileRepository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDBProcessingProfileRepository"
-        );
-        return new IndexedDBProcessingProfileRepository(
-          (p.dbName as string) ?? "knowledge-platform",
-        );
-      },
-    })
-    .add("server", {
-      create: async (p) => {
-        const { NeDBProcessingProfileRepository } = await import(
-          "../infrastructure/persistence/nedb/NeDBProcessingProfileRepository"
-        );
-        const filename = p.dbPath
-          ? `${p.dbPath}/processing-profiles.db`
-          : undefined;
-        return new NeDBProcessingProfileRepository(filename);
-      },
-    })
-    .build();
-
-  const repository = await repositoryRegistry
-    .resolve(policy.provider)
-    .create(policy);
+  const repository = await resolveRepository(policy);
 
   const { InMemoryEventPublisher } = await import(
-    "../../../../platform/eventing/InMemoryEventPublisher"
+    "../../../../shared/InMemoryEventPublisher"
   );
   const eventPublisher = new InMemoryEventPublisher();
 

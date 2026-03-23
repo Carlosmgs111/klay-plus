@@ -2,8 +2,8 @@ import type { VectorStoreConfig } from "../semantic-query/composition/factory";
 import type { SemanticQueryUseCases } from "../semantic-query/application";
 import type { ResolvedSemanticQueryInfra } from "../semantic-query/composition/factory";
 import type { SemanticQueryInfrastructurePolicy } from "../semantic-query/composition/factory";
-import type { ConfigStore } from "../../../platform/config/ConfigStore";
-import type { RetrievalConfig } from "../../../platform/config/InfrastructureProfile";
+import type { ConfigStore } from "../../../config/ConfigStore";
+import type { RetrievalConfig } from "../../../config/InfrastructureProfile";
 
 interface SemanticQueryOverrides {
   provider?: string;

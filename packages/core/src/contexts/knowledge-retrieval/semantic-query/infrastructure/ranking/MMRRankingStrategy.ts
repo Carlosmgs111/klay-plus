@@ -3,7 +3,7 @@ import type {
   RankedHit,
 } from "../../domain/ports/RankingStrategy";
 import type { SearchHit } from "../../domain/ports/VectorReadStore";
-import { cosineSimilarity } from "../../../../../platform/vector/hashVector";
+import { cosineSimilarity } from "../../../../../shared/vector/hashVector";
 
 /**
  * Maximal Marginal Relevance ranking strategy.

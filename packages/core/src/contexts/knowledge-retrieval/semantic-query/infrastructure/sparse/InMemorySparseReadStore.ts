@@ -1,5 +1,5 @@
 import { BaseSparseReadStore } from "./BaseSparseReadStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
 
 /**
  * In-memory BM25 sparse read store.

@@ -10,7 +10,7 @@ export interface EmbeddingResolutionPolicy {
   embeddingDimensions?: number;
   webLLMModelId?: string;
   configOverrides?: Record<string, string>;
-  configStore?: import("../../../../platform/config/ConfigStore").ConfigStore;
+  configStore?: import("../../../../config/ConfigStore").ConfigStore;
 }
 
 /**
@@ -48,7 +48,7 @@ export class EmbeddingStrategyResolver {
         "../infrastructure/strategies/embedding/HFInferenceEmbeddingStrategy"
       );
       const { resolveConfigProvider } = await import(
-        "../../../../platform/config/ConfigProvider"
+        "../../../../config/ConfigProvider"
       );
       const configProvider = await resolveConfigProvider(this.policy);
       const apiKey = configProvider.require("HUGGINGFACE_API_KEY");
@@ -108,7 +108,7 @@ export class EmbeddingStrategyResolver {
     );
 
     const { resolveConfigProvider } = await import(
-      "../../../../platform/config/ConfigProvider"
+      "../../../../config/ConfigProvider"
     );
     const configProvider = await resolveConfigProvider(this.policy);
 

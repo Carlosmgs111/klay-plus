@@ -1,7 +1,7 @@
 import { BaseSparseReadStore } from "./BaseSparseReadStore";
-import { NeDBStore } from "../../../../../platform/persistence/nedb/NeDBStore";
-import { fromDTO, type VectorEntryDTO } from "../../../../../platform/vector/VectorEntrySerialization";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import { NeDBStore } from "../../../../../shared/persistence/nedb/NeDBStore";
+import { fromDTO, type VectorEntryDTO } from "../../../../../shared/vector/VectorEntrySerialization";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
 
 /**
  * NeDB-backed BM25 sparse read store.

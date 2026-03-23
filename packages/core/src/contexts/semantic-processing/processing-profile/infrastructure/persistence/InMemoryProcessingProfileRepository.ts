@@ -2,7 +2,7 @@ import type { ProcessingProfileRepository } from "../../domain/ProcessingProfile
 import type { ProcessingProfile } from "../../domain/ProcessingProfile";
 import type { ProcessingProfileId } from "../../domain/ProcessingProfileId";
 import type { ProfileStatus } from "../../domain/ProfileStatus";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
+import { BaseInMemoryRepository } from "../../../../../shared/persistence/BaseInMemoryRepository";
 
 export class InMemoryProcessingProfileRepository
   extends BaseInMemoryRepository<ProcessingProfile>

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { semanticQueryFactory } from "../semantic-query/composition/factory";
-import { InMemoryVectorWriteStore } from "../../../platform/vector/InMemoryVectorWriteStore";
-import { hashToVector } from "../../../platform/vector/hashVector";
+import { InMemoryVectorWriteStore } from "../../../shared/vector/InMemoryVectorWriteStore";
+import { hashToVector } from "../../../shared/vector/hashVector";
 import type { ExecuteSemanticQuery } from "../semantic-query/application/use-cases/ExecuteSemanticQuery";
-import type { VectorEntry } from "../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../shared/vector/VectorEntry";
 import { MMRRankingStrategy } from "../semantic-query/infrastructure/ranking/MMRRankingStrategy";
 import type { SearchHit } from "../semantic-query/domain/ports/VectorReadStore";
 

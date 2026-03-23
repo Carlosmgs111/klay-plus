@@ -1,6 +1,6 @@
 import type { SourceRepository } from "../../../domain/SourceRepository";
 import type { Source } from "../../../domain/Source";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { BaseNeDBRepository } from "../../../../../../shared/persistence/BaseNeDBRepository";
 import { toDTO, fromDTO, type SourceDTO } from "../indexeddb/SourceDTO";
 
 export class NeDBSourceRepository

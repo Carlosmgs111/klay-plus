@@ -1,7 +1,7 @@
 import { BaseSparseReadStore } from "./BaseSparseReadStore";
-import { IndexedDBStore } from "../../../../../platform/persistence/indexeddb/IndexedDBStore";
-import { fromDTO, type VectorEntryDTO } from "../../../../../platform/vector/VectorEntrySerialization";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import { IndexedDBStore } from "../../../../../shared/persistence/indexeddb/IndexedDBStore";
+import { fromDTO, type VectorEntryDTO } from "../../../../../shared/vector/VectorEntrySerialization";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
 
 /**
  * IndexedDB-backed BM25 sparse read store.

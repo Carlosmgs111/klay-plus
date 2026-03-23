@@ -1,7 +1,7 @@
 import type { ContextRepository } from "../domain/ContextRepository";
 import type { Context } from "../domain/Context";
 import type { ContextState } from "../domain/ContextState";
-import { BaseInMemoryRepository } from "../../../../platform/persistence/BaseInMemoryRepository";
+import { BaseInMemoryRepository } from "../../../../shared/persistence/BaseInMemoryRepository";
 
 export class InMemoryContextRepository
   extends BaseInMemoryRepository<Context>

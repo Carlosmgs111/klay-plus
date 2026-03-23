@@ -1,7 +1,7 @@
 import type { SemanticProjectionRepository } from "../../../domain/SemanticProjectionRepository";
 import type { SemanticProjection } from "../../../domain/SemanticProjection";
 import type { ProjectionStatus } from "../../../domain/ProjectionStatus";
-import { BaseNeDBRepository } from "../../../../../../platform/persistence/BaseNeDBRepository";
+import { BaseNeDBRepository } from "../../../../../../shared/persistence/BaseNeDBRepository";
 import { toDTO, fromDTO, type ProjectionDTO } from "../indexeddb/ProjectionDTO";
 
 export class NeDBSemanticProjectionRepository

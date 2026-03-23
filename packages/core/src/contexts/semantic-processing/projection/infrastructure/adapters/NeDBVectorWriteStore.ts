@@ -1,7 +1,7 @@
 import type { VectorWriteStore } from "../../domain/ports/VectorWriteStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
-import { NeDBStore } from "../../../../../platform/persistence/nedb/NeDBStore";
-import { toDTO, type VectorEntryDTO } from "../../../../../platform/vector/VectorEntrySerialization";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
+import { NeDBStore } from "../../../../../shared/persistence/nedb/NeDBStore";
+import { toDTO, type VectorEntryDTO } from "../../../../../shared/vector/VectorEntrySerialization";
 
 export class NeDBVectorWriteStore implements VectorWriteStore {
   private store: NeDBStore<VectorEntryDTO>;

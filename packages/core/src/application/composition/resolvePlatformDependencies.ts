@@ -3,6 +3,19 @@ import type { ResolvedProjectionInfra } from "../../contexts/semantic-processing
 import type { OrchestratorPolicy } from "./OrchestratorPolicy";
 import type { ProcessingProfileRepository } from "../../contexts/semantic-processing/processing-profile/domain/ProcessingProfileRepository";
 import type { EventPublisher } from "../../shared/domain/EventPublisher";
+import type { VectorWriteStore } from "../../contexts/semantic-processing/projection/domain/ports/VectorWriteStore";
+import type { VectorReadStore } from "../../contexts/knowledge-retrieval/semantic-query/domain/ports/VectorReadStore";
+
+/**
+ * SystemResources — the shared vector store pair wired between semantic-processing
+ * (write) and knowledge-retrieval (read). Both sides must use the same physical store.
+ */
+export interface SystemResources {
+  vectorStore: {
+    write: VectorWriteStore;
+    read: VectorReadStore;
+  };
+}
 
 /**
  * Shared platform dependencies resolved by all orchestrator factories.
@@ -26,6 +39,8 @@ export interface PlatformDependencies {
   profileEventPublisher: EventPublisher;
   /** Vector store config for wiring with knowledge-retrieval */
   vectorStoreConfig: VectorStoreConfig;
+  /** Shared vector store pair (write = semantic-processing, read = knowledge-retrieval) */
+  system: SystemResources;
 
   /** Resolved provider strings — exposed for factory-specific infra (e.g. Retrieval). */
   resolved: {
@@ -45,10 +60,11 @@ export interface PlatformDependencies {
  * 1. Infrastructure profile resolution (preset + ConfigStore + overrides)
  * 2. Typed config → legacy provider string conversion
  * 3. Semantic processing infra resolution (without creating SemanticProcessingService)
+ * 4. Knowledge retrieval read-store resolution (shares the same vector store)
  *
  * Individual orchestrator factories call this once and then wire any
- * additional factory-specific dependencies (e.g. KnowledgeRetrieval,
- * context-management use cases, source-ingestion use cases) on top.
+ * additional factory-specific dependencies (e.g. context-management use cases,
+ * source-ingestion use cases) on top.
  */
 export async function resolvePlatformDependencies(
   policy: OrchestratorPolicy,
@@ -61,7 +77,7 @@ export async function resolvePlatformDependencies(
     documentStorageToProvider,
     getEmbeddingDimensions: _getDims,
     getEmbeddingModel: _getModel,
-  } = await import("../../platform/config/profileResolution");
+  } = await import("../../config/profileResolution");
 
   const profile = await resolveInfrastructureProfile(policy);
 
@@ -91,11 +107,38 @@ export async function resolvePlatformDependencies(
     configStore: policy.configStore,
   });
 
+  const vectorStoreConfig: VectorStoreConfig = modules.vectorStoreConfig;
+
+  // ── 4. Build the knowledge-retrieval read store from the same backing store ──
+  const { semanticQueryFactory } = await import(
+    "../../contexts/knowledge-retrieval/semantic-query/composition/factory"
+  );
+
+  const { infra: retrievalInfra } = await semanticQueryFactory({
+    provider: persistenceProvider,
+    vectorStoreProvider,
+    vectorStoreConfig,
+    embeddingDimensions,
+    embeddingProvider,
+    embeddingModel,
+    retrieval: policy.infrastructure?.retrieval,
+    configOverrides: policy.configOverrides,
+    configStore: policy.configStore,
+  });
+
+  const system: SystemResources = {
+    vectorStore: {
+      write: modules.projectionInfra.vectorWriteStore,
+      read: retrievalInfra.vectorSearch,
+    },
+  };
+
   return {
     projectionInfra: modules.projectionInfra,
     profileRepository: modules.profileRepository,
     profileEventPublisher: modules.profileEventPublisher,
-    vectorStoreConfig: modules.vectorStoreConfig,
+    vectorStoreConfig,
+    system,
     resolved: {
       persistenceProvider,
       embeddingProvider,

@@ -1,5 +1,5 @@
 import { BaseVectorReadStore } from "./BaseVectorReadStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
 
 /**
  * In-memory VectorReadStore implementation.

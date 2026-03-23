@@ -65,54 +65,45 @@ async function resolveExtractors(
   return extractors;
 }
 
+async function resolveRepository(policy: ExtractionInfrastructurePolicy): Promise<ExtractionJobRepository> {
+  switch (policy.provider) {
+    case "browser": {
+      const { IndexedDBExtractionJobRepository } = await import(
+        "../infrastructure/persistence/indexeddb/IndexedDBExtractionJobRepository"
+      );
+      return new IndexedDBExtractionJobRepository(
+        (policy.dbName as string) ?? "knowledge-platform",
+      );
+    }
+    case "server": {
+      const { NeDBExtractionJobRepository } = await import(
+        "../infrastructure/persistence/nedb/NeDBExtractionJobRepository"
+      );
+      const filename = policy.dbPath ? `${policy.dbPath}/extraction-jobs.db` : undefined;
+      return new NeDBExtractionJobRepository(filename);
+    }
+    default: {
+      const { InMemoryExtractionJobRepository } = await import(
+        "../infrastructure/persistence/InMemoryExtractionJobRepository"
+      );
+      return new InMemoryExtractionJobRepository();
+    }
+  }
+}
+
 export async function extractionFactory(
   policy: ExtractionInfrastructurePolicy,
 ): Promise<ExtractionFactoryResult> {
-  const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+  const { InMemoryEventPublisher } = await import(
+    "../../../../shared/InMemoryEventPublisher"
   );
 
-  const repositoryRegistry = new ProviderRegistryBuilder<ExtractionJobRepository>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryExtractionJobRepository } = await import(
-          "../infrastructure/persistence/InMemoryExtractionJobRepository"
-        );
-        return new InMemoryExtractionJobRepository();
-      },
-    })
-    .add("browser", {
-      create: async (p) => {
-        const { IndexedDBExtractionJobRepository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDBExtractionJobRepository"
-        );
-        return new IndexedDBExtractionJobRepository(
-          (p.dbName as string) ?? "knowledge-platform",
-        );
-      },
-    })
-    .add("server", {
-      create: async (p) => {
-        const { NeDBExtractionJobRepository } = await import(
-          "../infrastructure/persistence/nedb/NeDBExtractionJobRepository"
-        );
-        const filename = p.dbPath ? `${p.dbPath}/extraction-jobs.db` : undefined;
-        return new NeDBExtractionJobRepository(filename);
-      },
-    })
-    .build();
-
-  const { createEventPublisherRegistry } = await import(
-    "../../../../platform/composition/createEventPublisherRegistry"
-  );
-  const eventPublisherRegistry = createEventPublisherRegistry();
-
-  const [repository, extractors, eventPublisher] = await Promise.all([
-    repositoryRegistry.resolve(policy.provider).create(policy),
+  const [repository, extractors] = await Promise.all([
+    resolveRepository(policy),
     resolveExtractors(policy),
-    eventPublisherRegistry.resolve(policy.provider).create(policy),
   ]);
 
+  const eventPublisher: EventPublisher = new InMemoryEventPublisher();
   const infra: ResolvedExtractionInfra = { repository, extractors, eventPublisher };
 
   const { ExtractionUseCases } = await import("../application");

@@ -21,83 +21,61 @@ export interface ResourceFactoryResult {
   infra: ResolvedResourceInfra;
 }
 
+async function resolveRepository(policy: ResourceInfrastructurePolicy): Promise<ResourceRepository> {
+  switch (policy.provider) {
+    case "browser": {
+      const { IndexedDBResourceRepository } = await import(
+        "../infrastructure/persistence/indexeddb/IndexedDBResourceRepository"
+      );
+      return new IndexedDBResourceRepository(
+        (policy.dbName as string) ?? "knowledge-platform",
+      );
+    }
+    case "server": {
+      const { NeDBResourceRepository } = await import(
+        "../infrastructure/persistence/nedb/NeDBResourceRepository"
+      );
+      const filename = policy.dbPath ? `${policy.dbPath}/resources.db` : undefined;
+      return new NeDBResourceRepository(filename);
+    }
+    default: {
+      const { InMemoryResourceRepository } = await import(
+        "../infrastructure/persistence/InMemoryResourceRepository"
+      );
+      return new InMemoryResourceRepository();
+    }
+  }
+}
+
+async function resolveStorage(policy: ResourceInfrastructurePolicy): Promise<ResourceStorage> {
+  if (policy.provider === "server") {
+    const { LocalFileResourceStorage } = await import(
+      "../infrastructure/storage/LocalFileResourceStorage"
+    );
+    const uploadPath = (policy.uploadPath as string) ??
+                       (policy.dbPath ? `${policy.dbPath}/uploads` : "./uploads");
+    return new LocalFileResourceStorage(uploadPath);
+  }
+  // in-memory and browser both use InMemoryResourceStorage
+  const { InMemoryResourceStorage } = await import(
+    "../infrastructure/storage/InMemoryResourceStorage"
+  );
+  return new InMemoryResourceStorage();
+}
+
 export async function resourceFactory(
   policy: ResourceInfrastructurePolicy,
 ): Promise<ResourceFactoryResult> {
-  const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+  const { InMemoryEventPublisher } = await import(
+    "../../../../shared/InMemoryEventPublisher"
   );
 
-  const repositoryRegistry = new ProviderRegistryBuilder<ResourceRepository>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryResourceRepository } = await import(
-          "../infrastructure/persistence/InMemoryResourceRepository"
-        );
-        return new InMemoryResourceRepository();
-      },
-    })
-    .add("browser", {
-      create: async (p) => {
-        const { IndexedDBResourceRepository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDBResourceRepository"
-        );
-        return new IndexedDBResourceRepository(
-          (p.dbName as string) ?? "knowledge-platform",
-        );
-      },
-    })
-    .add("server", {
-      create: async (p) => {
-        const { NeDBResourceRepository } = await import(
-          "../infrastructure/persistence/nedb/NeDBResourceRepository"
-        );
-        const filename = p.dbPath ? `${p.dbPath}/resources.db` : undefined;
-        return new NeDBResourceRepository(filename);
-      },
-    })
-    .build();
-
-  const storageRegistry = new ProviderRegistryBuilder<ResourceStorage>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryResourceStorage } = await import(
-          "../infrastructure/storage/InMemoryResourceStorage"
-        );
-        return new InMemoryResourceStorage();
-      },
-    })
-    .add("browser", {
-      create: async () => {
-        const { InMemoryResourceStorage } = await import(
-          "../infrastructure/storage/InMemoryResourceStorage"
-        );
-        return new InMemoryResourceStorage();
-      },
-    })
-    .add("server", {
-      create: async (p) => {
-        const { LocalFileResourceStorage } = await import(
-          "../infrastructure/storage/LocalFileResourceStorage"
-        );
-        const uploadPath = (p.uploadPath as string) ??
-                           (p.dbPath ? `${p.dbPath}/uploads` : "./uploads");
-        return new LocalFileResourceStorage(uploadPath);
-      },
-    })
-    .build();
-
-  const { createEventPublisherRegistry } = await import(
-    "../../../../platform/composition/createEventPublisherRegistry"
-  );
-  const eventPublisherRegistry = createEventPublisherRegistry();
-
-  const [repository, storage, eventPublisher] = await Promise.all([
-    repositoryRegistry.resolve(policy.provider).create(policy),
-    storageRegistry.resolve(policy.provider).create(policy),
-    eventPublisherRegistry.resolve(policy.provider).create(policy),
+  const [repository, storage] = await Promise.all([
+    resolveRepository(policy),
+    resolveStorage(policy),
   ]);
 
+  const eventPublisher: EventPublisher = new InMemoryEventPublisher();
   const storageProvider = policy.provider === "in-memory" ? "in-memory" : "local";
 
   return { infra: { repository, storage, storageProvider, eventPublisher } };

@@ -17,53 +17,47 @@ export interface LineageFactoryResult {
   infra: ResolvedLineageInfra;
 }
 
+async function resolveRepository(policy: LineageInfrastructurePolicy): Promise<KnowledgeLineageRepository> {
+  switch (policy.provider) {
+    case "browser": {
+      const { IndexedDBKnowledgeLineageRepository } = await import(
+        "../infrastructure/persistence/indexeddb/IndexedDBKnowledgeLineageRepository"
+      );
+      return new IndexedDBKnowledgeLineageRepository(
+        (policy.dbName as string) ?? "knowledge-platform",
+      );
+    }
+    case "server": {
+      const { NeDBKnowledgeLineageRepository } = await import(
+        "../infrastructure/persistence/nedb/NeDBKnowledgeLineageRepository"
+      );
+      const filename = policy.dbPath
+        ? `${policy.dbPath}/lineage.db`
+        : undefined;
+      return new NeDBKnowledgeLineageRepository(filename);
+    }
+    default: {
+      const { InMemoryKnowledgeLineageRepository } = await import(
+        "../infrastructure/persistence/InMemoryKnowledgeLineageRepository"
+      );
+      return new InMemoryKnowledgeLineageRepository();
+    }
+  }
+}
+
+async function resolveEventPublisher(): Promise<EventPublisher> {
+  const { InMemoryEventPublisher } = await import(
+    "../../../../shared/InMemoryEventPublisher"
+  );
+  return new InMemoryEventPublisher();
+}
+
 export async function lineageFactory(
   policy: LineageInfrastructurePolicy,
 ): Promise<LineageFactoryResult> {
-  const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
-  );
-
-  const repositoryRegistry = new ProviderRegistryBuilder<KnowledgeLineageRepository>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemoryKnowledgeLineageRepository } = await import(
-          "../infrastructure/persistence/InMemoryKnowledgeLineageRepository"
-        );
-        return new InMemoryKnowledgeLineageRepository();
-      },
-    })
-    .add("browser", {
-      create: async (p) => {
-        const { IndexedDBKnowledgeLineageRepository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDBKnowledgeLineageRepository"
-        );
-        return new IndexedDBKnowledgeLineageRepository(
-          (p.dbName as string) ?? "knowledge-platform",
-        );
-      },
-    })
-    .add("server", {
-      create: async (p) => {
-        const { NeDBKnowledgeLineageRepository } = await import(
-          "../infrastructure/persistence/nedb/NeDBKnowledgeLineageRepository"
-        );
-        const filename = p.dbPath
-          ? `${p.dbPath}/lineage.db`
-          : undefined;
-        return new NeDBKnowledgeLineageRepository(filename);
-      },
-    })
-    .build();
-
-  const { createEventPublisherRegistry } = await import(
-    "../../../../platform/composition/createEventPublisherRegistry"
-  );
-  const eventPublisherRegistry = createEventPublisherRegistry();
-
   const [repository, eventPublisher] = await Promise.all([
-    repositoryRegistry.resolve(policy.provider).create(policy),
-    eventPublisherRegistry.resolve(policy.provider).create(policy),
+    resolveRepository(policy),
+    resolveEventPublisher(),
   ]);
 
   return { infra: { repository, eventPublisher } };

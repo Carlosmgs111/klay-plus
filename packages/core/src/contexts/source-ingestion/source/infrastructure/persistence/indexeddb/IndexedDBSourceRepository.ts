@@ -1,6 +1,6 @@
 import type { SourceRepository } from "../../../domain/SourceRepository";
 import type { Source } from "../../../domain/Source";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type SourceDTO } from "./SourceDTO";
 
 export class IndexedDBSourceRepository

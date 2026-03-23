@@ -2,7 +2,7 @@ import type {
   EmbeddingStrategy,
   EmbeddingResult,
 } from "../../../domain/ports/EmbeddingStrategy";
-import { hashToVector } from "../../../../../../platform/vector/hashVector";
+import { hashToVector } from "../../../../../../shared/vector/hashVector";
 
 /**
  * Deterministic local embedding strategy.

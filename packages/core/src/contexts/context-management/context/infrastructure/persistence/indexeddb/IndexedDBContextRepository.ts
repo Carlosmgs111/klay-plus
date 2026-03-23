@@ -1,7 +1,7 @@
 import type { ContextRepository } from "../../../domain/ContextRepository";
 import type { Context } from "../../../domain/Context";
 import type { ContextState } from "../../../domain/ContextState";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type ContextDTO } from "./ContextDTO";
 
 export class IndexedDBContextRepository

@@ -2,7 +2,7 @@ import type { ProcessingProfileRepository } from "../../../domain/ProcessingProf
 import type { ProcessingProfile } from "../../../domain/ProcessingProfile";
 import type { ProcessingProfileId } from "../../../domain/ProcessingProfileId";
 import type { ProfileStatus } from "../../../domain/ProfileStatus";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type ProfileDTO } from "./ProfileDTO";
 
 export class IndexedDBProcessingProfileRepository

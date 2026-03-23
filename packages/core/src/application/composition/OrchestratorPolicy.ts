@@ -1,6 +1,6 @@
-import type { ConfigStore } from "../../platform/config/ConfigStore";
-import type { InfrastructureProfile } from "../../platform/config/InfrastructureProfile";
-import type { SecretStore } from "../../platform/secrets/SecretStore";
+import type { ConfigStore } from "../../config/ConfigStore";
+import type { InfrastructureProfile } from "../../config/InfrastructureProfile";
+import type { SecretStore } from "../../config/secrets/SecretStore";
 
 /**
  * Shared policy type for all orchestrator factories.

@@ -4,7 +4,7 @@ import type { VectorEntry } from "./VectorEntry";
  * In-memory vector write store for testing and in-memory infrastructure.
  *
  * Uses structural typing (no explicit implements) to avoid importing
- * the VectorWriteStore port from a specific context — platform must
+ * the VectorWriteStore port from a specific context — shared must
  * not depend on contexts.
  */
 export class InMemoryVectorWriteStore {

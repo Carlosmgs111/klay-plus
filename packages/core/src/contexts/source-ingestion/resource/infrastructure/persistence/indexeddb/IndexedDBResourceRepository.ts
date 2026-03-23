@@ -1,7 +1,7 @@
 import type { ResourceRepository } from "../../../domain/ResourceRepository";
 import type { Resource } from "../../../domain/Resource";
 import type { ResourceStatus } from "../../../domain/ResourceStatus";
-import { BaseIndexedDBRepository } from "../../../../../../platform/persistence/BaseIndexedDBRepository";
+import { BaseIndexedDBRepository } from "../../../../../../shared/persistence/BaseIndexedDBRepository";
 import { toDTO, fromDTO, type ResourceDTO } from "./ResourceDTO";
 
 export class IndexedDBResourceRepository

@@ -1,7 +1,7 @@
 import type { ExtractionJobRepository } from "../../domain/ExtractionJobRepository";
 import type { ExtractionJob } from "../../domain/ExtractionJob";
 import type { ExtractionStatus } from "../../domain/ExtractionStatus";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
+import { BaseInMemoryRepository } from "../../../../../shared/persistence/BaseInMemoryRepository";
 
 export class InMemoryExtractionJobRepository
   extends BaseInMemoryRepository<ExtractionJob>

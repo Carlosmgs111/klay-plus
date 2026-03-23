@@ -1,7 +1,7 @@
 import type { SemanticProjectionRepository } from "../../domain/SemanticProjectionRepository";
 import type { SemanticProjection } from "../../domain/SemanticProjection";
 import type { ProjectionStatus } from "../../domain/ProjectionStatus";
-import { BaseInMemoryRepository } from "../../../../../platform/persistence/BaseInMemoryRepository";
+import { BaseInMemoryRepository } from "../../../../../shared/persistence/BaseInMemoryRepository";
 
 export class InMemorySemanticProjectionRepository
   extends BaseInMemoryRepository<SemanticProjection>

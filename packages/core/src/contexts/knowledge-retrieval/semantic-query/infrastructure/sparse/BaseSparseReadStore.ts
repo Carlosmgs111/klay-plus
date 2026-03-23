@@ -1,6 +1,6 @@
 import type { SparseReadStore } from "../../domain/ports/SparseReadStore";
 import type { SearchHit } from "../../domain/ports/VectorReadStore";
-import type { VectorEntry } from "../../../../../platform/vector/VectorEntry";
+import type { VectorEntry } from "../../../../../shared/vector/VectorEntry";
 
 interface ScoredEntry {
   entry: VectorEntry;

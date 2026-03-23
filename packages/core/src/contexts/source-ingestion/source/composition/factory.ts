@@ -17,52 +17,41 @@ export interface SourceFactoryResult {
   infra: ResolvedSourceInfra;
 }
 
+async function resolveRepository(policy: SourceInfrastructurePolicy): Promise<SourceRepository> {
+  switch (policy.provider) {
+    case "browser": {
+      const { IndexedDBSourceRepository } = await import(
+        "../infrastructure/persistence/indexeddb/IndexedDBSourceRepository"
+      );
+      return new IndexedDBSourceRepository(
+        (policy.dbName as string) ?? "knowledge-platform",
+      );
+    }
+    case "server": {
+      const { NeDBSourceRepository } = await import(
+        "../infrastructure/persistence/nedb/NeDBSourceRepository"
+      );
+      const filename = policy.dbPath ? `${policy.dbPath}/sources.db` : undefined;
+      return new NeDBSourceRepository(filename);
+    }
+    default: {
+      const { InMemorySourceRepository } = await import(
+        "../infrastructure/persistence/InMemorySourceRepository"
+      );
+      return new InMemorySourceRepository();
+    }
+  }
+}
+
 export async function sourceFactory(
   policy: SourceInfrastructurePolicy,
 ): Promise<SourceFactoryResult> {
-  const { ProviderRegistryBuilder } = await import(
-    "../../../../platform/composition/ProviderRegistryBuilder"
+  const { InMemoryEventPublisher } = await import(
+    "../../../../shared/InMemoryEventPublisher"
   );
 
-  const repositoryRegistry = new ProviderRegistryBuilder<SourceRepository>()
-    .add("in-memory", {
-      create: async () => {
-        const { InMemorySourceRepository } = await import(
-          "../infrastructure/persistence/InMemorySourceRepository"
-        );
-        return new InMemorySourceRepository();
-      },
-    })
-    .add("browser", {
-      create: async (p) => {
-        const { IndexedDBSourceRepository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDBSourceRepository"
-        );
-        return new IndexedDBSourceRepository(
-          (p.dbName as string) ?? "knowledge-platform",
-        );
-      },
-    })
-    .add("server", {
-      create: async (p) => {
-        const { NeDBSourceRepository } = await import(
-          "../infrastructure/persistence/nedb/NeDBSourceRepository"
-        );
-        const filename = p.dbPath ? `${p.dbPath}/sources.db` : undefined;
-        return new NeDBSourceRepository(filename);
-      },
-    })
-    .build();
-
-  const { createEventPublisherRegistry } = await import(
-    "../../../../platform/composition/createEventPublisherRegistry"
-  );
-  const eventPublisherRegistry = createEventPublisherRegistry();
-
-  const [repository, eventPublisher] = await Promise.all([
-    repositoryRegistry.resolve(policy.provider).create(policy),
-    eventPublisherRegistry.resolve(policy.provider).create(policy),
-  ]);
+  const repository = await resolveRepository(policy);
+  const eventPublisher: EventPublisher = new InMemoryEventPublisher();
 
   return { infra: { repository, eventPublisher } };
 }
