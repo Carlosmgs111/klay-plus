@@ -1,33 +1,36 @@
 /**
- * KnowledgeCoordinator.search() — retrievalOverride path tests
+ * SearchKnowledge — retrievalOverride path tests
  *
  * Verifies that search() routes correctly through the default path
- * (this._retrieval.query) vs the override path (one-shot ExecuteSemanticQuery)
+ * vs the override path (one-shot ExecuteSemanticQuery)
  * depending on the `retrievalOverride` field.
  *
- * Uses createKnowledgePlatform with in-memory provider to create a real
- * coordinator with actual vector data, keeping the tests honest without mocks.
+ * Uses createKnowledgeApplication with in-memory provider to create a real
+ * application with actual vector data, keeping the tests honest without mocks.
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { createKnowledgePlatform } from "../composition/knowledge.factory";
-import type { KnowledgePlatform } from "../composition/knowledge.factory";
+import {
+  createKnowledgeApplication,
+  executeCreateProfile,
+} from "../composition/knowledge.factory";
+import type { KnowledgeApplication } from "../composition/knowledge.factory";
 
 // ── Shared fixture ────────────────────────────────────────────────────
 
-describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
-  let knowledge: KnowledgePlatform;
+describe("SearchKnowledge — retrievalOverride path", () => {
+  let app: KnowledgeApplication;
   const profileId = "profile-search-override-001";
 
   beforeAll(async () => {
-    knowledge = await createKnowledgePlatform({
+    app = await createKnowledgeApplication({
       provider: "in-memory",
       embeddingDimensions: 128,
       defaultChunkingStrategy: "recursive",
     });
 
     // Create a processing profile
-    const profileResult = await knowledge.createProfile({
+    const profileResult = await executeCreateProfile(app.createProcessingProfile, {
       id: profileId,
       name: "Search Override Test Profile",
       preparation: { strategyId: "basic", config: {} },
@@ -37,7 +40,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     expect(profileResult.isOk()).toBe(true);
 
     // Ingest and process a source so the vector store has data to query
-    const processResult = await knowledge.process({
+    const processResult = await app.processKnowledge.execute({
       sourceId: "src-search-override-001",
       sourceName: "Domain-Driven Design Overview",
       uri: "Domain-driven design organizes software around the domain model, using bounded contexts, aggregates, and domain events to capture business rules.",
@@ -49,7 +52,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     expect(processResult.isOk()).toBe(true);
 
     // Ingest a second source for richer result sets
-    const processResult2 = await knowledge.process({
+    const processResult2 = await app.processKnowledge.execute({
       sourceId: "src-search-override-002",
       sourceName: "Clean Architecture Principles",
       uri: "Clean architecture separates business logic from infrastructure using dependency inversion, ports and adapters, and layered boundaries.",
@@ -65,7 +68,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
 
   describe("default path — no retrievalOverride", () => {
     it("should return Ok results when retrievalOverride is absent", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "domain model bounded contexts",
         topK: 5,
         minScore: 0.0,
@@ -80,7 +83,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should return items with correct shape on default path", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "clean architecture layers",
         topK: 3,
         minScore: 0.0,
@@ -98,7 +101,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should respect topK limit on default path", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "architecture patterns",
         topK: 1,
         minScore: 0.0,
@@ -115,7 +118,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
 
   describe("retrievalOverride: { ranking: 'passthrough' } — still uses default path", () => {
     it("should return Ok results with passthrough ranking (treated as default)", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "domain model bounded contexts",
         topK: 5,
         minScore: 0.0,
@@ -132,8 +135,8 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     it("passthrough produces same result shape as no-override", async () => {
       const queryText = "bounded context aggregate design";
 
-      const noOverride = await knowledge.search({ queryText, topK: 5, minScore: 0.0 });
-      const withPassthrough = await knowledge.search({
+      const noOverride = await app.searchKnowledge.execute({ queryText, topK: 5, minScore: 0.0 });
+      const withPassthrough = await app.searchKnowledge.execute({
         queryText,
         topK: 5,
         minScore: 0.0,
@@ -155,7 +158,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
 
   describe("retrievalOverride: { ranking: 'mmr' } — uses one-shot ExecuteSemanticQuery", () => {
     it("should return Ok results when ranking is 'mmr'", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "domain model bounded contexts",
         topK: 5,
         minScore: 0.0,
@@ -171,7 +174,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should return items with correct shape on mmr override path", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "architecture dependency inversion",
         topK: 3,
         minScore: 0.0,
@@ -190,7 +193,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should accept custom mmrLambda without error", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "business logic ports adapters",
         topK: 5,
         minScore: 0.0,
@@ -201,7 +204,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should use default mmrLambda (0.5) when not provided", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "domain events aggregates",
         topK: 5,
         minScore: 0.0,
@@ -213,7 +216,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should respect topK limit on mmr override path", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "clean architecture",
         topK: 1,
         minScore: 0.0,
@@ -240,7 +243,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     it("should return a Result (not throw) when ranking is 'cross-encoder'", async () => {
       // CrossEncoderRankingStrategy downloads a model at runtime which is unavailable
       // in the offline test environment, so this returns Result.fail() — but never throws.
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "bounded context aggregate",
         topK: 5,
         minScore: 0.0,
@@ -252,7 +255,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     });
 
     it("should return Result.fail() with a KnowledgeError when cross-encoder model unavailable", async () => {
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "domain driven design patterns",
         topK: 3,
         minScore: 0.0,
@@ -271,7 +274,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
     it("should accept a custom crossEncoderModel field and still return a Result", async () => {
       // Even with a custom model name provided, the coordinator must not throw —
       // it must capture the failure in a Result.fail().
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "software architecture layers",
         topK: 5,
         minScore: 0.0,
@@ -293,7 +296,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
       // but validates the Result shape — the coordinator wraps thrown errors in Result.fail().
       // We verify the path handles unexpected failures gracefully by checking the
       // coordinator correctly returns a Result (either ok or fail) without throwing.
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "",
         topK: 5,
       });
@@ -307,7 +310,7 @@ describe("KnowledgeCoordinator.search() — retrievalOverride path", () => {
       // Create a coordinator backed by a service that will throw on query.
       // We achieve this by searching with retrievalOverride mmr and verifying
       // the Result contract is respected (no promise rejection leaks out).
-      const result = await knowledge.search({
+      const result = await app.searchKnowledge.execute({
         queryText: "test error handling",
         topK: 5,
         minScore: 0.0,

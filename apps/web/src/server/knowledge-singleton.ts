@@ -1,10 +1,10 @@
-import { createKnowledgePlatform } from "@klay/core";
-import type { KnowledgePlatform } from "@klay/core";
+import { createKnowledgeApplication } from "@klay/core";
+import type { KnowledgeApplication } from "@klay/core";
 import type { ConfigStore } from "@klay/core/config";
 import { resolveInfrastructureProfile } from "@klay/core/config";
 import { InMemorySecretStore } from "@klay/core/secrets";
 
-let _coordinatorPromise: Promise<KnowledgePlatform> | null = null;
+let _coordinatorPromise: Promise<KnowledgeApplication> | null = null;
 let _configStore: ConfigStore | null = null;
 
 const DB_PATH = process.env.KLAY_DB_PATH ?? "./data";
@@ -21,14 +21,14 @@ export async function getConfigStore(): Promise<ConfigStore> {
   return _configStore;
 }
 
-function _getCoordinator(): Promise<KnowledgePlatform> {
+function _getCoordinator(): Promise<KnowledgeApplication> {
   if (!_coordinatorPromise) {
     _coordinatorPromise = _createCoordinator();
   }
   return _coordinatorPromise;
 }
 
-async function _createCoordinator(): Promise<KnowledgePlatform> {
+async function _createCoordinator(): Promise<KnowledgeApplication> {
   const configStore = await getConfigStore();
 
   // Create SecretStore and seed from env vars for immediate use
@@ -43,7 +43,7 @@ async function _createCoordinator(): Promise<KnowledgePlatform> {
     configStore,
   });
 
-  const coordinator = await createKnowledgePlatform({
+  const app = await createKnowledgeApplication({
     provider: "server",
     dbPath: DB_PATH,
     configStore,
@@ -52,7 +52,8 @@ async function _createCoordinator(): Promise<KnowledgePlatform> {
     infrastructure,
   });
 
-  await coordinator.createProfile({
+  // Seed default processing profile (ignore result — may already exist)
+  await app.createProcessingProfile.execute({
     id: "default",
     name: "Default",
     preparation: { strategyId: "basic", config: {} },
@@ -60,7 +61,7 @@ async function _createCoordinator(): Promise<KnowledgePlatform> {
     projection: { strategyId: "hash-embedding", config: {} },
   });
 
-  return coordinator;
+  return app;
 }
 
 /**
@@ -71,7 +72,7 @@ export function invalidateAdapters(): void {
   _coordinatorPromise = null;
 }
 
-export async function getCoordinator(): Promise<KnowledgePlatform> {
+export async function getCoordinator(): Promise<KnowledgeApplication> {
   return _getCoordinator();
 }
 

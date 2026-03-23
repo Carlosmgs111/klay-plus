@@ -1,6 +1,6 @@
 import type { KnowledgeService } from "./knowledge-service";
 import type { ServiceResult } from "./types";
-import type { KnowledgePlatform } from "@klay/core";
+import type { KnowledgeApplication } from "@klay/core";
 import type {
   ProcessKnowledgeInput,
   ProcessKnowledgeSuccess,
@@ -12,28 +12,28 @@ import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
 /**
  * BrowserKnowledgeService — runs all operations entirely in the browser.
  *
- * Uses dynamic imports to lazily load @klay/core and create a platform
+ * Uses dynamic imports to lazily load @klay/core and create an application
  * with IndexedDB storage and hash embeddings.
  */
 export class BrowserKnowledgeService implements KnowledgeService {
-  private _coordinatorPromise: Promise<KnowledgePlatform> | null = null;
+  private _appPromise: Promise<KnowledgeApplication> | null = null;
 
   constructor(
     private readonly configStore?: ConfigStore,
     private readonly profile?: InfrastructureProfile,
   ) {}
 
-  private _getCoordinator(): Promise<KnowledgePlatform> {
-    if (!this._coordinatorPromise) {
-      this._coordinatorPromise = this._initCoordinator();
+  private _getApp(): Promise<KnowledgeApplication> {
+    if (!this._appPromise) {
+      this._appPromise = this._initApp();
     }
-    return this._coordinatorPromise;
+    return this._appPromise;
   }
 
-  private async _initCoordinator(): Promise<KnowledgePlatform> {
-    const { createKnowledgePlatform } = await import("@klay/core");
+  private async _initApp(): Promise<KnowledgeApplication> {
+    const { createKnowledgeApplication } = await import("@klay/core");
 
-    const coordinator = await createKnowledgePlatform({
+    const app = await createKnowledgeApplication({
       provider: "browser",
       dbName: "klay-dashboard",
       embeddingDimensions: 128,
@@ -42,7 +42,7 @@ export class BrowserKnowledgeService implements KnowledgeService {
     });
 
     // Seed default processing profile (ignore if already exists)
-    await coordinator.createProfile({
+    await app.createProcessingProfile.execute({
       id: "default",
       name: "Default",
       preparation: { strategyId: "basic", config: {} },
@@ -50,108 +50,119 @@ export class BrowserKnowledgeService implements KnowledgeService {
       projection: { strategyId: "hash-embedding", config: {} },
     });
 
-    return coordinator;
+    return app;
   }
 
-  private async _call<T>(fn: (c: KnowledgePlatform) => Promise<any>): Promise<ServiceResult<T>> {
+  private async _callResult<T>(fn: (app: KnowledgeApplication) => Promise<any>): Promise<ServiceResult<T>> {
     const { unwrapResult } = await import("@klay/core/result");
-    const coordinator = await this._getCoordinator();
-    return unwrapResult(await fn(coordinator)) as ServiceResult<T>;
+    const app = await this._getApp();
+    return unwrapResult(await fn(app)) as ServiceResult<T>;
   }
 
   // ── Cross-cutting ──────────────────────────────────────────────────
 
   async process(input: ProcessKnowledgeInput): Promise<ServiceResult<ProcessKnowledgeSuccess>> {
-    return this._call(c => c.process(input));
+    return this._callResult(app => app.processKnowledge.execute(input));
   }
 
   async search(input: SearchKnowledgeInput): Promise<ServiceResult<SearchKnowledgeSuccess>> {
-    return this._call(c => c.search(input));
+    return this._callResult(app => app.searchKnowledge.execute(input));
   }
 
   // ── Contexts ──────────────────────────────────────────────────────
 
   createContext(input: Parameters<KnowledgeService["createContext"]>[0]) {
-    return this._call(c => c.createContext(input));
+    return this._callResult(app => app.createContextAndActivate.execute(input));
   }
 
   getContext(input: Parameters<KnowledgeService["getContext"]>[0]) {
-    return this._call(c => c.getContext(input));
+    return this._callResult(app => app.contextQueries.getDetail(input.contextId));
   }
 
   listContexts() {
-    return this._call(c => c.listContexts());
+    return this._callResult(app => app.contextQueries.listSummary());
   }
 
   listContextRefs() {
-    return this._call(c => c.listContextRefs());
+    return this._callResult(app => app.contextQueries.listRefs());
   }
 
-  transitionContextState(input: Parameters<KnowledgeService["transitionContextState"]>[0]) {
-    return this._call(c => c.transitionContextState(input));
+  async transitionContextState(input: Parameters<KnowledgeService["transitionContextState"]>[0]) {
+    const { executeTransitionContextState } = await import("@klay/core");
+    return this._callResult(app => executeTransitionContextState(app.transitionContextState, input));
   }
 
   updateContextProfile(input: Parameters<KnowledgeService["updateContextProfile"]>[0]) {
-    return this._call(c => c.updateContextProfile(input));
+    return this._callResult(app => app.updateContextProfileAndReconcile.execute(input));
   }
 
   reconcileProjections(input: Parameters<KnowledgeService["reconcileProjections"]>[0]) {
-    return this._call(c => c.reconcileProjections(input));
+    return this._callResult(app => app.reconcileProjections.execute(input));
   }
 
   reconcileAllProfiles(input: Parameters<KnowledgeService["reconcileAllProfiles"]>[0]) {
-    return this._call(c => c.reconcileAllProfiles(input));
+    return this._callResult(app => app.reconcileProjections.executeAllProfiles(input));
   }
 
-  removeSourceFromContext(input: Parameters<KnowledgeService["removeSourceFromContext"]>[0]) {
-    return this._call(c => c.removeSourceFromContext(input));
+  async removeSourceFromContext(input: Parameters<KnowledgeService["removeSourceFromContext"]>[0]) {
+    const { executeRemoveSource } = await import("@klay/core");
+    return this._callResult(app => executeRemoveSource(app.removeSourceFromContext, input));
   }
 
-  linkContexts(input: Parameters<KnowledgeService["linkContexts"]>[0]) {
-    return this._call(c => c.linkContexts(input));
+  async linkContexts(input: Parameters<KnowledgeService["linkContexts"]>[0]) {
+    const { executeLinkContexts } = await import("@klay/core");
+    return this._callResult(app => executeLinkContexts(app.linkContexts, input));
   }
 
-  unlinkContexts(input: Parameters<KnowledgeService["unlinkContexts"]>[0]) {
-    return this._call(c => c.unlinkContexts(input));
+  async unlinkContexts(input: Parameters<KnowledgeService["unlinkContexts"]>[0]) {
+    const { executeUnlinkContexts } = await import("@klay/core");
+    return this._callResult(app => executeUnlinkContexts(app.unlinkContexts, input));
   }
 
-  getContextLineage(input: Parameters<KnowledgeService["getContextLineage"]>[0]) {
-    return this._call(c => c.getContextLineage(input));
+  async getContextLineage(input: Parameters<KnowledgeService["getContextLineage"]>[0]) {
+    const { executeGetContextLineage } = await import("@klay/core");
+    return this._callResult(app => executeGetContextLineage(app.lineageQueries, input.contextId));
   }
 
   // ── Sources ──────────────────────────────────────────────────────
 
-  listSources() {
-    return this._call(c => c.listSources());
+  async listSources() {
+    const { executeListSources } = await import("@klay/core");
+    return this._callResult(app => executeListSources(app.sourceQueries));
   }
 
-  getSource(input: Parameters<KnowledgeService["getSource"]>[0]) {
-    return this._call(c => c.getSource(input));
+  async getSource(input: Parameters<KnowledgeService["getSource"]>[0]) {
+    const { executeGetSource } = await import("@klay/core");
+    return this._callResult(app => executeGetSource(app.sourceQueries, input.sourceId));
   }
 
   getSourceContexts(input: Parameters<KnowledgeService["getSourceContexts"]>[0]) {
-    return this._call(c => c.getSourceContexts(input));
+    return this._callResult(app => app.contextQueries.listBySource(input.sourceId));
   }
 
   processSourceAllProfiles(input: Parameters<KnowledgeService["processSourceAllProfiles"]>[0]) {
-    return this._call(c => c.processSourceAllProfiles(input));
+    return this._callResult(app => app.processSourceAllProfiles.execute(input));
   }
 
   // ── Profiles ──────────────────────────────────────────────────────
 
-  createProfile(input: Parameters<KnowledgeService["createProfile"]>[0]) {
-    return this._call(c => c.createProfile(input));
+  async createProfile(input: Parameters<KnowledgeService["createProfile"]>[0]) {
+    const { executeCreateProfile } = await import("@klay/core");
+    return this._callResult(app => executeCreateProfile(app.createProcessingProfile, input));
   }
 
-  listProfiles() {
-    return this._call(c => c.listProfiles());
+  async listProfiles() {
+    const { executeListProfiles } = await import("@klay/core");
+    return this._callResult(app => executeListProfiles(app.profileQueries));
   }
 
-  updateProfile(input: Parameters<KnowledgeService["updateProfile"]>[0]) {
-    return this._call(c => c.updateProfile(input));
+  async updateProfile(input: Parameters<KnowledgeService["updateProfile"]>[0]) {
+    const { executeUpdateProfile } = await import("@klay/core");
+    return this._callResult(app => executeUpdateProfile(app.updateProcessingProfile, input));
   }
 
-  deprecateProfile(input: Parameters<KnowledgeService["deprecateProfile"]>[0]) {
-    return this._call(c => c.deprecateProfile(input));
+  async deprecateProfile(input: Parameters<KnowledgeService["deprecateProfile"]>[0]) {
+    const { executeDeprecateProfile } = await import("@klay/core");
+    return this._callResult(app => executeDeprecateProfile(app.deprecateProcessingProfile, input));
   }
 }

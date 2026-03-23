@@ -3,7 +3,7 @@ import { getCoordinator } from "../../../server/knowledge-singleton";
 import { toRESTResponse } from "@klay/core/result";
 
 export const POST: APIRoute = async ({ request }) => {
-  const coordinator = await getCoordinator();
+  const app = await getCoordinator();
   const body = await request.json();
 
   // Decode base64-encoded content back to ArrayBuffer for extractors
@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  const result = toRESTResponse(await coordinator.process(body));
+  const result = toRESTResponse(await app.processKnowledge.execute(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

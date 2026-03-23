@@ -3,8 +3,8 @@ import { getCoordinator } from "../../../../../server/knowledge-singleton";
 import { toRESTResponse } from "@klay/core/result";
 
 export const GET: APIRoute = async ({ params }) => {
-  const coordinator = await getCoordinator();
-  const result = toRESTResponse(await coordinator.getSourceContexts({ sourceId: params.id! }));
+  const app = await getCoordinator();
+  const result = toRESTResponse(await app.contextQueries.listBySource(params.id!));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

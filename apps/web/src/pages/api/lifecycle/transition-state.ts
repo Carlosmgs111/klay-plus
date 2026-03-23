@@ -1,11 +1,12 @@
 import type { APIRoute } from "astro";
 import { getCoordinator } from "../../../server/knowledge-singleton";
+import { executeTransitionContextState } from "@klay/core";
 import { toRESTResponse } from "@klay/core/result";
 
 export const POST: APIRoute = async ({ request }) => {
-  const coordinator = await getCoordinator();
+  const app = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await coordinator.transitionContextState(body));
+  const result = toRESTResponse(await executeTransitionContextState(app.transitionContextState, body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

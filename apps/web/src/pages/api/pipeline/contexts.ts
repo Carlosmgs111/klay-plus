@@ -3,20 +3,20 @@ import { getCoordinator } from "../../../server/knowledge-singleton";
 import { toRESTResponse } from "@klay/core/result";
 
 export const GET: APIRoute = async ({ url }) => {
-  const coordinator = await getCoordinator();
+  const app = await getCoordinator();
   const id = url.searchParams.get("id");
   const summary = url.searchParams.get("summary");
 
   let result;
   if (id) {
     // GET /api/pipeline/contexts?id=xxx → getContextDetails
-    result = toRESTResponse(await coordinator.getContext({ contextId: id }));
+    result = toRESTResponse(await app.contextQueries.getDetail(id));
   } else if (summary === "true") {
     // GET /api/pipeline/contexts?summary=true → listContextsSummary
-    result = toRESTResponse(await coordinator.listContexts());
+    result = toRESTResponse(await app.contextQueries.listSummary());
   } else {
     // GET /api/pipeline/contexts → listContexts (simple list)
-    result = toRESTResponse(await coordinator.listContextRefs());
+    result = toRESTResponse(await app.contextQueries.listRefs());
   }
 
   return new Response(JSON.stringify(result.body), {

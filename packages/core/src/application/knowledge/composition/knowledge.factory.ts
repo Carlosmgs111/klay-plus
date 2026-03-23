@@ -3,47 +3,22 @@ import { Result } from "../../../shared/domain/Result";
 import { KnowledgeError } from "../domain/KnowledgeError";
 import { OperationStep } from "../domain/OperationStep";
 import { ProcessKnowledge } from "../ProcessKnowledge";
+import { CreateContextAndActivate } from "../CreateContextAndActivate";
+import { UpdateContextProfileAndReconcile } from "../UpdateContextProfileAndReconcile";
 import type {
-  ProcessKnowledgeInput,
-  ProcessKnowledgeSuccess,
-  SearchKnowledgeInput,
-  SearchKnowledgeSuccess,
-  CreateProcessingProfileInput,
   CreateProcessingProfileSuccess,
   ListProfilesResult,
-  UpdateProfileInput,
   UpdateProfileResult,
-  DeprecateProfileInput,
   DeprecateProfileResult,
-  GetContextDetailsInput,
-  GetContextDetailsResult,
-  ListContextsSummaryResult,
-  ListContextsResult,
-  GetSourceInput,
+  ListSourcesResult,
   GetSourceResult,
-  GetSourceContextsInput,
-  GetSourceContextsResult,
-  RemoveSourceInput,
   RemoveSourceResult,
-  ReconcileProjectionsInput,
-  ReconcileProjectionsResult,
-  ReconcileAllProfilesInput,
-  ReconcileAllProfilesResult,
-  ProcessSourceAllProfilesInput,
-  ProcessSourceAllProfilesResult,
-  LinkContextsInput,
   LinkContextsResult,
-  UnlinkContextsInput,
   UnlinkContextsResult,
-  CreateContextInput,
-  CreateContextResult,
-  GetContextLineageInput,
   GetContextLineageResult,
-  UpdateContextProfileInput,
-  UpdateContextProfileResult,
   TransitionContextStateInput,
   TransitionContextStateResult,
-  ListSourcesResult,
+  ProcessSourceAllProfilesResult,
 } from "../dtos";
 import type { SourceQueries } from "../../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
 import type { CreateProcessingProfile } from "../../../contexts/semantic-processing/processing-profile/application/use-cases/CreateProcessingProfile";
@@ -63,44 +38,7 @@ import type { LineageQueries } from "../../../contexts/context-management/lineag
 import type { ProcessSourceAllProfiles } from "../../../contexts/semantic-processing/projection/application/use-cases/ProcessSourceAllProfiles";
 import type { SearchKnowledge } from "../../../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
 
-// ── Public platform type ──────────────────────────────────────────────────────
-
-/**
- * KnowledgePlatform — the single public entry point for all knowledge operations.
- *
- * Plain-object type returned by `createKnowledgePlatform()`. Replaces the
- * former `KnowledgeCoordinator` class (same method signatures, duck-typed).
- */
-export type KnowledgePlatform = {
-  // ── Cross-cutting ────────────────────────────────────────────────
-  process(input: ProcessKnowledgeInput): Promise<Result<KnowledgeError, ProcessKnowledgeSuccess>>;
-  search(input: SearchKnowledgeInput): Promise<Result<KnowledgeError, SearchKnowledgeSuccess>>;
-  // ── Contexts ─────────────────────────────────────────────────────
-  createContext(input: CreateContextInput): Promise<Result<KnowledgeError, CreateContextResult>>;
-  getContext(input: GetContextDetailsInput): Promise<Result<KnowledgeError, GetContextDetailsResult>>;
-  listContexts(): Promise<Result<KnowledgeError, ListContextsSummaryResult>>;
-  listContextRefs(): Promise<Result<KnowledgeError, ListContextsResult>>;
-  transitionContextState(input: TransitionContextStateInput): Promise<Result<KnowledgeError, TransitionContextStateResult>>;
-  updateContextProfile(input: UpdateContextProfileInput): Promise<Result<KnowledgeError, UpdateContextProfileResult>>;
-  reconcileProjections(input: ReconcileProjectionsInput): Promise<Result<KnowledgeError, ReconcileProjectionsResult>>;
-  reconcileAllProfiles(input: ReconcileAllProfilesInput): Promise<Result<KnowledgeError, ReconcileAllProfilesResult>>;
-  removeSourceFromContext(input: RemoveSourceInput): Promise<Result<KnowledgeError, RemoveSourceResult>>;
-  linkContexts(input: LinkContextsInput): Promise<Result<KnowledgeError, LinkContextsResult>>;
-  unlinkContexts(input: UnlinkContextsInput): Promise<Result<KnowledgeError, UnlinkContextsResult>>;
-  getContextLineage(input: GetContextLineageInput): Promise<Result<KnowledgeError, GetContextLineageResult>>;
-  // ── Sources ──────────────────────────────────────────────────────
-  listSources(): Promise<Result<KnowledgeError, ListSourcesResult>>;
-  getSource(input: GetSourceInput): Promise<Result<KnowledgeError, GetSourceResult>>;
-  getSourceContexts(input: GetSourceContextsInput): Promise<Result<KnowledgeError, GetSourceContextsResult>>;
-  processSourceAllProfiles(input: ProcessSourceAllProfilesInput): Promise<Result<KnowledgeError, ProcessSourceAllProfilesResult>>;
-  // ── Profiles ─────────────────────────────────────────────────────
-  createProfile(input: CreateProcessingProfileInput): Promise<Result<KnowledgeError, CreateProcessingProfileSuccess>>;
-  listProfiles(): Promise<Result<KnowledgeError, ListProfilesResult>>;
-  updateProfile(input: UpdateProfileInput): Promise<Result<KnowledgeError, UpdateProfileResult>>;
-  deprecateProfile(input: DeprecateProfileInput): Promise<Result<KnowledgeError, DeprecateProfileResult>>;
-};
-
-// ── Resolved dependencies (kept for downstream use) ──────────────────────────
+// ── Resolved dependencies (internal, unchanged) ──────────────────────────────
 
 export interface ResolvedDependencies {
   // Source Ingestion (consolidated query class)
@@ -129,327 +67,306 @@ export interface ResolvedDependencies {
   lineageQueries: LineageQueries;
 }
 
-// ── Private helpers (module-level, mirror of old class helpers) ───────────────
+// ── Public application type ──────────────────────────────────────────────────
 
-async function _query<T>(
-  step: OperationStep,
-  fn: () => Promise<T>,
-): Promise<Result<KnowledgeError, T>> {
-  try {
-    return Result.ok(await fn());
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(step, error, []));
-  }
+/**
+ * KnowledgeApplication — exposes all use cases directly + 2 orchestrators.
+ *
+ * Consumers call use cases directly (e.g. `app.processKnowledge.execute(input)`)
+ * instead of going through a 22-method facade. DTO mapping utilities are
+ * exported as standalone functions for consumers that need them.
+ */
+export interface KnowledgeApplication extends ResolvedDependencies {
+  createContextAndActivate: CreateContextAndActivate;
+  updateContextProfileAndReconcile: UpdateContextProfileAndReconcile;
 }
 
-async function _wrap<T, R>(
-  step: OperationStep,
-  fn: () => Promise<Result<any, T>>,
-  map: (v: T) => R,
-): Promise<Result<KnowledgeError, R>> {
-  try {
-    const result = await fn();
-    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(step, result.error, []));
-    return Result.ok(map(result.value));
-  } catch (error) {
-    return Result.fail(KnowledgeError.fromStep(step, error, []));
-  }
-}
+// ── DTO mapping utilities (for web consumers) ────────────────────────────────
 
-// ── Builder ───────────────────────────────────────────────────────────────────
-
-function buildPlatform(deps: ResolvedDependencies): KnowledgePlatform {
+export function mapSourcesToDTO(sources: any[]): ListSourcesResult {
   return {
-    // ── Cross-cutting ────────────────────────────────────────────────
+    sources: sources.map((s: any) => ({
+      id: s.id.value,
+      name: s.name,
+      type: s.type,
+      uri: s.uri,
+      hasBeenExtracted: s.hasBeenExtracted,
+      currentVersion: s.currentVersion?.version ?? null,
+      registeredAt: s.registeredAt.toISOString(),
+    })),
+    total: sources.length,
+  };
+}
 
-    process(input: ProcessKnowledgeInput) {
-      return deps.processKnowledge.execute(input);
-    },
-
-    search(input: SearchKnowledgeInput) {
-      return deps.searchKnowledge.execute(input);
-    },
-
-    // ── Contexts ─────────────────────────────────────────────────────
-
-    async createContext(input: CreateContextInput) {
-      try {
-        const createResult = await deps.createContext.execute({
-          id: input.id,
-          name: input.name,
-          description: input.description,
-          language: input.language,
-          requiredProfileId: input.requiredProfileId,
-          createdBy: input.createdBy,
-          tags: input.tags,
-          attributes: input.attributes,
-        });
-
-        if (createResult.isFail()) {
-          return Result.fail(
-            KnowledgeError.fromStep(OperationStep.CreateContext, createResult.error, []),
-          );
-        }
-
-        // Auto-activate for low-friction UX (Draft → Active)
-        const activateResult = await deps.transitionContextState.execute({
-          contextId: createResult.value.id.value,
-          action: "activate",
-        });
-
-        if (activateResult.isFail()) {
-          return Result.fail(
-            KnowledgeError.fromStep(OperationStep.ActivateContext, activateResult.error, []),
-          );
-        }
-
-        return Result.ok({
-          contextId: activateResult.value.id.value,
-          state: activateResult.value.state,
-        });
-      } catch (error) {
-        return Result.fail(
-          KnowledgeError.fromStep(OperationStep.CreateContext, error, []),
-        );
-      }
-    },
-
-    getContext(input: GetContextDetailsInput) {
-      return deps.contextQueries.getDetail(input.contextId);
-    },
-
-    listContexts() {
-      return deps.contextQueries.listSummary();
-    },
-
-    listContextRefs() {
-      return deps.contextQueries.listRefs();
-    },
-
-    transitionContextState(input: TransitionContextStateInput) {
-      return _wrap(
-        OperationStep.TransitionState,
-        () => {
-          switch (input.targetState) {
-            case "ACTIVE":
-              return deps.transitionContextState.execute({ contextId: input.contextId, action: "activate" });
-            case "DEPRECATED":
-              return deps.transitionContextState.execute({ contextId: input.contextId, action: "deprecate", reason: input.reason ?? "" });
-            case "ARCHIVED":
-              return deps.transitionContextState.execute({ contextId: input.contextId, action: "archive" });
-          }
-        },
-        (ctx) => ({ contextId: ctx.id.value, state: ctx.state }),
-      );
-    },
-
-    async updateContextProfile(input: UpdateContextProfileInput) {
-      try {
-        const result = await deps.updateContextProfile.execute({
-          contextId: input.contextId,
-          profileId: input.profileId,
-        });
-
-        if (result.isFail()) {
-          return Result.fail(
-            KnowledgeError.fromStep(OperationStep.UpdateContextProfile, result.error, []),
-          );
-        }
-
-        const updatedContext = result.value;
-        let reconciled: { processedCount: number; failedCount: number } | undefined;
-
-        // Auto-reconcile projections if context has active sources
-        if (updatedContext.activeSources.length > 0) {
-          const reconcileResult = await deps.reconcileProjections.execute({
-            contextId: input.contextId,
-            profileId: input.profileId,
-          });
-
-          if (reconcileResult.isOk()) {
-            reconciled = {
-              processedCount: reconcileResult.value.processedCount,
-              failedCount: reconcileResult.value.failedCount,
-            };
-          }
-        }
-
-        return Result.ok({
-          contextId: updatedContext.id.value,
-          profileId: updatedContext.requiredProfileId,
-          reconciled,
-        });
-      } catch (error) {
-        return Result.fail(
-          KnowledgeError.fromStep(OperationStep.UpdateContextProfile, error, []),
-        );
-      }
-    },
-
-    reconcileProjections(input: ReconcileProjectionsInput) {
-      return deps.reconcileProjections.execute(input);
-    },
-
-    reconcileAllProfiles(input: ReconcileAllProfilesInput) {
-      return deps.reconcileProjections.executeAllProfiles(input);
-    },
-
-    removeSourceFromContext(input: RemoveSourceInput) {
-      return _wrap(
-        OperationStep.RemoveSource,
-        () => deps.removeSourceFromContext.execute({ contextId: input.contextId, sourceId: input.sourceId }),
-        (ctx) => ({ contextId: ctx.id.value, version: ctx.currentVersion?.version ?? 0 }),
-      );
-    },
-
-    linkContexts(input: LinkContextsInput) {
-      return _wrap(
-        OperationStep.Link,
-        () => deps.linkContexts.execute({ fromContextId: input.sourceContextId, toContextId: input.targetContextId, relationship: input.relationshipType }),
-        (v) => ({ sourceContextId: v.fromContextId, targetContextId: v.toContextId }),
-      );
-    },
-
-    unlinkContexts(input: UnlinkContextsInput) {
-      return _wrap(
-        OperationStep.Unlink,
-        () => deps.unlinkContexts.execute({ fromContextId: input.sourceContextId, toContextId: input.targetContextId }),
-        (v) => ({ sourceContextId: v.fromContextId, targetContextId: v.toContextId }),
-      );
-    },
-
-    getContextLineage(input: GetContextLineageInput) {
-      return _wrap(
-        OperationStep.Link,
-        () => deps.lineageQueries.getLineage(input.contextId),
-        (v) => ({
-          contextId: v.contextId,
-          traces: v.traces.map((t: any) => ({ ...t, createdAt: t.createdAt.toISOString() })),
-        }),
-      );
-    },
-
-    // ── Sources ──────────────────────────────────────────────────────
-
-    listSources() {
-      return _query(OperationStep.Ingestion, async () => {
-        const sources = await deps.sourceQueries.listAll();
-        return {
-          sources: sources.map((s) => ({
-            id: s.id.value,
-            name: s.name,
-            type: s.type,
-            uri: s.uri,
-            hasBeenExtracted: s.hasBeenExtracted,
-            currentVersion: s.currentVersion?.version ?? null,
-            registeredAt: s.registeredAt.toISOString(),
-          })),
-          total: sources.length,
-        };
-      });
-    },
-
-    getSource(input: GetSourceInput) {
-      return _query(OperationStep.Ingestion, async () => {
-        const source = await deps.sourceQueries.getById(input.sourceId);
-        if (!source) {
-          throw { message: `Source ${input.sourceId} not found`, code: "SOURCE_NOT_FOUND" };
-        }
-
-        let extractedTextPreview: string | null = null;
-        const textResult = await deps.sourceQueries.getExtractedText(input.sourceId);
-        if (textResult.isOk()) {
-          const text = textResult.value.text;
-          extractedTextPreview = text.length > 500 ? text.slice(0, 500) + "..." : text;
-        }
-
-        return {
-          source: {
-            id: source.id.value,
-            name: source.name,
-            type: source.type,
-            uri: source.uri,
-            hasBeenExtracted: source.hasBeenExtracted,
-            currentVersion: source.currentVersion?.version ?? null,
-            registeredAt: source.registeredAt.toISOString(),
-            versions: source.versions.map((v) => ({
-              version: v.version,
-              contentHash: v.contentHash,
-              extractedAt: v.extractedAt.toISOString(),
-            })),
-            extractedTextPreview,
-          },
-        };
-      });
-    },
-
-    getSourceContexts(input: GetSourceContextsInput) {
-      return deps.contextQueries.listBySource(input.sourceId);
-    },
-
-    processSourceAllProfiles(input: ProcessSourceAllProfilesInput) {
-      return deps.processSourceAllProfiles.execute(input);
-    },
-
-    // ── Profiles ─────────────────────────────────────────────────────
-
-    createProfile(input: CreateProcessingProfileInput) {
-      return _wrap(
-        OperationStep.Processing,
-        () => deps.createProcessingProfile.execute({
-          id: input.id,
-          name: input.name,
-          preparation: input.preparation,
-          fragmentation: input.fragmentation,
-          projection: input.projection,
-        }),
-        (v) => ({ profileId: v.profileId, version: v.version }),
-      );
-    },
-
-    listProfiles() {
-      return _query(OperationStep.Processing, async () => {
-        const profiles = await deps.profileQueries.listAll();
-        return {
-          profiles: profiles.map((p) => ({
-            id: p.id.value,
-            name: p.name,
-            version: p.version,
-            preparation: p.preparation.toDTO(),
-            fragmentation: p.fragmentation.toDTO(),
-            projection: p.projection.toDTO(),
-            status: p.status,
-            createdAt: p.createdAt.toISOString(),
-          })),
-        };
-      });
-    },
-
-    updateProfile(input: UpdateProfileInput) {
-      return _wrap(
-        OperationStep.Processing,
-        () => deps.updateProcessingProfile.execute({
-          id: input.id,
-          name: input.name,
-          preparation: input.preparation,
-          fragmentation: input.fragmentation,
-          projection: input.projection,
-        }),
-        (v) => ({ profileId: v.profileId, version: v.version }),
-      );
-    },
-
-    deprecateProfile(input: DeprecateProfileInput) {
-      return _wrap(
-        OperationStep.Processing,
-        () => deps.deprecateProcessingProfile.execute({
-          id: input.id,
-          reason: input.reason,
-        }),
-        (v) => ({ profileId: v.profileId }),
-      );
+export async function mapSourceToDetailDTO(source: any, sourceQueries: any): Promise<GetSourceResult> {
+  let extractedTextPreview: string | null = null;
+  const textResult = await sourceQueries.getExtractedText(source.id.value);
+  if (textResult.isOk()) {
+    const text = textResult.value.text;
+    extractedTextPreview = text.length > 500 ? text.slice(0, 500) + "..." : text;
+  }
+  return {
+    source: {
+      id: source.id.value,
+      name: source.name,
+      type: source.type,
+      uri: source.uri,
+      hasBeenExtracted: source.hasBeenExtracted,
+      currentVersion: source.currentVersion?.version ?? null,
+      registeredAt: source.registeredAt.toISOString(),
+      versions: source.versions.map((v: any) => ({
+        version: v.version,
+        contentHash: v.contentHash,
+        extractedAt: v.extractedAt.toISOString(),
+      })),
+      extractedTextPreview,
     },
   };
+}
+
+export function mapProfilesToDTO(profiles: any[]): ListProfilesResult {
+  return {
+    profiles: profiles.map((p: any) => ({
+      id: p.id.value,
+      name: p.name,
+      version: p.version,
+      preparation: p.preparation.toDTO(),
+      fragmentation: p.fragmentation.toDTO(),
+      projection: p.projection.toDTO(),
+      status: p.status,
+      createdAt: p.createdAt.toISOString(),
+    })),
+  };
+}
+
+export function mapTransitionResult(ctx: any): TransitionContextStateResult {
+  return { contextId: ctx.id.value, state: ctx.state };
+}
+
+export function mapRemoveSourceResult(ctx: any): RemoveSourceResult {
+  return { contextId: ctx.id.value, version: ctx.currentVersion?.version ?? 0 };
+}
+
+export function mapLinkResult(v: any): LinkContextsResult {
+  return { sourceContextId: v.fromContextId, targetContextId: v.toContextId };
+}
+
+export function mapUnlinkResult(v: any): UnlinkContextsResult {
+  return { sourceContextId: v.fromContextId, targetContextId: v.toContextId };
+}
+
+export function mapLineageResult(v: any): GetContextLineageResult {
+  return {
+    contextId: v.contextId,
+    traces: v.traces.map((t: any) => ({ ...t, createdAt: t.createdAt.toISOString() })),
+  };
+}
+
+export function mapCreateProfileResult(v: any): CreateProcessingProfileSuccess {
+  return { profileId: v.profileId, version: v.version };
+}
+
+export function mapUpdateProfileResult(v: any): UpdateProfileResult {
+  return { profileId: v.profileId, version: v.version };
+}
+
+export function mapDeprecateProfileResult(v: any): DeprecateProfileResult {
+  return { profileId: v.profileId };
+}
+
+/**
+ * Maps a TransitionContextStateInput (targetState: "ACTIVE"|"DEPRECATED"|"ARCHIVED")
+ * to the use case input (action: "activate"|"deprecate"|"archive").
+ */
+export function mapTransitionInput(input: TransitionContextStateInput) {
+  const actionMap = { ACTIVE: "activate", DEPRECATED: "deprecate", ARCHIVED: "archive" } as const;
+  return {
+    contextId: input.contextId,
+    action: actionMap[input.targetState],
+    ...(input.reason && { reason: input.reason }),
+  };
+}
+
+/**
+ * Convenience: execute transitionContextState use case with DTO mapping.
+ * Wraps the use case call + error handling + DTO mapping in a single function.
+ */
+export async function executeTransitionContextState(
+  transitionContextState: TransitionContextState,
+  input: TransitionContextStateInput,
+): Promise<Result<KnowledgeError, TransitionContextStateResult>> {
+  try {
+    const result = await transitionContextState.execute(mapTransitionInput(input));
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.TransitionState, result.error, []));
+    return Result.ok(mapTransitionResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.TransitionState, error, []));
+  }
+}
+
+/**
+ * Convenience: execute removeSourceFromContext use case with DTO mapping.
+ */
+export async function executeRemoveSource(
+  removeSourceFromContext: RemoveSourceFromContext,
+  input: { contextId: string; sourceId: string },
+): Promise<Result<KnowledgeError, RemoveSourceResult>> {
+  try {
+    const result = await removeSourceFromContext.execute(input);
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.RemoveSource, result.error, []));
+    return Result.ok(mapRemoveSourceResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.RemoveSource, error, []));
+  }
+}
+
+/**
+ * Convenience: execute linkContexts use case with DTO mapping.
+ */
+export async function executeLinkContexts(
+  linkContexts: LinkContexts,
+  input: { sourceContextId: string; targetContextId: string; relationshipType: string },
+): Promise<Result<KnowledgeError, LinkContextsResult>> {
+  try {
+    const result = await linkContexts.execute({
+      fromContextId: input.sourceContextId,
+      toContextId: input.targetContextId,
+      relationship: input.relationshipType,
+    });
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Link, result.error, []));
+    return Result.ok(mapLinkResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Link, error, []));
+  }
+}
+
+/**
+ * Convenience: execute unlinkContexts use case with DTO mapping.
+ */
+export async function executeUnlinkContexts(
+  unlinkContexts: UnlinkContexts,
+  input: { sourceContextId: string; targetContextId: string },
+): Promise<Result<KnowledgeError, UnlinkContextsResult>> {
+  try {
+    const result = await unlinkContexts.execute({
+      fromContextId: input.sourceContextId,
+      toContextId: input.targetContextId,
+    });
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Unlink, result.error, []));
+    return Result.ok(mapUnlinkResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Unlink, error, []));
+  }
+}
+
+/**
+ * Convenience: execute getContextLineage with DTO mapping.
+ */
+export async function executeGetContextLineage(
+  lineageQueries: LineageQueries,
+  contextId: string,
+): Promise<Result<KnowledgeError, GetContextLineageResult>> {
+  try {
+    const result = await lineageQueries.getLineage(contextId);
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Link, result.error, []));
+    return Result.ok(mapLineageResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Link, error, []));
+  }
+}
+
+/**
+ * Convenience: list sources with DTO mapping wrapped in Result.
+ */
+export async function executeListSources(
+  sourceQueries: SourceQueries,
+): Promise<Result<KnowledgeError, ListSourcesResult>> {
+  try {
+    const sources = await sourceQueries.listAll();
+    return Result.ok(mapSourcesToDTO(sources));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Ingestion, error, []));
+  }
+}
+
+/**
+ * Convenience: get source detail with DTO mapping wrapped in Result.
+ */
+export async function executeGetSource(
+  sourceQueries: SourceQueries,
+  sourceId: string,
+): Promise<Result<KnowledgeError, GetSourceResult>> {
+  try {
+    const source = await sourceQueries.getById(sourceId);
+    if (!source) {
+      throw { message: `Source ${sourceId} not found`, code: "SOURCE_NOT_FOUND" };
+    }
+    return Result.ok(await mapSourceToDetailDTO(source, sourceQueries));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Ingestion, error, []));
+  }
+}
+
+/**
+ * Convenience: create profile with DTO mapping wrapped in Result.
+ */
+export async function executeCreateProfile(
+  createProcessingProfile: CreateProcessingProfile,
+  input: { id: string; name: string; preparation: any; fragmentation: any; projection: any },
+): Promise<Result<KnowledgeError, CreateProcessingProfileSuccess>> {
+  try {
+    const result = await createProcessingProfile.execute(input);
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, result.error, []));
+    return Result.ok(mapCreateProfileResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
+  }
+}
+
+/**
+ * Convenience: list profiles with DTO mapping wrapped in Result.
+ */
+export async function executeListProfiles(
+  profileQueries: ProfileQueries,
+): Promise<Result<KnowledgeError, ListProfilesResult>> {
+  try {
+    const profiles = await profileQueries.listAll();
+    return Result.ok(mapProfilesToDTO(profiles));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
+  }
+}
+
+/**
+ * Convenience: update profile with DTO mapping wrapped in Result.
+ */
+export async function executeUpdateProfile(
+  updateProcessingProfile: UpdateProcessingProfile,
+  input: { id: string; name?: string; preparation?: any; fragmentation?: any; projection?: any },
+): Promise<Result<KnowledgeError, UpdateProfileResult>> {
+  try {
+    const result = await updateProcessingProfile.execute(input);
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, result.error, []));
+    return Result.ok(mapUpdateProfileResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
+  }
+}
+
+/**
+ * Convenience: deprecate profile with DTO mapping wrapped in Result.
+ */
+export async function executeDeprecateProfile(
+  deprecateProcessingProfile: DeprecateProcessingProfile,
+  input: { id: string; reason: string },
+): Promise<Result<KnowledgeError, DeprecateProfileResult>> {
+  try {
+    const result = await deprecateProcessingProfile.execute(input);
+    if (result.isFail()) return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, result.error, []));
+    return Result.ok(mapDeprecateProfileResult(result.value));
+  } catch (error) {
+    return Result.fail(KnowledgeError.fromStep(OperationStep.Processing, error, []));
+  }
 }
 
 // ── Dependency resolver ───────────────────────────────────────────────────────
@@ -741,9 +658,16 @@ export async function resolveDependencies(
 
 // ── Public factory ────────────────────────────────────────────────────────────
 
-export async function createKnowledgePlatform(
+export async function createKnowledgeApplication(
   policy: OrchestratorPolicy,
-): Promise<KnowledgePlatform> {
+): Promise<KnowledgeApplication> {
   const deps = await resolveDependencies(policy);
-  return buildPlatform(deps);
+  return {
+    ...deps,
+    createContextAndActivate: new CreateContextAndActivate(deps.createContext, deps.transitionContextState),
+    updateContextProfileAndReconcile: new UpdateContextProfileAndReconcile(deps.updateContextProfile, deps.reconcileProjections),
+  };
 }
+
+/** @deprecated Use createKnowledgeApplication() */
+export const createKnowledgePlatform = createKnowledgeApplication;
