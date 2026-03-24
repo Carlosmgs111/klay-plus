@@ -9,6 +9,8 @@ import type { ExtractionInfrastructurePolicy } from "../extraction/composition/f
 import type { ResourceInfrastructurePolicy } from "../resource/composition/factory";
 import { resolveConfigProvider } from "../../../config/ConfigProvider";
 import type { ConfigStore } from "../../../config/ConfigStore";
+import type { SourceQueries as SourceQueriesType } from "../source/application/use-cases/SourceQueries";
+import type { IngestAndExtract as IngestAndExtractType } from "../source/application/use-cases/IngestAndExtract";
 
 interface SourceOverrides {
   provider?: string;
@@ -115,4 +117,59 @@ export async function resolveSourceIngestionModules(
     resourceStorageProvider: resourceResult.infra.storageProvider,
     resourceEventPublisher: resourceResult.infra.eventPublisher,
   };
+}
+
+// ── Self-contained context factory ──────────────────────────────────
+
+export interface SourceIngestionCapabilities {
+  sourceQueries: SourceQueriesType;
+  ingestAndExtract: IngestAndExtractType;
+}
+
+export async function createSourceIngestion(
+  config: SourceIngestionServicePolicy,
+): Promise<SourceIngestionCapabilities> {
+  const modules = await resolveSourceIngestionModules(config);
+
+  const [
+    { StoreResource },
+    { RegisterExternalResource },
+    { DeleteResource },
+    { GetResource },
+    { SourceQueries },
+    { RegisterSource },
+    { ExtractSource },
+    { IngestAndExtract },
+    { IngestSource },
+  ] = await Promise.all([
+    import("../resource/application/use-cases/StoreResource"),
+    import("../resource/application/use-cases/RegisterExternalResource"),
+    import("../resource/application/use-cases/DeleteResource"),
+    import("../resource/application/use-cases/GetResource"),
+    import("../source/application/use-cases/SourceQueries"),
+    import("../source/application/use-cases/RegisterSource"),
+    import("../source/application/use-cases/ExtractSource"),
+    import("../source/application/use-cases/IngestAndExtract"),
+    import("../source/application/use-cases/IngestSource"),
+  ]);
+
+  const storeResource = new StoreResource(
+    modules.resourceRepository,
+    modules.resourceStorage,
+    modules.resourceStorageProvider,
+    modules.resourceEventPublisher,
+  );
+  const registerExternalResource = new RegisterExternalResource(
+    modules.resourceRepository,
+    modules.resourceEventPublisher,
+  );
+
+  const sourceQueries = new SourceQueries(modules.sourceRepository, modules.extractionJobRepository);
+  const ingestAndExtract = new IngestAndExtract(
+    modules.sourceRepository,
+    modules.sourceEventPublisher,
+    modules.extraction.executeExtraction,
+  );
+
+  return { sourceQueries, ingestAndExtract };
 }

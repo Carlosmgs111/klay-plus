@@ -1,25 +1,20 @@
 import type { ResolvedSemanticQueryInfra } from "../../composition/factory";
-import type { ContextSourcePort } from "../../domain/ports/ContextSourcePort";
-import type { SearchKnowledgeInput, SearchKnowledgeSuccess } from "../../../../../application/knowledge/dtos";
+import type { SearchKnowledgeInput, SearchKnowledgeSuccess } from "../../../../../application/dtos";
 import { Result } from "../../../../../shared/domain/Result";
-import { KnowledgeError } from "../../../../../application/knowledge/domain/KnowledgeError";
-import { OperationStep } from "../../../../../application/knowledge/domain/OperationStep";
+import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ExecuteSemanticQuery } from "./ExecuteSemanticQuery";
 
 /**
- * SearchKnowledge — Use case for semantic search across the knowledge base.
+ * SearchKnowledge — Pure semantic search use case.
  *
- * Handles context-filtered and unfiltered semantic search, with optional
- * retrieval strategy overrides (MMR, cross-encoder). Uses ContextSourcePort
- * to look up active source IDs for a context without depending directly on
- * ContextManagementService.
+ * No context dependency. Accepts optional sourceIds filter for
+ * context-scoped search (resolved by application layer).
  */
 export class SearchKnowledge {
   private readonly _executeQuery: ExecuteSemanticQuery;
 
   constructor(
     private readonly _retrievalInfra: ResolvedSemanticQueryInfra,
-    private readonly _contextSource: ContextSourcePort,
   ) {
     this._executeQuery = new ExecuteSemanticQuery(
       _retrievalInfra.queryEmbedder,
@@ -30,19 +25,25 @@ export class SearchKnowledge {
 
   async execute(
     input: SearchKnowledgeInput,
-  ): Promise<Result<KnowledgeError, SearchKnowledgeSuccess>> {
+  ): Promise<Result<StepError, SearchKnowledgeSuccess>> {
     try {
-      let contextSourceIds: Set<string> | null = null;
+      // Extract sourceIds filter (set by application layer for context-scoped search)
+      let sourceIds: Set<string> | undefined;
       let vectorFilters = input.filters;
 
-      if (input.filters?.contextId) {
-        const contextId = input.filters.contextId as string;
-        contextSourceIds = await this._contextSource.getActiveSourceIds(contextId);
-        const { contextId: _, ...rest } = input.filters;
+      if (input.filters?.sourceIds) {
+        sourceIds = new Set(input.filters.sourceIds as string[]);
+        const { sourceIds: _, ...rest } = input.filters;
         vectorFilters = Object.keys(rest).length > 0 ? rest : undefined;
       }
 
-      const fetchTopK = contextSourceIds
+      // Also handle legacy contextId filter by stripping it (app layer resolves it)
+      if (vectorFilters?.contextId) {
+        const { contextId: _, ...rest } = vectorFilters;
+        vectorFilters = Object.keys(rest).length > 0 ? rest : undefined;
+      }
+
+      const fetchTopK = sourceIds
         ? (input.topK ?? 10) * 3
         : input.topK;
 
@@ -52,7 +53,6 @@ export class SearchKnowledge {
       let result: import("../../domain/RetrievalResult").RetrievalResult;
 
       if (useOverridePath) {
-        // Build a one-shot ExecuteSemanticQuery with the override ranking strategy
         let rankingStrategy: import("../../domain/ports/RankingStrategy").RankingStrategy;
 
         if (override.ranking === "mmr") {
@@ -102,8 +102,8 @@ export class SearchKnowledge {
         metadata: item.metadata as Record<string, unknown>,
       }));
 
-      if (contextSourceIds) {
-        items = items.filter((item) => contextSourceIds!.has(item.sourceId));
+      if (sourceIds) {
+        items = items.filter((item) => sourceIds!.has(item.sourceId));
       }
 
       const topK = input.topK ?? 10;
@@ -116,7 +116,7 @@ export class SearchKnowledge {
       });
     } catch (error) {
       return Result.fail(
-        KnowledgeError.fromStep(OperationStep.Search, error, []),
+        stepError("search", error),
       );
     }
   }

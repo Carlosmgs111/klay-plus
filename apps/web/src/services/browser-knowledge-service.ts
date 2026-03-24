@@ -8,6 +8,22 @@ import type {
   SearchKnowledgeSuccess,
 } from "@klay/core";
 import type { ConfigStore, InfrastructureProfile } from "@klay/core/config";
+import {
+  mapResult,
+  mapCreateContextResult,
+  mapTransitionResult,
+  mapTransitionInput,
+  mapRemoveSourceResult,
+  mapUpdateContextProfileResult,
+  mapLinkResult,
+  mapLinkInput,
+  mapUnlinkResult,
+  mapUnlinkInput,
+  mapLineageResult,
+  mapSourcesToDTO,
+  mapSourceToDetailDTO,
+  mapProfilesToDTO,
+} from "./knowledge-mappers";
 
 /**
  * BrowserKnowledgeService — runs all operations entirely in the browser.
@@ -42,7 +58,7 @@ export class BrowserKnowledgeService implements KnowledgeService {
     });
 
     // Seed default processing profile (ignore if already exists)
-    await app.createProcessingProfile.execute({
+    await app.semanticProcessing.createProcessingProfile.execute({
       id: "default",
       name: "Default",
       preparation: { strategyId: "basic", config: {} },
@@ -66,103 +82,134 @@ export class BrowserKnowledgeService implements KnowledgeService {
   }
 
   async search(input: SearchKnowledgeInput): Promise<ServiceResult<SearchKnowledgeSuccess>> {
-    return this._callResult(app => app.searchKnowledge.execute(input));
+    return this._callResult(app => app.knowledgeRetrieval.searchKnowledge.execute(input));
   }
 
   // ── Contexts ──────────────────────────────────────────────────────
 
-  createContext(input: Parameters<KnowledgeService["createContext"]>[0]) {
-    return this._callResult(app => app.createContextAndActivate.execute(input));
+  async createContext(input: Parameters<KnowledgeService["createContext"]>[0]) {
+    return this._callResult(app =>
+      app.contextManagement.createContextAndActivate.execute(input)
+        .then(raw => mapResult(raw, mapCreateContextResult)),
+    );
   }
 
   getContext(input: Parameters<KnowledgeService["getContext"]>[0]) {
-    return this._callResult(app => app.contextQueries.getDetail(input.contextId));
+    return this._callResult(app => app.contextManagement.contextReadModel.getDetail(input.contextId));
   }
 
   listContexts() {
-    return this._callResult(app => app.contextQueries.listSummary());
+    return this._callResult(app => app.contextManagement.contextReadModel.listSummary());
   }
 
   listContextRefs() {
-    return this._callResult(app => app.contextQueries.listRefs());
+    return this._callResult(app => app.contextManagement.contextQueries.listRefs());
   }
 
   async transitionContextState(input: Parameters<KnowledgeService["transitionContextState"]>[0]) {
-    const { executeTransitionContextState } = await import("@klay/core");
-    return this._callResult(app => executeTransitionContextState(app.transitionContextState, input));
+    return this._callResult(app =>
+      app.contextManagement.transitionContextState.execute(mapTransitionInput(input))
+        .then(raw => mapResult(raw, mapTransitionResult)),
+    );
   }
 
-  updateContextProfile(input: Parameters<KnowledgeService["updateContextProfile"]>[0]) {
-    return this._callResult(app => app.updateContextProfileAndReconcile.execute(input));
+  async updateContextProfile(input: Parameters<KnowledgeService["updateContextProfile"]>[0]) {
+    return this._callResult(app =>
+      app.contextManagement.updateContextProfileAndReconcile.execute(input)
+        .then(raw => mapResult(raw, mapUpdateContextProfileResult)),
+    );
   }
 
   reconcileProjections(input: Parameters<KnowledgeService["reconcileProjections"]>[0]) {
-    return this._callResult(app => app.reconcileProjections.execute(input));
+    return this._callResult(app => app.contextManagement.reconcileProjections.execute(input));
   }
 
   reconcileAllProfiles(input: Parameters<KnowledgeService["reconcileAllProfiles"]>[0]) {
-    return this._callResult(app => app.reconcileProjections.executeAllProfiles(input));
+    return this._callResult(app => app.contextManagement.reconcileProjections.executeAllProfiles(input));
   }
 
   async removeSourceFromContext(input: Parameters<KnowledgeService["removeSourceFromContext"]>[0]) {
-    const { executeRemoveSource } = await import("@klay/core");
-    return this._callResult(app => executeRemoveSource(app.removeSourceFromContext, input));
+    return this._callResult(app =>
+      app.contextManagement.removeSourceFromContext.execute(input)
+        .then(raw => mapResult(raw, mapRemoveSourceResult)),
+    );
   }
 
   async linkContexts(input: Parameters<KnowledgeService["linkContexts"]>[0]) {
-    const { executeLinkContexts } = await import("@klay/core");
-    return this._callResult(app => executeLinkContexts(app.linkContexts, input));
+    return this._callResult(app =>
+      app.contextManagement.linkContexts.execute(mapLinkInput(input))
+        .then(raw => mapResult(raw, mapLinkResult)),
+    );
   }
 
   async unlinkContexts(input: Parameters<KnowledgeService["unlinkContexts"]>[0]) {
-    const { executeUnlinkContexts } = await import("@klay/core");
-    return this._callResult(app => executeUnlinkContexts(app.unlinkContexts, input));
+    return this._callResult(app =>
+      app.contextManagement.unlinkContexts.execute(mapUnlinkInput(input))
+        .then(raw => mapResult(raw, mapUnlinkResult)),
+    );
   }
 
   async getContextLineage(input: Parameters<KnowledgeService["getContextLineage"]>[0]) {
-    const { executeGetContextLineage } = await import("@klay/core");
-    return this._callResult(app => executeGetContextLineage(app.lineageQueries, input.contextId));
+    return this._callResult(app =>
+      app.contextManagement.lineageQueries.getLineage(input.contextId)
+        .then(raw => mapResult(raw, mapLineageResult)),
+    );
   }
 
   // ── Sources ──────────────────────────────────────────────────────
 
-  async listSources() {
-    const { executeListSources } = await import("@klay/core");
-    return this._callResult(app => executeListSources(app.sourceQueries));
+  async listSources(): Promise<ServiceResult<any>> {
+    try {
+      const app = await this._getApp();
+      const sources = await app.sourceIngestion.sourceQueries.listAll();
+      return { success: true, data: mapSourcesToDTO(sources) };
+    } catch (error: any) {
+      return { success: false, error: { message: error?.message ?? "Unknown error", code: "UNKNOWN" } };
+    }
   }
 
-  async getSource(input: Parameters<KnowledgeService["getSource"]>[0]) {
-    const { executeGetSource } = await import("@klay/core");
-    return this._callResult(app => executeGetSource(app.sourceQueries, input.sourceId));
+  async getSource(input: Parameters<KnowledgeService["getSource"]>[0]): Promise<ServiceResult<any>> {
+    try {
+      const app = await this._getApp();
+      const source = await app.sourceIngestion.sourceQueries.getById(input.sourceId);
+      if (!source) {
+        return { success: false, error: { message: `Source ${input.sourceId} not found`, code: "SOURCE_NOT_FOUND" } };
+      }
+      return { success: true, data: await mapSourceToDetailDTO(source, app.sourceIngestion.sourceQueries) };
+    } catch (error: any) {
+      return { success: false, error: { message: error?.message ?? "Unknown error", code: "UNKNOWN" } };
+    }
   }
 
   getSourceContexts(input: Parameters<KnowledgeService["getSourceContexts"]>[0]) {
-    return this._callResult(app => app.contextQueries.listBySource(input.sourceId));
+    return this._callResult(app => app.contextManagement.contextQueries.listBySource(input.sourceId));
   }
 
   processSourceAllProfiles(input: Parameters<KnowledgeService["processSourceAllProfiles"]>[0]) {
-    return this._callResult(app => app.processSourceAllProfiles.execute(input));
+    return this._callResult(app => app.semanticProcessing.processSourceAllProfiles.execute(input));
   }
 
   // ── Profiles ──────────────────────────────────────────────────────
 
   async createProfile(input: Parameters<KnowledgeService["createProfile"]>[0]) {
-    const { executeCreateProfile } = await import("@klay/core");
-    return this._callResult(app => executeCreateProfile(app.createProcessingProfile, input));
+    return this._callResult(app => app.semanticProcessing.createProcessingProfile.execute(input));
   }
 
-  async listProfiles() {
-    const { executeListProfiles } = await import("@klay/core");
-    return this._callResult(app => executeListProfiles(app.profileQueries));
+  async listProfiles(): Promise<ServiceResult<any>> {
+    try {
+      const app = await this._getApp();
+      const profiles = await app.semanticProcessing.profileQueries.listAll();
+      return { success: true, data: mapProfilesToDTO(profiles) };
+    } catch (error: any) {
+      return { success: false, error: { message: error?.message ?? "Unknown error", code: "UNKNOWN" } };
+    }
   }
 
   async updateProfile(input: Parameters<KnowledgeService["updateProfile"]>[0]) {
-    const { executeUpdateProfile } = await import("@klay/core");
-    return this._callResult(app => executeUpdateProfile(app.updateProcessingProfile, input));
+    return this._callResult(app => app.semanticProcessing.updateProcessingProfile.execute(input));
   }
 
   async deprecateProfile(input: Parameters<KnowledgeService["deprecateProfile"]>[0]) {
-    const { executeDeprecateProfile } = await import("@klay/core");
-    return this._callResult(app => executeDeprecateProfile(app.deprecateProcessingProfile, input));
+    return this._callResult(app => app.semanticProcessing.deprecateProcessingProfile.execute(input));
   }
 }

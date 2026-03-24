@@ -1,19 +1,15 @@
-import type { ProjectionQueries } from "../../../../semantic-processing/projection/application/use-cases/ProjectionQueries";
-import type { CleanupProjections } from "../../../../semantic-processing/projection/application/use-cases/CleanupProjections";
-import type { GenerateProjection } from "../../../../semantic-processing/projection/application/use-cases/GenerateProjection";
+import type { ProjectionQueries } from "../../contexts/semantic-processing/projection/application/use-cases/ProjectionQueries";
+import type { CleanupProjections } from "../../contexts/semantic-processing/projection/application/use-cases/CleanupProjections";
+import type { GenerateProjection } from "../../contexts/semantic-processing/projection/application/use-cases/GenerateProjection";
 import type {
   ProjectionOperationsPort,
   ExistingProjectionInfo,
   ProcessContentInput,
   ProcessContentSuccess,
-} from "../../application/ports/ProjectionOperationsPort";
-import { Result } from "../../../../../shared/domain/Result";
-import type { DomainError } from "../../../../../shared/domain/errors";
+} from "../ports/ProjectionOperationsPort";
+import { Result } from "../../shared/domain/Result";
+import type { DomainError } from "../../shared/domain/errors";
 
-/**
- * Implements ProjectionOperationsPort using consolidated semantic-processing query classes.
- * Updated to use ProjectionQueries, CleanupProjections, and GenerateProjection directly.
- */
 export class ProjectionOperationsAdapter implements ProjectionOperationsPort {
   constructor(
     private readonly _projectionQueries: ProjectionQueries,

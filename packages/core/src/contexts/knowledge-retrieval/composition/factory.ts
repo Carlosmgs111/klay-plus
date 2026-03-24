@@ -4,6 +4,7 @@ import type { ResolvedSemanticQueryInfra } from "../semantic-query/composition/f
 import type { SemanticQueryInfrastructurePolicy } from "../semantic-query/composition/factory";
 import type { ConfigStore } from "../../../config/ConfigStore";
 import type { RetrievalConfig } from "../../../config/InfrastructureProfile";
+import type { SearchKnowledge as SearchKnowledgeType } from "../semantic-query/application/use-cases/SearchKnowledge";
 
 interface SemanticQueryOverrides {
   provider?: string;
@@ -70,4 +71,50 @@ export async function resolveKnowledgeRetrievalModules(
     semanticQuery: semanticQueryResult.useCases,
     semanticQueryInfra: semanticQueryResult.infra,
   };
+}
+
+// ── Self-contained context factory ──────────────────────────────────
+
+export interface KnowledgeRetrievalCapabilities {
+  searchKnowledge: SearchKnowledgeType;
+}
+
+export async function createKnowledgeRetrieval(
+  config: KnowledgeRetrievalServicePolicy,
+): Promise<KnowledgeRetrievalCapabilities> {
+  const semanticQueryPolicy: SemanticQueryInfrastructurePolicy = {
+    provider: config.overrides?.semanticQuery?.provider ?? config.provider,
+    vectorStoreProvider: config.vectorStoreProvider,
+    vectorStoreConfig: config.vectorStoreConfig,
+    embeddingDimensions:
+      config.overrides?.semanticQuery?.embeddingDimensions ??
+      config.embeddingDimensions,
+    embeddingProvider:
+      config.overrides?.semanticQuery?.embeddingProvider ??
+      config.embeddingProvider,
+    embeddingModel:
+      config.overrides?.semanticQuery?.embeddingModel ??
+      config.embeddingModel,
+    webLLMModelId:
+      config.overrides?.semanticQuery?.webLLMModelId,
+    retrieval: config.retrieval,
+    configOverrides:
+      config.overrides?.semanticQuery?.configOverrides ??
+      config.configOverrides,
+    configStore:
+      config.overrides?.semanticQuery?.configStore ??
+      config.configStore,
+  };
+
+  const { semanticQueryFactory } = await import(
+    "../semantic-query/composition/factory"
+  );
+  const { infra: retrievalInfra } = await semanticQueryFactory(semanticQueryPolicy);
+
+  const { SearchKnowledge } = await import(
+    "../semantic-query/application/use-cases/SearchKnowledge"
+  );
+  const searchKnowledge = new SearchKnowledge(retrievalInfra);
+
+  return { searchKnowledge };
 }

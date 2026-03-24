@@ -5,6 +5,15 @@ import type { ProjectionInfrastructurePolicy, ResolvedProjectionInfra } from "..
 import type { ProcessingProfileInfrastructurePolicy } from "../processing-profile/composition/factory";
 import { resolveConfigProvider } from "../../../config/ConfigProvider";
 import type { ConfigStore } from "../../../config/ConfigStore";
+import type { SourceIngestionPort } from "../projection/application/ports/SourceIngestionPort";
+import type { CreateProcessingProfile as CreateProcessingProfileType } from "../processing-profile/application/use-cases/CreateProcessingProfile";
+import type { UpdateProcessingProfile as UpdateProcessingProfileType } from "../processing-profile/application/use-cases/UpdateProcessingProfile";
+import type { DeprecateProcessingProfile as DeprecateProcessingProfileType } from "../processing-profile/application/use-cases/DeprecateProcessingProfile";
+import type { ProfileQueries as ProfileQueriesType } from "../processing-profile/application/use-cases/ProfileQueries";
+import type { GenerateProjection as GenerateProjectionType } from "../projection/application/use-cases/GenerateProjection";
+import type { ProjectionQueries as ProjectionQueriesType } from "../projection/application/use-cases/ProjectionQueries";
+import type { CleanupProjections as CleanupProjectionsType } from "../projection/application/use-cases/CleanupProjections";
+import type { ProcessSourceAllProfiles as ProcessSourceAllProfilesType } from "../projection/application/use-cases/ProcessSourceAllProfiles";
 
 export interface VectorStoreConfig {
   dbPath?: string;
@@ -122,5 +131,83 @@ export async function resolveSemanticProcessingModules(
     profileRepository: processingProfileResult.repository,
     profileEventPublisher: processingProfileResult.eventPublisher,
     vectorStoreConfig,
+  };
+}
+
+// ── Self-contained context factory ──────────────────────────────────
+
+export interface SemanticProcessingCapabilities {
+  createProcessingProfile: CreateProcessingProfileType;
+  updateProcessingProfile: UpdateProcessingProfileType;
+  deprecateProcessingProfile: DeprecateProcessingProfileType;
+  profileQueries: ProfileQueriesType;
+  processSourceAllProfiles: ProcessSourceAllProfilesType;
+  projectionQueries: ProjectionQueriesType;
+  generateProjection: GenerateProjectionType;
+  cleanupProjections: CleanupProjectionsType;
+  vectorStoreConfig: VectorStoreConfig;
+}
+
+export async function createSemanticProcessing(
+  config: SemanticProcessingServicePolicy,
+  sourceIngestionPort: SourceIngestionPort,
+): Promise<SemanticProcessingCapabilities> {
+  const modules = await resolveSemanticProcessingModules(config);
+
+  const { repository: projectionRepository, materializer, vectorWriteStore, eventPublisher: projectionEventPublisher } =
+    modules.projectionInfra;
+
+  const [
+    { CreateProcessingProfile },
+    { UpdateProcessingProfile },
+    { DeprecateProcessingProfile },
+    { ProfileQueries },
+    { GenerateProjection },
+    { ProjectionQueries },
+    { CleanupProjections },
+    { ProcessSourceAllProfiles },
+  ] = await Promise.all([
+    import("../processing-profile/application/use-cases/CreateProcessingProfile"),
+    import("../processing-profile/application/use-cases/UpdateProcessingProfile"),
+    import("../processing-profile/application/use-cases/DeprecateProcessingProfile"),
+    import("../processing-profile/application/use-cases/ProfileQueries"),
+    import("../projection/application/use-cases/GenerateProjection"),
+    import("../projection/application/use-cases/ProjectionQueries"),
+    import("../projection/application/use-cases/CleanupProjections"),
+    import("../projection/application/use-cases/ProcessSourceAllProfiles"),
+  ]);
+
+  const createProcessingProfile = new CreateProcessingProfile(modules.profileRepository, modules.profileEventPublisher);
+  const updateProcessingProfile = new UpdateProcessingProfile(modules.profileRepository, modules.profileEventPublisher);
+  const deprecateProcessingProfile = new DeprecateProcessingProfile(modules.profileRepository, modules.profileEventPublisher);
+  const profileQueries = new ProfileQueries(modules.profileRepository);
+
+  const generateProjection = new GenerateProjection(
+    projectionRepository,
+    modules.profileRepository,
+    materializer,
+    vectorWriteStore,
+    projectionEventPublisher,
+  );
+  const projectionQueries = new ProjectionQueries(projectionRepository);
+  const cleanupProjections = new CleanupProjections(projectionRepository, vectorWriteStore);
+
+  const processSourceAllProfiles = new ProcessSourceAllProfiles(
+    profileQueries,
+    projectionQueries,
+    generateProjection,
+    sourceIngestionPort,
+  );
+
+  return {
+    createProcessingProfile,
+    updateProcessingProfile,
+    deprecateProcessingProfile,
+    profileQueries,
+    processSourceAllProfiles,
+    projectionQueries,
+    generateProjection,
+    cleanupProjections,
+    vectorStoreConfig: modules.vectorStoreConfig,
   };
 }
