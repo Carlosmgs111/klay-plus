@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
 import { getCoordinator } from "../../../server/knowledge-singleton";
-import { executeUnlinkContexts } from "@klay/core";
 import { toRESTResponse } from "@klay/core/result";
+import { mapResult, mapUnlinkResult, mapUnlinkInput } from "../../../services/knowledge-mappers";
 
 export const POST: APIRoute = async ({ request }) => {
   const app = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await executeUnlinkContexts(app.unlinkContexts, body));
+  const raw = await app.contextManagement.unlinkContexts.execute(mapUnlinkInput(body));
+  const result = toRESTResponse(mapResult(raw, mapUnlinkResult));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

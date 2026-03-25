@@ -53,7 +53,7 @@ async function _createCoordinator(): Promise<KnowledgeApplication> {
   });
 
   // Seed default processing profile (ignore result — may already exist)
-  await app.createProcessingProfile.execute({
+  await app.semanticProcessing.createProcessingProfile.execute({
     id: "default",
     name: "Default",
     preparation: { strategyId: "basic", config: {} },

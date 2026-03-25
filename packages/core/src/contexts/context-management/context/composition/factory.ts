@@ -13,10 +13,6 @@ export interface ResolvedContextInfra {
   eventPublisher: EventPublisher;
 }
 
-export interface ContextFactoryResult {
-  infra: ResolvedContextInfra;
-}
-
 async function resolveRepository(policy: ContextInfrastructurePolicy): Promise<ContextRepository> {
   switch (policy.provider) {
     case "browser": {
@@ -54,11 +50,11 @@ async function resolveEventPublisher(): Promise<EventPublisher> {
 
 export async function contextFactory(
   policy: ContextInfrastructurePolicy,
-): Promise<ContextFactoryResult> {
+): Promise<ResolvedContextInfra> {
   const [repository, eventPublisher] = await Promise.all([
     resolveRepository(policy),
     resolveEventPublisher(),
   ]);
 
-  return { infra: { repository, eventPublisher } };
+  return { repository, eventPublisher };
 }

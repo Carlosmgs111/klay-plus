@@ -2,10 +2,9 @@ import type { SourceIngestionPort } from "../ports/SourceIngestionPort";
 import type { ProfileQueries } from "../../../processing-profile/application/use-cases/ProfileQueries";
 import type { ProjectionQueries } from "./ProjectionQueries";
 import type { GenerateProjection } from "./GenerateProjection";
-import type { ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult } from "../../../../../application/knowledge/dtos";
+import type { ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult } from "../../../../../application/dtos";
 import { Result } from "../../../../../shared/domain/Result";
-import { KnowledgeError } from "../../../../../application/knowledge/domain/KnowledgeError";
-import { OperationStep } from "../../../../../application/knowledge/domain/OperationStep";
+import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 
 /**
  * ProcessSourceAllProfiles — Use case owned by semantic-processing bounded context.
@@ -25,15 +24,14 @@ export class ProcessSourceAllProfiles {
 
   async execute(
     input: ProcessSourceAllProfilesInput,
-  ): Promise<Result<KnowledgeError, ProcessSourceAllProfilesResult>> {
+  ): Promise<Result<StepError, ProcessSourceAllProfilesResult>> {
     try {
       const sourceExists = await this._sourceIngestion.sourceExists(input.sourceId);
       if (!sourceExists) {
         return Result.fail(
-          KnowledgeError.fromStep(
-            OperationStep.ProcessSourceAllProfiles,
+          stepError(
+            "process-source-all-profiles",
             { message: `Source ${input.sourceId} not found`, code: "SOURCE_NOT_FOUND" },
-            [],
           ),
         );
       }
@@ -41,10 +39,9 @@ export class ProcessSourceAllProfiles {
       const textResult = await this._sourceIngestion.getExtractedText(input.sourceId);
       if (textResult.isFail()) {
         return Result.fail(
-          KnowledgeError.fromStep(
-            OperationStep.ProcessSourceAllProfiles,
+          stepError(
+            "process-source-all-profiles",
             { message: `No extracted text for source ${input.sourceId}`, code: "TEXT_NOT_FOUND" },
-            [],
           ),
         );
       }
@@ -88,7 +85,7 @@ export class ProcessSourceAllProfiles {
         totalFailed: profileResults.reduce((s, r) => s + r.failedCount, 0),
       });
     } catch (error) {
-      return Result.fail(KnowledgeError.fromStep(OperationStep.ProcessSourceAllProfiles, error, []));
+      return Result.fail(stepError("process-source-all-profiles", error));
     }
   }
 }

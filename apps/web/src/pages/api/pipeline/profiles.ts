@@ -1,21 +1,28 @@
 import type { APIRoute } from "astro";
 import { getCoordinator } from "../../../server/knowledge-singleton";
-import { executeListProfiles, executeCreateProfile, executeUpdateProfile } from "@klay/core";
 import { toRESTResponse } from "@klay/core/result";
+import { mapProfilesToDTO } from "../../../services/knowledge-mappers";
 
 export const GET: APIRoute = async () => {
   const app = await getCoordinator();
-  const result = toRESTResponse(await executeListProfiles(app.profileQueries));
-  return new Response(JSON.stringify(result.body), {
-    status: result.status,
-    headers: { "Content-Type": "application/json" },
-  });
+  try {
+    const profiles = await app.semanticProcessing.profileQueries.listAll();
+    return new Response(JSON.stringify({ success: true, data: mapProfilesToDTO(profiles) }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ success: false, error: { message: error?.message ?? "Unknown error", code: "UNKNOWN" } }), {
+      status: 422,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
 export const POST: APIRoute = async ({ request }) => {
   const app = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await executeCreateProfile(app.createProcessingProfile, body));
+  const result = toRESTResponse(await app.semanticProcessing.createProcessingProfile.execute(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },
@@ -25,7 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
 export const PUT: APIRoute = async ({ request }) => {
   const app = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await executeUpdateProfile(app.updateProcessingProfile, body));
+  const result = toRESTResponse(await app.semanticProcessing.updateProcessingProfile.execute(body));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

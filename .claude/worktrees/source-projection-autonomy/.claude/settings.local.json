@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe:*)",
+      "Bash(cd \"D:\\\\Documentos\\\\Desktop\\\\klay+\" && npx --no vitest run packages/core/src/platform/config/__tests__/ConfigStore.test.ts 2>&1)",
+      "Bash(cd D:\\\\Documentos\\\\Desktop\\\\klay+:*)",
+      "Bash(cd:*)"
+    ]
+  }
+}

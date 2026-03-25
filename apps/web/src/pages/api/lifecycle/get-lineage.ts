@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
 import { getCoordinator } from "../../../server/knowledge-singleton";
-import { executeGetContextLineage } from "@klay/core";
 import { toRESTResponse } from "@klay/core/result";
+import { mapResult, mapLineageResult } from "../../../services/knowledge-mappers";
 
 export const POST: APIRoute = async ({ request }) => {
   const app = await getCoordinator();
   const body = await request.json();
-  const result = toRESTResponse(await executeGetContextLineage(app.lineageQueries, body.contextId));
+  const raw = await app.contextManagement.lineageQueries.getLineage(body.contextId);
+  const result = toRESTResponse(mapResult(raw, mapLineageResult));
   return new Response(JSON.stringify(result.body), {
     status: result.status,
     headers: { "Content-Type": "application/json" },

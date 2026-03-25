@@ -44,7 +44,9 @@ export async function resolveConfig(
     getEmbeddingModel,
   } = await import("../../config/profileResolution");
 
+  const { resolveConfigProvider } = await import("../../config/ConfigProvider");
   const profile = await resolveInfrastructureProfile(policy);
+  const configProvider = await resolveConfigProvider(policy);
 
   return {
     persistenceProvider: persistenceToProvider(profile.persistence),
@@ -53,8 +55,8 @@ export async function resolveConfig(
     documentStorageProvider: documentStorageToProvider(profile.documentStorage),
     embeddingDimensions: getEmbeddingDimensions(profile),
     embeddingModel: getEmbeddingModel(profile),
-    dbPath: policy.dbPath,
-    dbName: policy.dbName,
+    dbPath: policy.dbPath ?? configProvider.getOrDefault("KLAY_DB_PATH", "./data"),
+    dbName: policy.dbName ?? configProvider.getOrDefault("KLAY_DB_NAME", "knowledge-platform"),
     defaultChunkingStrategy: policy.defaultChunkingStrategy,
     configOverrides: policy.configOverrides,
     configStore: policy.configStore,

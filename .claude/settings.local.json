@@ -37,7 +37,11 @@
       "Bash(echo No version manager found:*)",
       "Bash(cd \"/d/Documentos/Desktop/klay+landing\" && npx create-astro@4.11.0 . --template minimal --no-install --no-git --typescript strict 2>&1)",
       "Bash(cd \"/d/Documentos/Desktop/klay+landing\" && npx astro build 2>&1)",
-      "Bash(cd D:\\\\Documentos\\\\Desktop\\\\klay+:*)"
+      "Bash(cd D:\\\\Documentos\\\\Desktop\\\\klay+:*)",
+      "Bash(del:*)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(rm:*)"
     ]
   },
   "mcpServers": {

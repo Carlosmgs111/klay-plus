@@ -11,43 +11,38 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolveSemanticProcessingModules } from "../composition/factory";
 import { ProjectionType } from "../projection/domain/ProjectionType";
-import { CreateProcessingProfile } from "../processing-profile/application/use-cases/CreateProcessingProfile";
-import { UpdateProcessingProfile } from "../processing-profile/application/use-cases/UpdateProcessingProfile";
-import { DeprecateProcessingProfile } from "../processing-profile/application/use-cases/DeprecateProcessingProfile";
-import { ProfileQueries } from "../processing-profile/application/use-cases/ProfileQueries";
-import { GenerateProjection } from "../projection/application/use-cases/GenerateProjection";
+import { processingProfileWiring } from "../processing-profile/composition/wiring";
+import { projectionWiring } from "../projection/composition/wiring";
 
 async function createUseCases(dims = 128) {
-  const modules = await resolveSemanticProcessingModules({
-    provider: "in-memory",
-    embeddingDimensions: dims,
-    defaultChunkingStrategy: "recursive",
-  });
+  const profile = await processingProfileWiring({ provider: "in-memory" });
 
-  const { projectionInfra, profileRepository, profileEventPublisher } = modules;
-  const { repository, materializer, vectorWriteStore, eventPublisher } = projectionInfra;
+  // Stub sourceIngestionPort — not needed for these tests
+  const stubSourceIngestionPort = {
+    sourceExists: async () => true,
+    getExtractedText: async () => ({ isOk: () => true, isFail: () => false, value: { text: "" } }) as any,
+  };
 
-  const createProcessingProfile = new CreateProcessingProfile(profileRepository, profileEventPublisher);
-  const updateProcessingProfile = new UpdateProcessingProfile(profileRepository, profileEventPublisher);
-  const deprecateProcessingProfile = new DeprecateProcessingProfile(profileRepository, profileEventPublisher);
-  const profileQueries = new ProfileQueries(profileRepository);
-  const generateProjection = new GenerateProjection(
-    repository,
-    profileRepository,
-    materializer,
-    vectorWriteStore,
-    eventPublisher,
+  const projection = await projectionWiring(
+    {
+      provider: "in-memory",
+      embeddingDimensions: dims,
+    },
+    {
+      profileRepository: profile.profileRepository,
+      profileQueries: profile.profileQueries,
+      sourceIngestionPort: stubSourceIngestionPort,
+    },
   );
 
   return {
-    createProcessingProfile,
-    updateProcessingProfile,
-    deprecateProcessingProfile,
-    profileQueries,
-    processContent: generateProjection,
-    vectorStoreConfig: modules.vectorStoreConfig,
+    createProcessingProfile: profile.createProcessingProfile,
+    updateProcessingProfile: profile.updateProcessingProfile,
+    deprecateProcessingProfile: profile.deprecateProcessingProfile,
+    profileQueries: profile.profileQueries,
+    processContent: projection.generateProjection,
+    vectorStoreConfig: projection.vectorStoreConfig,
   };
 }
 

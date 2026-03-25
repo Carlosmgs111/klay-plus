@@ -5,9 +5,9 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/application/knowledge/index.ts",
-      "import": "./src/application/knowledge/index.ts",
-      "default": "./src/application/knowledge/index.ts"
+      "types": "./src/application/index.ts",
+      "import": "./src/application/index.ts",
+      "default": "./src/application/index.ts"
     },
     "./result": {
       "types": "./src/shared/resultTransformers.ts",

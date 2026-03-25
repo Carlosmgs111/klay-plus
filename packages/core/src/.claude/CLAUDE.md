@@ -3,7 +3,7 @@
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test    # 336 tests (vitest)
+pnpm --filter @klay/core test    # 313 tests (vitest)
 ```
 
 ## Conventions
@@ -22,7 +22,7 @@ Plataforma de gestion de conocimiento semantico: transforma contenido (archivos,
 ## Architecture
 
 ```
-application/    KnowledgeCoordinator (class = contract, no separate Port/Adapter)
+application/    KnowledgeApplication (pure composition — 5 namespace properties, no facade)
 contexts/       4 Bounded Contexts (domain core)
 config/         Shared infra: ConfigProvider, ConfigStore, InfrastructureProfile, profileResolution, secrets/
 shared/         DDD building blocks (AggregateRoot, Result, ValueObject, resultTransformers)
@@ -43,26 +43,43 @@ Each context has its own `CLAUDE.md` with full entity/port/event specs.
 
 **Cross-context wiring**: Semantic Processing escribe al vector store; Knowledge Retrieval lee del mismo store. El wiring ocurre en el PipelineComposer. Ambos deben usar el mismo modelo de embeddings. `sourceKnowledgeId` is auto-derived as `sk-{sourceId}` when not provided.
 
-## Application Layer (`application/knowledge/`)
+## Application Layer (`application/`)
 
-`KnowledgeApplication` — exposes all use cases directly + 3 orchestrators. Consumers call `app.processKnowledge.execute(input)` directly. Three clear responsibility layers:
+Pure composition, no facade. `KnowledgeApplication` interface exposes raw use cases grouped by bounded context namespace. Factory wires dependencies and returns namespace object. No DTO mapping or error wrapping — consumers (web layer) own that responsibility.
 
 ```
-orchestrators/    Multi-step coordination (real application logic)
-  ProcessKnowledge.ts           — pipeline: Ingest → Process → Catalog
-  CreateContextAndActivate.ts   — create context + auto-activate (Draft→Active)
-  UpdateContextProfileAndReconcile.ts — update profile + auto-reconcile projections
-composition/      Dependency wiring
-  knowledge.factory.ts          — resolveDependencies() + createKnowledgeApplication()
-boundary/         DTO mapping + error wrapping (for web consumers)
-  mappers.ts                    — map* functions (domain→DTO)
-  executors.ts                  — execute* functions (use case call + error wrap + DTO map)
-domain/           Error types
-  KnowledgeError.ts             — error with step tracking
-  OperationStep.ts              — enum of all operation stages
-dtos.ts           Pure data contracts (input/output types)
-index.ts          Barrel exports
+process-knowledge/    Vertical slice: cross-context pipeline (spans 3 contexts)
+  ProcessKnowledge.ts           — Ingest → Process → Catalog
+  boundary.ts                   — PipelineError + pipelineError() helper
+  dtos.ts                       — ProcessKnowledgeInput/Success DTOs
+composition/          Pure dependency wiring
+  knowledge.factory.ts          — createKnowledgeApplication() wires all 4 contexts, returns namespaced use cases
+  OrchestratorPolicy.ts         — Policy type for factory configuration
+  resolvePlatformDependencies.ts — Platform-specific dependency resolution
+dtos.ts               Pure data contracts (non-ProcessKnowledge input/output types)
+index.ts              Barrel exports for @klay/core (types + factory)
 ```
+
+**KnowledgeApplication namespaces** (5 properties):
+- `processKnowledge` — cross-context pipeline (top-level)
+- `contextManagement` — createContextAndActivate, transitionContextState, removeSourceFromContext, updateContextProfileAndReconcile, contextQueries, reconcileProjections, linkContexts, unlinkContexts, lineageQueries
+- `sourceIngestion` — sourceQueries
+- `semanticProcessing` — createProcessingProfile, updateProcessingProfile, deprecateProcessingProfile, profileQueries, processSourceAllProfiles
+- `knowledgeRetrieval` — searchKnowledge
+
+**Error model** (no classes, plain objects):
+- `PipelineError` — `{ step, code, message, completedSteps }` (ProcessKnowledge pipeline)
+- `StepError` — `{ step, code, message }` (context-owned use cases, in `shared/domain/errors/`)
+- Domain errors from use cases pass through directly to consumers (no `BoundaryError` wrapping)
+
+Context-owned use cases (in `context-management/context/application/use-cases/`):
+- `CreateContextAndActivate` — create + auto-activate (Draft→Active), single save
+- `UpdateContextProfileAndReconcile` — update profile + auto-reconcile projections via ports
+- `ReconcileProjections` — ensure all sources have projections for a profile
+- `ContextQueries` — consolidated read-side queries (getRaw, listRefs, listBySource, getDetail, listSummary)
+
+Context-owned use cases (in `semantic-processing/projection/application/use-cases/`):
+- `ProcessSourceAllProfiles` — process a source against all active profiles
 
 **Result transformers** (`shared/resultTransformers.ts`, exported via `@klay/core/result`):
 - `toRESTResponse(result)` — converts Result to `{ status, body, headers }` for API routes

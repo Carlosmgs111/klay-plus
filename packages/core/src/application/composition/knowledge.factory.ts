@@ -22,24 +22,19 @@ import type { SearchKnowledge } from "../../contexts/knowledge-retrieval/semanti
  * KnowledgeApplication — pure composition, no facade.
  *
  * Exposes use cases grouped by bounded context namespace.
- * Some entries are domain use cases (from contexts), others are
+ * Some entries are domain use cases (from module wirings), others are
  * application-layer orchestrators (from application/).
  */
 export interface KnowledgeApplication {
-  /** Cross-context pipeline (vertical slice) */
   processKnowledge: ProcessKnowledge;
 
   contextManagement: {
     createContextAndActivate: CreateContextAndActivate;
-    /** Application-layer composite: UpdateContextProfile + best-effort reconcile */
     updateContextProfileAndReconcile: UpdateProfileAndReconcile;
     transitionContextState: TransitionContextState;
     removeSourceFromContext: RemoveSourceFromContext;
-    /** Pure domain queries (getRaw, listRefs, listBySource) */
     contextQueries: ContextQueries;
-    /** Application-layer orchestrator */
     reconcileProjections: ReconcileProjections;
-    /** Application-layer enriched read model (getDetail, listSummary) */
     contextReadModel: ContextReadModel;
     linkContexts: LinkContexts;
     unlinkContexts: UnlinkContexts;
@@ -79,10 +74,7 @@ function wrapSearchWithContextFilter(
         const sourceIds = await contextSource.getActiveSourceIds(contextId);
         if (sourceIds) {
           const { contextId: _, ...rest } = input.filters;
-          input = {
-            ...input,
-            filters: { ...rest, sourceIds: [...sourceIds] },
-          };
+          input = { ...input, filters: { ...rest, sourceIds: [...sourceIds] } };
         }
       }
       return searchKnowledge.execute(input);
@@ -98,60 +90,78 @@ async function resolveDependencies(
   const { resolveConfig } = await import("./resolvePlatformDependencies");
   const config = await resolveConfig(policy);
 
-  // ── 1. Source ingestion (no cross-context deps) ────────────────────
-  const { createSourceIngestion } = await import(
-    "../../contexts/source-ingestion/composition/factory"
-  );
-  const source = await createSourceIngestion({
-    provider: config.persistenceProvider,
-    dbPath: config.dbPath,
-    dbName: config.dbName,
-    documentStorageProvider: config.documentStorageProvider,
-    configOverrides: config.configOverrides,
-    configStore: config.configStore,
-  });
+  const persistenceConfig = { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName };
 
-  // ── 2. Semantic processing (depends on source via port) ────────────
+  // ── 1. Independent module wirings (parallel) ───────────────────────
   const [
-    { SourceIngestionAdapter },
-    { createSemanticProcessing },
+    { extractionWiring },
+    { resourceWiring },
+    { processingProfileWiring },
+    { contextWiring },
+    { lineageWiring },
   ] = await Promise.all([
-    import("../../contexts/semantic-processing/projection/infrastructure/adapters/SourceIngestionAdapter"),
-    import("../../contexts/semantic-processing/composition/factory"),
+    import("../../contexts/source-ingestion/extraction/composition/wiring"),
+    import("../../contexts/source-ingestion/resource/composition/wiring"),
+    import("../../contexts/semantic-processing/processing-profile/composition/wiring"),
+    import("../../contexts/context-management/context/composition/wiring"),
+    import("../../contexts/context-management/lineage/composition/wiring"),
   ]);
 
-  const sourceIngestionAdapter = new SourceIngestionAdapter(source.sourceQueries);
-  const semantic = await createSemanticProcessing({
-    provider: config.persistenceProvider,
-    dbPath: config.dbPath,
-    dbName: config.dbName,
-    embeddingDimensions: config.embeddingDimensions,
-    embeddingProvider: config.embeddingProvider,
-    embeddingModel: config.embeddingModel,
-    vectorStoreProvider: config.vectorStoreProvider,
-    defaultChunkingStrategy: config.defaultChunkingStrategy,
-    configOverrides: config.configOverrides,
-    configStore: config.configStore,
-  }, sourceIngestionAdapter);
+  const [extraction, resource, profile, context, lineage] = await Promise.all([
+    extractionWiring(persistenceConfig),
+    resourceWiring({
+      ...persistenceConfig,
+      provider: config.documentStorageProvider ?? config.persistenceProvider,
+    }),
+    processingProfileWiring(persistenceConfig),
+    contextWiring(persistenceConfig),
+    lineageWiring(persistenceConfig),
+  ]);
 
-  // ── 3. Context management (pure domain — NO ports) ─────────────────
-  const { createContextManagement } = await import(
-    "../../contexts/context-management/composition/factory"
+  // ── 2. Source wiring (depends on extraction + resource) ──────────────
+  const { sourceWiring } = await import(
+    "../../contexts/source-ingestion/source/composition/wiring"
   );
-  const context = await createContextManagement({
-    provider: config.persistenceProvider,
-    dbPath: config.dbPath,
-    dbName: config.dbName,
+  const source = await sourceWiring(persistenceConfig, {
+    executeExtraction: extraction.executeExtraction,
+    extractionJobRepository: extraction.extractionJobRepository,
+    storeResource: resource.storeResource,
+    registerExternalResource: resource.registerExternalResource,
   });
 
-  // ── 4. Knowledge retrieval (pure search — NO ports) ────────────────
-  const { createKnowledgeRetrieval } = await import(
-    "../../contexts/knowledge-retrieval/composition/factory"
+  // ── 3. Projection wiring (depends on profile + source via port) ────
+  const [
+    { projectionWiring },
+    { SourceIngestionAdapter },
+  ] = await Promise.all([
+    import("../../contexts/semantic-processing/projection/composition/wiring"),
+    import("../../contexts/semantic-processing/projection/infrastructure/adapters/SourceIngestionAdapter"),
+  ]);
+  const projection = await projectionWiring(
+    {
+      ...persistenceConfig,
+      embeddingDimensions: config.embeddingDimensions,
+      embeddingProvider: config.embeddingProvider,
+      embeddingModel: config.embeddingModel,
+      vectorStoreProvider: config.vectorStoreProvider,
+      configOverrides: config.configOverrides,
+      configStore: config.configStore,
+    },
+    {
+      profileRepository: profile.profileRepository,
+      profileQueries: profile.profileQueries,
+      sourceIngestionPort: new SourceIngestionAdapter(source.sourceQueries),
+    },
   );
-  const retrieval = await createKnowledgeRetrieval({
+
+  // ── 4. Knowledge retrieval ─────────────────────────────────────────
+  const { semanticQueryWiring } = await import(
+    "../../contexts/knowledge-retrieval/semantic-query/composition/wiring"
+  );
+  const retrieval = await semanticQueryWiring({
     provider: config.persistenceProvider,
     vectorStoreProvider: config.vectorStoreProvider,
-    vectorStoreConfig: semantic.vectorStoreConfig,
+    vectorStoreConfig: projection.vectorStoreConfig,
     embeddingDimensions: config.embeddingDimensions,
     embeddingProvider: config.embeddingProvider,
     embeddingModel: config.embeddingModel,
@@ -160,7 +170,7 @@ async function resolveDependencies(
     configStore: config.configStore,
   });
 
-  // ── 5. Application-layer adapters (cross-context bridges) ──────────
+  // ── 5. Application-layer adapters + orchestrators ──────────────────
   const [
     { ProjectionOperationsAdapter },
     { SourceTextAdapter },
@@ -168,6 +178,10 @@ async function resolveDependencies(
     { ProjectionStatsAdapter },
     { ActiveProfilesAdapter },
     { ContextSourceAdapter },
+    { ProcessKnowledge },
+    { ReconcileProjections },
+    { UpdateProfileAndReconcile },
+    { ContextReadModel },
   ] = await Promise.all([
     import("../adapters/ProjectionOperationsAdapter"),
     import("../adapters/SourceTextAdapter"),
@@ -175,28 +189,15 @@ async function resolveDependencies(
     import("../adapters/ProjectionStatsAdapter"),
     import("../adapters/ActiveProfilesAdapter"),
     import("../adapters/ContextSourceAdapter"),
-  ]);
-
-  const projectionOperationsAdapter = new ProjectionOperationsAdapter(
-    semantic.projectionQueries, semantic.cleanupProjections, semantic.generateProjection,
-  );
-  const sourceTextAdapter = new SourceTextAdapter(source.sourceQueries);
-  const sourceMetadataAdapter = new SourceMetadataAdapter(source.sourceQueries);
-  const projectionStatsAdapter = new ProjectionStatsAdapter(semantic.projectionQueries);
-  const activeProfilesAdapter = new ActiveProfilesAdapter(semantic.profileQueries);
-
-  // ── 6. Application-layer orchestrators ─────────────────────────────
-  const [
-    { ProcessKnowledge },
-    { ReconcileProjections },
-    { UpdateProfileAndReconcile },
-    { ContextReadModel },
-  ] = await Promise.all([
     import("../process-knowledge/ProcessKnowledge"),
     import("../reconcile-projections/ReconcileProjections"),
     import("../reconcile-projections/UpdateProfileAndReconcile"),
     import("../context-read-model/ContextReadModel"),
   ]);
+
+  const projectionOperationsAdapter = new ProjectionOperationsAdapter(
+    projection.projectionQueries, projection.cleanupProjections, projection.generateProjection,
+  );
 
   const processKnowledge = new ProcessKnowledge({
     ingestAndExtract: source.ingestAndExtract,
@@ -209,23 +210,23 @@ async function resolveDependencies(
   const reconcileProjections = new ReconcileProjections({
     contextQueries: context.contextQueries,
     projectionOperations: projectionOperationsAdapter,
-    sourceText: sourceTextAdapter,
-    activeProfiles: activeProfilesAdapter,
+    sourceText: new SourceTextAdapter(source.sourceQueries),
+    activeProfiles: new ActiveProfilesAdapter(profile.profileQueries),
   });
 
   const updateProfileAndReconcile = new UpdateProfileAndReconcile({
     updateContextProfile: context.updateContextProfile,
     projectionOperations: projectionOperationsAdapter,
-    sourceText: sourceTextAdapter,
+    sourceText: new SourceTextAdapter(source.sourceQueries),
   });
 
   const contextReadModel = new ContextReadModel({
     contextQueries: context.contextQueries,
-    sourceMetadata: sourceMetadataAdapter,
-    projectionStats: projectionStatsAdapter,
+    sourceMetadata: new SourceMetadataAdapter(source.sourceQueries),
+    projectionStats: new ProjectionStatsAdapter(projection.projectionQueries),
   });
 
-  // ── 7. Return namespaced application ───────────────────────────────
+  // ── 6. Return namespaced application ───────────────────────────────
   return {
     processKnowledge,
 
@@ -237,25 +238,22 @@ async function resolveDependencies(
       contextQueries: context.contextQueries,
       reconcileProjections,
       contextReadModel,
-      linkContexts: context.linkContexts,
-      unlinkContexts: context.unlinkContexts,
-      lineageQueries: context.lineageQueries,
+      linkContexts: lineage.linkContexts,
+      unlinkContexts: lineage.unlinkContexts,
+      lineageQueries: lineage.lineageQueries,
     },
 
-    sourceIngestion: {
-      sourceQueries: source.sourceQueries,
-    },
+    sourceIngestion: { sourceQueries: source.sourceQueries },
 
     semanticProcessing: {
-      createProcessingProfile: semantic.createProcessingProfile,
-      updateProcessingProfile: semantic.updateProcessingProfile,
-      deprecateProcessingProfile: semantic.deprecateProcessingProfile,
-      profileQueries: semantic.profileQueries,
-      processSourceAllProfiles: semantic.processSourceAllProfiles,
+      createProcessingProfile: profile.createProcessingProfile,
+      updateProcessingProfile: profile.updateProcessingProfile,
+      deprecateProcessingProfile: profile.deprecateProcessingProfile,
+      profileQueries: profile.profileQueries,
+      processSourceAllProfiles: projection.processSourceAllProfiles,
     },
 
     knowledgeRetrieval: {
-      // Wrap search with application-layer context resolution
       searchKnowledge: wrapSearchWithContextFilter(
         retrieval.searchKnowledge,
         new ContextSourceAdapter(context.contextRepository),

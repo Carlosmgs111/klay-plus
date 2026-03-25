@@ -1,13 +1,19 @@
 import type { APIRoute } from "astro";
 import { getCoordinator } from "../../../../server/knowledge-singleton";
-import { executeListSources } from "@klay/core";
-import { toRESTResponse } from "@klay/core/result";
+import { mapSourcesToDTO } from "../../../../services/knowledge-mappers";
 
 export const GET: APIRoute = async () => {
   const app = await getCoordinator();
-  const result = toRESTResponse(await executeListSources(app.sourceQueries));
-  return new Response(JSON.stringify(result.body), {
-    status: result.status,
-    headers: { "Content-Type": "application/json" },
-  });
+  try {
+    const sources = await app.sourceIngestion.sourceQueries.listAll();
+    return new Response(JSON.stringify({ success: true, data: mapSourcesToDTO(sources) }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ success: false, error: { message: error?.message ?? "Unknown error", code: "UNKNOWN" } }), {
+      status: 422,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
