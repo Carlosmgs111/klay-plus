@@ -14,10 +14,6 @@ export { LinkContexts } from "./application/use-cases/LinkContexts";
 export { UnlinkContexts } from "./application/use-cases/UnlinkContexts";
 export { LineageQueries } from "./application/use-cases/LineageQueries";
 
-// ── Infrastructure ───────────────────────────────────────────────────
-
-export { InMemoryKnowledgeLineageRepository } from "./infrastructure/persistence/InMemoryKnowledgeLineageRepository";
-
 // ── Composition ─────────────────────────────────────────────────────
 
 export { lineageFactory } from "./composition";

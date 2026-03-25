@@ -4,4 +4,3 @@ export type { QueryEmbedder } from "./QueryEmbedder";
 export type { SearchStrategy } from "./SearchStrategy";
 export type { SparseReadStore } from "./SparseReadStore";
 export type { QueryExpander } from "./QueryExpander";
-export type { ContextSourcePort } from "./ContextSourcePort";

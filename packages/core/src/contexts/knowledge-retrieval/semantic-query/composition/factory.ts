@@ -4,29 +4,21 @@ import type { RankingStrategy } from "../domain/ports/RankingStrategy";
 import type { SearchStrategy } from "../domain/ports/SearchStrategy";
 import type { SparseReadStore } from "../domain/ports/SparseReadStore";
 import type { QueryExpander } from "../domain/ports/QueryExpander";
-import type { VectorEntry } from "../../../../shared/vector/VectorEntry";
 import type { SemanticQueryUseCases } from "../application";
-import type { ConfigStore } from "../../../../config/ConfigStore";
-import type { RetrievalConfig } from "../../../../config/InfrastructureProfile";
 
-export interface VectorStoreConfig {
-  dbPath?: string;
-  dbName?: string;
-  sharedEntries?: Map<string, VectorEntry>;
-}
+export type {
+  VectorStoreConfig,
+  EmbeddingVectorPolicy,
+} from "../../../../shared/vector/VectorStoreConfig";
+import type {
+  VectorStoreConfig,
+  EmbeddingVectorPolicy,
+} from "../../../../shared/vector/VectorStoreConfig";
 
-export interface SemanticQueryInfrastructurePolicy {
-  provider: string;
+export interface SemanticQueryInfrastructurePolicy
+  extends EmbeddingVectorPolicy {
   vectorStoreConfig: VectorStoreConfig;
-  embeddingDimensions?: number;
-  embeddingProvider?: string;
-  embeddingModel?: string;
-  vectorStoreProvider?: string;
   webLLMModelId?: string;
-  retrieval?: RetrievalConfig;
-  configOverrides?: Record<string, string>;
-  configStore?: ConfigStore;
-  [key: string]: unknown;
 }
 
 export interface ResolvedSemanticQueryInfra {
@@ -43,7 +35,7 @@ export interface SemanticQueryFactoryResult {
 
 async function resolveVectorReadStore(
   provider: string,
-  policy: SemanticQueryInfrastructurePolicy,
+  policy: SemanticQueryInfrastructurePolicy
 ): Promise<VectorReadStore> {
   switch (provider) {
     case "browser": {
@@ -65,10 +57,12 @@ async function resolveVectorReadStore(
       );
       if (!policy.vectorStoreConfig?.sharedEntries) {
         throw new Error(
-          "InMemoryVectorReadStore requires vectorStoreConfig.sharedEntries",
+          "InMemoryVectorReadStore requires vectorStoreConfig.sharedEntries"
         );
       }
-      return new InMemoryVectorReadStore(policy.vectorStoreConfig.sharedEntries);
+      return new InMemoryVectorReadStore(
+        policy.vectorStoreConfig.sharedEntries
+      );
     }
   }
 }
@@ -76,7 +70,7 @@ async function resolveVectorReadStore(
 async function resolveQueryEmbedder(
   embedderProvider: string,
   policy: SemanticQueryInfrastructurePolicy,
-  config: import("../../../../config/ConfigProvider").ConfigProvider,
+  config: import("../../../../config/ConfigProvider").ConfigProvider
 ): Promise<QueryEmbedder> {
   switch (embedderProvider) {
     case "webllm": {
@@ -87,7 +81,8 @@ async function resolveQueryEmbedder(
     }
     case "openai": {
       const apiKey = config.require("OPENAI_API_KEY");
-      const modelId = (policy.embeddingModel as string) ?? "text-embedding-3-small";
+      const modelId =
+        (policy.embeddingModel as string) ?? "text-embedding-3-small";
       const { createOpenAI } = await import("@ai-sdk/openai");
       const { AISdkQueryEmbedder } = await import(
         "../infrastructure/embedders/AISdkQueryEmbedder"
@@ -97,8 +92,11 @@ async function resolveQueryEmbedder(
     }
     case "cohere": {
       const apiKey = config.require("COHERE_API_KEY");
-      const modelId = (policy.embeddingModel as string) ?? "embed-multilingual-v3.0";
-      const { createCohere } = await import(/* @vite-ignore */ "@ai-sdk/cohere");
+      const modelId =
+        (policy.embeddingModel as string) ?? "embed-multilingual-v3.0";
+      const { createCohere } = await import(
+        /* @vite-ignore */ "@ai-sdk/cohere"
+      );
       const { AISdkQueryEmbedder } = await import(
         "../infrastructure/embedders/AISdkQueryEmbedder"
       );
@@ -107,14 +105,17 @@ async function resolveQueryEmbedder(
     }
     case "hf-inference": {
       const apiKey = config.require("HUGGINGFACE_API_KEY");
-      const modelId = (policy.embeddingModel as string) ?? "sentence-transformers/all-MiniLM-L6-v2";
+      const modelId =
+        (policy.embeddingModel as string) ??
+        "sentence-transformers/all-MiniLM-L6-v2";
       const { HFInferenceQueryEmbedder } = await import(
         "../infrastructure/embedders/HFInferenceQueryEmbedder"
       );
       return new HFInferenceQueryEmbedder(apiKey, modelId);
     }
     case "huggingface": {
-      const modelId = (policy.embeddingModel as string) ?? "Xenova/all-MiniLM-L6-v2";
+      const modelId =
+        (policy.embeddingModel as string) ?? "Xenova/all-MiniLM-L6-v2";
       const { TransformersJSQueryEmbedder } = await import(
         "../infrastructure/embedders/TransformersJSQueryEmbedder"
       );
@@ -133,14 +134,16 @@ async function resolveQueryEmbedder(
 }
 
 export async function semanticQueryFactory(
-  policy: SemanticQueryInfrastructurePolicy,
+  policy: SemanticQueryInfrastructurePolicy
 ): Promise<SemanticQueryFactoryResult> {
   const embedderProvider =
     policy.embeddingProvider && policy.embeddingProvider !== "hash"
       ? policy.embeddingProvider
       : "hash";
 
-  const { resolveConfigProvider } = await import("../../../../config/ConfigProvider");
+  const { resolveConfigProvider } = await import(
+    "../../../../config/ConfigProvider"
+  );
   const config = await resolveConfigProvider(policy);
 
   const vectorProvider = policy.vectorStoreProvider ?? policy.provider;
@@ -180,7 +183,7 @@ export async function semanticQueryFactory(
       "../infrastructure/ranking/CrossEncoderRankingStrategy"
     );
     rankingStrategy = new CrossEncoderRankingStrategy(
-      retrieval.crossEncoderModel ?? "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      retrieval.crossEncoderModel ?? "cross-encoder/ms-marco-MiniLM-L-6-v2"
     );
   } else {
     const { PassthroughRankingStrategy } = await import(
@@ -208,7 +211,7 @@ export async function semanticQueryFactory(
     infra.queryEmbedder,
     infra.searchStrategy,
     infra.rankingStrategy,
-    expander,
+    expander
   );
 
   return { useCases, infra };
@@ -216,14 +219,17 @@ export async function semanticQueryFactory(
 
 async function buildSparseStore(
   provider: string,
-  policy: SemanticQueryInfrastructurePolicy,
+  policy: SemanticQueryInfrastructurePolicy
 ): Promise<SparseReadStore> {
   if (provider === "in-memory") {
     const { InMemorySparseReadStore } = await import(
       "../infrastructure/sparse/InMemorySparseReadStore"
     );
     const entries = policy.vectorStoreConfig?.sharedEntries;
-    if (!entries) throw new Error("InMemorySparseReadStore requires vectorStoreConfig.sharedEntries");
+    if (!entries)
+      throw new Error(
+        "InMemorySparseReadStore requires vectorStoreConfig.sharedEntries"
+      );
     return new InMemorySparseReadStore(entries);
   }
   if (provider === "browser") {

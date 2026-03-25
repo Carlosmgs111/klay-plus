@@ -18,13 +18,6 @@ import type { ProfileQueries } from "../../contexts/semantic-processing/processi
 import type { ProcessSourceAllProfiles } from "../../contexts/semantic-processing/projection/application/use-cases/ProcessSourceAllProfiles";
 import type { SearchKnowledge } from "../../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
 
-/**
- * KnowledgeApplication — pure composition, no facade.
- *
- * Exposes use cases grouped by bounded context namespace.
- * Some entries are domain use cases (from module wirings), others are
- * application-layer orchestrators (from application/).
- */
 export interface KnowledgeApplication {
   processKnowledge: ProcessKnowledge;
 
@@ -90,87 +83,57 @@ async function resolveDependencies(
   const { resolveConfig } = await import("./resolvePlatformDependencies");
   const config = await resolveConfig(policy);
 
-  const persistenceConfig = { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName };
-
-  // ── 1. Independent module wirings (parallel) ───────────────────────
-  const [
-    { extractionWiring },
-    { resourceWiring },
-    { processingProfileWiring },
-    { contextWiring },
-    { lineageWiring },
-  ] = await Promise.all([
-    import("../../contexts/source-ingestion/extraction/composition/wiring"),
-    import("../../contexts/source-ingestion/resource/composition/wiring"),
-    import("../../contexts/semantic-processing/processing-profile/composition/wiring"),
-    import("../../contexts/context-management/context/composition/wiring"),
-    import("../../contexts/context-management/lineage/composition/wiring"),
-  ]);
-
-  const [extraction, resource, profile, context, lineage] = await Promise.all([
-    extractionWiring(persistenceConfig),
-    resourceWiring({
-      ...persistenceConfig,
-      provider: config.documentStorageProvider ?? config.persistenceProvider,
-    }),
-    processingProfileWiring(persistenceConfig),
-    contextWiring(persistenceConfig),
-    lineageWiring(persistenceConfig),
-  ]);
-
-  // ── 2. Source wiring (depends on extraction + resource) ──────────────
-  const { sourceWiring } = await import(
-    "../../contexts/source-ingestion/source/composition/wiring"
-  );
-  const source = await sourceWiring(persistenceConfig, {
-    executeExtraction: extraction.executeExtraction,
-    extractionJobRepository: extraction.extractionJobRepository,
-    storeResource: resource.storeResource,
-    registerExternalResource: resource.registerExternalResource,
+  // ── 1. Core wiring — all contexts resolved ─────────────────────────
+  const { coreWiring } = await import("../../contexts");
+  const core = await coreWiring({
+    contextManagementInfrastructurePolicy: {
+      contextInfrastructurePolicy: { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName },
+      lineageInfrastructurePolicy: { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName },
+    },
+    sourceIngestionInfrastructurePolicy: {
+      sourceInfrastructurePolicy: { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName },
+      resourceInfrastructurePolicy: { provider: config.documentStorageProvider ?? config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName },
+      extractionInfrastructurePolicy: { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName },
+    },
+    semanticProcessingInfrastructurePolicy: {
+      projectionInfrastructurePolicy: {
+        provider: config.persistenceProvider,
+        dbPath: config.dbPath,
+        dbName: config.dbName,
+        embeddingDimensions: config.embeddingDimensions,
+        embeddingProvider: config.embeddingProvider,
+        embeddingModel: config.embeddingModel,
+        vectorStoreProvider: config.vectorStoreProvider,
+        configOverrides: config.configOverrides,
+        configStore: config.configStore,
+      },
+      processingProfileInfrastructurePolicy: { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName },
+    },
+    knowledgeRetrievalInfrastructurePolicy: {
+      semanticQueryInfrastructurePolicy: {
+        provider: config.persistenceProvider,
+        vectorStoreConfig: {}, // overridden by coreWiring from semantic-processing
+        embeddingDimensions: config.embeddingDimensions,
+        embeddingProvider: config.embeddingProvider,
+        embeddingModel: config.embeddingModel,
+        vectorStoreProvider: config.vectorStoreProvider,
+        retrieval: config.retrieval,
+        configOverrides: config.configOverrides,
+        configStore: config.configStore,
+      },
+    },
   });
 
-  // ── 3. Projection wiring (depends on profile + source via port) ────
-  const [
-    { projectionWiring },
-    { SourceIngestionAdapter },
-  ] = await Promise.all([
-    import("../../contexts/semantic-processing/projection/composition/wiring"),
-    import("../../contexts/semantic-processing/projection/infrastructure/adapters/SourceIngestionAdapter"),
-  ]);
-  const projection = await projectionWiring(
-    {
-      ...persistenceConfig,
-      embeddingDimensions: config.embeddingDimensions,
-      embeddingProvider: config.embeddingProvider,
-      embeddingModel: config.embeddingModel,
-      vectorStoreProvider: config.vectorStoreProvider,
-      configOverrides: config.configOverrides,
-      configStore: config.configStore,
-    },
-    {
-      profileRepository: profile.profileRepository,
-      profileQueries: profile.profileQueries,
-      sourceIngestionPort: new SourceIngestionAdapter(source.sourceQueries),
-    },
-  );
+  // ── 2. Unpack wiring results ───────────────────────────────────────
+  const { contextWiringResult: context, lineageWiringResult: lineage } =
+    core.contextManagementWiringResult;
+  const { sourceWiringResult: source } = core.sourceIngestionWiringResult;
+  const { projectionWiringResult: projection, processingProfileWiringResult: profile } =
+    core.semanticProcessingWiringResult;
+  const { semanticQueryWiringResult: retrieval } =
+    core.knowledgeRetrievalWiringResult;
 
-  // ── 4. Knowledge retrieval ─────────────────────────────────────────
-  const { semanticQueryWiring } = await import(
-    "../../contexts/knowledge-retrieval/semantic-query/composition/wiring"
-  );
-  const retrieval = await semanticQueryWiring({
-    provider: config.persistenceProvider,
-    vectorStoreProvider: config.vectorStoreProvider,
-    vectorStoreConfig: projection.vectorStoreConfig,
-    embeddingDimensions: config.embeddingDimensions,
-    embeddingProvider: config.embeddingProvider,
-    embeddingModel: config.embeddingModel,
-    retrieval: config.retrieval,
-    configOverrides: config.configOverrides,
-    configStore: config.configStore,
-  });
-
-  // ── 5. Application-layer adapters + orchestrators ──────────────────
+  // ── 3. Application-layer orchestrators ─────────────────────────────
   const [
     { ProjectionOperationsAdapter },
     { SourceTextAdapter },
@@ -226,7 +189,7 @@ async function resolveDependencies(
     projectionStats: new ProjectionStatsAdapter(projection.projectionQueries),
   });
 
-  // ── 6. Return namespaced application ───────────────────────────────
+  // ── 4. Return namespaced application ───────────────────────────────
   return {
     processKnowledge,
 

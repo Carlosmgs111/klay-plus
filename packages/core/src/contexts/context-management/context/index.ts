@@ -1,5 +1,3 @@
-export { contextWiring } from "./composition/wiring";
-
 // ── Domain ──────────────────────────────────────────────────────────
 
 export { Context } from "./domain/Context";

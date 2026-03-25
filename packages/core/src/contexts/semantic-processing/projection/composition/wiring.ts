@@ -6,7 +6,7 @@ import type { GenerateProjection as GenerateProjectionType } from "../applicatio
 import type { ProjectionQueries as ProjectionQueriesType } from "../application/use-cases/ProjectionQueries";
 import type { CleanupProjections as CleanupProjectionsType } from "../application/use-cases/CleanupProjections";
 import type { ProcessSourceAllProfiles as ProcessSourceAllProfilesType } from "../application/use-cases/ProcessSourceAllProfiles";
-import type { VectorStoreConfig } from "../../../knowledge-retrieval/semantic-query/composition/factory";
+import type { VectorStoreConfig } from "../../../../shared/vector/VectorStoreConfig";
 
 export interface ProjectionWiringDeps {
   profileRepository: ProcessingProfileRepository;
