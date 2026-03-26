@@ -1,12 +1,48 @@
 import type { ContextRepository } from "../../domain/ContextRepository";
 import type { SourceMetadataPort } from "../ports/SourceMetadataPort";
 import type { ProjectionStatsPort } from "../ports/ProjectionStatsPort";
-import type {
-  GetContextDetailsResult,
-  ContextSourceDetailDTO,
-  ProjectionSummaryDTO,
-} from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
+
+export interface GetContextDetailsInput {
+  contextId: string;
+}
+
+export interface ProjectionSummaryDTO {
+  projectionId: string;
+  processingProfileId: string;
+  chunksCount: number;
+  dimensions: number;
+  model: string;
+}
+
+export interface ContextSourceDetailDTO {
+  sourceId: string;
+  sourceName: string;
+  sourceType: string;
+  projections: ProjectionSummaryDTO[];
+  projectionId?: string;
+  chunksCount?: number;
+  dimensions?: number;
+  model?: string;
+  addedAt: string;
+}
+
+export interface ContextVersionDTO {
+  version: number;
+  sourceIds: string[];
+  reason: string;
+  createdAt: string;
+}
+
+export interface GetContextDetailsResult {
+  contextId: string;
+  name: string;
+  state: string;
+  requiredProfileId: string;
+  sources: ContextSourceDetailDTO[];
+  versions: ContextVersionDTO[];
+  status: "empty" | "partial" | "complete";
+}
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ContextId } from "../../domain/ContextId";
 

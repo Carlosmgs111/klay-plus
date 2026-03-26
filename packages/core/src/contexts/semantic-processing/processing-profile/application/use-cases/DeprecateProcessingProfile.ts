@@ -17,6 +17,11 @@ export interface DeprecateProcessingProfileSuccess {
   profileId: string;
 }
 
+/** Boundary alias for web consumers */
+export type DeprecateProfileInput = DeprecateProcessingProfileInput;
+/** Boundary alias for web consumers */
+export type DeprecateProfileResult = DeprecateProcessingProfileSuccess;
+
 export class DeprecateProcessingProfile {
   constructor(
     private readonly _repository: ProcessingProfileRepository,

@@ -1,5 +1,5 @@
 import type { OrchestratorPolicy } from "../config/OrchestratorPolicy";
-import type { SearchKnowledgeInput } from "../contexts/knowledge-retrieval/dtos";
+import type { SearchKnowledgeInput } from "../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
 import type { SearchKnowledge } from "../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
 
 // Inline import to avoid circular — KnowledgeApplication is defined in index.ts

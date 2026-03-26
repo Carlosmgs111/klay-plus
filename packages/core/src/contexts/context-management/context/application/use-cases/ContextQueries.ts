@@ -1,9 +1,22 @@
 import type { ContextRepository } from "../../domain/ContextRepository";
-import type {
-  ListContextsResult,
-  GetSourceContextsResult,
-} from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
+
+export interface ContextRefDTO {
+  id: string;
+  name: string;
+  state: string;
+  requiredProfileId: string;
+}
+
+export interface ListContextsResult {
+  contexts: ContextRefDTO[];
+  total: number;
+}
+
+export interface GetSourceContextsResult {
+  sourceId: string;
+  contexts: ContextRefDTO[];
+}
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ContextId } from "../../domain/ContextId";
 

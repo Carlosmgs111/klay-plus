@@ -1,6 +1,28 @@
 import type { ResolvedSemanticQueryInfra } from "../../composition/factory";
-import type { SearchKnowledgeInput, SearchKnowledgeSuccess } from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
+
+export interface SearchKnowledgeInput {
+  queryText: string;
+  topK?: number;
+  minScore?: number;
+  filters?: Record<string, unknown>;
+  retrievalOverride?: {
+    ranking?: "passthrough" | "mmr" | "cross-encoder";
+    mmrLambda?: number;
+    crossEncoderModel?: string;
+  };
+}
+
+export interface SearchKnowledgeSuccess {
+  queryText: string;
+  items: Array<{
+    sourceId: string;
+    content: string;
+    score: number;
+    metadata: Record<string, unknown>;
+  }>;
+  totalFound: number;
+}
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ExecuteSemanticQuery } from "./ExecuteSemanticQuery";
 

@@ -84,33 +84,80 @@ export type { SearchKnowledge };
 
 export type {
   SearchKnowledgeInput, SearchKnowledgeSuccess,
-} from "./contexts/knowledge-retrieval/dtos";
+} from "./contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
 
+// Semantic-processing DTOs (inlined into use cases)
 export type {
   CreateProcessingProfileInput, CreateProcessingProfileSuccess,
-  ListProfilesResult, UpdateProfileInput, UpdateProfileResult,
-  DeprecateProfileInput, DeprecateProfileResult,
-  ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult,
-} from "./contexts/semantic-processing/dtos";
+} from "./contexts/semantic-processing/processing-profile/application/use-cases/CreateProcessingProfile";
 
+export type {
+  ListProfilesResult,
+} from "./contexts/semantic-processing/processing-profile/application/use-cases/ProfileQueries";
+
+export type {
+  UpdateProcessingProfileInput, UpdateProcessingProfileSuccess,
+  UpdateProfileInput, UpdateProfileResult,
+} from "./contexts/semantic-processing/processing-profile/application/use-cases/UpdateProcessingProfile";
+
+export type {
+  DeprecateProcessingProfileInput, DeprecateProcessingProfileSuccess,
+  DeprecateProfileInput, DeprecateProfileResult,
+} from "./contexts/semantic-processing/processing-profile/application/use-cases/DeprecateProcessingProfile";
+
+export type {
+  ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult,
+} from "./contexts/semantic-processing/projection/application/use-cases/ProcessSourceAllProfiles";
+
+// Source-ingestion DTOs (inlined into use cases)
 export type {
   SourceSummaryDTO, ListSourcesResult, GetSourceInput,
   SourceDetailDTO, GetSourceResult,
-} from "./contexts/source-ingestion/dtos";
+} from "./contexts/source-ingestion/source/application/use-cases/SourceQueries";
+
+// Context-management DTOs (inlined into use cases)
+export type {
+  CreateContextInput, CreateContextResult,
+} from "./contexts/context-management/context/application/use-cases/CreateContextAndActivate";
 
 export type {
-  GetContextDetailsInput, GetContextDetailsResult,
-  ContextSourceDetailDTO, ProjectionSummaryDTO, ContextVersionDTO,
-  EnrichedContextSummaryDTO, ListContextsSummaryResult,
-  ContextRefDTO, GetSourceContextsResult, ListContextsResult,
+  TransitionContextStateInput, TransitionContextStateResult,
+} from "./contexts/context-management/context/application/use-cases/TransitionContextState";
+
+export type {
+  UpdateContextProfileInput, UpdateContextProfileResult,
+} from "./contexts/context-management/context/application/use-cases/UpdateProfileAndReconcile";
+
+export type {
   RemoveSourceInput, RemoveSourceResult,
+} from "./contexts/context-management/context/application/use-cases/RemoveSourceFromContext";
+
+export type {
+  GetContextDetailsInput, ProjectionSummaryDTO, ContextSourceDetailDTO, ContextVersionDTO,
+  GetContextDetailsResult,
+} from "./contexts/context-management/context/application/use-cases/GetContextDetail";
+
+export type {
+  ContextRefDTO, ListContextsResult, GetSourceContextsResult,
+} from "./contexts/context-management/context/application/use-cases/ContextQueries";
+
+export type {
+  EnrichedContextSummaryDTO, ListContextsSummaryResult,
+} from "./contexts/context-management/context/application/use-cases/ListContextSummary";
+
+export type {
   ReconcileProjectionsInput, ReconcileProjectionsResult,
   ReconcileAllProfilesInput, ReconcileAllProfilesResult,
+} from "./contexts/context-management/context/application/use-cases/ReconcileProjections";
+
+export type {
   LinkContextsInput, LinkContextsResult,
+} from "./contexts/context-management/lineage/application/use-cases/LinkContexts";
+
+export type {
   UnlinkContextsInput, UnlinkContextsResult,
-  CreateContextInput, CreateContextResult,
+} from "./contexts/context-management/lineage/application/use-cases/UnlinkContexts";
+
+export type {
   GetContextLineageInput, GetContextLineageResult,
-  UpdateContextProfileInput, UpdateContextProfileResult,
-  TransitionContextStateInput, TransitionContextStateResult,
-  GetSourceContextsInput,
-} from "./contexts/context-management/dtos";
+} from "./contexts/context-management/lineage/application/use-cases/LineageQueries";

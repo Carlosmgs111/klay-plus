@@ -8,6 +8,40 @@ import { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
 import type { Source } from "../../domain/Source";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface SourceSummaryDTO {
+  id: string;
+  name: string;
+  type: string;
+  uri: string;
+  hasBeenExtracted: boolean;
+  currentVersion: number | null;
+  registeredAt: string;
+}
+
+export interface ListSourcesResult {
+  sources: SourceSummaryDTO[];
+  total: number;
+}
+
+export interface GetSourceInput {
+  sourceId: string;
+}
+
+export interface SourceDetailDTO extends SourceSummaryDTO {
+  versions: Array<{
+    version: number;
+    contentHash: string;
+    extractedAt: string;
+  }>;
+  extractedTextPreview: string | null;
+}
+
+export interface GetSourceResult {
+  source: SourceDetailDTO;
+}
+
 /**
  * SourceQueries — Consolidated read-side use cases for source-ingestion.
  *

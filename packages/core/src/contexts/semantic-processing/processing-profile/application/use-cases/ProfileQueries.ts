@@ -3,6 +3,21 @@ import { ProcessingProfileId } from "../../domain/ProcessingProfileId";
 import { ProfileStatus } from "../../domain/ProfileStatus";
 import type { ProcessingProfile } from "../../domain/ProcessingProfile";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface ListProfilesResult {
+  profiles: Array<{
+    id: string;
+    name: string;
+    version: number;
+    preparation: { strategyId: string; config: Record<string, unknown> };
+    fragmentation: { strategyId: string; config: Record<string, unknown> };
+    projection: { strategyId: string; config: Record<string, unknown> };
+    status: string;
+    createdAt: string;
+  }>;
+}
+
 /**
  * ProfileQueries — Consolidated read-side use cases for semantic-processing profiles.
  *

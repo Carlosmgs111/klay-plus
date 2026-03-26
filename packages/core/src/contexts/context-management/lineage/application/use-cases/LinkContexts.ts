@@ -6,6 +6,19 @@ import { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
 import { OperationError } from "../../../../../shared/domain/errors";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface LinkContextsInput {
+  sourceContextId: string;
+  targetContextId: string;
+  relationshipType: string;
+}
+
+export interface LinkContextsResult {
+  sourceContextId: string;
+  targetContextId: string;
+}
+
 export class LineageOperationError extends OperationError {
   constructor(operation: string, reason: string) {
     super(operation, reason);

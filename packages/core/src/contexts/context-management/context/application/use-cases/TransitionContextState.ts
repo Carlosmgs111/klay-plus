@@ -6,6 +6,19 @@ import type { DomainError } from "../../../../../shared/domain/errors";
 import type { Context } from "../../domain/Context";
 import { NotFoundError } from "../../../../../shared/domain/errors";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface TransitionContextStateInput {
+  contextId: string;
+  targetState: "ACTIVE" | "DEPRECATED" | "ARCHIVED";
+  reason?: string;
+}
+
+export interface TransitionContextStateResult {
+  contextId: string;
+  state: string;
+}
+
 export class ContextNotFoundError extends NotFoundError {
   constructor(contextId: string) {
     super("Context", contextId);

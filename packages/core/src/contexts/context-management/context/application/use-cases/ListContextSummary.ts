@@ -1,7 +1,20 @@
 import type { ContextRepository } from "../../domain/ContextRepository";
 import type { ProjectionStatsPort } from "../ports/ProjectionStatsPort";
-import type { ListContextsSummaryResult } from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
+
+export interface EnrichedContextSummaryDTO {
+  id: string;
+  name: string;
+  state: string;
+  sourceCount: number;
+  projectionCount: number;
+  requiredProfileId: string;
+  status: "empty" | "partial" | "complete";
+}
+
+export interface ListContextsSummaryResult {
+  contexts: EnrichedContextSummaryDTO[];
+}
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 
 /**

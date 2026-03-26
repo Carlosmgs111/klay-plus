@@ -2,13 +2,34 @@ import type { ContextRepository } from "../../domain/ContextRepository";
 import type { ProjectionOperationsPort } from "../../../../semantic-processing/projection/application/ports/ProjectionOperationsPort";
 import type { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
-import type {
-  ReconcileProjectionsInput,
-  ReconcileProjectionsResult,
-  ReconcileAllProfilesInput,
-  ReconcileAllProfilesResult,
-} from "../../../dtos";
 import { Result as R } from "../../../../../shared/domain/Result";
+
+export interface ReconcileProjectionsInput {
+  contextId: string;
+  profileId: string;
+}
+
+export interface ReconcileProjectionsResult {
+  contextId: string;
+  version: number;
+  processedCount: number;
+  failedCount: number;
+}
+
+export interface ReconcileAllProfilesInput {
+  contextId: string;
+}
+
+export interface ReconcileAllProfilesResult {
+  contextId: string;
+  profileResults: Array<{
+    profileId: string;
+    processedCount: number;
+    failedCount: number;
+  }>;
+  totalProcessed: number;
+  totalFailed: number;
+}
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ContextId } from "../../domain/ContextId";
 

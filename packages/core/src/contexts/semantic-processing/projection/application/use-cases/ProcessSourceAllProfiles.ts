@@ -2,8 +2,22 @@ import type { SourceIngestionPort } from "../ports/SourceIngestionPort";
 import type { ProfileQueries } from "../../../processing-profile/application/use-cases/ProfileQueries";
 import type { ProjectionQueries } from "./ProjectionQueries";
 import type { GenerateProjection } from "./GenerateProjection";
-import type { ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult } from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
+
+export interface ProcessSourceAllProfilesInput {
+  sourceId: string;
+}
+
+export interface ProcessSourceAllProfilesResult {
+  sourceId: string;
+  profileResults: Array<{
+    profileId: string;
+    processedCount: number;
+    failedCount: number;
+  }>;
+  totalProcessed: number;
+  totalFailed: number;
+}
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 
 /**

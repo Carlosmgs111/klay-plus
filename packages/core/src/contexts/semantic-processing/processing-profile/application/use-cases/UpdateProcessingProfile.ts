@@ -22,6 +22,11 @@ export interface UpdateProcessingProfileSuccess {
   version: number;
 }
 
+/** Boundary alias for web consumers */
+export type UpdateProfileInput = UpdateProcessingProfileInput;
+/** Boundary alias for web consumers */
+export type UpdateProfileResult = UpdateProcessingProfileSuccess;
+
 export class UpdateProcessingProfile {
   constructor(
     private readonly _repository: ProcessingProfileRepository,

@@ -6,6 +6,24 @@ import { ContextMetadata } from "../../domain/ContextMetadata";
 import { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface CreateContextInput {
+  id: string;
+  name: string;
+  description: string;
+  language: string;
+  requiredProfileId: string;
+  createdBy: string;
+  tags?: string[];
+  attributes?: Record<string, string>;
+}
+
+export interface CreateContextResult {
+  contextId: string;
+  state: string;
+}
+
 /**
  * CreateContextAndActivate — creates a context in Draft state, then auto-activates it.
  *

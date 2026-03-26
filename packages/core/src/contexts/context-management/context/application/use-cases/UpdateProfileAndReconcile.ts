@@ -8,6 +8,19 @@ import { Result as R } from "../../../../../shared/domain/Result";
 import { ContextId } from "../../domain/ContextId";
 import { NotFoundError } from "../../../../../shared/domain/errors";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface UpdateContextProfileInput {
+  contextId: string;
+  profileId: string;
+}
+
+export interface UpdateContextProfileResult {
+  contextId: string;
+  profileId: string;
+  reconciled?: { processedCount: number; failedCount: number };
+}
+
 export interface UpdateAndReconcileResult {
   context: Context;
   reconciled?: { processedCount: number; failedCount: number };

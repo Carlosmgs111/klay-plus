@@ -2,6 +2,22 @@ import type { KnowledgeLineageRepository } from "../../domain/KnowledgeLineageRe
 import { Result } from "../../../../../shared/domain/Result";
 import type { DomainError } from "../../../../../shared/domain/errors";
 
+// ── Boundary DTOs ────────────────────────────────────────────────────
+
+export interface GetContextLineageInput {
+  contextId: string;
+}
+
+export interface GetContextLineageResult {
+  contextId: string;
+  traces: Array<{
+    fromContextId: string;
+    toContextId: string;
+    relationship: string;
+    createdAt: string;
+  }>;
+}
+
 /**
  * LineageQueries — Consolidated read-side use cases for context-management lineage.
  *
