@@ -338,7 +338,7 @@ describe("Knowledge Application — E2E", () => {
 
   describe("Context Details", () => {
     it("should get details for a context with sources and projections", async () => {
-      const result = await app.contextManagement.contextReadModel.getDetail("ctx-test-001");
+      const result = await app.contextManagement.getContextDetail.execute("ctx-test-001");
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -367,7 +367,7 @@ describe("Knowledge Application — E2E", () => {
       });
       expect(ctxResult.isOk()).toBe(true);
 
-      const result = await app.contextManagement.contextReadModel.getDetail("ctx-empty-details-001");
+      const result = await app.contextManagement.getContextDetail.execute("ctx-empty-details-001");
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.sources).toEqual([]);
@@ -376,12 +376,12 @@ describe("Knowledge Application — E2E", () => {
     });
 
     it("should fail for non-existent context", async () => {
-      const result = await app.contextManagement.contextReadModel.getDetail("non-existent");
+      const result = await app.contextManagement.getContextDetail.execute("non-existent");
       expect(result.isFail()).toBe(true);
     });
 
     it("should list contexts summary with enriched data", async () => {
-      const result = await app.contextManagement.contextReadModel.listSummary();
+      const result = await app.contextManagement.listContextSummary.execute();
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.contexts.length).toBeGreaterThan(0);
@@ -1122,7 +1122,7 @@ describe("Knowledge Application — E2E", () => {
       });
       expect(proc2.isOk()).toBe(true);
 
-      const detailResult = await app.contextManagement.contextReadModel.getDetail("ctx-multi-proj-001");
+      const detailResult = await app.contextManagement.getContextDetail.execute("ctx-multi-proj-001");
       expect(detailResult.isOk()).toBe(true);
       if (detailResult.isOk()) {
         const source = detailResult.value.sources[0];
@@ -1174,7 +1174,7 @@ describe("Knowledge Application — E2E", () => {
     });
 
     it("should reflect total projection count in list summary", async () => {
-      const listResult = await app.contextManagement.contextReadModel.listSummary();
+      const listResult = await app.contextManagement.listContextSummary.execute();
       expect(listResult.isOk()).toBe(true);
       if (listResult.isOk()) {
         const ctx = listResult.value.contexts.find((c) => c.id === "ctx-multi-proj-001");

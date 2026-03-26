@@ -1,7 +1,6 @@
 /**
- * Cross-context port for reading projection statistics per source.
- * Consumed by application-layer ContextReadModel.
- * Implemented by ProjectionStatsAdapter (wraps semantic-processing ProjectionQueries).
+ * Port for reading projection statistics per source.
+ * Consumed by GetContextDetail, ListContextSummary use cases.
  */
 export interface ProjectionSummary {
   projectionId: string;

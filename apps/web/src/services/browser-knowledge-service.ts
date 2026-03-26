@@ -95,11 +95,11 @@ export class BrowserKnowledgeService implements KnowledgeService {
   }
 
   getContext(input: Parameters<KnowledgeService["getContext"]>[0]) {
-    return this._callResult(app => app.contextManagement.contextReadModel.getDetail(input.contextId));
+    return this._callResult(app => app.contextManagement.getContextDetail.execute(input.contextId));
   }
 
   listContexts() {
-    return this._callResult(app => app.contextManagement.contextReadModel.listSummary());
+    return this._callResult(app => app.contextManagement.listContextSummary.execute());
   }
 
   listContextRefs() {

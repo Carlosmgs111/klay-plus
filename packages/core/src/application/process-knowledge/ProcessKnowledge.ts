@@ -1,7 +1,7 @@
 import type { IngestAndExtract } from "../../contexts/source-ingestion/source/application/use-cases/IngestAndExtract";
 import type { SourceQueries } from "../../contexts/source-ingestion/source/application/use-cases/SourceQueries";
 import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
-import type { ProjectionOperationsPort } from "../ports/ProjectionOperationsPort";
+import type { ProjectionOperationsPort } from "../../contexts/semantic-processing/projection/application/ports/ProjectionOperationsPort";
 import type { AddSourceToContext } from "../../contexts/context-management/context/application/use-cases/AddSourceToContext";
 import type { ProcessKnowledgeInput, ProcessKnowledgeSuccess } from "./dtos";
 import type { SourceType } from "../../contexts/source-ingestion/source/domain/SourceType";

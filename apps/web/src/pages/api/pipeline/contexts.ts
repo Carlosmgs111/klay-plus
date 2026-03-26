@@ -10,10 +10,10 @@ export const GET: APIRoute = async ({ url }) => {
   let result;
   if (id) {
     // GET /api/pipeline/contexts?id=xxx → getContextDetails
-    result = toRESTResponse(await app.contextManagement.contextReadModel.getDetail(id));
+    result = toRESTResponse(await app.contextManagement.getContextDetail.execute(id));
   } else if (summary === "true") {
     // GET /api/pipeline/contexts?summary=true → listContextsSummary
-    result = toRESTResponse(await app.contextManagement.contextReadModel.listSummary());
+    result = toRESTResponse(await app.contextManagement.listContextSummary.execute());
   } else {
     // GET /api/pipeline/contexts → listContexts (simple list)
     result = toRESTResponse(await app.contextManagement.contextQueries.listRefs());

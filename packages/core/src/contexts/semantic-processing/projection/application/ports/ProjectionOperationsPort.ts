@@ -1,6 +1,6 @@
-import type { Result } from "../../shared/domain/Result";
-import type { DomainError } from "../../shared/domain/errors";
-import type { ProjectionType } from "../../contexts/semantic-processing/projection/domain/ProjectionType";
+import type { Result } from "../../../../../shared/domain/Result";
+import type { DomainError } from "../../../../../shared/domain/errors";
+import type { ProjectionType } from "../../domain/ProjectionType";
 
 export interface ExistingProjectionInfo {
   projectionId: string;
@@ -27,9 +27,10 @@ export interface ProcessContentSuccess {
 }
 
 /**
- * Cross-context port for projection operations.
- * Consumed by application-layer orchestrators (ReconcileProjections, ProcessKnowledge).
- * Implemented by ProjectionOperationsAdapter (wraps semantic-processing UCs).
+ * Projection operations — semantic-processing capability.
+ *
+ * Facade over find, cleanup, and generate projection use cases.
+ * Consumed by application-layer orchestrators (ProcessKnowledge, ReconcileProjections).
  */
 export interface ProjectionOperationsPort {
   findExistingProjection(sourceId: string, profileId: string): Promise<ExistingProjectionInfo | null>;

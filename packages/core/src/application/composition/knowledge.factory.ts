@@ -2,8 +2,9 @@ import type { OrchestratorPolicy } from "./OrchestratorPolicy";
 import type { ProcessKnowledge } from "../process-knowledge/ProcessKnowledge";
 import type { ReconcileProjections } from "../reconcile-projections/ReconcileProjections";
 import type { UpdateProfileAndReconcile } from "../reconcile-projections/UpdateProfileAndReconcile";
-import type { ContextReadModel } from "../context-read-model/ContextReadModel";
 import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
+import type { GetContextDetail } from "../../contexts/context-management/context/application/use-cases/GetContextDetail";
+import type { ListContextSummary } from "../../contexts/context-management/context/application/use-cases/ListContextSummary";
 import type { CreateContextAndActivate } from "../../contexts/context-management/context/application/use-cases/CreateContextAndActivate";
 import type { TransitionContextState } from "../../contexts/context-management/context/application/use-cases/TransitionContextState";
 import type { RemoveSourceFromContext } from "../../contexts/context-management/context/application/use-cases/RemoveSourceFromContext";
@@ -17,6 +18,7 @@ import type { DeprecateProcessingProfile } from "../../contexts/semantic-process
 import type { ProfileQueries } from "../../contexts/semantic-processing/processing-profile/application/use-cases/ProfileQueries";
 import type { ProcessSourceAllProfiles } from "../../contexts/semantic-processing/projection/application/use-cases/ProcessSourceAllProfiles";
 import type { SearchKnowledge } from "../../contexts/knowledge-retrieval/semantic-query/application/use-cases/SearchKnowledge";
+import type { SearchKnowledgeInput } from "../dtos";
 
 export interface KnowledgeApplication {
   processKnowledge: ProcessKnowledge;
@@ -28,7 +30,8 @@ export interface KnowledgeApplication {
     removeSourceFromContext: RemoveSourceFromContext;
     contextQueries: ContextQueries;
     reconcileProjections: ReconcileProjections;
-    contextReadModel: ContextReadModel;
+    getContextDetail: GetContextDetail;
+    listContextSummary: ListContextSummary;
     linkContexts: LinkContexts;
     unlinkContexts: UnlinkContexts;
     lineageQueries: LineageQueries;
@@ -49,30 +52,6 @@ export interface KnowledgeApplication {
   knowledgeRetrieval: {
     searchKnowledge: SearchKnowledge;
   };
-}
-
-// ── Search context resolution (application-layer concern) ────────────
-
-import type { ContextSourcePort } from "../ports/ContextSourcePort";
-import type { SearchKnowledgeInput } from "../dtos";
-
-function wrapSearchWithContextFilter(
-  searchKnowledge: SearchKnowledge,
-  contextSource: ContextSourcePort,
-): SearchKnowledge {
-  return {
-    async execute(input: SearchKnowledgeInput) {
-      if (input.filters?.contextId) {
-        const contextId = input.filters.contextId as string;
-        const sourceIds = await contextSource.getActiveSourceIds(contextId);
-        if (sourceIds) {
-          const { contextId: _, ...rest } = input.filters;
-          input = { ...input, filters: { ...rest, sourceIds: [...sourceIds] } };
-        }
-      }
-      return searchKnowledge.execute(input);
-    },
-  } as SearchKnowledge;
 }
 
 // ── Dependency resolver ──────────────────────────────────────────────
@@ -135,61 +114,56 @@ async function resolveDependencies(
 
   // ── 3. Application-layer orchestrators ─────────────────────────────
   const [
-    { ProjectionOperationsAdapter },
-    { SourceTextAdapter },
-    { SourceMetadataAdapter },
-    { ProjectionStatsAdapter },
-    { ActiveProfilesAdapter },
-    { ContextSourceAdapter },
     { ProcessKnowledge },
     { ReconcileProjections },
     { UpdateProfileAndReconcile },
-    { ContextReadModel },
   ] = await Promise.all([
-    import("../adapters/ProjectionOperationsAdapter"),
-    import("../adapters/SourceTextAdapter"),
-    import("../adapters/SourceMetadataAdapter"),
-    import("../adapters/ProjectionStatsAdapter"),
-    import("../adapters/ActiveProfilesAdapter"),
-    import("../adapters/ContextSourceAdapter"),
     import("../process-knowledge/ProcessKnowledge"),
     import("../reconcile-projections/ReconcileProjections"),
     import("../reconcile-projections/UpdateProfileAndReconcile"),
-    import("../context-read-model/ContextReadModel"),
   ]);
-
-  const projectionOperationsAdapter = new ProjectionOperationsAdapter(
-    projection.projectionQueries, projection.cleanupProjections, projection.generateProjection,
-  );
 
   const processKnowledge = new ProcessKnowledge({
     ingestAndExtract: source.ingestAndExtract,
     sourceQueries: source.sourceQueries,
-    projectionOperations: projectionOperationsAdapter,
+    projectionOperations: projection.projectionOperations,
     contextQueries: context.contextQueries,
     addSourceToContext: context.addSourceToContext,
   });
 
   const reconcileProjections = new ReconcileProjections({
     contextQueries: context.contextQueries,
-    projectionOperations: projectionOperationsAdapter,
-    sourceText: new SourceTextAdapter(source.sourceQueries),
-    activeProfiles: new ActiveProfilesAdapter(profile.profileQueries),
+    projectionOperations: projection.projectionOperations,
+    getExtractedText: (id) => source.sourceQueries.getExtractedText(id),
+    listActiveProfiles: async () => {
+      const active = await profile.profileQueries.listActive();
+      return active.map((p) => ({ id: p.id.value }));
+    },
   });
 
   const updateProfileAndReconcile = new UpdateProfileAndReconcile({
     updateContextProfile: context.updateContextProfile,
-    projectionOperations: projectionOperationsAdapter,
-    sourceText: new SourceTextAdapter(source.sourceQueries),
+    projectionOperations: projection.projectionOperations,
+    getExtractedText: (id) => source.sourceQueries.getExtractedText(id),
   });
 
-  const contextReadModel = new ContextReadModel({
-    contextQueries: context.contextQueries,
-    sourceMetadata: new SourceMetadataAdapter(source.sourceQueries),
-    projectionStats: new ProjectionStatsAdapter(projection.projectionQueries),
-  });
+  // ── 4. Search with context filter (application-layer concern) ──────
+  const wrappedSearch = {
+    async execute(input: SearchKnowledgeInput) {
+      if (input.filters?.contextId) {
+        const contextId = input.filters.contextId as string;
+        const ctx = await context.contextQueries.getRaw(contextId);
+        if (ctx) {
+          const sourceIds = ctx.activeSources.map((s) => s.sourceId);
+          const { contextId: _, ...rest } = input.filters;
+          input = { ...input, filters: { ...rest, sourceIds } };
+        }
+      }
+      return retrieval.searchKnowledge.execute(input);
+    },
+  } as SearchKnowledge;
 
-  // ── 4. Return namespaced application ───────────────────────────────
+  // ── 5. Return namespaced application ───────────────────────────────
   return {
     processKnowledge,
 
@@ -200,7 +174,8 @@ async function resolveDependencies(
       removeSourceFromContext: context.removeSourceFromContext,
       contextQueries: context.contextQueries,
       reconcileProjections,
-      contextReadModel,
+      getContextDetail: context.getContextDetail,
+      listContextSummary: context.listContextSummary,
       linkContexts: lineage.linkContexts,
       unlinkContexts: lineage.unlinkContexts,
       lineageQueries: lineage.lineageQueries,
@@ -216,12 +191,7 @@ async function resolveDependencies(
       processSourceAllProfiles: projection.processSourceAllProfiles,
     },
 
-    knowledgeRetrieval: {
-      searchKnowledge: wrapSearchWithContextFilter(
-        retrieval.searchKnowledge,
-        new ContextSourceAdapter(context.contextRepository),
-      ),
-    },
+    knowledgeRetrieval: { searchKnowledge: wrappedSearch },
   };
 }
 

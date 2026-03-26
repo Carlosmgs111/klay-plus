@@ -15,39 +15,55 @@ export interface CoreWiringPolicy {
 }
 
 export const coreWiring = async (policy: CoreWiringPolicy) => {
-  // 1. Context management + Source ingestion (parallel — no cross-deps)
-  const [contextManagementWiringResult, sourceIngestionWiringResult] =
-    await Promise.all([
-      contextManagementWiring(
-        policy.contextManagementInfrastructurePolicy,
-      ),
-      sourceIngestionWiring(
-        policy.sourceIngestionInfrastructurePolicy,
-      ),
-    ]);
+  // 1. Source ingestion (independent)
+  const sourceIngestionWiringResult = await sourceIngestionWiring(
+    policy.sourceIngestionInfrastructurePolicy,
+  );
+
+  const sourceQueries = sourceIngestionWiringResult.sourceWiringResult.sourceQueries;
 
   // 2. Semantic processing (depends on source-ingestion for SourceIngestionPort)
   const semanticProcessingWiringResult = await semanticProcessingWiring({
     ...policy.semanticProcessingInfrastructurePolicy,
     projectionWiringDeps: {
       sourceIngestionPort: {
-        sourceExists: (id: string) =>
-          sourceIngestionWiringResult.sourceWiringResult.sourceQueries.exists(id),
-        getExtractedText: (id: string) =>
-          sourceIngestionWiringResult.sourceWiringResult.sourceQueries.getExtractedText(id),
+        sourceExists: (id: string) => sourceQueries.exists(id),
+        getExtractedText: (id: string) => sourceQueries.getExtractedText(id),
       },
     },
   });
 
-  // 3. Knowledge retrieval (depends on semantic-processing for vectorStoreConfig)
-  const knowledgeRetrievalWiringResult = await knowledgeRetrievalWiring({
-    semanticQueryInfrastructurePolicy: {
-      ...policy.knowledgeRetrievalInfrastructurePolicy
-        .semanticQueryInfrastructurePolicy,
-      vectorStoreConfig:
-        semanticProcessingWiringResult.projectionWiringResult.vectorStoreConfig,
-    },
-  });
+  const projectionQueries = semanticProcessingWiringResult.projectionWiringResult.projectionQueries;
+
+  // 3. Context management + Knowledge retrieval (parallel — both depend on SI/SP but not each other)
+  const [contextManagementWiringResult, knowledgeRetrievalWiringResult] =
+    await Promise.all([
+      contextManagementWiring(
+        policy.contextManagementInfrastructurePolicy,
+        {
+          enrichment: {
+            sourceMetadata: {
+              getSourceMetadata: async (sourceId: string) => {
+                const source = await sourceQueries.getById(sourceId);
+                return source ? { name: source.name, type: source.type } : null;
+              },
+            },
+            projectionStats: {
+              getAllProjectionsForSources: (sourceIds: string[]) =>
+                projectionQueries.listAllForSources(sourceIds),
+            },
+          },
+        },
+      ),
+      knowledgeRetrievalWiring({
+        semanticQueryInfrastructurePolicy: {
+          ...policy.knowledgeRetrievalInfrastructurePolicy
+            .semanticQueryInfrastructurePolicy,
+          vectorStoreConfig:
+            semanticProcessingWiringResult.projectionWiringResult.vectorStoreConfig,
+        },
+      }),
+    ]);
 
   return {
     contextManagementWiringResult,

@@ -24,7 +24,8 @@ export type { TransitionContextState } from "../contexts/context-management/cont
 export type { RemoveSourceFromContext } from "../contexts/context-management/context/application/use-cases/RemoveSourceFromContext";
 export type { ContextQueries } from "../contexts/context-management/context/application/use-cases/ContextQueries";
 export type { ReconcileProjections } from "./reconcile-projections/ReconcileProjections";
-export type { ContextReadModel } from "./context-read-model/ContextReadModel";
+export type { GetContextDetail } from "../contexts/context-management/context/application/use-cases/GetContextDetail";
+export type { ListContextSummary } from "../contexts/context-management/context/application/use-cases/ListContextSummary";
 export type { LinkContexts } from "../contexts/context-management/lineage/application/use-cases/LinkContexts";
 export type { UnlinkContexts } from "../contexts/context-management/lineage/application/use-cases/UnlinkContexts";
 export type { LineageQueries } from "../contexts/context-management/lineage/application/use-cases/LineageQueries";

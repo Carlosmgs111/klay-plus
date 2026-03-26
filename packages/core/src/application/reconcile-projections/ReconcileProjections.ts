@@ -1,14 +1,14 @@
-import type { ProjectionOperationsPort } from "../ports/ProjectionOperationsPort";
-import type { SourceTextPort } from "../ports/SourceTextPort";
-import type { ActiveProfilesPort } from "../ports/ActiveProfilesPort";
+import type { ProjectionOperationsPort } from "../../contexts/semantic-processing/projection/application/ports/ProjectionOperationsPort";
 import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
+import type { Result } from "../../shared/domain/Result";
+import type { DomainError } from "../../shared/domain/errors";
 import type {
   ReconcileProjectionsInput,
   ReconcileProjectionsResult,
   ReconcileAllProfilesInput,
   ReconcileAllProfilesResult,
 } from "../dtos";
-import { Result } from "../../shared/domain/Result";
+import { Result as R } from "../../shared/domain/Result";
 import { type StepError, stepError } from "../../shared/domain/errors/stepError";
 
 /**
@@ -16,15 +16,15 @@ import { type StepError, stepError } from "../../shared/domain/errors/stepError"
  *
  * Ensures all active sources in a context have projections for a given profile.
  * Coordinates context-management (reads context), source-ingestion (reads text),
- * and semantic-processing (generates projections) via explicit ports.
+ * and semantic-processing (generates projections).
  *
  * Semantics: best-effort — profile state is not affected by projection failures.
  */
 export interface ReconcileProjectionsDeps {
   contextQueries: ContextQueries;
   projectionOperations: ProjectionOperationsPort;
-  sourceText: SourceTextPort;
-  activeProfiles: ActiveProfilesPort;
+  getExtractedText: (sourceId: string) => Promise<Result<DomainError, { text: string }>>;
+  listActiveProfiles: () => Promise<Array<{ id: string }>>;
 }
 
 export class ReconcileProjections {
@@ -32,12 +32,12 @@ export class ReconcileProjections {
 
   async execute(
     input: ReconcileProjectionsInput,
-  ): Promise<Result<StepError, ReconcileProjectionsResult>> {
+  ): Promise<R<StepError, ReconcileProjectionsResult>> {
     try {
       const context = await this._deps.contextQueries.getRaw(input.contextId);
 
       if (!context) {
-        return Result.fail(
+        return R.fail(
           stepError("reconcile-projections", {
             message: `Context ${input.contextId} not found`,
             code: "CONTEXT_NOT_FOUND",
@@ -72,23 +72,22 @@ export class ReconcileProjections {
         }
       }
 
-      return Result.ok({
+      return R.ok({
         contextId: input.contextId,
         version: context.currentVersion?.version ?? 0,
         processedCount,
         failedCount,
       });
     } catch (error) {
-      return Result.fail(stepError("reconcile-projections", error));
+      return R.fail(stepError("reconcile-projections", error));
     }
   }
 
   async executeAllProfiles(
     input: ReconcileAllProfilesInput,
-  ): Promise<Result<StepError, ReconcileAllProfilesResult>> {
+  ): Promise<R<StepError, ReconcileAllProfilesResult>> {
     try {
-      const activeProfiles =
-        await this._deps.activeProfiles.listActiveProfiles();
+      const activeProfiles = await this._deps.listActiveProfiles();
 
       const profileResults: Array<{
         profileId: string;
@@ -109,28 +108,18 @@ export class ReconcileProjections {
             failedCount: result.value.failedCount,
           });
         } else {
-          profileResults.push({
-            profileId,
-            processedCount: 0,
-            failedCount: 1,
-          });
+          profileResults.push({ profileId, processedCount: 0, failedCount: 1 });
         }
       }
 
-      return Result.ok({
+      return R.ok({
         contextId: input.contextId,
         profileResults,
-        totalProcessed: profileResults.reduce(
-          (sum, r) => sum + r.processedCount,
-          0,
-        ),
-        totalFailed: profileResults.reduce(
-          (sum, r) => sum + r.failedCount,
-          0,
-        ),
+        totalProcessed: profileResults.reduce((sum, r) => sum + r.processedCount, 0),
+        totalFailed: profileResults.reduce((sum, r) => sum + r.failedCount, 0),
       });
     } catch (error) {
-      return Result.fail(stepError("processing", error));
+      return R.fail(stepError("processing", error));
     }
   }
 
@@ -138,9 +127,7 @@ export class ReconcileProjections {
     sourceId: string;
     profileId: string;
   }): Promise<{ success: boolean }> {
-    const textResult = await this._deps.sourceText.getExtractedText(
-      params.sourceId,
-    );
+    const textResult = await this._deps.getExtractedText(params.sourceId);
     if (textResult.isFail()) return { success: false };
 
     await this._deps.projectionOperations.cleanupSourceProjectionForProfile(

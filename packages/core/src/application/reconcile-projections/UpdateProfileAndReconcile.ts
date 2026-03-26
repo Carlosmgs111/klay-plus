@@ -1,9 +1,8 @@
 import type { UpdateContextProfile } from "../../contexts/context-management/context/application/use-cases/UpdateContextProfile";
-import type { ProjectionOperationsPort } from "../ports/ProjectionOperationsPort";
-import type { SourceTextPort } from "../ports/SourceTextPort";
+import type { ProjectionOperationsPort } from "../../contexts/semantic-processing/projection/application/ports/ProjectionOperationsPort";
 import type { Context } from "../../contexts/context-management/context/domain/Context";
-import { Result } from "../../shared/domain/Result";
 import type { DomainError } from "../../shared/domain/errors";
+import { Result } from "../../shared/domain/Result";
 
 export interface UpdateAndReconcileResult {
   context: Context;
@@ -22,7 +21,7 @@ export interface UpdateAndReconcileResult {
 export interface UpdateProfileAndReconcileDeps {
   updateContextProfile: UpdateContextProfile;
   projectionOperations: ProjectionOperationsPort;
-  sourceText: SourceTextPort;
+  getExtractedText: (sourceId: string) => Promise<Result<DomainError, { text: string }>>;
 }
 
 export class UpdateProfileAndReconcile {
@@ -32,7 +31,6 @@ export class UpdateProfileAndReconcile {
     contextId: string;
     profileId: string;
   }): Promise<Result<DomainError, UpdateAndReconcileResult>> {
-    // Step 1: Domain operation — update profile (committed independently)
     const updateResult = await this._deps.updateContextProfile.execute(params);
     if (updateResult.isFail()) {
       return updateResult as Result<DomainError, never>;
@@ -40,7 +38,6 @@ export class UpdateProfileAndReconcile {
 
     const context = updateResult.value;
 
-    // Step 2: Best-effort reconciliation — failures reported, not propagated
     let reconciled: { processedCount: number; failedCount: number } | undefined;
     if (context.activeSources.length > 0) {
       reconciled = await this._reconcileSources(context, params.profileId);
@@ -68,9 +65,7 @@ export class UpdateProfileAndReconcile {
           continue;
         }
 
-        const textResult = await this._deps.sourceText.getExtractedText(
-          source.sourceId,
-        );
+        const textResult = await this._deps.getExtractedText(source.sourceId);
         if (textResult.isFail()) {
           failedCount++;
           continue;
