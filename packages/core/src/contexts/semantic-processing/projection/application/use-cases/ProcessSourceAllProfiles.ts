@@ -2,7 +2,7 @@ import type { SourceIngestionPort } from "../ports/SourceIngestionPort";
 import type { ProfileQueries } from "../../../processing-profile/application/use-cases/ProfileQueries";
 import type { ProjectionQueries } from "./ProjectionQueries";
 import type { GenerateProjection } from "./GenerateProjection";
-import type { ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult } from "../../../../../application/dtos";
+import type { ProcessSourceAllProfilesInput, ProcessSourceAllProfilesResult } from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 

@@ -12,13 +12,13 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { createKnowledgeApplication } from "..";
-import type { KnowledgeApplication } from "..";
-import { pipelineError } from "../process-knowledge/boundary";
+import { createKnowledgeApplication } from "../index";
+import type { KnowledgeApplication } from "../index";
+import { pipelineError } from "../pipelines/process-knowledge/boundary";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.resolve(__dirname, "../../tests/integration/fixtures");
+const FIXTURES_DIR = path.resolve(__dirname, "../tests/integration/fixtures");
 
 describe("Knowledge Application — E2E", () => {
   let app: KnowledgeApplication;

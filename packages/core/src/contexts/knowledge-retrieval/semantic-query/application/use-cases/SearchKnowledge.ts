@@ -1,5 +1,5 @@
 import type { ResolvedSemanticQueryInfra } from "../../composition/factory";
-import type { SearchKnowledgeInput, SearchKnowledgeSuccess } from "../../../../../application/dtos";
+import type { SearchKnowledgeInput, SearchKnowledgeSuccess } from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ExecuteSemanticQuery } from "./ExecuteSemanticQuery";

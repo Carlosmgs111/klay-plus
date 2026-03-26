@@ -2,7 +2,7 @@ import type { ContextRepository } from "../../domain/ContextRepository";
 import type {
   ListContextsResult,
   GetSourceContextsResult,
-} from "../../../../../application/dtos";
+} from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ContextId } from "../../domain/ContextId";

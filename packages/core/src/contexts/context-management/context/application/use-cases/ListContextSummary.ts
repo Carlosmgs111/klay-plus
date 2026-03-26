@@ -1,6 +1,6 @@
 import type { ContextRepository } from "../../domain/ContextRepository";
 import type { ProjectionStatsPort } from "../ports/ProjectionStatsPort";
-import type { ListContextsSummaryResult } from "../../../../../application/dtos";
+import type { ListContextsSummaryResult } from "../../../dtos";
 import { Result } from "../../../../../shared/domain/Result";
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 

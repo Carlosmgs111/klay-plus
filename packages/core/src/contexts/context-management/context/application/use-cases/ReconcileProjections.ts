@@ -7,7 +7,7 @@ import type {
   ReconcileProjectionsResult,
   ReconcileAllProfilesInput,
   ReconcileAllProfilesResult,
-} from "../../../../../application/dtos";
+} from "../../../dtos";
 import { Result as R } from "../../../../../shared/domain/Result";
 import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
 import { ContextId } from "../../domain/ContextId";
