@@ -1,8 +1,12 @@
-import type { UpdateContextProfile } from "../../contexts/context-management/context/application/use-cases/UpdateContextProfile";
-import type { ProjectionOperationsPort } from "../../contexts/semantic-processing/projection/application/ports/ProjectionOperationsPort";
-import type { Context } from "../../contexts/context-management/context/domain/Context";
-import type { DomainError } from "../../shared/domain/errors";
-import { Result } from "../../shared/domain/Result";
+import type { ContextRepository } from "../../domain/ContextRepository";
+import type { EventPublisher } from "../../../../../shared/domain/EventPublisher";
+import type { ProjectionOperationsPort } from "../../../../semantic-processing/projection/application/ports/ProjectionOperationsPort";
+import type { Result } from "../../../../../shared/domain/Result";
+import type { DomainError } from "../../../../../shared/domain/errors";
+import type { Context } from "../../domain/Context";
+import { Result as R } from "../../../../../shared/domain/Result";
+import { ContextId } from "../../domain/ContextId";
+import { NotFoundError } from "../../../../../shared/domain/errors";
 
 export interface UpdateAndReconcileResult {
   context: Context;
@@ -10,40 +14,47 @@ export interface UpdateAndReconcileResult {
 }
 
 /**
- * UpdateProfileAndReconcile — Application-layer composite orchestrator.
+ * UpdateProfileAndReconcile — context-management use case.
  *
- * Pipeline: UpdateContextProfile (domain) → ReconcileProjections (best-effort).
+ * Pipeline: update profile on context (domain) → reconcile projections (best-effort).
  *
  * Semantics: best-effort.
  * - Profile update is committed even if reconciliation fails.
  * - Reconciliation failures are reported in the result, not propagated.
  */
 export interface UpdateProfileAndReconcileDeps {
-  updateContextProfile: UpdateContextProfile;
   projectionOperations: ProjectionOperationsPort;
   getExtractedText: (sourceId: string) => Promise<Result<DomainError, { text: string }>>;
 }
 
 export class UpdateProfileAndReconcile {
-  constructor(private readonly _deps: UpdateProfileAndReconcileDeps) {}
+  constructor(
+    private readonly _repo: ContextRepository,
+    private readonly _eventPublisher: EventPublisher,
+    private readonly _deps: UpdateProfileAndReconcileDeps,
+  ) {}
 
   async execute(params: {
     contextId: string;
     profileId: string;
-  }): Promise<Result<DomainError, UpdateAndReconcileResult>> {
-    const updateResult = await this._deps.updateContextProfile.execute(params);
-    if (updateResult.isFail()) {
-      return updateResult as Result<DomainError, never>;
+  }): Promise<R<DomainError, UpdateAndReconcileResult>> {
+    // Step 1: Domain operation — update profile
+    const context = await this._repo.findById(ContextId.create(params.contextId));
+    if (!context) {
+      return R.fail(new NotFoundError("Context", params.contextId));
     }
 
-    const context = updateResult.value;
+    context.changeRequiredProfile(params.profileId);
+    await this._repo.save(context);
+    await this._eventPublisher.publishAll(context.clearEvents());
 
+    // Step 2: Best-effort reconciliation
     let reconciled: { processedCount: number; failedCount: number } | undefined;
     if (context.activeSources.length > 0) {
       reconciled = await this._reconcileSources(context, params.profileId);
     }
 
-    return Result.ok({ context, reconciled });
+    return R.ok({ context, reconciled });
   }
 
   private async _reconcileSources(

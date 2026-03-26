@@ -1,40 +1,42 @@
-import type { ProjectionOperationsPort } from "../../contexts/semantic-processing/projection/application/ports/ProjectionOperationsPort";
-import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
-import type { Result } from "../../shared/domain/Result";
-import type { DomainError } from "../../shared/domain/errors";
+import type { ContextRepository } from "../../domain/ContextRepository";
+import type { ProjectionOperationsPort } from "../../../../semantic-processing/projection/application/ports/ProjectionOperationsPort";
+import type { Result } from "../../../../../shared/domain/Result";
+import type { DomainError } from "../../../../../shared/domain/errors";
 import type {
   ReconcileProjectionsInput,
   ReconcileProjectionsResult,
   ReconcileAllProfilesInput,
   ReconcileAllProfilesResult,
-} from "../dtos";
-import { Result as R } from "../../shared/domain/Result";
-import { type StepError, stepError } from "../../shared/domain/errors/stepError";
+} from "../../../../../application/dtos";
+import { Result as R } from "../../../../../shared/domain/Result";
+import { type StepError, stepError } from "../../../../../shared/domain/errors/stepError";
+import { ContextId } from "../../domain/ContextId";
 
 /**
- * ReconcileProjections — Application-layer orchestrator.
+ * ReconcileProjections — context-management use case.
  *
  * Ensures all active sources in a context have projections for a given profile.
- * Coordinates context-management (reads context), source-ingestion (reads text),
- * and semantic-processing (generates projections).
+ * Uses semantic-processing capabilities via ProjectionOperationsPort.
  *
- * Semantics: best-effort — profile state is not affected by projection failures.
+ * Semantics: best-effort — projection failures are counted, not propagated.
  */
 export interface ReconcileProjectionsDeps {
-  contextQueries: ContextQueries;
   projectionOperations: ProjectionOperationsPort;
   getExtractedText: (sourceId: string) => Promise<Result<DomainError, { text: string }>>;
   listActiveProfiles: () => Promise<Array<{ id: string }>>;
 }
 
 export class ReconcileProjections {
-  constructor(private readonly _deps: ReconcileProjectionsDeps) {}
+  constructor(
+    private readonly _repo: ContextRepository,
+    private readonly _deps: ReconcileProjectionsDeps,
+  ) {}
 
   async execute(
     input: ReconcileProjectionsInput,
   ): Promise<R<StepError, ReconcileProjectionsResult>> {
     try {
-      const context = await this._deps.contextQueries.getRaw(input.contextId);
+      const context = await this._repo.findById(ContextId.create(input.contextId));
 
       if (!context) {
         return R.fail(
@@ -96,19 +98,18 @@ export class ReconcileProjections {
       }> = [];
 
       for (const profile of activeProfiles) {
-        const profileId = profile.id;
         const result = await this.execute({
           contextId: input.contextId,
-          profileId,
+          profileId: profile.id,
         });
         if (result.isOk()) {
           profileResults.push({
-            profileId,
+            profileId: profile.id,
             processedCount: result.value.processedCount,
             failedCount: result.value.failedCount,
           });
         } else {
-          profileResults.push({ profileId, processedCount: 0, failedCount: 1 });
+          profileResults.push({ profileId: profile.id, processedCount: 0, failedCount: 1 });
         }
       }
 

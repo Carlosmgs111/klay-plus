@@ -53,6 +53,16 @@ export const coreWiring = async (policy: CoreWiringPolicy) => {
                 projectionQueries.listAllForSources(sourceIds),
             },
           },
+          reconciliation: {
+            projectionOperations:
+              semanticProcessingWiringResult.projectionWiringResult.projectionOperations,
+            getExtractedText: (id: string) => sourceQueries.getExtractedText(id),
+            listActiveProfiles: async () => {
+              const active = await semanticProcessingWiringResult
+                .processingProfileWiringResult.profileQueries.listActive();
+              return active.map((p) => ({ id: p.id.value }));
+            },
+          },
         },
       ),
       knowledgeRetrievalWiring({

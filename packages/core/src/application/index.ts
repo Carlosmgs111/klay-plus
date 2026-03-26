@@ -17,13 +17,13 @@ export type { KnowledgeApplication as KnowledgeCoordinator } from "./composition
 
 // ── Use-case types (for consumers typing namespace references) ──────
 export type { CreateContextAndActivate } from "../contexts/context-management/context/application/use-cases/CreateContextAndActivate";
-export type { UpdateProfileAndReconcile } from "./reconcile-projections/UpdateProfileAndReconcile";
+export type { UpdateProfileAndReconcile } from "../contexts/context-management/context/application/use-cases/UpdateProfileAndReconcile";
 /** @deprecated Use `UpdateProfileAndReconcile` instead. */
-export type { UpdateProfileAndReconcile as UpdateContextProfileAndReconcile } from "./reconcile-projections/UpdateProfileAndReconcile";
+export type { UpdateProfileAndReconcile as UpdateContextProfileAndReconcile } from "../contexts/context-management/context/application/use-cases/UpdateProfileAndReconcile";
 export type { TransitionContextState } from "../contexts/context-management/context/application/use-cases/TransitionContextState";
 export type { RemoveSourceFromContext } from "../contexts/context-management/context/application/use-cases/RemoveSourceFromContext";
 export type { ContextQueries } from "../contexts/context-management/context/application/use-cases/ContextQueries";
-export type { ReconcileProjections } from "./reconcile-projections/ReconcileProjections";
+export type { ReconcileProjections } from "../contexts/context-management/context/application/use-cases/ReconcileProjections";
 export type { GetContextDetail } from "../contexts/context-management/context/application/use-cases/GetContextDetail";
 export type { ListContextSummary } from "../contexts/context-management/context/application/use-cases/ListContextSummary";
 export type { LinkContexts } from "../contexts/context-management/lineage/application/use-cases/LinkContexts";

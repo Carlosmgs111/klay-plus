@@ -1,7 +1,7 @@
 import type { OrchestratorPolicy } from "./OrchestratorPolicy";
 import type { ProcessKnowledge } from "../process-knowledge/ProcessKnowledge";
-import type { ReconcileProjections } from "../reconcile-projections/ReconcileProjections";
-import type { UpdateProfileAndReconcile } from "../reconcile-projections/UpdateProfileAndReconcile";
+import type { ReconcileProjections } from "../../contexts/context-management/context/application/use-cases/ReconcileProjections";
+import type { UpdateProfileAndReconcile } from "../../contexts/context-management/context/application/use-cases/UpdateProfileAndReconcile";
 import type { ContextQueries } from "../../contexts/context-management/context/application/use-cases/ContextQueries";
 import type { GetContextDetail } from "../../contexts/context-management/context/application/use-cases/GetContextDetail";
 import type { ListContextSummary } from "../../contexts/context-management/context/application/use-cases/ListContextSummary";
@@ -112,16 +112,8 @@ async function resolveDependencies(
   const { semanticQueryWiringResult: retrieval } =
     core.knowledgeRetrievalWiringResult;
 
-  // ── 3. Application-layer orchestrators ─────────────────────────────
-  const [
-    { ProcessKnowledge },
-    { ReconcileProjections },
-    { UpdateProfileAndReconcile },
-  ] = await Promise.all([
-    import("../process-knowledge/ProcessKnowledge"),
-    import("../reconcile-projections/ReconcileProjections"),
-    import("../reconcile-projections/UpdateProfileAndReconcile"),
-  ]);
+  // ── 3. ProcessKnowledge (cross-context vertical slice) ──────────
+  const { ProcessKnowledge } = await import("../process-knowledge/ProcessKnowledge");
 
   const processKnowledge = new ProcessKnowledge({
     ingestAndExtract: source.ingestAndExtract,
@@ -129,22 +121,6 @@ async function resolveDependencies(
     projectionOperations: projection.projectionOperations,
     contextQueries: context.contextQueries,
     addSourceToContext: context.addSourceToContext,
-  });
-
-  const reconcileProjections = new ReconcileProjections({
-    contextQueries: context.contextQueries,
-    projectionOperations: projection.projectionOperations,
-    getExtractedText: (id) => source.sourceQueries.getExtractedText(id),
-    listActiveProfiles: async () => {
-      const active = await profile.profileQueries.listActive();
-      return active.map((p) => ({ id: p.id.value }));
-    },
-  });
-
-  const updateProfileAndReconcile = new UpdateProfileAndReconcile({
-    updateContextProfile: context.updateContextProfile,
-    projectionOperations: projection.projectionOperations,
-    getExtractedText: (id) => source.sourceQueries.getExtractedText(id),
   });
 
   // ── 4. Search with context filter (application-layer concern) ──────
@@ -169,11 +145,11 @@ async function resolveDependencies(
 
     contextManagement: {
       createContextAndActivate: context.createContextAndActivate,
-      updateContextProfileAndReconcile: updateProfileAndReconcile,
+      updateContextProfileAndReconcile: context.updateProfileAndReconcile,
       transitionContextState: context.transitionContextState,
       removeSourceFromContext: context.removeSourceFromContext,
       contextQueries: context.contextQueries,
-      reconcileProjections,
+      reconcileProjections: context.reconcileProjections,
       getContextDetail: context.getContextDetail,
       listContextSummary: context.listContextSummary,
       linkContexts: lineage.linkContexts,
