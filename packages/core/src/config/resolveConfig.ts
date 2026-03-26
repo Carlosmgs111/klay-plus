@@ -1,6 +1,6 @@
 import type { OrchestratorPolicy } from "./OrchestratorPolicy";
-import type { RetrievalConfig } from "../../config/InfrastructureProfile";
-import type { ConfigStore } from "../../config/ConfigStore";
+import type { RetrievalConfig } from "./InfrastructureProfile";
+import type { ConfigStore } from "./ConfigStore";
 
 /**
  * Resolved configuration from an OrchestratorPolicy.
@@ -42,9 +42,9 @@ export async function resolveConfig(
     documentStorageToProvider,
     getEmbeddingDimensions,
     getEmbeddingModel,
-  } = await import("../../config/profileResolution");
+  } = await import("./profileResolution");
 
-  const { resolveConfigProvider } = await import("../../config/ConfigProvider");
+  const { resolveConfigProvider } = await import("./ConfigProvider");
   const profile = await resolveInfrastructureProfile(policy);
   const configProvider = await resolveConfigProvider(policy);
 

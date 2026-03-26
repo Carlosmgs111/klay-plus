@@ -2,29 +2,35 @@ import { contextManagementWiring } from "./context-management";
 import { sourceIngestionWiring } from "./source-ingestion";
 import { knowledgeRetrievalWiring } from "./knowledge-retrieval";
 import { semanticProcessingWiring } from "./semantic-processing";
-import type { ContextManagementInfrastructurePolicy } from "./context-management";
-import type { SourceIngestionInfrastructurePolicy } from "./source-ingestion";
-import type { KnowledgeRetrievalInfrastructurePolicy } from "./knowledge-retrieval";
-import type { SemanticProcessingInfrastructurePolicy } from "./semantic-processing";
+import type { ResolvedConfig } from "../config/resolveConfig";
 
-export interface CoreWiringPolicy {
-  contextManagementInfrastructurePolicy: ContextManagementInfrastructurePolicy;
-  sourceIngestionInfrastructurePolicy: SourceIngestionInfrastructurePolicy;
-  semanticProcessingInfrastructurePolicy: SemanticProcessingInfrastructurePolicy;
-  knowledgeRetrievalInfrastructurePolicy: KnowledgeRetrievalInfrastructurePolicy;
-}
+export const coreWiring = async (config: ResolvedConfig) => {
+  const persistenceConfig = { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName };
 
-export const coreWiring = async (policy: CoreWiringPolicy) => {
   // 1. Source ingestion (independent)
-  const sourceIngestionWiringResult = await sourceIngestionWiring(
-    policy.sourceIngestionInfrastructurePolicy,
-  );
+  const sourceIngestionWiringResult = await sourceIngestionWiring({
+    sourceInfrastructurePolicy: persistenceConfig,
+    resourceInfrastructurePolicy: {
+      ...persistenceConfig,
+      provider: config.documentStorageProvider ?? config.persistenceProvider,
+    },
+    extractionInfrastructurePolicy: persistenceConfig,
+  });
 
   const sourceQueries = sourceIngestionWiringResult.sourceWiringResult.sourceQueries;
 
   // 2. Semantic processing (depends on source-ingestion for SourceIngestionPort)
   const semanticProcessingWiringResult = await semanticProcessingWiring({
-    ...policy.semanticProcessingInfrastructurePolicy,
+    projectionInfrastructurePolicy: {
+      ...persistenceConfig,
+      embeddingDimensions: config.embeddingDimensions,
+      embeddingProvider: config.embeddingProvider,
+      embeddingModel: config.embeddingModel,
+      vectorStoreProvider: config.vectorStoreProvider,
+      configOverrides: config.configOverrides,
+      configStore: config.configStore,
+    },
+    processingProfileInfrastructurePolicy: persistenceConfig,
     projectionWiringDeps: {
       sourceIngestionPort: {
         sourceExists: (id: string) => sourceQueries.exists(id),
@@ -33,13 +39,16 @@ export const coreWiring = async (policy: CoreWiringPolicy) => {
     },
   });
 
-  const projectionQueries = semanticProcessingWiringResult.projectionWiringResult.projectionQueries;
+  const projectionResult = semanticProcessingWiringResult.projectionWiringResult;
 
-  // 3. Context management + Knowledge retrieval (parallel — both depend on SI/SP but not each other)
+  // 3. Context management + Knowledge retrieval (parallel)
   const [contextManagementWiringResult, knowledgeRetrievalWiringResult] =
     await Promise.all([
       contextManagementWiring(
-        policy.contextManagementInfrastructurePolicy,
+        {
+          contextInfrastructurePolicy: persistenceConfig,
+          lineageInfrastructurePolicy: persistenceConfig,
+        },
         {
           enrichment: {
             sourceMetadata: {
@@ -50,12 +59,11 @@ export const coreWiring = async (policy: CoreWiringPolicy) => {
             },
             projectionStats: {
               getAllProjectionsForSources: (sourceIds: string[]) =>
-                projectionQueries.listAllForSources(sourceIds),
+                projectionResult.projectionQueries.listAllForSources(sourceIds),
             },
           },
           reconciliation: {
-            projectionOperations:
-              semanticProcessingWiringResult.projectionWiringResult.projectionOperations,
+            projectionOperations: projectionResult.projectionOperations,
             getExtractedText: (id: string) => sourceQueries.getExtractedText(id),
             listActiveProfiles: async () => {
               const active = await semanticProcessingWiringResult
@@ -67,10 +75,15 @@ export const coreWiring = async (policy: CoreWiringPolicy) => {
       ),
       knowledgeRetrievalWiring({
         semanticQueryInfrastructurePolicy: {
-          ...policy.knowledgeRetrievalInfrastructurePolicy
-            .semanticQueryInfrastructurePolicy,
-          vectorStoreConfig:
-            semanticProcessingWiringResult.projectionWiringResult.vectorStoreConfig,
+          provider: config.persistenceProvider,
+          vectorStoreConfig: projectionResult.vectorStoreConfig,
+          embeddingDimensions: config.embeddingDimensions,
+          embeddingProvider: config.embeddingProvider,
+          embeddingModel: config.embeddingModel,
+          vectorStoreProvider: config.vectorStoreProvider,
+          retrieval: config.retrieval,
+          configOverrides: config.configOverrides,
+          configStore: config.configStore,
         },
       }),
     ]);

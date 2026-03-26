@@ -12,8 +12,8 @@ import * as os from "os";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
-import { createKnowledgeApplication } from "../composition/knowledge.factory";
-import type { KnowledgeApplication } from "../composition/knowledge.factory";
+import { createKnowledgeApplication } from "..";
+import type { KnowledgeApplication } from "..";
 import { pipelineError } from "../process-knowledge/boundary";
 
 const __filename = fileURLToPath(import.meta.url);
