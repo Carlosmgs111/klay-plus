@@ -22,8 +22,8 @@ describe("PRESET_PROFILES", () => {
     const p = PRESET_PROFILES["browser"];
     expect(p.id).toBe("browser");
     expect(p.persistence).toEqual({ type: "indexeddb" });
-    expect(p.vectorStore).toEqual({ type: "indexeddb", dimensions: 384 });
-    expect(p.embedding).toEqual({ type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" });
+    expect(p.vectorStore).toEqual({ type: "indexeddb", dimensions: 128 });
+    expect(p.embedding).toEqual({ type: "hash", dimensions: 128 });
     expect(p.documentStorage).toEqual({ type: "browser" });
   });
 
@@ -73,7 +73,7 @@ describe("resolveInfrastructureProfile", () => {
     });
 
     expect(profile.persistence).toEqual({ type: "indexeddb" });
-    expect(profile.vectorStore).toEqual({ type: "indexeddb", dimensions: 384 });
+    expect(profile.vectorStore).toEqual({ type: "indexeddb", dimensions: 128 });
     expect(profile.documentStorage).toEqual({ type: "browser" });
     expect(profile.embedding).toEqual({ type: "openai", authRef: "openai-key", model: "text-embedding-3-small" });
   });

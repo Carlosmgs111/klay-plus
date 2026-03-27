@@ -76,8 +76,8 @@ export const PRESET_PROFILES: Record<string, InfrastructureProfile> = {
     id: "browser",
     name: "Browser",
     persistence: { type: "indexeddb" },
-    vectorStore: { type: "indexeddb", dimensions: 384 },
-    embedding: { type: "huggingface", model: "Xenova/all-MiniLM-L6-v2" },
+    vectorStore: { type: "indexeddb", dimensions: 128 },
+    embedding: { type: "hash", dimensions: 128 },
     documentStorage: { type: "browser" },
   },
   server: {

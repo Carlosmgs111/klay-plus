@@ -16,8 +16,10 @@ export class TransformersJSQueryEmbedder implements QueryEmbedder {
     const { retryWithBackoff } = await import("../../../../../shared/retry");
     this.extractor = await retryWithBackoff(
       async () => {
-        const { pipeline } = await import("@huggingface/transformers");
-        return pipeline("feature-extraction", this.modelId);
+        const mod = typeof window !== "undefined"
+          ? await import(/* @vite-ignore */ "https://esm.sh/@huggingface/transformers")
+          : await import("@huggingface/transformers");
+        return mod.pipeline("feature-extraction", this.modelId);
       },
       { label: `TransformersJS query embedder load (${this.modelId})` },
     );
