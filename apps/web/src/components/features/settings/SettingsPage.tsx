@@ -20,6 +20,7 @@ export function SettingsPage() {
     secretStore,
     infrastructureProfile,
     setInfrastructureProfile,
+    isModeLocked,
   } = useRuntimeMode();
 
   const [localProfile, setLocalProfile] = useState<InfrastructureProfile | null>(null);
@@ -33,7 +34,7 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <ThemeCard />
-      <RuntimeModeCard mode={mode} setMode={setMode} />
+      <RuntimeModeCard mode={mode} setMode={setMode} isModeLocked={isModeLocked} />
 
       {localProfile ? (
         <InfrastructureSection

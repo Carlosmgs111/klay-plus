@@ -5,9 +5,26 @@ import type { RuntimeMode } from "../../../services/types";
 interface RuntimeModeCardProps {
   mode: RuntimeMode;
   setMode: (mode: RuntimeMode) => void;
+  isModeLocked?: boolean;
 }
 
-export function RuntimeModeCard({ mode, setMode }: RuntimeModeCardProps) {
+export function RuntimeModeCard({ mode, setMode, isModeLocked }: RuntimeModeCardProps) {
+  if (isModeLocked) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Icon name="globe" className="text-success" />
+            <h2 className="text-sm font-semibold text-primary tracking-heading">Runtime Mode</h2>
+          </div>
+        </CardHeader>
+        <CardBody>
+          <p className="text-xs text-tertiary">Browser mode (cloud deployment)</p>
+        </CardBody>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>

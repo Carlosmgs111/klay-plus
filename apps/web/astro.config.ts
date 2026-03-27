@@ -1,22 +1,31 @@
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import tailwind from "@astrojs/tailwind";
-import node from "@astrojs/node";
+
+const isVercel = !!process.env.VERCEL;
+
+function getAdapter() {
+  if (isVercel) {
+    return import("@astrojs/vercel").then((m) => m.default());
+  }
+  return import("@astrojs/node").then((m) => m.default({ mode: "standalone" }));
+}
 
 export default defineConfig({
   output: "server",
-  adapter: node({ mode: "standalone" }),
+  adapter: await getAdapter(),
   integrations: [react(), tailwind({ applyBaseStyles: false })],
   vite: {
+    define: {
+      "import.meta.env.PUBLIC_IS_VERCEL": JSON.stringify(isVercel),
+    },
     server: {
       watch: {
         ignored: ["**/data/**"],
       },
     },
     ssr: {
-      // Bundle @klay/core (source .ts files need transpilation)
       noExternal: ["@klay/core"],
-      // Server-only / optional providers — keep external (resolved at runtime or tree-shaken)
       external: ["nedb-promises", "pdf-extraction", "@ai-sdk/cohere", "@huggingface/transformers", "@huggingface/inference"],
     },
     optimizeDeps: {

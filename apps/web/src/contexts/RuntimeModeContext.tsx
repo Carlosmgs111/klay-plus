@@ -22,12 +22,15 @@ interface RuntimeModeContextValue {
   secretStore: SecretStore | null;
   infrastructureProfile: InfrastructureProfile | null;
   setInfrastructureProfile: (profile: InfrastructureProfile) => void;
+  /** True when running on Vercel — mode locked to browser */
+  isModeLocked: boolean;
 }
 
 const RuntimeModeContext = createContext<RuntimeModeContextValue | null>(null);
 
 const STORAGE_KEY = "klay-runtime-mode";
 const LEGACY_API_KEYS_KEY = "klay-api-keys";
+const IS_VERCEL = import.meta.env.PUBLIC_IS_VERCEL === true || import.meta.env.PUBLIC_IS_VERCEL === "true";
 
 // ─── Init helpers ────────────────────────────────────────────────────────────
 
@@ -142,17 +145,22 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Read stored mode after mount
+  // Read stored mode after mount (Vercel: always browser)
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as RuntimeMode | null;
-    if (stored) {
-      profileRef.current = null;
-      setModeState(stored);
+    if (IS_VERCEL) {
+      setModeState("browser");
+    } else {
+      const stored = localStorage.getItem(STORAGE_KEY) as RuntimeMode | null;
+      if (stored) {
+        profileRef.current = null;
+        setModeState(stored);
+      }
     }
     setModeResolved(true);
   }, []);
 
   const setMode = (newMode: RuntimeMode) => {
+    if (IS_VERCEL) return; // locked to browser on Vercel
     profileRef.current = null;
     configStoreRef.current = null;
     setModeState(newMode);
@@ -191,7 +199,7 @@ export function RuntimeModeProvider({ children }: { children: ReactNode }) {
   }, [mode, reinitKey, modeResolved]);
 
   return (
-    <RuntimeModeContext.Provider value={{ mode, setMode, service, isInitializing, reinitialize, configStore, secretStore, infrastructureProfile, setInfrastructureProfile }}>
+    <RuntimeModeContext.Provider value={{ mode, setMode, service, isInitializing, reinitialize, configStore, secretStore, infrastructureProfile, setInfrastructureProfile, isModeLocked: IS_VERCEL }}>
       {children}
     </RuntimeModeContext.Provider>
   );
