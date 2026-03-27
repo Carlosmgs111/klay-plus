@@ -4,34 +4,31 @@
 
 Transformacion de contenido textual en representaciones vectoriales buscables. Toma texto, lo segmenta en chunks, genera embeddings vectoriales y los almacena en un vector store. Estrategias configurables y reproducibles via Processing Profiles.
 
-## Service: `SemanticProcessingService`
-
-Punto de entrada unico del contexto. Coordina projection y processing-profile, materializando las estrategias declarativas de un profile en instancias concretas al momento de procesar.
-
-| Operacion | Descripcion | Modulos involucrados |
-|-----------|-------------|---------------------|
-| `processContent` | Chunking + embedding + almacenamiento vectorial | projection, (lee profile) |
-| `batchProcess` | Procesamiento paralelo de multiples unidades | projection |
-| `createProcessingProfile` | Crea un perfil de procesamiento | processing-profile |
-| `updateProcessingProfile` | Actualiza estrategias/config del perfil (incrementa version) | processing-profile |
-| `deprecateProcessingProfile` | Retira un perfil de procesamiento | processing-profile |
-| `vectorStoreConfig` (getter) | Expone config del vector store para wiring cross-context | (infraestructura) |
-
 ### Cross-Context Wiring
 
-El `vectorStoreConfig` se expone para que Knowledge Retrieval pueda leer del mismo vector store fisico donde Semantic Processing escribe. Este wiring ocurre en el PipelineComposer.
+El `vectorStoreConfig` se comparte via `shared/vector/VectorStoreConfig.ts` para que Knowledge Retrieval pueda leer del mismo vector store fisico donde Semantic Processing escribe. El wiring ocurre en `coreWiring` (no en PipelineComposer).
 
 ### Composicion
 
-```
-composition/
-├── factory.ts    → SemanticProcessingServicePolicy + resolveSemanticProcessingModules()
-└── index.ts      → re-exports
+El contexto no tiene service layer — su API publica es el resultado del wiring.
 
-resolveSemanticProcessingModules(policy)
-├── projectionFactory(policy)        → { useCases: ProjectionUseCases, infra }
-├── processingProfileFactory(policy) → { useCases: ProfileUseCases, infra }
-└── ProcessingProfileMaterializer    → resuelve strategyIds declarativos en instancias concretas
+```
+Module-level wirings:
+  processing-profile/composition/
+    factory.ts   → processingProfileFactory(policy) → { repository, eventPublisher }
+    wiring.ts    → processingProfileWiring(policy) → profile use cases + profileRepository
+  projection/composition/
+    factory.ts   → projectionFactory(policy, profileRepo) → { infra }
+    wiring.ts    → projectionWiring(policy, deps) → projection use cases + projectionOperations facade + vectorStoreConfig
+                   (deps: profileRepository, profileQueries, sourceIngestionPort)
+
+  projection/application/ports/
+    ProjectionOperationsPort.ts  — facade interface (find, cleanup, generate)
+    SourceIngestionPort.ts       — cross-context port for source existence + text
+
+Context-level wiring (semantic-processing/index.ts):
+  semanticProcessingWiring(policy + externalDeps) → resolves intra-context deps (profile → projection)
+  External dep: sourceIngestionPort (from source-ingestion via coreWiring)
 ```
 
 ---

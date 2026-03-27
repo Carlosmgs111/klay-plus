@@ -10,7 +10,7 @@ Monorepo (pnpm workspaces) que transforma documentos en conocimiento buscable se
 ## Commands
 
 ```bash
-pnpm --filter @klay/core test         # 309 tests (vitest)
+pnpm --filter @klay/core test         # 313 tests (vitest)
 pnpm --filter @klay/web dev           # Astro dev server
 pnpm --filter @klay/web build         # Production build
 ```
@@ -21,7 +21,7 @@ pnpm --filter @klay/web build         # Production build
 - Extensionless imports (no `.js` suffixes)
 - Aggregates: private constructor + `create()` / `reconstitute()`
 - Triple repo: InMemory (test), NeDB (server), IndexedDB (browser)
-- Service = public API de cada bounded context; Factory en `composition/`
+- Wiring pattern: each module has `composition/wiring.ts` (factory builds infra, wiring builds use cases)
 - `@klay/core` bundled via `ssr.noExternal: ["@klay/core"]` in astro.config (Vite transpiles .ts source directly)
 
 ## Known Issues

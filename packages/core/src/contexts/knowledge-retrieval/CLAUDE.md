@@ -4,32 +4,22 @@
 
 Busqueda semantica y descubrimiento de conocimiento. Lado de lectura del sistema: recibe consultas en lenguaje natural, las convierte a vectores y encuentra las unidades de conocimiento mas relevantes por similitud semantica.
 
-## Service: `KnowledgeRetrievalService`
-
-Punto de entrada unico del contexto. Expone multiples niveles de abstraccion para busqueda.
-
-| Operacion | Descripcion | Nivel |
-|-----------|-------------|-------|
-| `query` | Query semantico completo con filtros, retorna `RetrievalResult` | Bajo nivel |
-| `search` | Busqueda simplificada con limit/threshold/domain | Alto nivel |
-| `findMostSimilar` | Retorna el mejor match unico | Conveniencia |
-| `hasSimilarContent` | Detecta contenido duplicado/similar | Deduplicacion |
-| `findRelated` | Encuentra unidades relacionadas a una dada | Recomendacion |
-| `batchSearch` | Busqueda paralela de multiples queries | Batch |
-
 ### Cross-Context Wiring
 
-Este contexto **lee** del mismo vector store donde Semantic Processing **escribe**. El wiring se realiza en el PipelineComposer.
+Este contexto **lee** del mismo vector store donde Semantic Processing **escribe**. El wiring ocurre en `coreWiring`. `SearchKnowledge` es puro (0 ports) — el filtrado por contexto se aplica en la composition root (wraps searchKnowledge), no dentro del use case.
 
 ### Composicion
 
-```
-composition/
-├── factory.ts    → KnowledgeRetrievalServicePolicy + resolveKnowledgeRetrievalModules()
-└── index.ts      → re-exports
+El contexto no tiene service layer — su API publica es el resultado del wiring.
 
-resolveKnowledgeRetrievalModules(policy)
-└── semanticQueryFactory(policy) → { useCases: SemanticQueryUseCases, infra }
+```
+Module-level wiring:
+  semantic-query/composition/
+    factory.ts   → semanticQueryFactory(policy) → { useCases, infra }
+    wiring.ts    → semanticQueryWiring(policy) → { searchKnowledge }
+
+Context-level wiring (knowledge-retrieval/index.ts):
+  knowledgeRetrievalWiring(policy) → passthrough to semanticQueryWiring
 ```
 
 ---

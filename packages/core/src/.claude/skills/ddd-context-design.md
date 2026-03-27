@@ -14,36 +14,50 @@ Este skill guía el diseño e implementación de **Bounded Contexts**, sus **Mó
 |----------|-------------|---------|
 | **Bounded Context** | Límite semántico que encapsula un subdominio completo. Contiene uno o más módulos. | `source-ingestion` |
 | **Módulo** | Unidad cohesiva dentro de un contexto. Contiene un Aggregate Root y sus colaboradores. | `source`, `extraction` |
-| **Pipeline** | Capa de coordinación cross-context. Orquesta flujos de usuario que atraviesan múltiples contextos. | `pipeline` |
+| **Pipeline** | Capa de coordinación cross-context. Orquesta flujos de usuario que atraviesan múltiples contextos. | `ProcessKnowledge` |
 
 **Regla crítica**: Los módulos NO se comunican directamente entre sí. La coordinación entre módulos ocurre **exclusivamente a nivel de contexto**, mediante:
-- Un **Service** a nivel de contexto
+- El **context wiring** en `index.ts` del contexto
 
-**Regla crítica**: Los contextos NO se comunican directamente entre sí. La coordinación entre contextos ocurre **exclusivamente a nivel de pipeline**, mediante:
-- Un **Pipeline Orchestrator** que invoca services
+**Regla crítica**: Los contextos NO se comunican directamente entre sí. La coordinación entre contextos ocurre **exclusivamente** mediante:
+- `coreWiring()` en `contexts/index.ts` que resuelve inter-context deps
+- **Pipelines** en `pipelines/` que coordinan use cases cross-context
 - **Eventos de integración** (comunicación asíncrona)
 
 ### 0.2 Responsabilidades por Nivel
 
 ```
-PIPELINE (Pipeline Orchestrator)
-├── Orquestación de workflows que involucran múltiples CONTEXTOS
-├── PipelineOrchestrator como punto de entrada único cross-context
-├── Composición de services (PipelineComposer)
+COMPOSITION ROOT (composition/root.ts)
+├── resolveConfig(policy) → ResolvedConfig
+├── coreWiring(config) → wired contexts
+├── Creates pipelines (ProcessKnowledge)
+├── Wraps cross-cutting concerns (search context filter)
+└── Returns KnowledgeApplication namespace object
+
+CORE WIRING (contexts/index.ts)
+├── Resuelve inter-context deps entre contextos
+├── Llama context wirings en orden correcto
+├── Ports resueltos inline (no adapters/ directory)
+├── NO contiene lógica de dominio
+└── Solo conecta outputs de un contexto como inputs de otro
+
+PIPELINES (pipelines/)
+├── Orquestación cross-context (e.g., ProcessKnowledge)
+├── Reciben deps por constructor (use cases/queries de contextos)
 ├── NO contiene lógica de dominio
 ├── NO accede a repositorios
-└── Solo interactúa con la API pública de cada service
+└── Solo coordina use cases de diferentes contextos
 
 CONTEXTO (Bounded Context)
 ├── Orquestación de workflows que involucran múltiples módulos
-├── Service como punto de entrada único del contexto
-├── Composición de módulos (composition/factory.ts)
-└── Políticas de infraestructura a nivel de contexto
+├── Wiring function en `index.ts` como coordinador
+├── Llama module wirings, resuelve intra-context deps
+└── Políticas de infraestructura por módulo
 
 MÓDULO (dentro del contexto)
 ├── Un Aggregate Root + Value Objects
 ├── Use Cases que operan SOLO sobre su propio Aggregate
-├── Composer que resuelve SU infraestructura
+├── Factory que resuelve SU infraestructura, Wiring que crea use cases
 ├── NO coordina otros módulos
 └── NO tiene Service propio
 ```
@@ -54,40 +68,30 @@ MÓDULO (dentro del contexto)
 
 ```
 {context-name}/
-├── index.ts                          # API pública del contexto
-├── ARCHITECTURE.md                   # Documentación arquitectónica
+├── index.ts                          # Context wiring: coordina módulos, resuelve intra-context deps
+├── CLAUDE.md                         # Documentación del contexto
 ├── __tests__/
 │   └── e2e.test.ts                   # Tests end-to-end (OBLIGATORIO)
-│
-├── composition/                      # COMPOSICIÓN A NIVEL DE CONTEXTO
-│   ├── factory.ts                    # {Context}ServicePolicy + resolve{Context}Modules()
-│   └── index.ts                      # Re-exports (OBLIGATORIO)
-│
-├── service/                          # SERVICE DEL CONTEXTO
-│   ├── {ContextName}Service.ts       # Orchestrator (coordina módulos)
-│   └── index.ts                      # create{Context}Service factory
 │
 ├── {module-a}/                       # Módulo A
 │   ├── index.ts
 │   ├── domain/
 │   ├── application/
+│   │   └── use-cases/                # Use cases + DTOs co-located
 │   ├── infrastructure/
 │   └── composition/
-│       ├── index.ts                  # Re-exports (OBLIGATORIO)
-│       ├── infra-policies.ts
-│       ├── {ModuleA}Composer.ts
-│       └── {module-a}.factory.ts     # Retorna { useCases, infra }
+│       ├── factory.ts                # {moduleA}Factory(policy) → { infra }
+│       └── wiring.ts                 # {moduleA}Wiring(policy, deps?) → use cases
 │
 └── {module-b}/                       # Módulo B
     ├── index.ts
     ├── domain/
     ├── application/
+    │   └── use-cases/
     ├── infrastructure/
     └── composition/
-        ├── index.ts                  # Re-exports (OBLIGATORIO)
-        ├── infra-policies.ts
-        ├── {ModuleB}Composer.ts
-        └── {module-b}.factory.ts     # Retorna { useCases, infra }
+        ├── factory.ts                # {moduleB}Factory(policy) → { infra }
+        └── wiring.ts                 # {moduleB}Wiring(policy, deps?) → use cases
 ```
 
 ### 1.1 Estructura de un Módulo
@@ -108,8 +112,10 @@ MÓDULO (dentro del contexto)
 │   │   └── {EventName}.ts
 │   └── index.ts
 ├── application/
-│   ├── {UseCaseName}.ts              # Use Cases (operan sobre SU aggregate)
-│   └── index.ts                      # {Module}UseCases container
+│   ├── use-cases/
+│   │   ├── {UseCaseName}.ts          # Use Cases + DTOs co-located
+│   │   └── index.ts
+│   └── index.ts
 ├── infrastructure/
 │   ├── adapters/                     # Implementaciones de ports
 │   │   └── {AdapterName}.ts
@@ -118,25 +124,39 @@ MÓDULO (dentro del contexto)
 │       ├── indexeddb/
 │       └── nedb/
 └── composition/                      # ÚNICA ubicación para decisiones de infra
-    ├── index.ts                      # Re-exports TODO (OBLIGATORIO)
-    ├── infra-policies.ts             # Types: Policy + ResolvedInfra
-    ├── {Module}Composer.ts           # Métodos privados por concern
-    └── {module}.factory.ts           # Retorna { useCases, infra }
+    ├── factory.ts                    # {module}Factory(policy) → { infra }
+    └── wiring.ts                     # {module}Wiring(policy, deps?) → use cases wired
 ```
 
-### 1.2 composition/index.ts (OBLIGATORIO)
+### 1.2 composition/ Structure (OBLIGATORIO)
 
-Cada módulo DEBE tener un `composition/index.ts` que re-exporta todo:
+Cada módulo DEBE tener `composition/factory.ts` y `composition/wiring.ts`:
 
 ```typescript
-// composition/index.ts
-export { ModuleComposer } from "./ModuleComposer";
-export type {
-  ModuleInfraPolicy,
-  ModuleInfrastructurePolicy,
-  ResolvedModuleInfra,
-} from "./infra-policies";
-export { moduleFactory, type ModuleFactoryResult } from "./module.factory";
+// composition/factory.ts — resolves infrastructure from policy
+export type ModuleInfrastructurePolicy = {
+  provider: "in-memory" | "browser" | "server";
+  dbPath?: string;
+  dbName?: string;
+};
+
+export async function moduleFactory(policy: ModuleInfrastructurePolicy) {
+  // ... resolve repository + eventPublisher based on policy.provider
+  return { infra: { repository, eventPublisher } };
+}
+```
+
+```typescript
+// composition/wiring.ts — creates use cases with resolved infra + deps
+export async function moduleWiring(
+  policy: ModuleInfrastructurePolicy,
+  deps?: ModuleWiringDeps,
+) {
+  const { moduleFactory } = await import("./factory");
+  const { infra } = await moduleFactory(policy);
+  // ... create use cases with infra + deps
+  return { useCase1, useCase2 };
+}
 ```
 
 ---
@@ -158,63 +178,54 @@ La carpeta `composition/` es el **único lugar** donde se toman decisiones de in
 ```
 ✅ CORRECTO                              ❌ INCORRECTO
 ───────────────────────────────────────────────────────────────────
-Composer decide qué Repository usar      Adapter detecta si es browser/server
-Composer importa dinámicamente adapters  Repository decide su implementación
-Política viene de arriba (context)       Adapter lee process.env o window
-Factory retorna { useCases, infra }      Factory retorna solo useCases
-Métodos privados separados por concern   Un solo switch que resuelve todo
-Factory en {module}.factory.ts           Factory inline en index.ts del módulo
-composition/index.ts re-exporta todo     No hay index.ts en composition/
-composition/factory.ts usa ConfigProvider API keys/paths hardcodeados
-configOverrides permite testing          Tests dependen de environment real
+Factory decide qué Repository usar       Adapter detecta si es browser/server
+Factory importa dinámicamente adapters   Repository decide su implementación
+Política viene de arriba (coreWiring)    Adapter lee process.env o window
+Factory retorna { infra }                Factory crea use cases directamente
+Wiring crea use cases con infra+deps     Factory mezcla infra + use cases
+Factory en composition/factory.ts        Factory inline en index.ts del módulo
+Wiring en composition/wiring.ts          Use case creation dispersa
+Config resolved in composition root      API keys/paths hardcodeados en contextos
+DTOs co-located with use cases           Centralized dtos.ts files
+Ports resolved inline in coreWiring      Separate adapters/ directory
 ```
 
 ### 2.3 ConfigProvider Pattern
 
-La `composition/factory.ts` del contexto usa `ConfigProvider` para resolver configuración de ambiente de forma testeable:
+Config resolution happens at the **composition root** (`composition/root.ts`), NOT at context or module level. The `resolveConfig()` function converts an `OrchestratorPolicy` into a `ResolvedConfig`:
 
 ```typescript
-// composition/factory.ts
-async function resolveConfig(
-  policy: ServicePolicy
-): Promise<ConfigProvider> {
-  // 1. Si hay overrides de test, usar InMemoryConfigProvider
-  if (policy.configOverrides) {
-    const { InMemoryConfigProvider } = await import(
-      "@shared/config/InMemoryConfigProvider"
-    );
-    return new InMemoryConfigProvider(policy.configOverrides);
-  }
+// composition/root.ts
+export async function createKnowledgeApplication(policy: OrchestratorPolicy) {
+  const { resolveConfig } = await import("../config/resolveConfig");
+  const config = await resolveConfig(policy);  // OrchestratorPolicy → ResolvedConfig
 
-  // 2. Para browser, config vacía (no hay process.env)
-  if (policy.provider === "browser") {
-    const { InMemoryConfigProvider } = await import(
-      "@shared/config/InMemoryConfigProvider"
-    );
-    return new InMemoryConfigProvider({});
-  }
+  const { coreWiring } = await import("../contexts");
+  const core = await coreWiring(config);       // ResolvedConfig → wired contexts
 
-  // 3. Para server, usar NodeConfigProvider (lee process.env)
-  const { NodeConfigProvider } = await import(
-    "@shared/config/NodeConfigProvider"
-  );
-  return new NodeConfigProvider();
+  // ... create pipelines, return KnowledgeApplication
 }
+```
 
-// Uso en resolveModules()
-export async function resolveContextModules(
-  policy: ServicePolicy
-): Promise<ResolvedModules> {
-  const config = await resolveConfig(policy);
+Context and module wirings receive already-resolved infrastructure policies — they never resolve config themselves. The `coreWiring()` function builds per-module policies from the `ResolvedConfig`:
 
-  const modulePolicy = {
-    provider: policy.provider,
-    dbPath: policy.dbPath ?? config.getOrDefault("KLAY_DB_PATH", "./data"),
-    dbName: policy.dbName ?? config.getOrDefault("KLAY_DB_NAME", "knowledge-platform"),
+```typescript
+// contexts/index.ts
+export const coreWiring = async (config: ResolvedConfig) => {
+  const persistenceConfig = {
+    provider: config.persistenceProvider,
+    dbPath: config.dbPath,
+    dbName: config.dbName,
   };
 
-  // Continuar con resolución de módulos...
-}
+  // Pass already-resolved policy to context wirings
+  const result = await sourceIngestionWiring({
+    sourceInfrastructurePolicy: persistenceConfig,
+    resourceInfrastructurePolicy: persistenceConfig,
+    extractionInfrastructurePolicy: persistenceConfig,
+  });
+  // ...
+};
 ```
 
 **Variables de configuración comunes:**
@@ -222,197 +233,166 @@ export async function resolveContextModules(
 - `KLAY_DB_NAME`: Nombre de base de datos IndexedDB (browser)
 - API keys y tokens deben resolverse via ConfigProvider, nunca hardcodeados
 
-### 2.4 Composer (Obligatorio)
+### 2.4 Factory (Obligatorio)
 
 ```typescript
-import type {
-  {Module}InfrastructurePolicy,
-  Resolved{Module}Infra,
-} from "./infra-policies";
+// composition/factory.ts
+export type {Module}InfrastructurePolicy = {
+  provider: "in-memory" | "browser" | "server";
+  dbPath?: string;
+  dbName?: string;
+};
 
 /**
- * Composer: ÚNICO responsable de decisiones de infraestructura.
+ * Factory: ÚNICO responsable de decisiones de infraestructura.
  * Los adapters NO detectan entorno por sí mismos.
  */
-export class {Module}Composer {
-  // ─── Resolver Repositorio ─────────────────────────────────
-  private static async resolveRepository(
-    policy: {Module}InfrastructurePolicy,
-  ): Promise<{Aggregate}Repository> {
-    // La POLÍTICA determina qué implementación usar
-    switch (policy.provider) {
-      case "in-memory": {
-        const { InMemory{Aggregate}Repository } = await import(
-          "../infrastructure/persistence/InMemory{Aggregate}Repository"
-        );
-        return new InMemory{Aggregate}Repository();
-      }
-
-      case "browser": {
-        const { IndexedDB{Aggregate}Repository } = await import(
-          "../infrastructure/persistence/indexeddb/IndexedDB{Aggregate}Repository"
-        );
-        return new IndexedDB{Aggregate}Repository(policy.dbName ?? "default-db");
-      }
-
-      case "server": {
-        const { NeDB{Aggregate}Repository } = await import(
-          "../infrastructure/persistence/nedb/NeDB{Aggregate}Repository"
-        );
-        return new NeDB{Aggregate}Repository(policy.dbPath);
-      }
-
-      default:
-        throw new Error(`Unknown policy provider: ${(policy as any).provider}`);
-    }
-  }
-
-  // ─── Resolver otros ports ─────────────────────────────────
-  private static async resolveEventPublisher(
-    _policy: {Module}InfrastructurePolicy,
-  ): Promise<EventPublisher> {
-    const { InMemoryEventPublisher } = await import(
-      "@shared/infrastructure/InMemoryEventPublisher"
-    );
-    return new InMemoryEventPublisher();
-  }
-
-  // ─── Resolución Principal ─────────────────────────────────
-  static async resolve(
-    policy: {Module}InfrastructurePolicy,
-  ): Promise<Resolved{Module}Infra> {
-    const [repository, eventPublisher] = await Promise.all([
-      this.resolveRepository(policy),
-      this.resolveEventPublisher(policy),
-    ]);
-
-    return { repository, eventPublisher };
-  }
-}
-```
-
-### 2.5 Factory (Retorna { useCases, infra })
-
-El archivo `{module}.factory.ts` es necesario cuando el módulo participa en un Service. **Siempre retorna `{ useCases, infra }`** para permitir coordinación.
-
-```typescript
-// {module}.factory.ts - archivo SEPARADO en composition/
-export interface {Module}FactoryResult {
-  useCases: {Module}UseCases;
-  infra: Resolved{Module}Infra;  // Expuesto para coordinación del Service
-}
-
 export async function {module}Factory(
   policy: {Module}InfrastructurePolicy,
-): Promise<{Module}FactoryResult> {
-  const infra = await {Module}Composer.resolve(policy);
-  const useCases = new {Module}UseCases(infra.repository, infra.eventPublisher);
-  return { useCases, infra };  // ¡Retorna AMBOS!
+) {
+  // ─── Resolver Repositorio ─────────────────────────────────
+  let repository: {Aggregate}Repository;
+  switch (policy.provider) {
+    case "in-memory": {
+      const { InMemory{Aggregate}Repository } = await import(
+        "../infrastructure/persistence/InMemory{Aggregate}Repository"
+      );
+      repository = new InMemory{Aggregate}Repository();
+      break;
+    }
+    case "browser": {
+      const { IndexedDB{Aggregate}Repository } = await import(
+        "../infrastructure/persistence/indexeddb/IndexedDB{Aggregate}Repository"
+      );
+      repository = new IndexedDB{Aggregate}Repository(policy.dbName ?? "default-db");
+      break;
+    }
+    case "server": {
+      const { NeDB{Aggregate}Repository } = await import(
+        "../infrastructure/persistence/nedb/NeDB{Aggregate}Repository"
+      );
+      repository = new NeDB{Aggregate}Repository(policy.dbPath);
+      break;
+    }
+    default:
+      throw new Error(`Unknown policy provider: ${(policy as any).provider}`);
+  }
+
+  // ─── Resolver Event Publisher ─────────────────────────────
+  const { InMemoryEventPublisher } = await import(
+    "@shared/infrastructure/InMemoryEventPublisher"
+  );
+  const eventPublisher = new InMemoryEventPublisher();
+
+  return { infra: { repository, eventPublisher } };
 }
 ```
 
-**¿Por qué retornar `infra`?**
-- El Service puede necesitar acceso al repository para queries cross-module
-- Permite coordinación sin acoplar módulos entre sí
-- El Service actúa como anti-corruption layer
+### 2.5 Wiring (Crea use cases con infra + deps)
+
+El archivo `wiring.ts` usa la factory para obtener infra y luego crea use cases inyectándoles las dependencias resueltas. Opcionalmente recibe `deps` para intra-context dependencies (resueltas por el context wiring).
+
+```typescript
+// composition/wiring.ts
+export interface {Module}WiringDeps {
+  somePort: SomePort;  // Intra-context dep from another module
+}
+
+export interface {Module}WiringResult {
+  someUseCase: SomeUseCase;
+  someQuery: SomeQuery;
+}
+
+export async function {module}Wiring(
+  policy: {Module}InfrastructurePolicy,
+  deps: {Module}WiringDeps,
+): Promise<{Module}WiringResult> {
+  const { {module}Factory } = await import("./factory");
+  const { infra } = await {module}Factory(policy);
+
+  const { SomeUseCase } = await import("../application/use-cases/SomeUseCase");
+  const { SomeQuery } = await import("../application/use-cases/SomeQuery");
+
+  const someUseCase = new SomeUseCase(infra.repository, infra.eventPublisher, deps.somePort);
+  const someQuery = new SomeQuery(infra.repository);
+
+  return { someUseCase, someQuery };
+}
+```
+
+**¿Por qué separar factory y wiring?**
+- Factory solo resuelve infraestructura (repository, eventPublisher, etc.)
+- Wiring crea use cases y puede recibir deps de otros módulos del mismo contexto
+- El context wiring (`index.ts`) coordina el orden de module wirings
 
 ---
 
-## 3. Service (Nivel de Contexto)
+## 3. Context Wiring (Nivel de Contexto)
 
 ### 3.1 Ubicación y Responsabilidad
 
-El Service existe **a nivel de contexto**, NO de módulo. Es el único punto de coordinación entre módulos.
+El context wiring existe en el `index.ts` **a nivel de contexto**, NO de módulo. Es el único punto de coordinación entre módulos del mismo contexto.
 
 ```
 source-ingestion/
-├── composition/
-│   ├── factory.ts                    ← ServicePolicy + resolveModules()
-│   └── index.ts                      ← Re-exports
-├── service/
-│   ├── SourceIngestionService.ts     ← Service del CONTEXTO
-│   └── index.ts                      ← createSourceIngestionService factory
+├── index.ts                          ← Context wiring: sourceIngestionWiring()
 ├── source/                           ← Módulo (NO tiene service propio)
-└── extraction/                       ← Módulo (NO tiene service propio)
+│   └── composition/
+│       ├── factory.ts
+│       └── wiring.ts
+├── resource/                         ← Módulo
+│   └── composition/
+│       ├── factory.ts
+│       └── wiring.ts
+└── extraction/                       ← Módulo
+    └── composition/
+        ├── factory.ts
+        └── wiring.ts
 ```
 
-### 3.2 service/index.ts (Patrón Obligatorio)
+### 3.2 Context Wiring (Patrón Obligatorio)
 
 ```typescript
-// service/index.ts
-export { ContextService } from "./ContextService";
-export type {
-  ContextServicePolicy,
-  ResolvedContextModules,
-} from "../composition/factory";
+// {context}/index.ts
+export type SourceIngestionInfrastructurePolicy = {
+  sourceInfrastructurePolicy: SourceInfrastructurePolicy;
+  resourceInfrastructurePolicy: ResourceInfrastructurePolicy;
+  extractionInfrastructurePolicy: ExtractionInfrastructurePolicy;
+};
 
-// Factory function como API principal
-export async function createContextService(
-  policy: ContextServicePolicy
-): Promise<ContextService> {
-  const { resolveContextModules } = await import("../composition/factory");
-  const { ContextService } = await import("./ContextService");
-  const modules = await resolveContextModules(policy);
-  return new ContextService(modules);
-}
+export const sourceIngestionWiring = async (
+  policy: SourceIngestionInfrastructurePolicy,
+) => {
+  // 1. Wire independent modules first
+  const extractionWiringResult = await extractionWiring(
+    policy.extractionInfrastructurePolicy,
+  );
+  const resourceWiringResult = await resourceWiring(
+    policy.resourceInfrastructurePolicy,
+  );
+
+  // 2. Wire dependent module with intra-context deps
+  const sourceWiringDeps: SourceWiringDeps = {
+    executeExtraction: extractionWiringResult.executeExtraction,
+    extractionJobRepository: extractionWiringResult.extractionJobRepository,
+    storeResource: resourceWiringResult.storeResource,
+    registerExternalResource: resourceWiringResult.registerExternalResource,
+  };
+  const sourceWiringResult = await sourceWiring(
+    policy.sourceInfrastructurePolicy,
+    sourceWiringDeps,
+  );
+
+  return { sourceWiringResult, resourceWiringResult, extractionWiringResult };
+};
 ```
 
-### 3.3 Qué hace el Service
+### 3.3 Qué hace el Context Wiring
 
-```typescript
-// Errores específicos del Service (coordinación)
-export class ModuleANotFoundError extends NotFoundError {
-  constructor(id: string) { super("ModuleA", id); }
-}
-
-export class ModuleAOperationError extends OperationError {
-  constructor(operation: string, reason: string) {
-    super("ModuleA", operation, reason);
-  }
-}
-
-export class {Context}Service {
-  private readonly _moduleA: ModuleAUseCases;
-  private readonly _moduleB: ModuleBUseCases;
-  private readonly _moduleARepository: ModuleARepository; // Para queries
-
-  constructor(modules: Resolved{Context}Modules) {
-    this._moduleA = modules.moduleA;
-    this._moduleB = modules.moduleB;
-    this._moduleARepository = modules.moduleARepository;
-  }
-
-  // ─── Accessors para operaciones simples ──────────────────
-  get moduleA(): ModuleAUseCases { return this._moduleA; }
-  get moduleB(): ModuleBUseCases { return this._moduleB; }
-
-  // ─── Workflow que coordina MÚLTIPLES módulos ─────────────
-  async complexWorkflow(
-    params: WorkflowParams
-  ): Promise<Result<ModuleAOperationError | ModuleBError, WorkflowResult>> {
-    // 1. Operación en módulo A
-    const resultA = await this._moduleA.someUseCase.execute(...);
-    if (resultA.isFail()) {
-      return Result.fail(new ModuleAOperationError("create", resultA.error.message));
-    }
-
-    // 2. Operación en módulo B (usando resultado de A)
-    const resultB = await this._moduleB.anotherUseCase.execute({
-      ...params,
-      dataFromA: resultA.value.someData,
-    });
-    if (resultB.isFail()) return Result.fail(resultB.error);
-
-    // 3. Actualizar módulo A con resultado de B
-    const updateResult = await this._moduleA.updateUseCase.execute({
-      id: resultA.value.id,
-      newData: resultB.value.computedData,
-    });
-
-    return updateResult;
-  }
-}
-```
+- Llama module wirings en el **orden correcto** (independientes primero)
+- Resuelve **intra-context deps** entre módulos (outputs de un módulo → deps de otro)
+- Retorna los resultados de cada module wiring como un objeto plano
+- **No crea clases Service** — la coordinación es funcional via el wiring
 
 ### 3.4 Qué NO hace un Módulo
 
@@ -422,101 +402,70 @@ Un módulo individual **NUNCA**:
 - Tiene su propio Service/Orchestrator
 - Accede al repository de otro módulo
 
-### 3.5 Context Composition Pattern
+### 3.5 Context Wiring with Cross-Context Deps
+
+Some contexts need cross-context ports (resolved by `coreWiring()`). These are passed as a second argument:
 
 ```typescript
-// composition/factory.ts
-export interface ContextServicePolicy {
-  provider: "in-memory" | "browser" | "server";
-  dbPath?: string;
-  dbName?: string;
-  configOverrides?: Record<string, string>;
-  overrides?: {
-    moduleA?: Partial<ModuleAInfrastructurePolicy>;
-    moduleB?: Partial<ModuleBInfrastructurePolicy>;
+// context-management/index.ts
+export type ContextManagementInfrastructurePolicy = {
+  contextInfrastructurePolicy: ContextInfrastructurePolicy;
+  lineageInfrastructurePolicy: LineageInfrastructurePolicy;
+};
+
+export type ContextManagementCrossContextDeps = {
+  enrichment: {
+    sourceMetadata: SourceMetadataPort;
+    projectionStats: ProjectionStatsPort;
   };
-}
-
-export interface ResolvedContextModules {
-  moduleA: ModuleAUseCases;
-  moduleB: ModuleBUseCases;
-  moduleARepository: ModuleARepository; // Para coordinación
-}
-
-// ─── Config Resolution ───────────────────────────────────
-async function resolveConfig(policy: ContextServicePolicy): Promise<ConfigProvider> {
-  if (policy.configOverrides) {
-    const { InMemoryConfigProvider } = await import("@shared/config/...");
-    return new InMemoryConfigProvider(policy.configOverrides);
-  }
-  if (policy.provider === "browser") {
-    return new InMemoryConfigProvider({});
-  }
-  const { NodeConfigProvider } = await import("@shared/config/...");
-  return new NodeConfigProvider();
-}
-
-// ─── Build module policies from context policy ───────────
-function buildModuleAPolicy(
-  contextPolicy: ContextServicePolicy,
-  config: ConfigProvider
-): ModuleAInfrastructurePolicy {
-  return {
-    provider: contextPolicy.overrides?.moduleA?.provider ?? contextPolicy.provider,
-    dbPath: contextPolicy.dbPath ?? config.getOrDefault("KLAY_DB_PATH", "./data"),
-    dbName: contextPolicy.dbName ?? config.getOrDefault("KLAY_DB_NAME", "klay-db"),
+  reconciliation: {
+    projectionOperations: ProjectionOperations;
+    getExtractedText: (id: string) => Promise<string | null>;
+    listActiveProfiles: () => Promise<Array<{ id: string }>>;
   };
-}
+};
 
-// ─── Main resolution ─────────────────────────────────────
-export async function resolveContextModules(
-  policy: ContextServicePolicy
-): Promise<ResolvedContextModules> {
-  const config = await resolveConfig(policy);
-
-  const [moduleAResult, moduleBResult] = await Promise.all([
-    moduleAFactory(buildModuleAPolicy(policy, config)),
-    moduleBFactory(buildModuleBPolicy(policy, config)),
-  ]);
-
-  return {
-    moduleA: moduleAResult.useCases,
-    moduleB: moduleBResult.useCases,
-    moduleARepository: moduleAResult.infra.repository, // Para coordinación
-  };
-}
+export const contextManagementWiring = async (
+  policy: ContextManagementInfrastructurePolicy,
+  crossContextDeps: ContextManagementCrossContextDeps,
+) => {
+  const contextWiringResult = await contextWiring(
+    policy.contextInfrastructurePolicy,
+    crossContextDeps, // Cross-context deps passed through to module wiring
+  );
+  const lineageWiringResult = await lineageWiring(
+    policy.lineageInfrastructurePolicy,
+  );
+  return { contextWiringResult, lineageWiringResult };
+};
 ```
+
+The cross-context ports are resolved inline in `coreWiring()` — no separate `adapters/` directory needed.
 
 ---
 
-## 4. Pipeline Orchestrator (Nivel Cross-Context)
+## 4. Pipelines + Core Wiring (Nivel Cross-Context)
 
 ### 4.1 Ubicación y Responsabilidad
 
-El Pipeline existe **al mismo nivel que los contextos**, NO dentro de uno. Es el único punto de coordinación entre Bounded Contexts.
+Pipelines live in `pipelines/`, and `coreWiring()` lives in `contexts/index.ts`. Together they handle cross-context coordination.
 
 ```
-klay+/
-├── source-ingestion/          ← Bounded Context
-├── context-management/        ← Bounded Context
-├── source-knowledge/          ← Bounded Context
-├── semantic-processing/       ← Bounded Context
-├── knowledge-retrieval/       ← Bounded Context
-├── shared/                    ← Shared Kernel
-│
-└── pipeline/                  ← Pipeline Orchestrator (NO es un Bounded Context)
-    ├── index.ts               # API pública del pipeline
-    ├── PipelineOrchestrator.ts # Punto de entrada cross-context
-    ├── __tests__/
-    │   └── e2e.test.ts        # Tests E2E (OBLIGATORIO)
-    ├── use-cases/
-    │   ├── {Acción}{Dominio}Workflow.ts
-    │   └── index.ts
-    └── composition/
-        ├── index.ts           # Re-exports (OBLIGATORIO)
-        ├── infra-policies.ts  # PipelinePolicy, ResolvedPipelineServices
-        ├── PipelineComposer.ts
-        └── pipeline.factory.ts
+src/
+├── composition/
+│   └── root.ts                ← createKnowledgeApplication() — composition root
+├── pipelines/                 ← Cross-context pipelines (NOT bounded contexts)
+│   └── process-knowledge/
+│       ├── ProcessKnowledge.ts  # Pipeline class
+│       ├── boundary.ts          # PipelineError type
+│       └── dtos.ts              # DTOs co-located
+├── contexts/
+│   ├── index.ts               ← coreWiring(ResolvedConfig) — inter-context deps
+│   ├── source-ingestion/      ← Bounded Context
+│   ├── context-management/    ← Bounded Context
+│   ├── semantic-processing/   ← Bounded Context
+│   └── knowledge-retrieval/   ← Bounded Context
+└── shared/                    ← Shared Kernel
 ```
 
 ### 4.2 Qué hace vs Qué NO hace el Pipeline
@@ -524,11 +473,11 @@ klay+/
 ```
 ✅ EL PIPELINE HACE                          ❌ EL PIPELINE NO HACE
 ─────────────────────────────────────────────────────────────────────────
-Coordinar services en secuencia              Contener lógica de dominio
+Coordinar use cases en secuencia             Contener lógica de dominio
 Propagar resultados entre pasos              Acceder a repositorios directamente
 Envolver errores con contexto de paso        Definir entidades o agregados
-Componer services via PipelineComposer       Importar internos de un contexto
-Exponer workflows como operaciones           Decidir reglas de negocio
+Recibir deps por constructor                 Importar internos de un contexto
+Exponer execute() como operación             Decidir reglas de negocio
 Usar Result<PipelineError, T>                Publicar eventos de dominio
 ```
 
@@ -539,273 +488,203 @@ La jerarquía de coordinación sigue un patrón fractal:
 | Nivel | Coordinador | Coordina | Mediante |
 |-------|-------------|----------|----------|
 | **Módulo** | Use Case | Aggregate + Ports | Inyección directa |
-| **Contexto** | Service | Múltiples Módulos | Module factories |
-| **Pipeline** | PipelineOrchestrator | Múltiples Contextos | Context services |
+| **Contexto** | Context wiring (`index.ts`) | Múltiples Módulos | Module wirings |
+| **Core wiring** | `coreWiring()` | Múltiples Contextos | Context wirings |
+| **Pipeline** | Pipeline class | Use cases cross-context | Constructor injection |
 
 Cada nivel solo conoce la API pública del nivel inferior. Nunca accede a los internos.
 
-### 4.4 Pipeline Policy
+### 4.4 OrchestratorPolicy (Top-Level Config)
+
+The top-level policy is `OrchestratorPolicy` (in `config/OrchestratorPolicy.ts`), which is resolved into `ResolvedConfig` by the composition root:
 
 ```typescript
-// composition/infra-policies.ts
-export type PipelineInfraPolicy = "in-memory" | "browser" | "server";
-
-export interface PipelinePolicy {
-  provider: PipelineInfraPolicy;
-
-  // Configuración global propagada a todos los contextos
+// config/OrchestratorPolicy.ts
+export interface OrchestratorPolicy {
+  provider: "in-memory" | "browser" | "server";
+  dbPath?: string;
+  dbName?: string;
   configOverrides?: Record<string, string>;
-
-  // Overrides granulares por contexto (opcional)
-  overrides?: {
-    ingestion?: Partial<SourceIngestionServicePolicy>;
-    knowledge?: Partial<ContextManagementServicePolicy>;
-    processing?: Partial<SemanticProcessingServicePolicy>;
-    retrieval?: Partial<KnowledgeRetrievalServicePolicy>;
-  };
-}
-
-export interface ResolvedPipelineServices {
-  ingestion: SourceIngestionService;
-  knowledge: ContextManagementService;
-  processing: SemanticProcessingService;
-  retrieval: KnowledgeRetrievalService;
+  configStore?: ConfigStore;
+  // ... embedding, vector store, retrieval settings
 }
 ```
 
-### 4.5 Pipeline Composer
+`resolveConfig(policy)` converts this to a `ResolvedConfig` with all values resolved (defaults applied, config store consulted). The `ResolvedConfig` is then passed to `coreWiring()` which builds per-module infrastructure policies.
 
-El PipelineComposer instancia services respetando dependencias cross-context. Los contextos independientes se resuelven en paralelo; los contextos con dependencias se resuelven en secuencia.
+### 4.5 Core Wiring (Inter-Context Coordination)
+
+`coreWiring()` in `contexts/index.ts` wires all 4 contexts respecting inter-context dependencies. Independent contexts first, then dependent ones:
 
 ```typescript
-// composition/PipelineComposer.ts
-export class PipelineComposer {
-  static async resolve(policy: PipelinePolicy): Promise<ResolvedPipelineServices> {
-    // 1. Contextos sin dependencias cross-context (paralelo)
-    const [ingestion, knowledge] = await Promise.all([
-      import("../../source-ingestion/service").then(
-        (m) => m.createSourceIngestionService({
-          provider: policy.provider,
-          ...policy.overrides?.ingestion,
-        }),
+// contexts/index.ts
+export const coreWiring = async (config: ResolvedConfig) => {
+  const persistenceConfig = { provider: config.persistenceProvider, dbPath: config.dbPath, dbName: config.dbName };
+
+  // 1. Source Ingestion (independent — no cross-context deps)
+  const sourceIngestionWiringResult = await sourceIngestionWiring({
+    sourceInfrastructurePolicy: persistenceConfig,
+    resourceInfrastructurePolicy: persistenceConfig,
+    extractionInfrastructurePolicy: persistenceConfig,
+  });
+
+  // 2. Semantic Processing (depends on SI: SourceIngestionPort)
+  const semanticProcessingWiringResult = await semanticProcessingWiring({
+    projectionInfrastructurePolicy: { ...persistenceConfig, /* embedding config */ },
+    processingProfileInfrastructurePolicy: persistenceConfig,
+    projectionWiringDeps: {
+      sourceIngestionPort: {
+        sourceExists: (id) => sourceQueries.exists(id),        // ← resolved inline
+        getExtractedText: (id) => sourceQueries.getExtractedText(id),
+      },
+    },
+  });
+
+  // 3. Context Management + Knowledge Retrieval (parallel, depend on SI + SP)
+  const [contextManagementWiringResult, knowledgeRetrievalWiringResult] =
+    await Promise.all([
+      contextManagementWiring(
+        { contextInfrastructurePolicy: persistenceConfig, lineageInfrastructurePolicy: persistenceConfig },
+        { enrichment: { /* sourceMetadata, projectionStats */ }, reconciliation: { /* ... */ } },
       ),
-      import("../../context-management/service").then(
-        (m) => m.createContextManagementService({
-          provider: policy.provider,
-          ...policy.overrides?.knowledge,
-        }),
-      ),
+      knowledgeRetrievalWiring({
+        semanticQueryInfrastructurePolicy: { ..., vectorStoreConfig: projectionResult.vectorStoreConfig },
+      }),
     ]);
 
-    // 2. SemanticProcessing (independiente, pero expone vectorStore)
-    const processing = await import("../../semantic-processing/service").then(
-      (m) => m.createSemanticProcessingService({
-        provider: policy.provider,
-        ...policy.overrides?.processing,
-      }),
-    );
+  return { contextManagementWiringResult, sourceIngestionWiringResult, ... };
+};
+```
 
-    // 3. KnowledgeRetrieval (depende del vectorStore de processing)
-    const retrieval = await import("../../knowledge-retrieval/service").then(
-      (m) => m.createKnowledgeRetrievalService({
-        provider: policy.provider,
-        vectorStoreRef: processing.vectorStore,  // Wiring cross-context
-        ...policy.overrides?.retrieval,
-      }),
-    );
+**Key pattern**: Cross-context ports are resolved **inline** in `coreWiring()`. No separate `adapters/` directory — just closures that call use cases from other contexts.
 
-    return { ingestion, knowledge, processing, retrieval };
+### 4.6 Pipeline Pattern
+
+A Pipeline is a class that coordinates a cross-context flow. It receives use cases/queries by constructor (not services) and exposes an `execute()` method that returns `Result<PipelineError, T>`.
+
+```typescript
+// pipelines/process-knowledge/ProcessKnowledge.ts
+export interface ProcessKnowledgeDeps {
+  ingestAndExtract: IngestAndExtract;
+  sourceQueries: SourceQueries;
+  projectionOperations: ProjectionOperations;
+  contextQueries: ContextQueries;
+  addSourceToContext: AddSourceToContext;
+}
+
+export class ProcessKnowledge {
+  constructor(private readonly deps: ProcessKnowledgeDeps) {}
+
+  async execute(
+    input: ProcessKnowledgeInput,
+  ): Promise<Result<PipelineError, ProcessKnowledgeResult>> {
+    // Step 1: Ingest and extract
+    const ingestionResult = await this.deps.ingestAndExtract.execute({...});
+    if (ingestionResult.isFail()) {
+      return Result.fail(pipelineError("ingestion", ingestionResult.error));
+    }
+
+    // Step 2: Process projections
+    const projectionResult = await this.deps.projectionOperations.processSource({...});
+    if (projectionResult.isFail()) {
+      return Result.fail(pipelineError("processing", projectionResult.error, ["ingestion"]));
+    }
+
+    // Step 3: Add source to context (catalog)
+    const catalogResult = await this.deps.addSourceToContext.execute({...});
+    if (catalogResult.isFail()) {
+      return Result.fail(pipelineError("cataloging", catalogResult.error, ["ingestion", "processing"]));
+    }
+
+    return Result.ok({ sourceId, contextId, projectionCount });
   }
 }
 ```
 
-### 4.6 Workflow Pattern
-
-Un Workflow es una clase que coordina un flujo cross-context. Recibe services por constructor y expone un método `execute()` que retorna `Result<PipelineError, T>`.
+The pipeline is instantiated in `composition/root.ts` with deps from `coreWiring()`:
 
 ```typescript
-// use-cases/IngestDocumentWorkflow.ts
-export interface IngestDocumentCommand {
-  sourceId: string;
-  sourceName: string;
-  uri: string;
-  sourceType: SourceType;
-  extractionJobId: string;
-  contextId: string;
-  projectionId: string;
-  content: string;
-  language: string;
-  createdBy: string;
-  projectionType: ProjectionType;
-}
-
-export interface IngestDocumentSuccess {
-  sourceId: string;
-  contextId: string;
-  projectionId: string;
-  chunksCount: number;
-}
-
-export class IngestDocumentWorkflow {
-  constructor(
-    private readonly ingestion: SourceIngestionService,
-    private readonly knowledge: ContextManagementService,
-    private readonly processing: SemanticProcessingService,
-  ) {}
-
-  async execute(
-    command: IngestDocumentCommand,
-  ): Promise<Result<PipelineError, IngestDocumentSuccess>> {
-    // Paso 1: Ingerir y extraer
-    const ingestionResult = await this.ingestion.ingestAndExtract({
-      sourceId: command.sourceId,
-      sourceName: command.sourceName,
-      uri: command.uri,
-      type: command.sourceType,
-      extractionJobId: command.extractionJobId,
-    });
-
-    if (ingestionResult.isFail()) {
-      return Result.fail(
-        PipelineError.fromStep("ingestion", ingestionResult.error),
-      );
-    }
-
-    // Paso 2: Crear context con lineage
-    const knowledgeResult = await this.knowledge.createContext({
-      id: command.contextId,
-      name: command.sourceName,
-      description: command.content.slice(0, 200),
-      language: command.language,
-      createdBy: command.createdBy,
-    });
-
-    if (knowledgeResult.isFail()) {
-      return Result.fail(
-        PipelineError.fromStep("knowledge", knowledgeResult.error, ["ingestion"]),
-      );
-    }
-
-    // Paso 3: Generar proyección semántica
-    const projectionResult = await this.processing.processContent({
-      projectionId: command.projectionId,
-      sourceId: command.sourceId,
-      content: command.content,
-      type: command.projectionType,
-    });
-
-    if (projectionResult.isFail()) {
-      return Result.fail(
-        PipelineError.fromStep("processing", projectionResult.error, ["ingestion", "knowledge"]),
-      );
-    }
-
-    return Result.ok({
-      sourceId: command.sourceId,
-      contextId: knowledgeResult.value.contextId,
-      projectionId: projectionResult.value.projectionId,
-      chunksCount: projectionResult.value.chunksCount,
-    });
-  }
-}
+// composition/root.ts (excerpt)
+const processKnowledge = new ProcessKnowledge({
+  ingestAndExtract: core.sourceIngestionWiringResult.sourceWiringResult.ingestAndExtract,
+  sourceQueries: core.sourceIngestionWiringResult.sourceWiringResult.sourceQueries,
+  projectionOperations: core.semanticProcessingWiringResult.projectionWiringResult.projectionOperations,
+  contextQueries: core.contextManagementWiringResult.contextWiringResult.contextQueries,
+  addSourceToContext: core.contextManagementWiringResult.contextWiringResult.addSourceToContext,
+});
 ```
 
 ### 4.7 Pipeline Error
 
-El Pipeline define un tipo de error que envuelve errores de contexto con trazabilidad de paso:
+Pipeline errors are plain objects (not classes), defined in `boundary.ts` co-located with the pipeline:
 
 ```typescript
-export class PipelineError extends DomainError {
-  constructor(
-    readonly step: string,              // Contexto donde falló
-    readonly originalError: DomainError, // Error original del contexto
-    readonly completedSteps: string[],  // Pasos exitosos antes del fallo
-  ) {
-    super(
-      `Pipeline failed at step '${step}': ${originalError.message}`,
-      "PIPELINE_STEP_FAILED",
-      { step, completedSteps },
-    );
-  }
+// pipelines/process-knowledge/boundary.ts
+export type PipelineError = {
+  step: string;              // Contexto donde falló
+  code: string;              // Error code
+  message: string;           // Human-readable message
+  completedSteps: string[];  // Pasos exitosos antes del fallo
+};
 
-  static fromStep(
-    step: string,
-    error: DomainError,
-    completed?: string[],
-  ): PipelineError {
-    return new PipelineError(step, error, completed ?? []);
-  }
+export function pipelineError(
+  step: string,
+  error: { code?: string; message: string },
+  completedSteps: string[] = [],
+): PipelineError {
+  return { step, code: error.code ?? "PIPELINE_STEP_FAILED", message: error.message, completedSteps };
 }
 ```
 
-### 4.8 Pipeline Orchestrator
+### 4.8 Composition Root
+
+The composition root (`composition/root.ts`) is the top-level factory. It:
+1. Resolves config from `OrchestratorPolicy`
+2. Calls `coreWiring()` to wire all contexts
+3. Creates pipelines with deps from wired contexts
+4. Wraps cross-cutting concerns (e.g., search context filter)
+5. Returns the `KnowledgeApplication` namespace object
 
 ```typescript
-// PipelineOrchestrator.ts
-export class PipelineOrchestrator {
-  private readonly _ingestDocument: IngestDocumentWorkflow;
-  private readonly _addSourceToUnit: AddSourceToUnitWorkflow;
-  private readonly _reprocessKnowledge: ReprocessKnowledgeWorkflow;
+// composition/root.ts
+export async function createKnowledgeApplication(
+  policy: OrchestratorPolicy,
+): Promise<KnowledgeApplication> {
+  const config = await resolveConfig(policy);
+  const core = await coreWiring(config);
 
-  // Expose services for direct access when needed
-  private readonly _services: ResolvedPipelineServices;
+  // Unpack wiring results
+  const { contextWiringResult: context, lineageWiringResult: lineage } =
+    core.contextManagementWiringResult;
+  const { sourceWiringResult: source } = core.sourceIngestionWiringResult;
+  // ...
 
-  constructor(services: ResolvedPipelineServices) {
-    this._services = services;
-    this._ingestDocument = new IngestDocumentWorkflow(
-      services.ingestion, services.knowledge, services.processing,
-    );
-    this._addSourceToUnit = new AddSourceToUnitWorkflow(
-      services.ingestion, services.knowledge, services.processing,
-    );
-    this._reprocessKnowledge = new ReprocessKnowledgeWorkflow(
-      services.knowledge, services.processing,
-    );
-  }
+  // Create ProcessKnowledge pipeline
+  const processKnowledge = new ProcessKnowledge({ /* deps from core */ });
 
-  // ─── Workflow Operations ──────────────────────────────────
-  async ingestDocument(command: IngestDocumentCommand) {
-    return this._ingestDocument.execute(command);
-  }
-
-  async addSourceToUnit(command: AddSourceToUnitCommand) {
-    return this._addSourceToUnit.execute(command);
-  }
-
-  async reprocessKnowledge(command: ReprocessKnowledgeCommand) {
-    return this._reprocessKnowledge.execute(command);
-  }
-
-  // ─── Direct Service Access ────────────────────────────────
-  get ingestion(): SourceIngestionService { return this._services.ingestion; }
-  get knowledge(): ContextManagementService { return this._services.knowledge; }
-  get processing(): SemanticProcessingService { return this._services.processing; }
-  get retrieval(): KnowledgeRetrievalService { return this._services.retrieval; }
+  // Return KnowledgeApplication namespace
+  return {
+    processKnowledge,
+    contextManagement: { /* use cases from context wiring */ },
+    sourceIngestion: { /* use cases from source wiring */ },
+    semanticProcessing: { /* use cases from projection/profile wirings */ },
+    knowledgeRetrieval: { searchKnowledge: wrappedSearch },
+  };
 }
 ```
 
-### 4.9 pipeline.ts (Patrón Obligatorio)
+### 4.9 Public API (index.ts)
+
+The package's public API is in `src/index.ts`, which exports the `KnowledgeApplication` interface and the `createKnowledgeApplication` factory:
 
 ```typescript
-// pipeline.ts
-export { PipelineOrchestrator } from "./PipelineOrchestrator.js";
-export { PipelineComposer } from "./composition/PipelineComposer.js";
-export { PipelineError } from "./PipelineError.js";
-export type {
-  PipelinePolicy,
-  PipelineInfraPolicy,
-  ResolvedPipelineServices,
-} from "./composition/infra-policies.js";
+// src/index.ts
+export type { KnowledgeApplication } from "./application-interface";
+export { createKnowledgeApplication } from "./composition/root";
 
-// Factory function como API principal
-export async function createPipeline(
-  policy: PipelinePolicy,
-): Promise<PipelineOrchestrator> {
-  const { PipelineComposer } = await import("./composition/PipelineComposer.js");
-  const { PipelineOrchestrator } = await import("./PipelineOrchestrator.js");
-  const services = await PipelineComposer.resolve(policy);
-  return new PipelineOrchestrator(services);
-}
+// Type re-exports for consumers
+export type { ProcessKnowledgeInput, ProcessKnowledgeResult } from "./pipelines/process-knowledge/dtos";
+// ... other type re-exports
 ```
 
 ---
@@ -878,7 +757,7 @@ export class PdfExtractor implements ContentExtractor {
   }
 }
 
-// ✅ CORRECTO - Composer decide, Adapter es específico
+// ✅ CORRECTO - Factory decide, Adapter es específico
 // BrowserPdfExtractor.ts - Solo sabe extraer en browser
 export class BrowserPdfExtractor implements ContentExtractor {
   async extract(source: Source) {
@@ -893,8 +772,8 @@ export class ServerPdfExtractor implements ContentExtractor {
   }
 }
 
-// Composer decide cuál usar
-private static async resolveExtractor(policy): Promise<ContentExtractor> {
+// Factory decide cuál usar
+async function resolveExtractor(policy): Promise<ContentExtractor> {
   if (policy.provider === "browser") {
     return new BrowserPdfExtractor();
   }
@@ -909,15 +788,16 @@ private static async resolveExtractor(policy): Promise<ContentExtractor> {
 // extraction/application/ExecuteExtraction.ts
 import { SourceRepository } from "../../source/domain/SourceRepository"; // ❌ NO
 
-// ✅ CORRECTO - Solo el Service coordina
-// service/SourceIngestionService.ts
-import type { SourceUseCases } from "../source/application";
-import type { ExtractionUseCases } from "../extraction/application";
-
-export class SourceIngestionService {
-  constructor(modules: { source: SourceUseCases; extraction: ExtractionUseCases }) {}
-  // Aquí se coordina
-}
+// ✅ CORRECTO - Solo el context wiring coordina
+// source-ingestion/index.ts
+export const sourceIngestionWiring = async (policy) => {
+  const extractionResult = await extractionWiring(policy.extractionInfrastructurePolicy);
+  const sourceResult = await sourceWiring(
+    policy.sourceInfrastructurePolicy,
+    { executeExtraction: extractionResult.executeExtraction }, // intra-context dep
+  );
+  return { sourceResult, extractionResult };
+};
 ```
 
 #### ❌ Dependencias Cruzadas entre Contextos
@@ -927,17 +807,15 @@ export class SourceIngestionService {
 // knowledge-retrieval/semantic-query/application/QueryUseCase.ts
 import { SemanticProjectionRepository } from "../../semantic-processing/projection/domain/..."; // ❌ NO
 
-// ✅ CORRECTO - Solo el Pipeline coordina services
-// pipeline/use-cases/IngestDocumentWorkflow.ts
-import type { SourceIngestionService } from "../../source-ingestion/service";
-import type { ContextManagementService } from "../../context-management/service";
-
-export class IngestDocumentWorkflow {
-  constructor(
-    private readonly ingestion: SourceIngestionService,  // Solo API pública
-    private readonly knowledge: ContextManagementService, // Solo API pública
-  ) {}
+// ✅ CORRECTO - Solo coreWiring coordina contextos, pipelines receive deps
+// pipelines/process-knowledge/ProcessKnowledge.ts
+export class ProcessKnowledge {
+  constructor(private readonly deps: {
+    ingestAndExtract: IngestAndExtract;  // From source-ingestion wiring
+    contextQueries: ContextQueries;     // From context-management wiring
+  }) {}
 }
+// deps resolved in composition/root.ts from coreWiring() results
 ```
 
 #### ❌ Lógica de Composición Fuera de composition/
@@ -981,8 +859,8 @@ class IngestDocumentWorkflow {
 // ✅ CORRECTO - Pipeline solo coordina
 class IngestDocumentWorkflow {
   async execute(command) {
-    // ✅ Delega al service, que delega al use case, que valida en dominio
-    const result = await this.ingestion.ingestAndExtract({...command});
+    // ✅ Delega al use case, que valida en dominio
+    const result = await this.deps.ingestAndExtract.execute({...command});
     if (result.isFail()) return Result.fail(PipelineError.fromStep("ingestion", result.error));
     // ...
   }
@@ -993,15 +871,15 @@ class IngestDocumentWorkflow {
 
 Antes de finalizar un módulo, verificar:
 
-- [ ] ¿El Composer es el ÚNICO que decide implementaciones?
+- [ ] ¿La factory es la ÚNICA que decide implementaciones?
 - [ ] ¿Los adapters NO detectan entorno (window, process, etc.)?
 - [ ] ¿El módulo NO importa otros módulos del contexto?
 - [ ] ¿Los Use Cases reciben TODAS sus dependencias por constructor?
-- [ ] ¿La coordinación entre módulos está SOLO en el Service?
-- [ ] ¿Factory retorna `{ useCases, infra }`?
-- [ ] ¿Existe `composition/index.ts` que re-exporta todo?
-- [ ] ¿`composition/factory.ts` del contexto usa ConfigProvider?
-- [ ] ¿Existe `service/index.ts` con `create{Context}Service`?
+- [ ] ¿La coordinación entre módulos está SOLO en el context wiring (`index.ts`)?
+- [ ] ¿Factory retorna `{ infra }`?
+- [ ] ¿Wiring crea use cases y retorna resultado tipado?
+- [ ] ¿DTOs están co-located con use cases (no centralizados)?
+- [ ] ¿Cross-context ports se resuelven inline en `coreWiring()`?
 - [ ] ¿Existe `__tests__/e2e.test.ts` para el contexto?
 
 ---
@@ -1027,11 +905,12 @@ Antes de finalizar un módulo, verificar:
 | Use Case | `{Verb}{Noun}` | `RegisterSource`, `ExecuteExtraction` |
 | Error | `{Concept}{Type}Error` | `SourceNotFoundError` |
 | Event | `{Aggregate}{PastVerb}` | `SourceRegistered` |
-| Composer | `{Module}Composer` | `SourceComposer` |
-| Service | `{Context}Service` | `SourceIngestionService` |
-| Workflow | `{Verb}{Domain}Workflow` | `IngestDocumentWorkflow` |
-| Pipeline Error | `PipelineError` | Único, con `step` discriminante |
-| Pipeline Factory | `createPipeline` | API pública del pipeline |
+| Module Factory | `{module}Factory` | `sourceFactory` |
+| Module Wiring | `{module}Wiring` | `sourceWiring` |
+| Context Wiring | `{context}Wiring` | `sourceIngestionWiring` |
+| Pipeline | `{Verb}{Domain}` | `ProcessKnowledge` |
+| Pipeline Error | `PipelineError` | Plain object, con `step` discriminante |
+| Composition Root | `createKnowledgeApplication` | API pública |
 
 ### 7.3 EVENT_TYPE
 
@@ -1143,66 +1022,54 @@ export interface {Aggregate}Repository extends Repository<{Aggregate}, {Aggregat
 ### 9.1 Nivel Módulo
 
 ```
-Policy → Composer → Resolved Infra → UseCases Container
+Policy → factory → { infra } → wiring(policy, deps) → use cases
 ```
 
 ```typescript
-// 1. Política define QUÉ tipo de infra
-const policy: SourceInfrastructurePolicy = { provider: "server", dbPath: "./data" };
+// 1. Factory resuelve infraestructura
+const { infra } = await sourceFactory({ provider: "server", dbPath: "./data" });
 
-// 2. Composer resuelve CÓMO implementar
-const infra = await SourceComposer.resolve(policy);
-
-// 3. UseCases se construyen con infra resuelta
-const useCases = new SourceUseCases(infra.repository, infra.eventPublisher);
+// 2. Wiring crea use cases con infra + deps
+const result = await sourceWiring(policy, { executeExtraction, ... });
+// result = { sourceQueries, ingestAndExtract, ... }
 ```
 
 ### 9.2 Nivel Contexto
 
 ```
-ServicePolicy → resolveModules() → ResolvedModules → Service
+ContextPolicy → contextWiring() → calls module wirings → resolves intra-context deps
 ```
 
 ```typescript
-// 1. Política de contexto (hereda a módulos)
-const contextPolicy: SourceIngestionServicePolicy = {
-  provider: "server",
-  dbPath: "./data",
-  overrides: {
-    extraction: { provider: "browser" }, // Override específico
-  },
-};
-
-// 2. resolveModules() orquesta la composición
-const modules = await resolveSourceIngestionModules(contextPolicy);
-
-// 3. Service recibe módulos ya resueltos
-const service = new SourceIngestionService(modules);
+// Context wiring calls module wirings in correct order
+const result = await sourceIngestionWiring({
+  sourceInfrastructurePolicy: persistenceConfig,
+  resourceInfrastructurePolicy: persistenceConfig,
+  extractionInfrastructurePolicy: persistenceConfig,
+});
+// result = { sourceWiringResult, resourceWiringResult, extractionWiringResult }
 ```
 
-### 9.3 Nivel Pipeline
+### 9.3 Nivel Core Wiring
 
 ```
-PipelinePolicy → PipelineComposer → Context Services → Workflows → PipelineOrchestrator
+ResolvedConfig → coreWiring() → calls context wirings → resolves inter-context deps
 ```
 
 ```typescript
-// 1. Política global (hereda a todos los contextos)
-const pipelinePolicy: PipelinePolicy = {
-  provider: "in-memory",
-  overrides: {
-    processing: { embeddingProvider: "hash" },
-  },
-};
+const core = await coreWiring(config);
+// core = { contextManagementWiringResult, sourceIngestionWiringResult, ... }
+```
 
-// 2. PipelineComposer instancia services (respetando dependencias)
-const services = await PipelineComposer.resolve(pipelinePolicy);
+### 9.4 Nivel Composition Root
 
-// 3. PipelineOrchestrator ensambla workflows con services resueltos
-const pipeline = new PipelineOrchestrator(services);
+```
+OrchestratorPolicy → resolveConfig → coreWiring → pipelines → KnowledgeApplication
+```
 
-// 4. Ejecutar flujos cross-context
-const result = await pipeline.ingestDocument({ ... });
+```typescript
+const app = await createKnowledgeApplication({ provider: "server" });
+const result = await app.processKnowledge.execute({ ... });
 ```
 
 ---
@@ -1230,25 +1097,25 @@ const result = await pipeline.ingestDocument({ ... });
 
 ### 10.4 Reglas de Composición
 
-1. **Composer es obligatorio**, Factory es opcional
-2. **Políticas declarativas** (`in-memory`, `browser`, `server`)
-3. **Un método por aspecto** (`resolveRepository`, `resolvePublisher`)
+1. **Factory es obligatorio** por módulo (resuelve infra)
+2. **Wiring es obligatorio** por módulo (crea use cases)
+3. **Políticas declarativas** (`in-memory`, `browser`, `server`)
+4. **DTOs co-located** con use cases (no centralizados)
 
 ### 10.5 Reglas de Contexto
 
-1. **Service solo a nivel de contexto**
+1. **Context wiring en `index.ts`** — no Service classes
 2. **Módulos NO se comunican directamente**
-3. **Coordinación vía Service o eventos**
+3. **Coordinación vía context wiring**
 
-### 10.6 Reglas del Pipeline
+### 10.6 Reglas del Pipeline + Core Wiring
 
 1. **Pipeline NO es un Bounded Context** — no tiene dominio
-2. **Solo invoca services** — nunca repositorios ni use cases directamente
+2. **Pipelines reciben use cases por constructor** — no services ni repositorios
 3. **Sin lógica de negocio** — solo coordinación y propagación de resultados
-4. **Cada workflow es una clase** — constructor recibe services, `execute()` retorna Result
-5. **PipelineError envuelve errores** — preserva `step` y `completedSteps`
-6. **Sigue Composición por Políticas** — PipelineComposer resuelve services
-7. **Wiring cross-context en el Composer** — e.g., `processing.vectorStore → retrieval`
+4. **PipelineError es plain object** — preserva `step` y `completedSteps`
+5. **`coreWiring()` resuelve inter-context deps** inline (no adapters/ directory)
+6. **Composition root** (`root.ts`) crea pipelines y retorna `KnowledgeApplication`
 
 ---
 
@@ -1260,51 +1127,33 @@ const result = await pipeline.ingestDocument({ ... });
 - [ ] Definir Repository interface (port)
 - [ ] Definir errores de dominio
 - [ ] Implementar eventos de dominio
-- [ ] Implementar Use Cases con Result
-- [ ] Crear UseCases container
+- [ ] Implementar Use Cases con Result (DTOs co-located)
 - [ ] Implementar repositorios (InMemory mínimo)
-- [ ] **Crear Composer** (obligatorio)
-- [ ] **Crear Factory** retornando `{ useCases, infra }`
-- [ ] **Crear `composition/index.ts`** (obligatorio)
+- [ ] **Crear `composition/factory.ts`** retornando `{ infra }`
+- [ ] **Crear `composition/wiring.ts`** creando use cases
 - [ ] Configurar index.ts del módulo
 
 ## 12. Checklist para Nuevo Contexto
 
 - [ ] Crear estructura de contexto
-- [ ] Implementar módulos individuales (con factories)
-- [ ] **Crear `composition/factory.ts`** con ServicePolicy + resolveModules()
-- [ ] **Crear `composition/index.ts`** (obligatorio)
-- [ ] Crear Service con errores específicos de coordinación
-- [ ] **Crear `service/index.ts`** con `create{Context}Service()`
-- [ ] Definir políticas de contexto con `configOverrides`
+- [ ] Implementar módulos individuales (con factory + wiring)
+- [ ] **Crear `index.ts`** con context wiring function
+- [ ] Definir `InfrastructurePolicy` type (per-module policies)
+- [ ] Definir cross-context deps type (si aplica)
 - [ ] **Escribir `__tests__/e2e.test.ts`** (obligatorio)
-- [ ] Configurar index.ts del contexto
 
-## 13. Checklist para Nuevo Workflow
+## 13. Checklist para Nuevo Pipeline
 
-- [ ] Crear `use-cases/{Acción}{Dominio}Workflow.ts`
-- [ ] Definir Command interface (entrada del workflow)
-- [ ] Definir Success interface (salida exitosa)
-- [ ] Constructor recibe services como dependencias
+- [ ] Crear `pipelines/{pipeline-name}/` directory
+- [ ] Crear pipeline class con deps por constructor
+- [ ] Crear `boundary.ts` con PipelineError type
+- [ ] Crear `dtos.ts` co-located con pipeline
 - [ ] `execute()` retorna `Result<PipelineError, Success>`
-- [ ] Cada paso invoca service → verifica `isFail()` → propaga con `PipelineError.fromStep()`
+- [ ] Cada paso invoca use case → verifica `isFail()` → propaga con `pipelineError()`
 - [ ] `completedSteps` acumula pasos exitosos
-- [ ] Exportar workflow desde `use-cases/index.ts`
-- [ ] Registrar workflow en `PipelineOrchestrator`
+- [ ] Instanciar pipeline en `composition/root.ts` con deps de `coreWiring()`
+- [ ] Agregar al `KnowledgeApplication` interface
 - [ ] Agregar tests en `__tests__/e2e.test.ts`
-
-## 14. Checklist para Pipeline Orchestrator
-
-- [ ] Crear estructura `pipeline/` al nivel de los contextos
-- [ ] **Crear `composition/infra-policies.ts`** con PipelinePolicy
-- [ ] **Crear PipelineComposer** (instancia services en orden correcto)
-- [ ] **Crear `composition/pipeline.factory.ts`**
-- [ ] **Crear `composition/index.ts`** (obligatorio)
-- [ ] Crear `PipelineError` con step + completedSteps
-- [ ] Crear `PipelineOrchestrator` con workflows y service accessors
-- [ ] Crear `pipeline.ts` con `createPipeline()`
-- [ ] Implementar workflows identificados
-- [ ] **Escribir `__tests__/e2e.test.ts`** (obligatorio)
 
 ---
 
@@ -1312,18 +1161,16 @@ const result = await pipeline.ingestDocument({ ... });
 
 | Nivel | Archivo | Contenido |
 |-------|---------|-----------|
-| Módulo | `composition/index.ts` | Re-exports de Composer, policies, factory |
-| Módulo | `composition/{module}.factory.ts` | Retorna `{ useCases, infra }` |
-| Contexto | `composition/factory.ts` | ServicePolicy + resolveModules() |
-| Contexto | `composition/index.ts` | Re-exports |
-| Contexto | `service/index.ts` | `create{Context}Service()` factory |
+| Módulo | `composition/factory.ts` | `{module}Factory(policy)` → `{ infra }` |
+| Módulo | `composition/wiring.ts` | `{module}Wiring(policy, deps?)` → use cases wired |
+| Contexto | `index.ts` | `{context}Wiring(policy, crossContextDeps?)` |
 | Contexto | `__tests__/e2e.test.ts` | Test E2E completo del contexto |
-| Pipeline | `composition/index.ts` | Re-exports de PipelineComposer, policies |
-| Pipeline | `index.ts` | `createPipeline()` factory |
-| Pipeline | `PipelineOrchestrator.ts` | Workflows + service accessors |
-| Pipeline | `PipelineError.ts` | Error con step + completedSteps |
-| Pipeline | `__tests__/e2e.test.ts` | Test E2E completo del pipeline |
+| Core wiring | `contexts/index.ts` | `coreWiring(ResolvedConfig)` — inter-context deps |
+| Pipeline | `pipelines/{name}/{Name}.ts` | Pipeline class con deps por constructor |
+| Pipeline | `pipelines/{name}/boundary.ts` | PipelineError plain object type |
+| Pipeline | `pipelines/{name}/dtos.ts` | DTOs co-located |
+| Composition | `composition/root.ts` | `createKnowledgeApplication(policy)` |
 
 ---
 
-*Skill arquitectónico para klay+ - Última actualización: Febrero 2026*
+*Skill arquitectónico para klay+ - Última actualización: Marzo 2026*

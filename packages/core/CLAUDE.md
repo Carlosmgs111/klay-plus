@@ -12,23 +12,24 @@ pnpm --filter @klay/core test    # 313 tests (vitest)
 
 ```
 src/
-  contexts/       # 4 bounded contexts (source-ingestion, context-management, semantic-processing, knowledge-retrieval)
-  application/    # Vertical slice: process-knowledge/, boundary, dtos, composition/
-  config/         # Infrastructure config: ConfigProvider, ConfigStore, InfrastructureProfile, profileResolution, secrets/
-  shared/         # DDD building blocks: AggregateRoot, Result, Entity, ValueObject, resultTransformers
-                  #   shared/persistence/ — BaseInMemoryRepository, BaseNeDBRepository, BaseIndexedDBRepository
-                  #   shared/vector/      — VectorEntry, hashVector, InMemoryVectorWriteStore
+  index.ts            # Public API (KnowledgeApplication interface + factory + type re-exports)
+  composition/        # composition/root.ts — factory: resolveConfig → coreWiring → return
+  pipelines/          # Cross-context pipelines (process-knowledge/)
+  contexts/           # 4 bounded contexts + coreWiring (contexts/index.ts)
+  config/             # OrchestratorPolicy, resolveConfig, ConfigProvider, ConfigStore, profiles, secrets/
+  shared/             # DDD building blocks, persistence/, vector/
 ```
 
 ## Package Exports
 
 | Export path | Module |
 |-------------|--------|
-| `.` | application (main entry: KnowledgeApplication, DTOs, factory, boundary functions) |
+| `.` | `./src/index.ts` — KnowledgeApplication interface, factory, type + DTO re-exports |
 | `./result` | Result transformers (toRESTResponse, unwrapResult, RESTResponse, UIResult) |
 | `./config` | Infrastructure config types, profiles, resolution, validation |
 | `./config/nedb` | NeDBConfigStore (server-side config persistence) |
 | `./config/browser` | IndexedDBConfigStore (browser-side config persistence) |
+| `./secrets` | SecretStore, ManagedSecret, InMemorySecretStore, SecretResolver |
 
 ## Key Files
 

@@ -4,32 +4,24 @@
 
 Adquisicion de contenido y extraccion de texto. Puerta de entrada del sistema: recibe contenido desde diversas fuentes externas y produce texto extraido listo para procesamiento semantico.
 
-## Service: `SourceIngestionService`
-
-Punto de entrada unico del contexto. Coordina los 3 modulos internos.
-
-| Operacion | Descripcion | Modulos involucrados |
-|-----------|-------------|---------------------|
-| `registerSource` | Registra una referencia a source sin extraccion | source |
-| `extractSource` | Extrae texto de un source ya registrado | source, extraction |
-| `ingestAndExtract` | Registra + extrae en una llamada | source, extraction |
-| `ingestExtractAndReturn` | Registra + extrae + retorna texto completo | source, extraction |
-| `ingestFile` | Sube archivo → registra source → extrae | resource, source, extraction |
-| `ingestExternalResource` | Registra referencia externa → registra source → extrae | resource, source, extraction |
-| `batchRegister` | Registro paralelo de multiples sources | source |
-| `batchIngestAndExtract` | Ingesta + extraccion paralela de multiples sources | source, extraction |
-
 ### Composicion
 
-```
-composition/
-├── factory.ts    → SourceIngestionServicePolicy + resolveSourceIngestionModules()
-└── index.ts      → re-exports
+El contexto no tiene service layer — su API publica es el resultado del wiring.
 
-resolveSourceIngestionModules(policy)
-├── sourceFactory(policy)      → { useCases: SourceUseCases, infra }
-├── resourceFactory(policy)    → { useCases: ResourceUseCases, infra }
-└── extractionFactory(policy)  → { useCases: ExtractionUseCases, infra }
+```
+Module-level wirings:
+  source/composition/
+    factory.ts   → sourceFactory(policy) → { infra: { repository, eventPublisher } }
+    wiring.ts    → sourceWiring(policy, deps) → use cases (needs extraction + resource deps)
+  resource/composition/
+    factory.ts   → resourceFactory(policy) → { infra }
+    wiring.ts    → resourceWiring(policy) → use cases (self-contained)
+  extraction/composition/
+    factory.ts   → extractionFactory(policy) → { useCases, infra }
+    wiring.ts    → extractionWiring(policy) → { executeExtraction, extractionJobRepository }
+
+Context-level wiring (source-ingestion/index.ts):
+  sourceIngestionWiring(policy) → calls extraction → resource → source wirings, resolves intra-context deps
 ```
 
 ---
